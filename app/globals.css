@@ -1,49 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
-}
-
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --cream: #FAFAFA;
+  --mint: #10B981;
+  --mint-light: #D1FAE5;
+  --mint-hover: #059669;
+  --navy: #1E3A8A;
 }
 
 * {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--cream);
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+/* Guardián del diseño: Clon de la micro-animación principal */
+.card-hover {
+  transition: all 0.3s ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* Botones Neón Estilo Prosper */
+.btn-mint {
+  background-color: var(--mint);
+  color: white;
+  border-radius: 1rem;
+  padding: 1rem 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  display: inline-block;
+}
+.btn-mint:hover {
+  transform: scale(1.02);
+  background-color: var(--mint-hover);
+}
+
+/* Base UI minimalista */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.text-center { text-align: center; }
+
+/* Hero Section */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+
+.hero-title span { color: var(--mint); }
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: #4B5563;
+  max-width: 600px;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+/* Grid de Features */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.feature-card {
+  background: white;
+  border-radius: 1.5rem; /* Acorde al diseño de prosper */
+  padding: 2.5rem 2rem;
+  border: 2px solid #F3F4F6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.feature-icon {
+  background: var(--mint-light);
+  color: var(--mint);
+  width: 64px;
+  height: 64px;
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  font-weight: 900;
+  margin-bottom: 1.5rem;
+}
+
+.feature-title { 
+  font-weight: 900; 
+  font-size: 1.25rem; 
+  margin-bottom: 0.75rem; 
+}
+
+.feature-desc { 
+  color: #6B7280; 
+  font-size: 0.95rem; 
+  line-height: 1.6; 
+}
+
+/* Responsividad Fuerte */
+@media (max-width: 768px) {
+  .hero-title { font-size: 2.5rem; }
+  .hero-subtitle { font-size: 1.1rem; padding: 0 1rem; }
+  .hero-section { min-height: 70vh; padding-top: 3rem; }
 }
