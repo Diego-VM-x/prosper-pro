@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ThemeProvider } from './ThemeProvider';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import ProtectedRoute from './ProtectedRoute';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,8 +19,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <ThemeProvider>
-      <div className="app-shell">
-        {/* === SIDEBAR === */}
+      <ProtectedRoute>
+        <div className="app-shell">
+          {/* === SIDEBAR === */}
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* === MAIN === */}
@@ -33,6 +35,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </main>
       </div>
+      </ProtectedRoute>
     </ThemeProvider>
   );
 }

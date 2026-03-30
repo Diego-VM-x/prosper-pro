@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '@/lib/contexts/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Prosper Pro | Dashboard de Libertad Financiera',
@@ -26,7 +27,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

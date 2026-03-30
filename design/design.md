@@ -4,6 +4,15 @@ Este documento registra los componentes estéticos, propósitos arquitectónicos
 
 ## Registro de Cambios y Decisiones
 
+### [2026-03-30 17:10] - Interfaz de Autenticación Premium (Auth Flows)
+- **Archivos/Componentes**: `app/login/page.tsx`, `app/register/page.tsx`, `auth.css`, `AuthContext.tsx`.
+- **Propósito Arquitectónico**: Integración del flujo de acceso seguro con Firebase respetando la identidad visual de marca.
+- **Decisiones de Diseño**:
+  - **Layout**: Diseño centrado de tarjeta blanca sobre fondo degradado Navy a Verde Pino (`radial-gradient`), creando una atmósfera de seguridad y exclusividad.
+  - **Identidad**: Uso del logo oficial (`logo-icon.png`) y tipografía de marca (`Prosper.`) con el punto verde esmeralda para una coherencia total con el Dashboard.
+  - **Interacción**: Estados de carga (`disabled/opacity`) en botones y campos durante la autenticación. Animaciones sutiles (`entrance-fade`) para alertas de error.
+  - **Optimización**: Migración de estilos inline a `auth.css` físico para eliminar el FOUC (parpadeo de estilos) en la carga inicial.
+
 ### [2026-03-30 15:40] - Vista Detallada de Metas y Dashboard Atómico
 - **Archivos/Componentes**: `app/metas/page.tsx`, `DashboardLayout.tsx`, `Sidebar.tsx`, `icons.tsx`.
 - **Propósito Arquitectónico**: Expandir la funcionalidad del dashboard manteniendo consistencia visual y estructural mediante un layout compartido.

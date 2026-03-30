@@ -8,6 +8,7 @@
 
 import React from 'react';
 import { useTheme } from './ThemeProvider';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   IconSearch,
   IconMail,
@@ -15,6 +16,7 @@ import {
   IconSun,
   IconMoon,
   IconMenu,
+  IconLogout, // Añadir este icono si existe o usar uno similar
 } from './icons';
 
 interface TopbarProps {
@@ -29,6 +31,9 @@ interface TopbarProps {
  */
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
+
+  const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
 
   return (
     <header className="topbar" id="main-topbar">
@@ -85,12 +90,22 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile">
-          <div className="topbar-avatar">NR</div>
-          <div className="topbar-user-info">
-            <span className="topbar-user-name">Norelys R.</span>
-            <span className="topbar-user-email">norelys@prosper.com</span>
+        <div className="topbar-user" id="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="topbar-avatar" style={{ overflow: 'hidden' }}>
+            {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
           </div>
+          <div className="topbar-user-info">
+            <span className="topbar-user-name">{user?.displayName || 'Usuario Pro'}</span>
+            <span className="topbar-user-email">{user?.email}</span>
+          </div>
+          <button 
+            className="topbar-icon-btn logout-btn" 
+            onClick={logout} 
+            title="Cerrar sesión"
+            style={{ marginLeft: '8px' }}
+          >
+            <IconLogout />
+          </button>
         </div>
       </div>
 

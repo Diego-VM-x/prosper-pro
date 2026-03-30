@@ -5,12 +5,13 @@ import { getFirestore } from 'firebase/firestore';
 
 // TODO: Reemplaza estos con la configuración de tu proyecto Firebase
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBmrDThJ-J40ktiSWDkex1yjB-fa4lkDyg",
+  authDomain: "prosper-197d4.firebaseapp.com",
+  projectId: "prosper-197d4",
+  storageBucket: "prosper-197d4.firebasestorage.app",
+  messagingSenderId: "183396372863",
+  appId: "1:183396372863:web:1b3a5c2d1d5288c7a28a4a",
+  measurementId: "G-PW6SZ1WP5Y"
 };
 
 // Inicializa Firebase

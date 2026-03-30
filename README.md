@@ -2,6 +2,11 @@
 
 ## Historial de Cambios
 
+### [2026-03-30] [17:10] - Implementación de Sistema de Autenticación Completo (Firebase + Google)
+- **Resumen técnico**: Integración de Firebase Auth con soporte para Google Sign-In y correo/contraseña. Creación de `AuthContext.tsx` y `ProtectedRoute.tsx` para la gestión de sesiones globales. Implementación de una interfaz de autenticación premium (Login/Registro) con carga optimizada mediante CSS estático (`auth.css`) para evitar FOUC.
+- **Desafíos resueltos**: Manejo de errores detallado de Firebase (credenciales inválidas, usuario no encontrado, etc.). Solución del parpadeo de contenido sin estilo mediante la migración de `styled-jsx` a CSS físico. Sincronización de la identidad visual oficial (logo y marca) en las vistas de acceso.
+- **Lecciones aprendidas**: Centralizar la lógica de sesión en un proveedor de contexto facilita enormemente la protección de rutas y la personalización de la UI según el estado del usuario (ej. Topbar dinámico).
+
 ### [2026-03-30] [15:40] - Implementación de la Sección "Mis Metas"
 - **Resumen técnico**: Creación de la ruta `/metas` con una interfaz premium para el seguimiento de objetivos financieros. Se refactorizó el Dashboard para usar un `DashboardLayout` compartido, optimizando la reutilización de componentes y la gestión de estados globales de navegación (active states en Sidebar).
 - **Desafíos resueltos**: Sincronización de iconos faltantes en la biblioteca interna. Implementación de filtrado reactivo por categorías de metas.
