@@ -9,6 +9,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   IconDashboard,
   IconTasks,
@@ -37,6 +38,13 @@ interface SidebarProps {
  * promocional de enlace a la academia Prosper en el footer.
  */
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const pathname = usePathname();
+
+  /**
+   * Verifica si una ruta está activa para aplicar estilos de resaltado.
+   */
+  const isActive = (path: string) => pathname === path;
+
   return (
     <>
       {/* Overlay para móvil */}
@@ -91,36 +99,36 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Navegación Principal */}
         <nav className="sidebar-nav">
           <p className="sidebar-label">Menú</p>
-          <Link href="/" className="nav-item active" id="nav-dashboard">
+          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard">
             <IconDashboard /> Dashboard
           </Link>
-          <Link href="/metas" className="nav-item" id="nav-tasks">
+          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks">
             <IconTasks /> Mis Metas
             <span className="nav-badge">12</span>
           </Link>
-          <Link href="/calendario" className="nav-item" id="nav-calendar">
+          <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar">
             <IconCalendar /> Calendario
           </Link>
-          <Link href="/finanzas" className="nav-item" id="nav-analytics">
+          <Link href="/finanzas" className={`nav-item ${isActive('/finanzas') ? 'active' : ''}`} id="nav-analytics">
             <IconAnalytics /> Finanzas
           </Link>
-          <Link href="/comunidad" className="nav-item" id="nav-team">
+          <Link href="/comunidad" className={`nav-item ${isActive('/comunidad') ? 'active' : ''}`} id="nav-team">
             <IconTeam /> Comunidad
           </Link>
 
           <p className="sidebar-label">Aprendizaje</p>
-          <Link href="/cursos" className="nav-item" id="nav-courses">
+          <Link href="/cursos" className={`nav-item ${isActive('/cursos') ? 'active' : ''}`} id="nav-courses">
             <IconBook /> Cursos
           </Link>
-          <Link href="/logros" className="nav-item" id="nav-achievements">
+          <Link href="/logros" className={`nav-item ${isActive('/logros') ? 'active' : ''}`} id="nav-achievements">
             <IconTrophy /> Logros
           </Link>
 
           <p className="sidebar-label">General</p>
-          <Link href="/configuracion" className="nav-item" id="nav-settings">
+          <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings">
             <IconSettings /> Configuración
           </Link>
-          <Link href="/ayuda" className="nav-item" id="nav-help">
+          <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help">
             <IconHelp /> Ayuda
           </Link>
           <div className="nav-item" id="nav-logout">

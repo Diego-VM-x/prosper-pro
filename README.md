@@ -2,6 +2,11 @@
 
 ## Historial de Cambios
 
+### [2026-03-30] [15:40] - Implementación de la Sección "Mis Metas"
+- **Resumen técnico**: Creación de la ruta `/metas` con una interfaz premium para el seguimiento de objetivos financieros. Se refactorizó el Dashboard para usar un `DashboardLayout` compartido, optimizando la reutilización de componentes y la gestión de estados globales de navegación (active states en Sidebar).
+- **Desafíos resueltos**: Sincronización de iconos faltantes en la biblioteca interna. Implementación de filtrado reactivo por categorías de metas.
+- **Lecciones aprendidas**: Extraer layouts comunes tempranamente permite un escalado mucho más limpio de la aplicación al añadir nuevas páginas con la misma estructura base.
+
 ### [2026-03-30] [15:20] - Identidad Visual Oficial y Conectividad Remota
 - **Resumen técnico**: Actualización de la paleta de colores global a Prosper Emerald (#3DCC8E) y Navy (#1E3A6E). Refactorización de la navegación lateral usando `Next/Link`. Inicialización de la configuración de Firebase y mantenimiento del túnel de desarrollo `prosper-dev` para gestión remota.
 - **Desafíos resueltos**: Mantenimiento de la consistencia del modo oscuro tras el cambio de tokens de marca.

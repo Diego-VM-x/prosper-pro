@@ -14,7 +14,7 @@
 - ✅ **Túnel VS Code Activado**: Túnel `prosper-dev` iniciado para desarrollo remoto desde móvil.
 
 ## Pendientes Próximos
-- [ ] Implementar página de detalles de "Mis Metas".
+- ✅ **Mis Metas**: Implementación de la sección con filtrado y tarjetas de progreso.
 - [ ] Desarrollar módulo de "Cursos" de Academia Prosper.
 - [ ] Conectar con Firebase para persistencia real.
 

@@ -4,6 +4,14 @@ Este documento registra los componentes estéticos, propósitos arquitectónicos
 
 ## Registro de Cambios y Decisiones
 
+### [2026-03-30 15:40] - Vista Detallada de Metas y Dashboard Atómico
+- **Archivos/Componentes**: `app/metas/page.tsx`, `DashboardLayout.tsx`, `Sidebar.tsx`, `icons.tsx`.
+- **Propósito Arquitectónico**: Expandir la funcionalidad del dashboard manteniendo consistencia visual y estructural mediante un layout compartido.
+- **Decisiones de Diseño**:
+  - **Layout**: Implementación de `DashboardLayout` como HOC (Higher-Order Component) para inyectar Sidebar/Topbar consistentemente y manejar el estado del menú móvil.
+  - **Componentes**: Tarjetas de meta de ancho completo (`goal-wide-card`) con barras de progreso animadas, chips de filtrado interactivos y sistema de estados dinámicos (Colores por categoría: Ahorro/Verde, Inversión/Navy, Educación/Emerald).
+  - **Interacción**: Efectos de hover con desplazamiento horizontal (`translateX(4px)`) y sombras suaves para reforzar la profundidad en la lista de metas.
+
 ### [2026-03-30 15:20] - Identidad Visual Oficial Prosper (Emerald & Navy)
 - **Archivos/Componentes**: `globals.css`, `Sidebar.tsx`, `Topbar.tsx`.
 - **Propósito Arquitectónico**: Unificación de la marca Prosper Pro en toda la plataforma.
