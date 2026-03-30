@@ -6,7 +6,7 @@
    ============================================================ */
 
 :root {
-  /* === BRAND COLORS === */
+  /* === BRAND COLORS (CORE) === */
   --color-pine-900:    #0D2B1E;
   --color-pine-800:    #14442F;
   --color-pine-700:    #1B5B3F;
@@ -17,6 +17,11 @@
   --color-pine-200:    #98D9BC;
   --color-pine-100:    #D3EFE2;
   --color-pine-50:     #EEF8F3;
+
+  /* === NEW LOGO BRAND COLORS === */
+  --color-prosper-green: #3DCC8E;  /* Emerald from Logo */
+  --color-prosper-navy:  #1E3A6E;  /* Navy from Logo Text */
+
 
   /* === STONE / NEUTRAL === */
   --color-stone-950:   #0C0A09;
@@ -234,14 +239,15 @@ ul, ol {
 .sidebar-logo-icon svg { color: white; }
 
 .sidebar-logo-text {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.5px;
+  color: var(--color-prosper-navy);
+  letter-spacing: -1px;
+  line-height: 1;
 }
 
-.sidebar-logo-text span {
-  color: var(--color-pine-500);
+[data-theme="dark"] .sidebar-logo-text {
+  color: #FFFFFF;
 }
 
 .sidebar-nav {
@@ -326,10 +332,11 @@ ul, ol {
 }
 
 .sidebar-promo-card {
-  background: linear-gradient(135deg, var(--color-pine-800), var(--color-pine-600));
+  background: linear-gradient(135deg, var(--color-prosper-navy), var(--color-prosper-green));
   border-radius: var(--radius-lg);
   padding: 16px;
   color: white;
+  box-shadow: 0 10px 15px -3px rgba(30, 58, 110, 0.2);
 }
 
 .sidebar-promo-card .promo-title {
@@ -604,15 +611,15 @@ ul, ol {
 .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 
 .btn-primary {
-  background: var(--color-pine-500);
+  background: var(--color-prosper-green);
   color: white;
-  box-shadow: var(--shadow-accent);
+  box-shadow: 0 4px 12px rgba(61, 204, 142, 0.3);
 }
 
 .btn-primary:hover {
-  background: var(--color-pine-600);
+  background: #34BB81;
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(43,133,96,0.35);
+  box-shadow: 0 6px 24px rgba(61, 204, 142, 0.35);
 }
 
 .btn-primary:active { transform: translateY(0); }
@@ -656,9 +663,10 @@ ul, ol {
 }
 
 .stat-card.featured {
-  background: linear-gradient(135deg, var(--color-pine-700) 0%, var(--color-pine-500) 100%);
+  background: linear-gradient(135deg, var(--color-prosper-navy) 0%, var(--color-prosper-green) 100%);
   border-color: transparent;
   color: white;
+  box-shadow: 0 10px 20px -5px rgba(30, 58, 110, 0.25);
 }
 
 .stat-card.featured .stat-label { color: rgba(255,255,255,0.75); }
@@ -687,8 +695,8 @@ ul, ol {
 }
 
 .stat-icon-link:hover {
-  border-color: var(--color-pine-500);
-  color: var(--color-pine-500);
+  border-color: var(--color-prosper-green);
+  color: var(--color-prosper-green);
   background: var(--bg-accent-soft);
 }
 

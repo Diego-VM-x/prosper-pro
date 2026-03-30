@@ -56,11 +56,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside className={`sidebar${isOpen ? ' open' : ''}`} id="main-sidebar">
         {/* Logo */}
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">
-            <IconProsperLeaf width={20} height={20} />
-          </div>
+          <img
+            src="/logo-icon.png"
+            alt="Prosper Logo"
+            width={36}
+            height={36}
+            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
+          />
           <span className="sidebar-logo-text">
-            <span>Prosper</span> Pro
+            Prosper<span style={{ color: 'var(--color-prosper-green)' }}>.</span>
           </span>
           {/* Botón cerrar para móvil */}
           <button
