@@ -2,6 +2,11 @@
 
 ## Historial de Cambios
 
+### [2026-03-30] [09:30] - Limpieza Progresiva y Simplificación para Sitio Web
+- **Resumen técnico**: Eliminación de la "Arquitectura Tripartita" y soporte de Capacitor/Android. Se reestructuró la carpeta `app/` para aplanar la jerarquía y remover Route Groups redundantes. Las habilidades de agente exclusivas de la App se movieron a `.agent/skills/app-exclusive/`.
+- **Desafíos resueltos**: Migración limpia de rutas y depuración de dependencias en `package.json`.
+- **Lecciones aprendidas**: Simplificar el repositorio tempranamente evita deuda técnica en builds y confusiones de ruteo cuando el objetivo es puramente web.
+
 ### [2026-03-29] [21:40] - Implementación de Arquitectura Tripartita y Firebase Skill
 - **Resumen técnico**: Creación de dos nuevas habilidades maestras (`firebase-connector` y `arquitectura-tripartita`) y reestructuración completa del directorio `app/` utilizando Route Groups de Next.js. El proyecto ahora se divide en tres pilares: APP, WEB y Publicidad, cada uno con su propio espacio de desarrollo aislado.
 - **Desafíos resueltos**: Migración de la página principal a `app/(web)/` sin romper el routing y establecimiento de bases para despliegue multiplataforma con Firebase.
