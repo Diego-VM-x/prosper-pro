@@ -2,6 +2,11 @@
 
 ## Historial de Cambios
 
+### [2026-03-29] [21:40] - Implementación de Arquitectura Tripartita y Firebase Skill
+- **Resumen técnico**: Creación de dos nuevas habilidades maestras (`firebase-connector` y `arquitectura-tripartita`) y reestructuración completa del directorio `app/` utilizando Route Groups de Next.js. El proyecto ahora se divide en tres pilares: APP, WEB y Publicidad, cada uno con su propio espacio de desarrollo aislado.
+- **Desafíos resueltos**: Migración de la página principal a `app/(web)/` sin romper el routing y establecimiento de bases para despliegue multiplataforma con Firebase.
+- **Lecciones aprendidas**: El uso de Route Groups (`(carpeta)`) en Next.js es la forma más limpia de gestionar proyectos multi-propósito (SaaS + Landing + App) en un solo repositorio.
+
 ### [2026-03-29] [18:38] - Despliegue del Clúster de Agentes y Prueba de Estrés (Landing Módulo)
 - **Resumen técnico**: Inicialización de 10 habilidades maestras (Orquestador, QA de Producción, UX Minimalista, Guardián del Diseño, etc.) que automatizan las validaciones del código. Se ejecutó una prueba de estrés exitosa renderizando una Landing Page temporal ("Modo Turbo"), validando la respuesta del framework, y posteriormente se aplicó un *revert* quirúrgico en Git para devolver la estructura `app/` a su estado base limpio en Vanilla CSS.
 - **Desafíos resueltos**: Coordinación en tiempo real entre múltiples Skills del agente para diagnosticar, auditar y reescribir código garantizando cero pantallazos de carga y estricta adhesión a paletas Neón/Dark. Se dominó el rollback seguro (`git checkout`) aislando el código basura sin afectar la memoria de los Skills creados.
