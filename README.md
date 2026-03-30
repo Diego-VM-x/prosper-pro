@@ -2,6 +2,11 @@
 
 ## Historial de Cambios
 
+### [2026-03-30] [15:20] - Identidad Visual Oficial y Conectividad Remota
+- **Resumen técnico**: Actualización de la paleta de colores global a Prosper Emerald (#3DCC8E) y Navy (#1E3A6E). Refactorización de la navegación lateral usando `Next/Link`. Inicialización de la configuración de Firebase y mantenimiento del túnel de desarrollo `prosper-dev` para gestión remota.
+- **Desafíos resueltos**: Mantenimiento de la consistencia del modo oscuro tras el cambio de tokens de marca.
+- **Lecciones aprendidas**: El uso de variables CSS semánticas permitió una actualización de marca rápida sin alterar la estructura del layout.
+
 ### [2026-03-30] [09:45] - Implementación del Dashboard Principal con Modo Oscuro/Claro
 - **Resumen técnico**: Construcción completa del Dashboard de Prosper-Pro con sistema de design tokens en Vanilla CSS (Verde Pino + Gris Piedra), modo oscuro/claro con persistencia en localStorage, y widgets interactivos: stat cards, analíticas semanales, lista de metas financieras, comunidad, anillo de progreso, timer de estudio y logros gamificados.
 - **Desafíos resueltos**: Sistema de temas sin flash de contenido (FOUC) usando `data-theme` en `<html>`. Corrección de error de hidratación React causado por el timer que cambia entre SSR y cliente.

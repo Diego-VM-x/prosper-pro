@@ -4,6 +4,14 @@ Este documento registra los componentes estéticos, propósitos arquitectónicos
 
 ## Registro de Cambios y Decisiones
 
+### [2026-03-30 15:20] - Identidad Visual Oficial Prosper (Emerald & Navy)
+- **Archivos/Componentes**: `globals.css`, `Sidebar.tsx`, `Topbar.tsx`.
+- **Propósito Arquitectónico**: Unificación de la marca Prosper Pro en toda la plataforma.
+- **Decisiones de Diseño**:
+  - **Paleta**: Reemplazo de Verde Pino por **Verde Esmeralda (#3DCC8E)** para elementos de acción y **Azul Navy (#1E3A6E)** para tipografía y fondos de énfasis.
+  - **Navegación**: Refactorización a `Next/Link` en el `Sidebar` para eliminar recargas de página completas.
+  - **Identidad**: Uso de gradientes lineales entre Navy y Emerald en cards destacados para un look premium.
+
 ### [2026-03-30 09:45] - Dashboard Completo con Design Tokens y Modo Oscuro/Claro
 - **Archivos/Componentes**: `globals.css`, `ThemeProvider.tsx`, `Sidebar.tsx`, `Topbar.tsx`, `Dashboard.tsx`, `icons.tsx`.
 - **Propósito Arquitectónico**: Implementación completa del dashboard principal de Prosper-Pro como punto de partida visual y funcional.

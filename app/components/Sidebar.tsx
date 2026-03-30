@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import Link from 'next/link';
 import {
   IconDashboard,
   IconTasks,
@@ -90,38 +91,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Navegación Principal */}
         <nav className="sidebar-nav">
           <p className="sidebar-label">Menú</p>
-          <div className="nav-item active" id="nav-dashboard">
+          <Link href="/" className="nav-item active" id="nav-dashboard">
             <IconDashboard /> Dashboard
-          </div>
-          <div className="nav-item" id="nav-tasks">
+          </Link>
+          <Link href="/metas" className="nav-item" id="nav-tasks">
             <IconTasks /> Mis Metas
             <span className="nav-badge">12</span>
-          </div>
-          <div className="nav-item" id="nav-calendar">
+          </Link>
+          <Link href="/calendario" className="nav-item" id="nav-calendar">
             <IconCalendar /> Calendario
-          </div>
-          <div className="nav-item" id="nav-analytics">
+          </Link>
+          <Link href="/finanzas" className="nav-item" id="nav-analytics">
             <IconAnalytics /> Finanzas
-          </div>
-          <div className="nav-item" id="nav-team">
+          </Link>
+          <Link href="/comunidad" className="nav-item" id="nav-team">
             <IconTeam /> Comunidad
-          </div>
+          </Link>
 
           <p className="sidebar-label">Aprendizaje</p>
-          <div className="nav-item" id="nav-courses">
+          <Link href="/cursos" className="nav-item" id="nav-courses">
             <IconBook /> Cursos
-          </div>
-          <div className="nav-item" id="nav-achievements">
+          </Link>
+          <Link href="/logros" className="nav-item" id="nav-achievements">
             <IconTrophy /> Logros
-          </div>
+          </Link>
 
           <p className="sidebar-label">General</p>
-          <div className="nav-item" id="nav-settings">
+          <Link href="/configuracion" className="nav-item" id="nav-settings">
             <IconSettings /> Configuración
-          </div>
-          <div className="nav-item" id="nav-help">
+          </Link>
+          <Link href="/ayuda" className="nav-item" id="nav-help">
             <IconHelp /> Ayuda
-          </div>
+          </Link>
           <div className="nav-item" id="nav-logout">
             <IconLogout /> Cerrar Sesión
           </div>
