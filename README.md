@@ -1,6 +1,11 @@
-# Proyecto test
+# Prosper Pro
 
 ## Historial de Cambios
+
+### [2026-03-30] [09:45] - Implementación del Dashboard Principal con Modo Oscuro/Claro
+- **Resumen técnico**: Construcción completa del Dashboard de Prosper-Pro con sistema de design tokens en Vanilla CSS (Verde Pino + Gris Piedra), modo oscuro/claro con persistencia en localStorage, y widgets interactivos: stat cards, analíticas semanales, lista de metas financieras, comunidad, anillo de progreso, timer de estudio y logros gamificados.
+- **Desafíos resueltos**: Sistema de temas sin flash de contenido (FOUC) usando `data-theme` en `<html>`. Corrección de error de hidratación React causado por el timer que cambia entre SSR y cliente.
+- **Lecciones aprendidas**: El uso de CSS custom properties (`var(--token)`) con overrides en `[data-theme="dark"]` es la forma más eficiente de implementar modos de color sin duplicar estilos. Mantener iconos SVG inline elimina dependencias externas.
 
 ### [2026-03-30] [09:30] - Limpieza Progresiva y Simplificación para Sitio Web
 - **Resumen técnico**: Eliminación de la "Arquitectura Tripartita" y soporte de Capacitor/Android. Se reestructuró la carpeta `app/` para aplanar la jerarquía y remover Route Groups redundantes. Las habilidades de agente exclusivas de la App se movieron a `.agent/skills/app-exclusive/`.

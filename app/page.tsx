@@ -1,7 +1,10 @@
+import { Dashboard } from './components/Dashboard';
+
+/**
+ * @file page.tsx
+ * @description Página principal del sitio web Prosper-Pro.
+ * Renderiza el Dashboard completo con sidebar, topbar y widgets financieros.
+ */
 export default function Home() {
-  return (
-    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <h1>Entorno Prosper Limpio. Listo para código.</h1>
-    </main>
-  );
+  return <Dashboard />;
 }
