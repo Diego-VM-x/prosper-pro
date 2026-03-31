@@ -82,7 +82,9 @@ export function Dashboard() {
   });
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Timer tick
   useEffect(() => {
     timerRef.current = setInterval(() => {
       if (timerRunning) {
@@ -91,6 +93,28 @@ export function Dashboard() {
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [timerRunning]);
+
+  // Auto-guardar timer en Firestore cada 30s
+  useEffect(() => {
+    if (!userId) return;
+    saveTimerRef.current = setInterval(() => {
+      import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
+        saveStudyTimer(userId, timerSeconds, timerRunning);
+      });
+    }, 30000);
+    return () => { if (saveTimerRef.current) clearInterval(saveTimerRef.current); };
+  }, [userId]);
+
+  // Guardar timer al desmontar
+  useEffect(() => {
+    return () => {
+      if (userId && timerSeconds > 0) {
+        import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
+          saveStudyTimer(userId, timerSeconds, timerRunning);
+        });
+      }
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -160,6 +184,27 @@ export function Dashboard() {
     }
     setShowNewGoalModal(false);
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
+  };
+
+  // Timer handlers con sync a Firestore
+  const handleToggleTimer = () => {
+    const newState = !timerRunning;
+    setTimerRunning(newState);
+    if (userId) {
+      import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
+        saveStudyTimer(userId, timerSeconds, newState);
+      });
+    }
+  };
+
+  const handleStopTimer = () => {
+    setTimerRunning(false);
+    setTimerSeconds(0);
+    if (userId) {
+      import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
+        saveStudyTimer(userId, 0, false);
+      });
+    }
   };
 
   const handleJoinSession = () => {
@@ -330,8 +375,8 @@ export function Dashboard() {
             <p className="timer-title">Rastreador de Estudio</p>
             <p className="timer-display">{formatTime(timerSeconds)}</p>
             <div className="timer-controls">
-              <button className="timer-btn timer-btn-pause" onClick={() => setTimerRunning(!timerRunning)} aria-label={timerRunning ? 'Pausar' : 'Reanudar'}><IconPause /></button>
-              <button className="timer-btn timer-btn-stop" onClick={() => { setTimerRunning(false); setTimerSeconds(0); }} aria-label="Detener"><IconStop /></button>
+              <button className="timer-btn timer-btn-pause" onClick={handleToggleTimer} aria-label={timerRunning ? 'Pausar' : 'Reanudar'}><IconPause /></button>
+              <button className="timer-btn timer-btn-stop" onClick={handleStopTimer} aria-label="Detener"><IconStop /></button>
             </div>
           </div>
 

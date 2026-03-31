@@ -100,10 +100,31 @@ export interface StudySession {
 }
 
 export interface Course {
-  id: string;
+  id?: string;
   title: string;
   description: string;
-  modules: number;
+  modulesCount: number;
   progress: number;
   thumbnail: string;
+  category: string;
+  xpReward: number;
+  createdAt: number;
+}
+
+export interface CourseModule {
+  id?: string;
+  courseId: string;
+  title: string;
+  content: string;
+  duration: number; // minutos
+  order: number;
+}
+
+export interface UserCourseProgress {
+  id?: string;
+  userId: string;
+  courseId: string;
+  completedModules: string[];
+  startedAt: number;
+  completedAt?: number;
 }

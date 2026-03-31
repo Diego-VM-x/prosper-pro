@@ -1,5 +1,9 @@
 import {
   collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   query,
   where,
   getDocs,
@@ -76,6 +80,41 @@ export async function getMonthlySavings(userId: string): Promise<number> {
   } catch (err) {
     console.error('getMonthlySavings error:', err);
     return 0;
+  }
+}
+
+export async function createTransaction(transaction: Omit<Transaction, 'id'>) {
+  const docRef = await addDoc(collection(db, COLLECTION), transaction);
+  return docRef.id;
+}
+
+export async function updateTransaction(transactionId: string, updates: Partial<Transaction>) {
+  await updateDoc(doc(db, COLLECTION, transactionId), updates);
+}
+
+export async function deleteTransaction(transactionId: string) {
+  await deleteDoc(doc(db, COLLECTION, transactionId));
+}
+
+export async function getMonthlySummary(userId: string) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+  try {
+    const snapshot = await getDocs(q);
+    let income = 0, expenses = 0, saving = 0;
+    snapshot.forEach((docSnap) => {
+      const t = docSnap.data() as Transaction;
+      if (t.date >= startOfMonth) {
+        if (t.type === 'income') income += t.amount;
+        else if (t.type === 'expense') expenses += t.amount;
+        else if (t.type === 'saving') saving += t.amount;
+      }
+    });
+    return { income, expenses, saving, balance: income - expenses - saving };
+  } catch (err) {
+    console.error('getMonthlySummary error:', err);
+    return { income: 0, expenses: 0, saving: 0, balance: 0 };
   }
 }
 
