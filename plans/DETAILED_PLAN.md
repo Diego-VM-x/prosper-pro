@@ -1,5 +1,9 @@
 # Plan Detallado - Prosper-Pro
 
+## Nota: Revisión de subplanes
+- Se ha creado el archivo `plans/ISSUES_AND_OPTIMIZATIONS.md` para registrar problemas técnicos y optimizaciones detectados en tiempo de ejecución.
+- Consultar dicho archivo antes de comenzar cada nueva tarea.
+
 ## Arquitectura Actual
 
 ```

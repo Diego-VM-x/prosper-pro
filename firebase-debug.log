@@ -34,3 +34,5 @@
 [debug] [2026-03-31T21:27:26.335Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
 [debug] [2026-03-31T21:28:35.742Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] [2026-03-31T21:28:35.748Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
+[debug] [2026-03-31T21:28:53.328Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-31T21:28:53.332Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
