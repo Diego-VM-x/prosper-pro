@@ -12,6 +12,8 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
+import { seedUserData } from '@/lib/seed';
 
 interface AuthContextType {
   user: User | null;
@@ -38,8 +40,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        try {
+          const profile = await getUserProfile(firebaseUser.uid);
+          if (!profile) {
+            await createUserProfile({
+              uid: firebaseUser.uid,
+              displayName: firebaseUser.displayName,
+              email: firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+              createdAt: Date.now(),
+              isSeeded: false,
+            });
+            try {
+              await seedUserData(firebaseUser.uid);
+            } catch (seedErr) {
+              console.error('Seed error:', seedErr);
+            }
+            try {
+              const { initStudySession } = await import('@/lib/firestore/study');
+              await initStudySession(firebaseUser.uid);
+            } catch (initErr) {
+              console.error('Init study session error:', initErr);
+            }
+          }
+        } catch (profileErr) {
+          console.error('Profile error:', profileErr);
+        }
+      }
       setLoading(false);
     });
 

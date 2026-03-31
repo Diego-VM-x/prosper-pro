@@ -10,6 +10,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { subscribeToGoals } from '@/lib/firestore/goals';
+import { useState, useEffect } from 'react';
 import {
   IconDashboard,
   IconTasks,
@@ -39,6 +42,16 @@ interface SidebarProps {
  */
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const [activeGoalsCount, setActiveGoalsCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = subscribeToGoals(user.uid, (goals) => {
+      setActiveGoalsCount(goals.filter((g) => g.status !== 'completed').length);
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
   /**
    * Verifica si una ruta está activa para aplicar estilos de resaltado.
@@ -104,7 +117,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
           <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks">
             <IconTasks /> Mis Metas
-            <span className="nav-badge">12</span>
+            {activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}
           </Link>
           <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar">
             <IconCalendar /> Calendario
@@ -131,7 +144,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help">
             <IconHelp /> Ayuda
           </Link>
-          <div className="nav-item" id="nav-logout">
+          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }}>
             <IconLogout /> Cerrar Sesión
           </div>
         </nav>

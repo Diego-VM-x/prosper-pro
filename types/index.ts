@@ -1,0 +1,109 @@
+export interface UserProfile {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  createdAt: number;
+  isSeeded: boolean;
+}
+
+export type GoalCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Otro';
+export type GoalStatus = 'pending' | 'progress' | 'completed';
+
+export interface Goal {
+  id: string;
+  userId: string;
+  title: string;
+  category: GoalCategory;
+  current: number;
+  target: number;
+  deadline: string;
+  status: GoalStatus;
+  color: string;
+  icon: string;
+  createdAt: number;
+  updatedAt: number;
+  monthlyGrowth?: number;
+  streakDays?: number;
+}
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  amount: number;
+  type: 'income' | 'expense' | 'saving';
+  category: string;
+  description: string;
+  date: number;
+}
+
+export interface WeeklyData {
+  day: string;
+  income: number;
+  saving: number;
+}
+
+export interface Reminder {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  date: string;
+  type: 'mentor' | 'course' | 'meeting' | 'other';
+  isActive: boolean;
+}
+
+export interface XPState {
+  userId: string;
+  level: number;
+  title: string;
+  currentXP: number;
+  maxXP: number;
+  achievements: string[];
+}
+
+export interface Achievement {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt: number;
+}
+
+export interface CommunityMember {
+  id: string;
+  name: string;
+  avatarInitials: string;
+  task: string;
+  highlight: string;
+  status: 'completed' | 'progress' | 'pending';
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'goal' | 'achievement' | 'community' | 'system';
+  read: boolean;
+  createdAt: number;
+}
+
+export interface StudySession {
+  userId: string;
+  totalSeconds: number;
+  lastUpdated: number;
+  isRunning: boolean;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string;
+  modules: number;
+  progress: number;
+  thumbnail: string;
+}

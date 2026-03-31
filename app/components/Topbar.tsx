@@ -6,9 +6,10 @@
  * notificaciones y perfil de usuario Prosper-Pro.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { subscribeToNotifications, markNotificationRead, getUnreadCount } from '@/lib/firestore/notifications';
 import {
   IconSearch,
   IconMail,
@@ -16,8 +17,10 @@ import {
   IconSun,
   IconMoon,
   IconMenu,
-  IconLogout, // Añadir este icono si existe o usar uno similar
+  IconLogout,
+  IconX,
 } from './icons';
+import type { Notification } from '@/types';
 
 interface TopbarProps {
   /** Función para alternar la visibilidad del sidebar en móvil */
@@ -32,8 +35,41 @@ interface TopbarProps {
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = subscribeToNotifications(user.uid, (n) => {
+      setNotifications(n);
+      setUnreadCount(n.filter((notif) => !notif.read).length);
+    });
+    return () => unsub();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      if (e.key === 'Escape') {
+        setShowSearch(false);
+        setShowNotifications(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleMarkRead = async (id: string) => {
+    await markNotificationRead(id);
+  };
 
   return (
     <header className="topbar" id="main-topbar">
@@ -48,13 +84,16 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       </button>
 
       {/* Búsqueda */}
-      <div className="topbar-search">
+      <div className="topbar-search" onClick={() => setShowSearch(true)} style={{ cursor: 'pointer' }}>
         <IconSearch className="topbar-search-icon" />
         <input
           type="text"
           placeholder="Buscar metas, cursos..."
           id="global-search"
           aria-label="Buscador global"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onClick={(e) => e.stopPropagation()}
         />
         <span className="topbar-search-shortcut">⌘ F</span>
       </div>
@@ -78,14 +117,62 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         </button>
 
         {/* Notificaciones */}
-        <button
-          className="topbar-icon-btn"
-          aria-label="Notificaciones"
-          id="btn-notifications"
-        >
-          <IconBell />
-          <span className="topbar-notif-dot" />
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            className="topbar-icon-btn"
+            aria-label="Notificaciones"
+            id="btn-notifications"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <IconBell />
+            {unreadCount > 0 && <span className="topbar-notif-dot" />}
+          </button>
+
+          {showNotifications && (
+            <div className="notifications-dropdown" style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              width: 320,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              zIndex: 100,
+              maxHeight: 400,
+              overflowY: 'auto',
+            }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Notificaciones</span>
+                {unreadCount > 0 && (
+                  <span style={{ background: 'var(--color-prosper-green)', color: 'white', fontSize: '0.6875rem', fontWeight: 700, padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
+                    {unreadCount} nueva{unreadCount > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              {notifications.length > 0 ? notifications.slice(0, 5).map((notif) => (
+                <div
+                  key={notif.id}
+                  onClick={() => handleMarkRead(notif.id)}
+                  style={{
+                    padding: '10px 16px',
+                    borderBottom: '1px solid var(--border-default)',
+                    cursor: 'pointer',
+                    background: notif.read ? 'transparent' : 'var(--bg-input)',
+                    transition: 'background var(--transition-fast)',
+                  }}
+                >
+                  <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{notif.title}</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{notif.message}</p>
+                </div>
+              )) : (
+                <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>No hay notificaciones</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="topbar-divider" />
 
@@ -113,6 +200,9 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       <style>{`
         @media (max-width: 1024px) {
           .sidebar-toggle { display: flex !important; }
+        }
+        .notifications-dropdown {
+          animation: fadeInUp 0.2s ease;
         }
       `}</style>
     </header>

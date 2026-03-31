@@ -1,15 +1,8 @@
 'use client';
 
-/**
- * @file Dashboard.tsx
- * @description Vista principal del Dashboard Prosper-Pro.
- * Contiene las tarjetas de estadísticas, analíticas financieras,
- * recordatorios, lista de proyectos/metas, equipo y progreso.
- * Temática: Libertad financiera y educación gamificada.
- */
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from './DashboardLayout';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   IconPlus,
   IconArrowUpRight,
@@ -20,79 +13,118 @@ import {
   IconZap,
   IconWallet,
   IconTasks,
+  IconX,
 } from './icons';
+import type { Goal, WeeklyData, Reminder, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
 
-/* ============================================================
-   DATA / MOCK
-   ============================================================ */
-
-/** Datos de las tarjetas estadísticas principales */
-const STATS = [
-  { label: 'Metas Activas', value: '24', change: '+3 este mes', positive: true, featured: true },
-  { label: 'Metas Completadas', value: '10', change: '+2 este mes', positive: true, featured: false },
-  { label: 'Ahorro Mensual', value: '$1.2k', change: 'Incrementado', positive: true, featured: false },
-  { label: 'Lecciones Pendientes', value: '2', change: 'En progreso', positive: false, featured: false },
+const DEFAULT_GOALS: Goal[] = [
+  { id: 'g1', userId: 'local', title: 'Fondo de Emergencia', category: 'Ahorro', current: 4500, target: 10000, deadline: 'Dic 2026', status: 'progress', color: '#3DCC8E', icon: '🛡️', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 12, streakDays: 5 },
+  { id: 'g2', userId: 'local', title: 'Inversión en ETFs (S&P 500)', category: 'Inversión', current: 12000, target: 50000, deadline: 'Jun 2028', status: 'progress', color: '#1E3A6E', icon: '📈', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 8, streakDays: 3 },
+  { id: 'g3', userId: 'local', title: 'Viaje a Japón 2027', category: 'Ahorro', current: 2500, target: 8000, deadline: 'Mar 2027', status: 'progress', color: '#F59E0B', icon: '✈️', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 15, streakDays: 7 },
+  { id: 'g4', userId: 'local', title: 'Curso de Blockchain Pro', category: 'Educación', current: 500, target: 500, deadline: 'Completado', status: 'completed', color: '#3DCC8E', icon: '🎓', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 0, streakDays: 10 },
+  { id: 'g5', userId: 'local', title: 'Compra de MacBook Pro', category: 'Ahorro', current: 1200, target: 2500, deadline: 'Oct 2026', status: 'progress', color: '#EF4444', icon: '💻', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 10, streakDays: 2 },
 ];
 
-/** Datos del gráfico de barras de analíticas semanales */
-const CHART_DATA = [
-  { day: 'L', h1: 40, h2: 55 },
-  { day: 'M', h1: 65, h2: 80 },
-  { day: 'Mi', h1: 50, h2: 90 },
-  { day: 'J', h1: 70, h2: 60 },
-  { day: 'V', h1: 55, h2: 75 },
-  { day: 'S', h1: 30, h2: 45 },
-  { day: 'D', h1: 25, h2: 35 },
+const DEFAULT_WEEKLY: WeeklyData[] = [
+  { day: 'L', income: 40, saving: 55 },
+  { day: 'M', income: 65, saving: 80 },
+  { day: 'Mi', income: 50, saving: 90 },
+  { day: 'J', income: 70, saving: 60 },
+  { day: 'V', income: 55, saving: 75 },
+  { day: 'S', income: 30, saving: 45 },
+  { day: 'D', income: 25, saving: 35 },
 ];
 
-/** Lista de metas / proyectos financieros activos */
-const PROJECTS = [
-  { name: 'Fondo de Emergencia', date: '15 Abr, 2026', color: '#2B8560', icon: '🛡️' },
-  { name: 'Invertir en ETFs', date: '20 Abr, 2026', color: '#3B82F6', icon: '📈' },
-  { name: 'Curso de Trading', date: '28 Abr, 2026', color: '#F59E0B', icon: '📚' },
-  { name: 'Ahorro Viaje', date: '10 May, 2026', color: '#8B5CF6', icon: '✈️' },
-  { name: 'Certificación Finanzas', date: '31 May, 2026', color: '#EF4444', icon: '🎓' },
+const DEFAULT_REMINDERS: Reminder[] = [
+  { id: 'r1', userId: 'local', title: 'Sesión con Mentor Financiero', description: 'Revisión de portafolio', startTime: '02:00 pm', endTime: '04:00 pm', date: new Date().toISOString().split('T')[0], type: 'mentor', isActive: true },
 ];
 
-/** Lista de miembros del equipo / comunidad Prosper */
-const TEAM_MEMBERS = [
-  { name: 'Alexandra Deff', task: 'Completó', highlight: 'Módulo de Presupuesto Básico', status: 'completed' },
-  { name: 'Edwin Adenike', task: 'En progreso', highlight: 'Reto de Ahorro 30 Días', status: 'progress' },
-  { name: 'Isaac Oluwatem.', task: 'Buscando', highlight: 'Mentor de Inversiones', status: 'pending' },
-  { name: 'David Oshodi', task: 'En progreso', highlight: 'Simulador de Portafolio', status: 'progress' },
+const DEFAULT_XP: XPState = { userId: 'local', level: 7, title: 'Inversionista', currentXP: 2450, maxXP: 3000, achievements: [] };
+
+const DEFAULT_MEMBERS: CommunityMember[] = [
+  { id: 'm1', name: 'Alexandra Deff', avatarInitials: 'AD', task: 'Completó', highlight: 'Módulo de Presupuesto Básico', status: 'completed' },
+  { id: 'm2', name: 'Edwin Adenike', avatarInitials: 'EA', task: 'En progreso', highlight: 'Reto de Ahorro 30 Días', status: 'progress' },
+  { id: 'm3', name: 'Isaac Oluwatem.', avatarInitials: 'IO', task: 'Buscando', highlight: 'Mentor de Inversiones', status: 'pending' },
+  { id: 'm4', name: 'David Oshodi', avatarInitials: 'DO', task: 'En progreso', highlight: 'Simulador de Portafolio', status: 'progress' },
 ];
 
-/* ============================================================
-   COMPONENT: Dashboard
-   ============================================================ */
+const DEFAULT_ACHIEVEMENTS: Achievement[] = [
+  { id: 'a1', userId: 'local', title: 'Primer Ahorro', description: 'Completaste tu primera meta de ahorro', icon: '🏅', unlockedAt: Date.now() },
+  { id: 'a2', userId: 'local', title: 'Racha de 7 Días', description: '7 días consecutivos de lecciones', icon: '🔥', unlockedAt: Date.now() },
+  { id: 'a3', userId: 'local', title: 'Nivel Inversionista', description: 'Alcanzaste el Nivel 7', icon: '💎', unlockedAt: Date.now() },
+];
 
-/**
- * Componente principal del Dashboard.
- * Orquesta el layout del sidebar, topbar y toda la zona de contenido
- * con widgets interactivos.
- */
 export function Dashboard() {
+  const { user } = useAuth();
+  const userId = user?.uid || '';
+
+  const [goals, setGoals] = useState<Goal[]>(DEFAULT_GOALS);
+  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>(DEFAULT_WEEKLY);
+  const [reminders, setReminders] = useState<Reminder[]>(DEFAULT_REMINDERS);
+  const [xp, setXP] = useState<XPState | null>(DEFAULT_XP);
+  const [members, setMembers] = useState<CommunityMember[]>(DEFAULT_MEMBERS);
+  const [achievements, setAchievements] = useState<Achievement[]>(DEFAULT_ACHIEVEMENTS);
+  const [monthlySavings, setMonthlySavings] = useState(1200);
+
   const [timerSeconds, setTimerSeconds] = useState(5048);
   const [timerRunning, setTimerRunning] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const [showNewGoalModal, setShowNewGoalModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
-  // Marcar como montado para evitar mismatch de hidratación
-  useEffect(() => { setMounted(true); }, []);
+  const [newGoal, setNewGoal] = useState({
+    title: '',
+    category: 'Ahorro' as GoalCategory,
+    current: 0,
+    target: 0,
+    deadline: '',
+    color: '#3DCC8E',
+    icon: '🎯',
+  });
 
-  // Timer de estudio / tracking
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
-    if (!timerRunning || !mounted) return;
-    const interval = setInterval(() => {
-      setTimerSeconds((s) => s + 1);
+    timerRef.current = setInterval(() => {
+      if (timerRunning) {
+        setTimerSeconds((prev) => prev + 1);
+      }
     }, 1000);
-    return () => clearInterval(interval);
-  }, [timerRunning, mounted]);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [timerRunning]);
 
-  /**
-   * Formatea segundos a formato HH:MM:SS.
-   * @param s - Cantidad de segundos.
-   * @returns String formateado.
-   */
+  useEffect(() => {
+    if (!userId) return;
+    try {
+      import('@/lib/firestore/goals').then(({ subscribeToGoals }) =>
+        subscribeToGoals(userId, (g) => { if (g.length) setGoals(g); })
+      );
+      import('@/lib/firestore/transactions').then(({ subscribeToWeeklyData, getMonthlySavings }) => {
+        subscribeToWeeklyData(userId, (w) => { if (w.length) setWeeklyData(w); });
+        getMonthlySavings(userId).then((s) => { if (s > 0) setMonthlySavings(s); });
+      });
+      import('@/lib/firestore/reminders').then(({ subscribeToReminders }) =>
+        subscribeToReminders(userId, (r) => { if (r.length) setReminders(r); })
+      );
+      import('@/lib/firestore/gamification').then(({ subscribeToXP, subscribeToAchievements }) => {
+        subscribeToXP(userId, (x) => { if (x) setXP(x); });
+        subscribeToAchievements(userId, (a) => { if (a.length) setAchievements(a); });
+      });
+      import('@/lib/firestore/community').then(({ subscribeToCommunityMembers }) =>
+        subscribeToCommunityMembers((m) => { if (m.length) setMembers(m); })
+      );
+      import('@/lib/firestore/study').then(({ subscribeToStudySession }) =>
+        subscribeToStudySession(userId, (s) => {
+          if (s) {
+            setTimerSeconds(s.totalSeconds);
+            setTimerRunning(s.isRunning);
+          }
+        })
+      );
+    } catch (e) {
+      console.error('Firestore load error (using local data):', e);
+    }
+  }, [userId]);
+
   const formatTime = useCallback((s: number): string => {
     const hrs = String(Math.floor(s / 3600)).padStart(2, '0');
     const min = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
@@ -100,291 +132,304 @@ export function Dashboard() {
     return `${hrs}:${min}:${sec}`;
   }, []);
 
+  const activeGoals = goals.filter((g) => g.status !== 'completed');
+  const completedGoals = goals.filter((g) => g.status === 'completed');
+  const totalGoals = goals.length;
+  const progressPct = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
+  const circumference = 2 * Math.PI * 54;
+  const strokeDashoffset = circumference * (1 - progressPct / 100);
+
+  const handleCreateGoal = async () => {
+    if (!newGoal.title || !newGoal.target) return;
+    const goal: Goal = {
+      id: 'g' + Date.now(),
+      userId: userId || 'local',
+      ...newGoal,
+      status: newGoal.current >= newGoal.target ? 'completed' : 'pending',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      monthlyGrowth: 0,
+      streakDays: 0,
+    };
+    setGoals((prev) => [goal, ...prev]);
+    if (userId) {
+      try {
+        const { createGoal } = await import('@/lib/firestore/goals');
+        await createGoal(goal);
+      } catch (e) { console.error(e); }
+    }
+    setShowNewGoalModal(false);
+    setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
+  };
+
+  const handleJoinSession = () => {
+    alert('Funcionalidad de sesión de mentor: se abriría una ventana de video llamada.');
+  };
+
+  const handleInviteMember = () => {
+    alert('Funcionalidad de invitación: se abriría un formulario para compartir enlace.');
+  };
+
   return (
     <DashboardLayout>
-      {/* Header */}
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">
-            Planifica, ahorra y prospera con tus metas financieras.
-          </p>
+          <p className="page-subtitle">Planifica, ahorra y prospera con tus metas financieras.</p>
         </div>
         <div className="page-header-actions">
-          <button className="btn btn-primary" id="btn-add-goal">
+          <button className="btn btn-primary" onClick={() => setShowNewGoalModal(true)}>
             <IconPlus /> Nueva Meta
           </button>
-          <button className="btn btn-outline" id="btn-import">
+          <button className="btn btn-outline" onClick={() => setShowImportModal(true)}>
             <IconWallet /> Importar Datos
           </button>
         </div>
       </div>
 
-      {/* === STAT CARDS === */}
       <div className="stats-grid">
-        {STATS.map((stat, i) => (
-          <div
-            key={i}
-            className={`stat-card animate-fadeInUp${stat.featured ? ' featured' : ''}`}
-            id={`stat-card-${i}`}
-          >
-            <div className="stat-card-top">
-              <span className="stat-label">{stat.label}</span>
-              <button className="stat-icon-link" aria-label={`Ver ${stat.label}`}>
-                <IconArrowUpRight />
-              </button>
-            </div>
-            <p className="stat-value">{stat.value}</p>
-            <span className={`stat-change ${stat.positive ? 'positive' : ''}`}>
-              {stat.positive && <IconTrendUp />}
-              {stat.change}
-            </span>
+        <div className="stat-card animate-fadeInUp featured">
+          <div className="stat-card-top">
+            <span className="stat-label">Metas Activas</span>
+            <button className="stat-icon-link" aria-label="Ver Metas Activas"><IconArrowUpRight /></button>
           </div>
-        ))}
+          <p className="stat-value">{activeGoals.length}</p>
+          <span className="stat-change positive"><IconTrendUp />{activeGoals.filter((g) => g.status === 'progress').length} en progreso</span>
+        </div>
+        <div className="stat-card animate-fadeInUp">
+          <div className="stat-card-top">
+            <span className="stat-label">Metas Completadas</span>
+            <button className="stat-icon-link" aria-label="Ver Metas Completadas"><IconArrowUpRight /></button>
+          </div>
+          <p className="stat-value">{completedGoals.length}</p>
+          <span className="stat-change positive"><IconTrendUp />{totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0}% del total</span>
+        </div>
+        <div className="stat-card animate-fadeInUp">
+          <div className="stat-card-top">
+            <span className="stat-label">Ahorro Mensual</span>
+            <button className="stat-icon-link" aria-label="Ver Ahorro"><IconArrowUpRight /></button>
+          </div>
+          <p className="stat-value">${(monthlySavings / 1000).toFixed(1)}k</p>
+          <span className="stat-change positive"><IconTrendUp />Incrementado</span>
+        </div>
+        <div className="stat-card animate-fadeInUp">
+          <div className="stat-card-top">
+            <span className="stat-label">Lecciones Pendientes</span>
+            <button className="stat-icon-link" aria-label="Ver Lecciones"><IconArrowUpRight /></button>
+          </div>
+          <p className="stat-value">{goals.filter((g) => g.category === 'Educación' && g.status !== 'completed').length}</p>
+          <span className="stat-change">En progreso</span>
+        </div>
       </div>
 
-      {/* === GRID CENTRAL === */}
       <div className="content-grid">
-        {/* Columna Izquierda: Analíticas + Recordatorios */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Analíticas semanales */}
           <div className="card animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-            <div className="card-header">
-              <span className="card-title">Progreso Financiero Semanal</span>
-            </div>
+            <div className="card-header"><span className="card-title">Progreso Financiero Semanal</span></div>
             <div className="chart-bars">
-              {CHART_DATA.map((bar, i) => (
+              {weeklyData.map((bar, i) => (
                 <div className="chart-bar-wrapper" key={i}>
-                  <div
-                    className="chart-bar style-stripe"
-                    style={{ height: `${bar.h1}%` }}
-                  >
-                    <span className="chart-tooltip">{bar.h1}%</span>
-                  </div>
-                  <div
-                    className="chart-bar style-solid"
-                    style={{ height: `${bar.h2}%` }}
-                  >
-                    <span className="chart-tooltip">{bar.h2}%</span>
-                  </div>
+                  <div className="chart-bar style-stripe" style={{ height: `${Math.max(bar.income, 10)}%` }}><span className="chart-tooltip">{bar.income}%</span></div>
+                  <div className="chart-bar style-solid" style={{ height: `${Math.max(bar.saving, 10)}%` }}><span className="chart-tooltip">{bar.saving}%</span></div>
                   <span className="chart-day">{bar.day}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Recordatorio */}
-          <div className="reminder-card animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-            <span className="reminder-title">Recordatorios</span>
-            <p className="reminder-event-name" style={{ marginTop: 12 }}>
-              Sesión con Mentor Financiero
-            </p>
-            <p className="reminder-time">Hora: 02:00 pm - 04:00 pm</p>
-            <button className="reminder-cta" id="btn-start-session">
-              <IconVideo /> Iniciar Sesión
-            </button>
-          </div>
+          {reminders.length > 0 ? (
+            <div className="reminder-card animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
+              <span className="reminder-title">Recordatorios</span>
+              <p className="reminder-event-name" style={{ marginTop: 12 }}>{reminders[0].title}</p>
+              <p className="reminder-time">Hora: {reminders[0].startTime} - {reminders[0].endTime}</p>
+              <button className="reminder-cta" onClick={handleJoinSession}><IconVideo /> Iniciar Sesión</button>
+            </div>
+          ) : (
+            <div className="card animate-fadeInUp" style={{ animationDelay: '0.25s', padding: 20, textAlign: 'center' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No hay recordatorios pendientes</p>
+            </div>
+          )}
         </div>
 
-        {/* Columna Derecha: Proyectos / Metas */}
         <div className="card animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
           <div className="card-header">
             <span className="card-title">Metas Activas</span>
-            <button className="card-action" id="btn-new-project">
-              <IconPlus /> Nueva
-            </button>
+            <button className="card-action" onClick={() => setShowNewGoalModal(true)}><IconPlus /> Nueva</button>
           </div>
           <div className="project-list">
-            {PROJECTS.map((project, i) => (
-              <div className="project-list-item" key={i} id={`project-${i}`}>
-                <div
-                  className="project-color-dot"
-                  style={{ background: project.color }}
-                >
-                  <span style={{ fontSize: '0.875rem' }}>{project.icon}</span>
-                </div>
+            {activeGoals.length > 0 ? activeGoals.slice(0, 5).map((goal) => (
+              <div className="project-list-item" key={goal.id}>
+                <div className="project-color-dot" style={{ background: goal.color }}><span style={{ fontSize: '0.875rem' }}>{goal.icon}</span></div>
                 <div className="project-info">
-                  <p className="project-name">{project.name}</p>
-                  <p className="project-due">Fecha: {project.date}</p>
+                  <p className="project-name">{goal.title}</p>
+                  <p className="project-due">Fecha: {goal.deadline}</p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p style={{ padding: '16px 0', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No hay metas activas. ¡Crea una!</p>
+            )}
           </div>
 
-          {/* XP / Gamification Bar */}
-          <div className="xp-bar-wrapper" style={{ marginTop: 16 }}>
-            <div className="xp-bar-header">
-              <span className="xp-bar-label">
-                <IconZap
-                  style={{
-                    display: 'inline-block',
-                    verticalAlign: 'middle',
-                    width: 14,
-                    height: 14,
-                    marginRight: 4,
-                  }}
-                />
-                Nivel 7 — Inversionista
-              </span>
-              <span className="xp-bar-value">2,450 / 3,000 XP</span>
+          {xp && (
+            <div className="xp-bar-wrapper" style={{ marginTop: 16 }}>
+              <div className="xp-bar-header">
+                <span className="xp-bar-label"><IconZap style={{ display: 'inline-block', verticalAlign: 'middle', width: 14, height: 14, marginRight: 4 }} />Nivel {xp.level} — {xp.title}</span>
+                <span className="xp-bar-value">{xp.currentXP.toLocaleString()} / {xp.maxXP.toLocaleString()} XP</span>
+              </div>
+              <div className="xp-bar-track"><div className="xp-bar-fill" style={{ width: `${(xp.currentXP / xp.maxXP) * 100}%` }} /></div>
             </div>
-            <div className="xp-bar-track">
-              <div className="xp-bar-fill" style={{ width: '81.6%' }} />
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* === GRID INFERIOR === */}
       <div className="content-grid-full" style={{ marginTop: 4 }}>
-        {/* Equipo / Comunidad */}
         <div className="card animate-fadeInUp" style={{ animationDelay: '0.35s' }}>
           <div className="card-header">
             <span className="card-title">Comunidad Prosper</span>
-            <button className="card-action" id="btn-add-member">
-              <IconPlus /> Invitar
-            </button>
+            <button className="card-action" onClick={handleInviteMember}><IconPlus /> Invitar</button>
           </div>
           <div className="team-list">
-            {TEAM_MEMBERS.map((member, i) => (
-              <div className="team-member" key={i} id={`team-member-${i}`}>
-                <div className="team-avatar">
-                  {member.name.split(' ').map((n) => n[0]).join('')}
-                </div>
+            {members.map((member) => (
+              <div className="team-member" key={member.id}>
+                <div className="team-avatar">{member.avatarInitials}</div>
                 <div className="team-info">
                   <p className="team-name">{member.name}</p>
-                  <p className="team-task">
-                    {member.task} <span>{member.highlight}</span>
-                  </p>
+                  <p className="team-task">{member.task} <span>{member.highlight}</span></p>
                 </div>
                 <span className={`status-badge status-${member.status}`}>
-                  {member.status === 'completed'
-                    ? 'Completado'
-                    : member.status === 'progress'
-                    ? 'En Progreso'
-                    : 'Pendiente'}
+                  {member.status === 'completed' ? 'Completado' : member.status === 'progress' ? 'En Progreso' : 'Pendiente'}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Progreso General */}
         <div className="card animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
-          <div className="card-header">
-            <span className="card-title">Progreso de Metas</span>
-          </div>
+          <div className="card-header"><span className="card-title">Progreso de Metas</span></div>
           <div className="progress-ring-wrapper">
             <div className="progress-ring">
               <svg width="120" height="120" viewBox="0 0 120 120">
-                <circle
-                  className="progress-ring-track"
-                  cx="60"
-                  cy="60"
-                  r="54"
-                />
-                <circle
-                  className="progress-ring-fill"
-                  cx="60"
-                  cy="60"
-                  r="54"
-                  style={{ strokeDashoffset: 339.29 * (1 - 0.41) }}
-                />
+                <circle className="progress-ring-track" cx="60" cy="60" r="54" />
+                <circle className="progress-ring-fill" cx="60" cy="60" r="54" style={{ strokeDashoffset }} />
               </svg>
               <div className="progress-ring-inner">
-                <span className="progress-ring-pct">41%</span>
+                <span className="progress-ring-pct">{progressPct}%</span>
                 <span className="progress-ring-label">Metas<br />Logradas</span>
               </div>
             </div>
             <div className="progress-legend">
-              <div className="legend-item">
-                <span className="legend-dot" style={{ background: 'var(--color-pine-500)' }} />
-                Completadas
-              </div>
-              <div className="legend-item">
-                <span className="legend-dot" style={{ background: 'var(--color-blue-500)' }} />
-                En Progreso
-              </div>
-              <div className="legend-item">
-                <span className="legend-dot" style={{ background: 'var(--color-gold-500)' }} />
-                Pendientes
-              </div>
+              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--color-pine-500)' }} />Completadas</div>
+              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--color-blue-500)' }} />En Progreso</div>
+              <div className="legend-item"><span className="legend-dot" style={{ background: 'var(--color-gold-500)' }} />Pendientes</div>
             </div>
           </div>
         </div>
 
-        {/* Timer / Tracker de Estudio */}
         <div className="animate-fadeInUp" style={{ animationDelay: '0.45s', display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="timer-card">
             <p className="timer-title">Rastreador de Estudio</p>
-            <p className="timer-display" id="study-timer">{formatTime(timerSeconds)}</p>
+            <p className="timer-display">{formatTime(timerSeconds)}</p>
             <div className="timer-controls">
-              <button
-                className="timer-btn timer-btn-pause"
-                onClick={() => setTimerRunning(!timerRunning)}
-                aria-label={timerRunning ? 'Pausar' : 'Reanudar'}
-                id="btn-timer-pause"
-              >
-                <IconPause />
-              </button>
-              <button
-                className="timer-btn timer-btn-stop"
-                onClick={() => {
-                  setTimerRunning(false);
-                  setTimerSeconds(0);
-                }}
-                aria-label="Detener"
-                id="btn-timer-stop"
-              >
-                <IconStop />
-              </button>
+              <button className="timer-btn timer-btn-pause" onClick={() => setTimerRunning(!timerRunning)} aria-label={timerRunning ? 'Pausar' : 'Reanudar'}><IconPause /></button>
+              <button className="timer-btn timer-btn-stop" onClick={() => { setTimerRunning(false); setTimerSeconds(0); }} aria-label="Detener"><IconStop /></button>
             </div>
           </div>
 
-          {/* Logros Recientes Compact */}
           <div className="card" style={{ flex: 1 }}>
-            <div className="card-header">
-              <span className="card-title">Logros Recientes</span>
-            </div>
+            <div className="card-header"><span className="card-title">Logros Recientes</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.25rem' }}>🏅</span>
-                <div>
-                  <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Primer Ahorro
-                  </p>
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-                    Completaste tu primera meta de ahorro
-                  </p>
+              {achievements.slice(0, 3).map((ach) => (
+                <div key={ach.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: '1.25rem' }}>{ach.icon}</span>
+                  <div>
+                    <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{ach.title}</p>
+                    <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{ach.description}</p>
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.25rem' }}>🔥</span>
-                <div>
-                  <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Racha de 7 Días
-                  </p>
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-                    7 días consecutivos de lecciones
-                  </p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.25rem' }}>💎</span>
-                <div>
-                  <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Nivel Inversionista
-                  </p>
-                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-                    Alcanzaste el Nivel 7
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-    </DashboardLayout>
 
+      {showNewGoalModal && (
+        <div className="modal-overlay" onClick={() => setShowNewGoalModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Nueva Meta</h2>
+              <button className="modal-close" onClick={() => setShowNewGoalModal(false)}><IconX width={20} /></button>
+            </div>
+            <div className="modal-body">
+              <label className="form-label">Título</label>
+              <input className="form-input" type="text" placeholder="Ej: Fondo de Emergencia" value={newGoal.title} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
+              <label className="form-label">Categoría</label>
+              <select className="form-input" value={newGoal.category} onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value as GoalCategory })}>
+                <option value="Ahorro">Ahorro</option>
+                <option value="Inversión">Inversión</option>
+                <option value="Educación">Educación</option>
+                <option value="Otro">Otro</option>
+              </select>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div><label className="form-label">Monto Actual ($)</label><input className="form-input" type="number" placeholder="0" value={newGoal.current || ''} onChange={(e) => setNewGoal({ ...newGoal, current: Number(e.target.value) })} /></div>
+                <div><label className="form-label">Meta ($)</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>
+              </div>
+              <label className="form-label">Fecha Límite</label>
+              <input className="form-input" type="text" placeholder="Ej: Dic 2026" value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
+              <label className="form-label">Color</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['#3DCC8E', '#1E3A6E', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6'].map((c) => (
+                  <button key={c} onClick={() => setNewGoal({ ...newGoal, color: c })} style={{ width: 32, height: 32, borderRadius: '50%', background: c, border: newGoal.color === c ? '3px solid var(--text-primary)' : '3px solid transparent', cursor: 'pointer' }} />
+                ))}
+              </div>
+              <label className="form-label">Icono</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['🎯', '🛡️', '📈', '✈️', '🎓', '💻', '🏠', '🚗'].map((icon) => (
+                  <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.5rem', padding: 8, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer' }}>{icon}</button>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setShowNewGoalModal(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={handleCreateGoal}>Crear Meta</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImportModal && (
+        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Importar Datos</h2>
+              <button className="modal-close" onClick={() => setShowImportModal(false)}><IconX width={20} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Selecciona un archivo CSV con tus transacciones para importar.</p>
+              <input type="file" accept=".csv" className="form-input" />
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setShowImportModal(false)}>Cancelar</button>
+              <button className="btn btn-primary" onClick={() => setShowImportModal(false)}>Importar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 480px; max-height: 85vh; overflow-y: auto; padding: 24px; animation: fadeInUp 0.3s ease; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-body { display: flex; flex-direction: column; gap: 14px; }
+        .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .form-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: -6px; }
+        .form-input { width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-primary); font-size: 0.875rem; outline: none; transition: border-color var(--transition-fast); box-sizing: border-box; }
+        .form-input:focus { border-color: var(--color-prosper-green); }
+        .form-input::placeholder { color: var(--text-tertiary); }
+        select.form-input { cursor: pointer; }
+      `}</style>
+    </DashboardLayout>
   );
 }
