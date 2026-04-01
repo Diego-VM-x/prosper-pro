@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { DashboardLayout } from './DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useSearch } from '@/lib/contexts/SearchContext';
 import {
   IconPlus,
   IconArrowUpRight,
@@ -22,6 +23,7 @@ import { importTransactionsFromCSV } from '@/lib/csvParser';
 
 export function Dashboard() {
   const { user } = useAuth();
+  const { query } = useSearch();
   const userId = user?.uid || '';
 
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -103,8 +105,8 @@ export function Dashboard() {
         subscribeToXP(userId, (x) => { if (x) setXP(x); });
         subscribeToAchievements(userId, (a) => { if (a.length) setAchievements(a); });
       });
-      import('@/lib/firestore/community').then(({ subscribeToCommunityMembers }) =>
-        subscribeToCommunityMembers((m) => { if (m.length) setMembers(m); })
+      import('@/lib/firestore/community').then(({ subscribeToCommunityUsers }) =>
+        subscribeToCommunityUsers((m) => { if (m.length) setMembers(m); })
       );
       import('@/lib/firestore/study').then(({ subscribeToStudySession }) =>
         subscribeToStudySession(userId, (s) => {
@@ -126,8 +128,8 @@ export function Dashboard() {
     return `${hrs}:${min}:${sec}`;
   }, []);
 
-  const activeGoals = goals.filter((g) => g.status !== 'completed');
-  const completedGoals = goals.filter((g) => g.status === 'completed');
+  const activeGoals = goals.filter((g) => g.status !== 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
+  const completedGoals = goals.filter((g) => g.status === 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
   const totalGoals = goals.length;
   const progressPct = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
   const circumference = 2 * Math.PI * 54;
@@ -301,21 +303,30 @@ export function Dashboard() {
         <div className="card animate-fadeInUp" style={{ animationDelay: '0.35s' }}>
           <div className="card-header">
             <span className="card-title">Comunidad Prosper</span>
-            <button className="card-action" onClick={handleInviteMember}><IconPlus /> Invitar</button>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{members.length} miembros</span>
           </div>
           <div className="team-list">
-            {members.map((member) => (
-              <div className="team-member" key={member.id}>
-                <div className="team-avatar">{member.avatarInitials}</div>
-                <div className="team-info">
-                  <p className="team-name">{member.name}</p>
-                  <p className="team-task">{member.task} <span>{member.highlight}</span></p>
+            {members.length > 0 ? members.map((member) => (
+              <div className="team-member" key={member.uid}>
+                <div className="team-avatar" style={{ overflow: 'hidden' }}>
+                  {member.photoURL ? (
+                    <img src={member.photoURL} alt={member.displayName || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (member.displayName || member.email || '?').charAt(0).toUpperCase()
+                  )}
                 </div>
-                <span className={`status-badge status-${member.status}`}>
-                  {member.status === 'completed' ? 'Completado' : member.status === 'progress' ? 'En Progreso' : 'Pendiente'}
-                </span>
+                <div className="team-info">
+                  <p className="team-name">{member.displayName || 'Usuario'}</p>
+                  <p className="team-task">Nivel {member.level} — {member.title} <span>{member.currentXP}/{member.maxXP} XP</span></p>
+                </div>
+                <div style={{ textAlign: 'right', fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                  <div>🏆 {member.achievementsCount}</div>
+                  <div>🎯 {member.goalsCount}</div>
+                </div>
               </div>
-            ))}
+            )) : (
+              <p style={{ padding: '16px 0', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Aún no hay miembros. ¡Comparte Prosper!</p>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
+import { SearchProvider } from '@/lib/contexts/SearchContext';
+import { ThemeProvider } from './components/ThemeProvider';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -70,10 +72,30 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('prosper-pro-theme');
+                  if (theme === 'dark' || theme === 'light') {
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <SearchProvider>
+              {children}
+            </SearchProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

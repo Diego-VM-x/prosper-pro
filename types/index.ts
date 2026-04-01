@@ -74,12 +74,16 @@ export interface Achievement {
 }
 
 export interface CommunityMember {
-  id: string;
-  name: string;
-  avatarInitials: string;
-  task: string;
-  highlight: string;
-  status: 'completed' | 'progress' | 'pending';
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  level: number;
+  title: string;
+  currentXP: number;
+  maxXP: number;
+  achievementsCount: number;
+  goalsCount: number;
 }
 
 export interface Notification {

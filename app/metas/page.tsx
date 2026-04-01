@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useSearch } from '@/lib/contexts/SearchContext';
 import {
   IconPlus,
   IconTrendUp,
@@ -19,6 +20,7 @@ import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
 export default function MetasPage() {
   const { user } = useAuth();
+  const { query } = useSearch();
   const userId = user?.uid || '';
 
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -42,9 +44,10 @@ export default function MetasPage() {
     } catch (e) { console.error(e); }
   }, [userId]);
 
-  const filteredGoals = filter === 'Todas'
+  const filteredGoals = (filter === 'Todas'
     ? goals
-    : goals.filter((g) => g.category === filter || (filter === 'Completadas' && g.status === 'completed'));
+    : goals.filter((g) => g.category === filter || (filter === 'Completadas' && g.status === 'completed')
+  )).filter((g) => !query || g.title.toLowerCase().includes(query.toLowerCase()));
 
   const resetForm = () => {
     setFormData({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });

@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useSearch } from '@/lib/contexts/SearchContext';
 import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification } from '@/lib/firestore/notifications';
 import {
   IconSearch,
@@ -37,7 +38,7 @@ interface TopbarProps {
 export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);

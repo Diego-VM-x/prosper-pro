@@ -10,7 +10,7 @@ import { IconX, IconEdit, IconTrash, IconCheck } from '../components/icons';
 import type { UserProfile } from '@/types';
 
 export default function ConfiguracionPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
@@ -229,10 +229,13 @@ export default function ConfiguracionPage() {
                 <button
                   className="btn"
                   style={{ background: 'var(--color-error)', color: 'white' }}
-                  onClick={() => {
-                    // TODO: Implementar eliminación real con Firebase Auth
-                    alert('Para eliminar tu cuenta, contacta a soporte o elimina manualmente desde la consola de Firebase.');
-                    setShowDeleteConfirm(false);
+                  onClick={async () => {
+                    try {
+                      await deleteAccount();
+                    } catch (e) {
+                      console.error('Error al eliminar cuenta:', e);
+                      alert('Error al eliminar la cuenta. Intenta de nuevo.');
+                    }
                   }}
                 >
                   Confirmar Eliminación
