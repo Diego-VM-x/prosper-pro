@@ -3,18 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { DashboardLayout } from '../../components/DashboardLayout';
-import { getCourseById, getCourseModules } from '@/lib/firestore/courses';
-import type { Course, CourseModule } from '@/types';
+import { getCourseById } from '@/lib/firestore/courses';
+import type { Course } from '@/types';
 
 export default function CourseDetail() {
-  const { id } = useParams();
+  const { id } = useParams() as { id: string };
   const [course, setCourse] = useState<Course | null>(null);
-  const [modules, setModules] = useState<CourseModule[]>([]);
 
   useEffect(() => {
-    if (typeof id === 'string') {
+    if (id) {
       getCourseById(id).then(setCourse);
-      getCourseModules(id).then(setModules);
     }
   }, [id]);
 
@@ -28,13 +26,10 @@ export default function CourseDetail() {
       </div>
 
       <div className="card" style={{ padding: 24 }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: 16 }}>Módulos</h2>
-        {modules.map((m, i) => (
-          <div key={m.id} className="card" style={{ marginBottom: 12, padding: 16 }}>
-            <h3 style={{ fontSize: '1rem' }}>{i + 1}. {m.title}</h3>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{m.duration} min</p>
-          </div>
-        ))}
+        <h2 style={{ fontSize: '1.25rem', marginBottom: 16 }}>Detalles del Curso</h2>
+        <p>Categoría: {course.category}</p>
+        <p>XP Reward: {course.xpReward}</p>
+        <p>Módulos: {course.modulesCount}</p>
       </div>
     </DashboardLayout>
   );
