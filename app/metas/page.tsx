@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
-import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
+import { useGoals } from '@/lib/contexts/GoalsContext';
 import {
   IconPlus,
   IconTrendUp,
@@ -16,14 +16,9 @@ import {
 } from '../components/icons';
 import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
-// Sin datos por defecto
-
 export default function MetasPage() {
-  const { user } = useAuth();
   const { query } = useSearch();
-  const userId = user?.uid || '';
-
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const { goals, userId, addGoal, updateGoalFn, deleteGoalFn } = useGoals();
   const [filter, setFilter] = useState('Todas');
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -34,21 +29,6 @@ export default function MetasPage() {
   const [formData, setFormData] = useState({
     title: '', category: 'Ahorro' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯',
   });
-
-  useEffect(() => {
-    const uid = userId as string;
-    if (!uid) return;
-    let cancelled = false;
-    async function loadGoals() {
-      try {
-        const { getGoalsByUserId } = await import('@/lib/firestore/goals');
-        const data = await getGoalsByUserId(uid);
-        if (!cancelled && data.length) setGoals(data);
-      } catch (e) { console.error(e); }
-    }
-    loadGoals();
-    return () => { cancelled = true; };
-  }, [userId]);
 
   const filteredGoals = (filter === 'Todas'
     ? goals
@@ -65,26 +45,20 @@ export default function MetasPage() {
 
     if (editingGoal) {
       const newStatus: GoalStatus = formData.current >= formData.target ? 'completed' : editingGoal.status === 'pending' && formData.current > 0 ? 'progress' : editingGoal.status;
-      const updated = { ...editingGoal, ...formData, status: newStatus, updatedAt: Date.now() };
-      setGoals((prev) => prev.map((g) => g.id === editingGoal.id ? updated : g));
-      if (userId) {
-        try { const { updateGoal } = await import('@/lib/firestore/goals'); await updateGoal(editingGoal.id, updated); } catch (e) { console.error(e); }
-      }
+      const updated: Partial<Goal> = { ...editingGoal, ...formData, status: newStatus, updatedAt: Date.now() };
+      await updateGoalFn(editingGoal.id, updated);
     } else {
-      const newGoal: Goal = {
-        id: 'g' + Date.now(),
+      await addGoal({
         userId: userId || 'local',
-        ...formData,
+        title: formData.title,
+        category: formData.category,
+        current: formData.current,
+        target: formData.target,
+        deadline: formData.deadline,
         status: formData.current >= formData.target ? 'completed' : 'pending',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        monthlyGrowth: 0,
-        streakDays: 0,
-      };
-      setGoals((prev) => [newGoal, ...prev]);
-      if (userId) {
-        try { const { createGoalWithId } = await import('@/lib/firestore/goals'); await createGoalWithId(newGoal); } catch (e) { console.error(e); }
-      }
+        color: formData.color,
+        icon: formData.icon,
+      });
     }
 
     setShowNewGoalModal(false);
@@ -93,10 +67,7 @@ export default function MetasPage() {
 
   const handleDeleteGoal = async (goalId: string) => {
     if (confirm('¿Estás seguro de eliminar esta meta?')) {
-      setGoals((prev) => prev.filter((g) => g.id !== goalId));
-      if (userId) {
-        try { const { deleteGoal } = await import('@/lib/firestore/goals'); await deleteGoal(goalId); } catch (e) { console.error(e); }
-      }
+      await deleteGoalFn(goalId);
     }
   };
 
@@ -104,14 +75,9 @@ export default function MetasPage() {
     if (!showAddFundsModal || !addAmount) return;
     const amount = Number(addAmount);
     if (amount <= 0) return;
-    const updated = {
-      ...showAddFundsModal,
-      current: Math.min(showAddFundsModal.current + amount, showAddFundsModal.target),
-      updatedAt: Date.now(),
-    };
-    if (updated.current >= updated.target) updated.status = 'completed';
-    else if (updated.status === 'pending') updated.status = 'progress';
-    setGoals((prev) => prev.map((g) => g.id === updated.id ? updated : g));
+    const newCurrent = Math.min(showAddFundsModal.current + amount, showAddFundsModal.target);
+    const newStatus: GoalStatus = newCurrent >= showAddFundsModal.target ? 'completed' : showAddFundsModal.status === 'pending' ? 'progress' : showAddFundsModal.status;
+    await updateGoalFn(showAddFundsModal.id, { current: newCurrent, status: newStatus, updatedAt: Date.now() });
     setShowAddFundsModal(null);
     setAddAmount('');
   };

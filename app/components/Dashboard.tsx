@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
-import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
+import { useGoals } from '@/lib/contexts/GoalsContext';
 import {
   IconPlus,
   IconArrowUpRight,
@@ -13,19 +13,14 @@ import {
   IconZap,
   IconX,
 } from './icons';
-import type { Goal, WeeklyData, Reminder, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
-
-// Sin datos por defecto - todo viene de Firebase
+import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
 
 export function Dashboard() {
   const router = useRouter();
-  const { user } = useAuth();
   const { query } = useSearch();
-  const userId = user?.uid || '';
+  const { goals, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
 
-  const [goals, setGoals] = useState<Goal[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [xp, setXP] = useState<XPState | null>(null);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -43,7 +38,7 @@ export function Dashboard() {
     icon: '🎯',
   });
 
-  // Carga optimizada con caché: una sola lectura por sesión, sin suscripciones abiertas
+  // Carga de datos estáticos (transacciones, XP, comunidad)
   useEffect(() => {
     const uid = userId as string;
     if (!uid) return;
@@ -52,25 +47,19 @@ export function Dashboard() {
     async function loadData() {
       try {
         const [
-          { getGoalsByUserId },
-          { getTransactionsByUserId, getMonthlySavings },
-          { getRemindersByUserId },
+          { getTransactionsByUserId },
           { getXPByUserId, getAchievementsByUserId },
           { getCommunityUsers },
         ] = await Promise.all([
-          import('@/lib/firestore/goals'),
           import('@/lib/firestore/transactions'),
-          import('@/lib/firestore/reminders'),
           import('@/lib/firestore/gamification'),
           import('@/lib/firestore/community'),
         ]);
 
         if (cancelled) return;
 
-        const [goalsData, transactionsData, remindersData, xpData, achievementsData, membersData] = await Promise.all([
-          getGoalsByUserId(uid),
+        const [transactionsData, xpData, achievementsData, membersData] = await Promise.all([
           getTransactionsByUserId(uid),
-          getRemindersByUserId(uid),
           getXPByUserId(uid),
           getAchievementsByUserId(uid),
           getCommunityUsers(),
@@ -78,8 +67,6 @@ export function Dashboard() {
 
         if (cancelled) return;
 
-        if (goalsData.length) setGoals(goalsData);
-        if (remindersData.length) setReminders(remindersData);
         if (xpData) setXP(xpData);
         if (achievementsData.length) setAchievements(achievementsData);
         if (membersData.length) setMembers(membersData);
@@ -92,7 +79,6 @@ export function Dashboard() {
           const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
           if (monthSavings > 0) setMonthlySavings(monthSavings);
 
-          // Weekly data
           const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
           const weekly: WeeklyData[] = [];
           for (let i = 6; i >= 0; i--) {
@@ -134,23 +120,17 @@ export function Dashboard() {
 
   const handleCreateGoal = async () => {
     if (!newGoal.title || !newGoal.target) return;
-    const goal: Goal = {
-      id: 'g' + Date.now(),
+    await addGoal({
       userId: userId || 'local',
-      ...newGoal,
+      title: newGoal.title,
+      category: newGoal.category,
+      current: newGoal.current,
+      target: newGoal.target,
+      deadline: newGoal.deadline,
       status: newGoal.current >= newGoal.target ? 'completed' : 'pending',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      monthlyGrowth: 0,
-      streakDays: 0,
-    };
-    setGoals((prev) => [goal, ...prev]);
-    if (userId) {
-      try {
-        const { createGoal } = await import('@/lib/firestore/goals');
-        await createGoal(goal);
-      } catch (e) { console.error(e); }
-    }
+      color: newGoal.color,
+      icon: newGoal.icon,
+    });
     setShowNewGoalModal(false);
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
@@ -176,6 +156,31 @@ export function Dashboard() {
           </button>
         </div>
       </div>
+
+      {/* Avisos Recientes - Metas y recordatorios que vencen hoy */}
+      {(goalsToday.length > 0 || remindersToday.length > 0) && (
+        <div className="card animate-fadeInUp" style={{ marginBottom: 20, borderLeft: '4px solid var(--color-gold-500)' }}>
+          <div className="card-header">
+            <span className="card-title">🔔 Avisos Recientes - Hoy</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {goalsToday.map((g) => (
+              <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: 'var(--radius-md)' }}>
+                <span>{g.icon}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{g.title}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-gold-500)', marginLeft: 'auto' }}>Fecha límite hoy</span>
+              </div>
+            ))}
+            {remindersToday.map((r) => (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: 'var(--radius-md)' }}>
+                <span>🔔</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{r.title}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-blue-500)', marginLeft: 'auto' }}>{r.startTime}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="stats-grid">
         <div className="stat-card animate-fadeInUp featured">
@@ -364,7 +369,7 @@ export function Dashboard() {
                 <div><label className="form-label">Meta ($)</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>
               </div>
               <label className="form-label">Fecha Límite</label>
-              <input className="form-input" type="text" placeholder="Ej: Dic 2026" value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
+              <input className="form-input" type="date" value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
               <label className="form-label">Color</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {['#3DCC8E', '#1E3A6E', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6'].map((c) => (

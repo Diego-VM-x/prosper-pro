@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { useAuth } from '@/lib/contexts/AuthContext';
-import { getRemindersByUserId, createReminder, deleteReminder, updateReminder } from '@/lib/firestore/reminders';
-import { subscribeToGoals } from '@/lib/firestore/goals';
+import { useGoals } from '@/lib/contexts/GoalsContext';
 import type { Reminder, Goal } from '@/types';
 
 const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌', goal: '🎯' };
@@ -41,40 +39,14 @@ function goalToCalendarEvent(goal: Goal): CalendarGoalEvent | null {
 }
 
 export default function CalendarioPage() {
-  const { user } = useAuth();
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [goalEvents, setGoalEvents] = useState<CalendarGoalEvent[]>([]);
+  const { goals, reminders, userId, addReminder, deleteReminderFn } = useGoals();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
   const [newReminder, setNewReminder] = useState({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' as Reminder['type'] });
 
-  useEffect(() => {
-    const uid = user?.uid as string;
-    if (!uid) return;
-
-    // Cargar recordatorios (una vez)
-    let cancelled = false;
-    async function loadReminders() {
-      try {
-        const data = await getRemindersByUserId(uid);
-        if (!cancelled && data.length) setReminders(data);
-      } catch (e) { console.error(e); }
-    }
-    loadReminders();
-
-    // Suscribirse a metas en tiempo real
-    const unsubscribe = subscribeToGoals(uid, (goals) => {
-      const events = goals.map(goalToCalendarEvent).filter((e): e is CalendarGoalEvent => e !== null);
-      setGoalEvents(events);
-    });
-
-    return () => {
-      cancelled = true;
-      unsubscribe(); // Limpiar suscripción para evitar fugas de memoria
-    };
-  }, [user?.uid]);
+  // Convertir goals a eventos de calendario
+  const goalEvents = goals.map(goalToCalendarEvent).filter((e): e is CalendarGoalEvent => e !== null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -99,26 +71,22 @@ export default function CalendarioPage() {
 
   const handleAddReminder = async () => {
     if (!newReminder.title || !selectedDate) return;
-    const reminder: Reminder = {
-      id: 'r' + Date.now(),
-      userId: user?.uid || 'local',
-      ...newReminder,
+    await addReminder({
+      userId: userId || 'local',
+      title: newReminder.title,
+      description: newReminder.description,
+      startTime: newReminder.startTime,
+      endTime: newReminder.endTime,
       date: selectedDate,
+      type: newReminder.type,
       isActive: true,
-    };
-    setReminders((prev) => [...prev, reminder]);
-    if (user?.uid) {
-      try { await createReminder(reminder); } catch (e) { console.error(e); }
-    }
+    });
     setShowModal(false);
     setNewReminder({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' });
   };
 
   const handleDeleteReminder = async (id: string) => {
-    setReminders((prev) => prev.filter((r) => r.id !== id));
-    if (user?.uid) {
-      try { await deleteReminder(id); } catch (e) { console.error(e); }
-    }
+    await deleteReminderFn(id);
   };
 
   const handleDayClick = (day: number) => {
@@ -176,9 +144,16 @@ export default function CalendarioPage() {
 
           {/* Panel lateral - Eventos del día seleccionado */}
           <div className="reminders-panel">
-            <h3 className="reminders-panel-title">
-              {selectedDate ? `Eventos - ${new Date(selectedDate + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'long' })}` : 'Selecciona un día'}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 className="reminders-panel-title" style={{ margin: 0 }}>
+                {selectedDate ? `Eventos - ${new Date(selectedDate + 'T12:00:00').toLocaleDateString('es', { day: 'numeric', month: 'long' })}` : 'Selecciona un día'}
+              </h3>
+              {selectedDate && (
+                <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setShowModal(true)}>
+                  + Recordatorio
+                </button>
+              )}
+            </div>
             {selectedEvents.length > 0 ? (
               <div className="reminders-list">
                 {selectedEvents.map((ev) => {
@@ -214,11 +189,11 @@ export default function CalendarioPage() {
 
         {/* Modal */}
         {showModal && (
-          <div className="modal-overlay" onClick={() => { setShowModal(false); setEditingReminder(null); }}>
+          <div className="modal-overlay" onClick={() => { setShowModal(false); }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <h2 className="modal-title">Nuevo Recordatorio</h2>
-                <button className="modal-close" onClick={() => { setShowModal(false); setEditingReminder(null); }}>✕</button>
+                <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
               </div>
               <div className="modal-body">
                 <label className="form-label">Título</label>
@@ -238,7 +213,7 @@ export default function CalendarioPage() {
                 </select>
               </div>
               <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => { setShowModal(false); setEditingReminder(null); }}>Cancelar</button>
+                <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancelar</button>
                 <button className="btn btn-primary" onClick={handleAddReminder}>Crear</button>
               </div>
             </div>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { ThemeProvider } from './ThemeProvider';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,15 +15,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <ThemeProvider>
-      <div className="app-shell">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="main-content">
-          <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-          <div className="page-content">
-            {children}
-          </div>
-        </main>
-      </div>
+      <GoalsProvider>
+        <div className="app-shell">
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <main className="main-content">
+            <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+            <div className="page-content">
+              {children}
+            </div>
+          </main>
+        </div>
+      </GoalsProvider>
     </ThemeProvider>
   );
 }
