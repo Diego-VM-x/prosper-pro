@@ -155,21 +155,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
-      // 2. Eliminar archivos de Storage (avatares)
-      try {
-        console.log('[deleteAccount] Eliminando avatares de Storage...');
-        const { getStorage, ref, listAll, deleteObject } = await import('firebase/storage');
-        const storage = getStorage();
-        const avatarsRef = ref(storage, `avatars/${uid}`);
-        const avatarsList = await listAll(avatarsRef);
-        if (avatarsList.items.length > 0) {
-          await Promise.all(avatarsList.items.map((itemRef) => deleteObject(itemRef)));
-        }
-      } catch (err) {
-        console.log('[deleteAccount] Sin avatares o error en Storage:', err);
-      }
-
-      // 3. Eliminar usuario de Firebase Auth
+      // 2. Eliminar usuario de Firebase Auth (Storage se omite por problemas de CORS)
       console.log('[deleteAccount] Eliminando usuario de Auth...');
       await deleteUser(user);
       console.log('[deleteAccount] Usuario eliminado exitosamente');
