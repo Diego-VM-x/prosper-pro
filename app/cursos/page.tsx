@@ -101,6 +101,16 @@ export default function CoursesPage() {
           })}
         </div>
       )}
+
+      <style>{`
+        .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        @media (max-width: 768px) {
+          .courses-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        }
+        @media (max-width: 480px) {
+          .courses-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
     </DashboardLayout>
   );
 }

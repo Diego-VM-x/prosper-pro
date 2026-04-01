@@ -211,7 +211,7 @@ export default function MetasPage() {
                 <div><label className="form-label">Meta ($)</label><input className="form-input" type="number" placeholder="10000" value={formData.target || ''} onChange={(e) => setFormData({ ...formData, target: Number(e.target.value) })} /></div>
               </div>
               <label className="form-label">Fecha Límite</label>
-              <input className="form-input" type="text" placeholder="Ej: Dic 2026" value={formData.deadline} onChange={(e) => setFormData({ ...formData, deadline: e.target.value })} />
+              <input className="form-input" type="date" value={formData.deadline} onChange={(e) => setFormData({ ...formData, deadline: e.target.value })} />
               <label className="form-label">Color</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {['#3DCC8E', '#1E3A6E', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6'].map((c) => (
@@ -335,6 +335,25 @@ export default function MetasPage() {
         .form-input:focus { border-color: var(--color-prosper-green); }
         .form-input::placeholder { color: var(--text-tertiary); }
         select.form-input { cursor: pointer; }
+
+        @media (max-width: 768px) {
+          .goal-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+          .goal-status-group { text-align: left; }
+          .goal-footer { flex-direction: column; align-items: stretch; }
+          .goal-stats { justify-content: space-between; }
+          .goal-footer > div:last-child { display: flex; gap: 8px; justify-content: center; }
+          .filters-bar { flex-wrap: wrap; }
+          .modal-content { width: 95%; padding: 16px; }
+        }
+        @media (max-width: 480px) {
+          .goal-wide-card { padding: 16px; }
+          .goal-icon-wrapper { width: 40px; height: 40px; }
+          .goal-title { font-size: 1rem; }
+          .current { font-size: 1.125rem; }
+          .goal-action-btn { width: 28px; height: 28px; }
+          .goal-action-btn svg { width: 12px; height: 12px; }
+          .filter-chip { padding: 6px 12px; font-size: 0.75rem; }
+        }
       `}</style>
     </DashboardLayout>
   );

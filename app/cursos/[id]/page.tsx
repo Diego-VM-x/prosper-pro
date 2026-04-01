@@ -169,6 +169,13 @@ export default function CourseDetail() {
           );
         })}
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .page-header { flex-direction: column !important; }
+          .page-header > div:last-child { width: 100%; justify-content: flex-start; }
+        }
+      `}</style>
     </DashboardLayout>
   );
 }

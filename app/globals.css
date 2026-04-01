@@ -1331,6 +1331,73 @@ ul, ol {
 }
 
 /* ============================================================
+   RESPONSIVE - MEJORAS ADICIONALES
+   ============================================================ */
+
+/* Asegurar que el layout de página sea responsivo */
+.page-header {
+  flex-wrap: wrap;
+}
+
+.page-header-actions {
+  flex-wrap: wrap;
+}
+
+/* Tablas responsivas */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grids responsivos genéricos */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* Botones en móvil */
+@media (max-width: 768px) {
+  .btn {
+    white-space: nowrap;
+  }
+  .page-header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .page-header-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Cards en móvil */
+@media (max-width: 480px) {
+  .card {
+    padding: 14px;
+  }
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .card-action {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Formularios en móvil */
+@media (max-width: 480px) {
+  .form-row {
+    flex-direction: column;
+  }
+  .form-row > * {
+    width: 100%;
+  }
+}
+
+/* ============================================================
    ANIMATIONS
    ============================================================ */
 @keyframes fadeInUp {

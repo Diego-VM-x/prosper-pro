@@ -217,6 +217,23 @@ export default function FinanzasPage() {
           .btn { padding: 10px 20px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; }
           .btn-primary { background: var(--color-prosper-green); color: white; }
           .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
+          .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
+          .filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
+          .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+
+          @media (max-width: 768px) {
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-select { width: 100%; }
+            .transactions-table-wrapper { overflow-x: auto; }
+            .transactions-table { min-width: 600px; }
+          }
+          @media (max-width: 480px) {
+            .summary-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; }
+            .page-header-actions { width: 100%; }
+            .page-header-actions .btn { width: 100%; justify-content: center; }
+          }
         `}</style>
       </DashboardLayout>
     </ProtectedRoute>

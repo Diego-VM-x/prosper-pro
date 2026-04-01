@@ -15,6 +15,11 @@ Actúa como un Desarrollador Senior enfocado en ahorro de recursos (Context-Spar
 ### 3. MEMORIA DEL PROYECTO
 - Consulta siempre el `CONTEXT.md` para entender la arquitectura antes de preguntar.
 - No repitas explicaciones de errores que ya marcamos como "Solucionados" en el historial.
+- **ACTUALIZACIÓN DE CONTEXTO:** Después de cada cambio exitoso (build sin errores), pregunta al usuario si desea actualizar `CONTEXT.md` con los cambios realizados. Si el usuario confirma, actualiza `CONTEXT.md` inmediatamente con:
+  - Nuevos hitos completados
+  - Cambios en la estructura de archivos
+  - Notas técnicas relevantes
+  - Historial de instrucciones con fecha actual
 
 ### 4. OPTIMIZACIÓN PARA PC DE BAJOS RECURSOS (i3/4GB RAM)
 - Prioriza soluciones que no requieran instalar nuevas librerías pesadas.

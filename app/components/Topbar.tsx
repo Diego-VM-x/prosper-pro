@@ -99,7 +99,6 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         className="topbar-icon-btn sidebar-toggle"
         onClick={onToggleSidebar}
         aria-label="Abrir menú"
-        style={{ display: 'none' }}
       >
         <IconMenu />
       </button>
@@ -116,7 +115,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           onChange={(e) => setSearchQuery(e.target.value)}
           onClick={(e) => e.stopPropagation()}
         />
-        <span className="topbar-search-shortcut">⌘ F</span>
+        <span className="topbar-search-shortcut">⌘F</span>
       </div>
 
       {/* Acciones */}
@@ -138,7 +137,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         </button>
 
         {/* Notificaciones */}
-        <div style={{ position: 'relative' }}>
+        <div className="topbar-notif-wrapper">
           <button
             className="topbar-icon-btn"
             aria-label="Notificaciones"
@@ -150,45 +149,25 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           </button>
 
           {showNotifications && (
-            <div className="notifications-dropdown" style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              width: 320,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-default)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-lg)',
-              zIndex: 100,
-              maxHeight: 400,
-              overflowY: 'auto',
-            }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-primary)' }}>Notificaciones</span>
+            <div className="notifications-dropdown">
+              <div className="notifications-dropdown-header">
+                <span>Notificaciones</span>
                 {unreadCount > 0 && (
-                  <span style={{ background: 'var(--color-prosper-green)', color: 'white', fontSize: '0.6875rem', fontWeight: 700, padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>
-                    {unreadCount} nueva{unreadCount > 1 ? 's' : ''}
-                  </span>
+                  <span className="notifications-badge">{unreadCount} nueva{unreadCount > 1 ? 's' : ''}</span>
                 )}
               </div>
               {notifications.length > 0 ? notifications.slice(0, 5).map((notif) => (
                 <div
                   key={notif.id}
+                  className={`notif-item ${notif.read ? 'read' : 'unread'}`}
                   onClick={() => handleMarkRead(notif.id)}
-                  style={{
-                    padding: '10px 16px',
-                    borderBottom: '1px solid var(--border-default)',
-                    cursor: 'pointer',
-                    background: notif.read ? 'transparent' : 'var(--bg-input)',
-                    transition: 'background var(--transition-fast)',
-                  }}
                 >
-                  <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{notif.title}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{notif.message}</p>
+                  <p className="notif-title">{notif.title}</p>
+                  <p className="notif-message">{notif.message}</p>
                 </div>
               )) : (
-                <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>No hay notificaciones</p>
+                <div className="notif-empty">
+                  <p>No hay notificaciones</p>
                 </div>
               )}
             </div>
@@ -198,89 +177,203 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+        <div className="topbar-user" id="user-profile">
           <div
             className="topbar-avatar"
-            style={{ overflow: 'hidden', cursor: 'pointer' }}
             onClick={() => setShowUserMenu(!showUserMenu)}
           >
             {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
           </div>
-          <div className="topbar-user-info" style={{ cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
-            <span className="topbar-user-name">{user?.displayName || 'Usuario Pro'}</span>
+          <div className="topbar-user-info" onClick={() => setShowUserMenu(!showUserMenu)}>
+            <span className="topbar-user-name">{user?.displayName || 'Usuario'}</span>
             <span className="topbar-user-email">{user?.email}</span>
           </div>
 
           {showUserMenu && (
-            <div style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              width: 220,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-default)',
-              borderRadius: 'var(--radius-lg)',
-              boxShadow: 'var(--shadow-lg)',
-              zIndex: 100,
-              overflow: 'hidden',
-              animation: 'fadeInUp 0.2s ease',
-            }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-default)' }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{user?.displayName || 'Usuario'}</p>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>{user?.email}</p>
+            <div className="user-dropdown">
+              <div className="user-dropdown-header">
+                <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
+                <p className="user-dropdown-email">{user?.email}</p>
               </div>
+              <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                <IconSettings /> Configuración
+              </Link>
+              <div className="user-dropdown-divider" />
               <button
-                onClick={() => { setShowUserMenu(false); }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-primary)',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
+                className="user-dropdown-item user-dropdown-logout"
+                onClick={() => { setShowUserMenu(false); logout(); }}
               >
-                <Link href="/configuracion" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 16px', fontSize: '0.875rem' }}>
-                  <IconSettings /> Configuración
-                </Link>
+                <IconLogout /> Cerrar Sesión
               </button>
-              <div style={{ borderTop: '1px solid var(--border-default)' }}>
-                <button
-                  onClick={() => { setShowUserMenu(false); logout(); }}
-                  style={{
-                    width: '100%',
-                    padding: '10px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    border: 'none',
-                    background: 'transparent',
-                    color: 'var(--color-error)',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <IconLogout /> Cerrar Sesión
-                </button>
-              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Estilos inline para hambúrguer en móvil */}
+      {/* Estilos inline */}
       <style>{`
+        .sidebar-toggle { display: none; }
         @media (max-width: 1024px) {
           .sidebar-toggle { display: flex !important; }
         }
+
+        /* Notificaciones dropdown */
+        .topbar-notif-wrapper { position: relative; }
         .notifications-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: 320px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-lg);
+          z-index: 100;
+          max-height: 400px;
+          overflow-y: auto;
           animation: fadeInUp 0.2s ease;
+        }
+        .notifications-dropdown-header {
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--border-default);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 0.875rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .notifications-badge {
+          background: var(--color-prosper-green);
+          color: white;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: var(--radius-full);
+        }
+        .notif-item {
+          padding: 10px 16px;
+          border-bottom: 1px solid var(--border-default);
+          cursor: pointer;
+          transition: background var(--transition-fast);
+        }
+        .notif-item.unread { background: var(--bg-input); }
+        .notif-item:hover { background: var(--bg-card-hover); }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+        .notif-message { font-size: 0.75rem; color: var(--text-secondary); }
+        .notif-empty { padding: 24px 16px; text-align: center; font-size: 0.8125rem; color: var(--text-secondary); }
+
+        /* User dropdown */
+        .topbar-user { display: flex; align-items: center; gap: 12px; position: relative; }
+        .topbar-avatar {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--color-prosper-green), var(--color-prosper-navy));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          border: 2px solid var(--color-pine-300);
+          flex-shrink: 0;
+          cursor: pointer;
+          overflow: hidden;
+          transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+        .topbar-avatar:hover { transform: scale(1.05); box-shadow: 0 0 0 3px rgba(61,204,142,0.2); }
+        .topbar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .topbar-user-info { display: flex; flex-direction: column; cursor: pointer; }
+        .topbar-user-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+        .topbar-user-email { font-size: 0.6875rem; color: var(--text-secondary); }
+
+        .user-dropdown {
+          position: absolute;
+          top: calc(100% + 12px);
+          right: 0;
+          width: 260px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-xl);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+          z-index: 100;
+          overflow: hidden;
+          animation: fadeInUp 0.2s ease;
+          backdrop-filter: blur(12px);
+        }
+        .user-dropdown-header {
+          padding: 16px;
+          background: linear-gradient(135deg, var(--color-prosper-navy), var(--color-prosper-green));
+          position: relative;
+        }
+        .user-dropdown-header::after {
+          content: '';
+          position: absolute;
+          top: -6px;
+          right: 16px;
+          width: 12px;
+          height: 12px;
+          background: var(--color-prosper-navy);
+          transform: rotate(45deg);
+          border-left: 1px solid var(--border-default);
+          border-top: 1px solid var(--border-default);
+        }
+        .user-dropdown-name { font-size: 0.9375rem; font-weight: 700; color: white; margin: 0; }
+        .user-dropdown-email { font-size: 0.75rem; color: rgba(255,255,255,0.75); margin: 4px 0 0 0; }
+        .user-dropdown-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          font-size: 0.875rem;
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          text-decoration: none;
+          border: none;
+          background: none;
+          width: 100%;
+          text-align: left;
+          font-family: inherit;
+          position: relative;
+        }
+        .user-dropdown-item::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background: transparent;
+          transition: background var(--transition-fast);
+        }
+        .user-dropdown-item:hover { background: var(--bg-accent-soft); }
+        .user-dropdown-item:hover::before { background: var(--color-prosper-green); }
+        .user-dropdown-item svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--text-secondary); transition: color var(--transition-fast); }
+        .user-dropdown-item:hover svg { color: var(--color-prosper-green); }
+        .user-dropdown-divider { height: 1px; background: var(--border-default); margin: 4px 0; }
+        .user-dropdown-logout { color: var(--color-error); }
+        .user-dropdown-logout:hover { background: rgba(239,68,68,0.08); }
+        .user-dropdown-logout::before { background: transparent !important; }
+        .user-dropdown-logout:hover::before { background: var(--color-error) !important; }
+        .user-dropdown-logout svg { color: var(--color-error); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .topbar-search { max-width: 180px; }
+          .topbar-search-shortcut { display: none; }
+          .topbar-user-info { display: none; }
+          .notifications-dropdown { width: 280px; right: -8px; }
+          .user-dropdown { width: 220px; }
+        }
+        @media (max-width: 480px) {
+          .topbar-search { max-width: 120px; }
+          .topbar-search input { padding: 6px 10px 6px 30px; font-size: 0.8125rem; }
+          .topbar-icon-btn { width: 32px; height: 32px; }
+          .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
+          .notifications-dropdown { width: 260px; }
         }
       `}</style>
     </header>
