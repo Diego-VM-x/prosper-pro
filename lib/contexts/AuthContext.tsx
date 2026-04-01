@@ -24,7 +24,7 @@ interface AuthContextType {
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
+  deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -34,7 +34,7 @@ const AuthContext = createContext<AuthContextType>({
   loginWithEmail: async () => {},
   registerWithEmail: async () => {},
   logout: async () => {},
-  deleteAccount: async () => {},
+  deleteAccount: async () => ({ success: false, error: 'No disponible' }),
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -99,45 +99,65 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push('/login');
   };
 
-  const deleteAccount = async () => {
-    if (!auth || !user) return;
-    const uid = user.uid;
+  const deleteAccount = async (): Promise<{ success: boolean; needsReauth?: boolean; error?: string }> => {
+    if (!auth || !user) return { success: false, error: 'No hay usuario autenticado' };
 
-    // Eliminar datos de Firestore
-    const { deleteGoal } = await import('@/lib/firestore/goals');
-    const { deleteTransaction } = await import('@/lib/firestore/transactions');
-    const { deleteReminder } = await import('@/lib/firestore/reminders');
-    const { deleteDoc: fsDeleteDoc, collection, query, where, getDocs } = await import('firebase/firestore');
-    const { db } = await import('@/lib/firebase');
+    try {
+      const uid = user.uid;
 
-    // Eliminar metas
-    const goalsQ = query(collection(db, 'goals'), where('userId', '==', uid));
-    const goalsSnap = await getDocs(goalsQ);
-    await Promise.all(goalsSnap.docs.map((d) => deleteGoal(d.id)));
+      // 1. Eliminar datos de Firestore
+      const { deleteGoal } = await import('@/lib/firestore/goals');
+      const { deleteTransaction } = await import('@/lib/firestore/transactions');
+      const { deleteReminder } = await import('@/lib/firestore/reminders');
+      const { deleteDoc: fsDeleteDoc, collection, query, where, getDocs } = await import('firebase/firestore');
+      const { db } = await import('@/lib/firebase');
 
-    // Eliminar transacciones
-    const txQ = query(collection(db, 'transactions'), where('userId', '==', uid));
-    const txSnap = await getDocs(txQ);
-    await Promise.all(txSnap.docs.map((d) => deleteTransaction(d.id)));
+      // Eliminar metas
+      const goalsQ = query(collection(db, 'goals'), where('userId', '==', uid));
+      const goalsSnap = await getDocs(goalsQ);
+      await Promise.all(goalsSnap.docs.map((d) => deleteGoal(d.id)));
 
-    // Eliminar recordatorios
-    const remQ = query(collection(db, 'reminders'), where('userId', '==', uid));
-    const remSnap = await getDocs(remQ);
-    await Promise.all(remSnap.docs.map((d) => deleteReminder(d.id)));
+      // Eliminar transacciones
+      const txQ = query(collection(db, 'transactions'), where('userId', '==', uid));
+      const txSnap = await getDocs(txQ);
+      await Promise.all(txSnap.docs.map((d) => deleteTransaction(d.id)));
 
-    // Eliminar colecciones adicionales (gamification, notifications, study, user_profile)
-    const collectionsToDelete = ['notifications', 'xp_states', 'achievements', 'study_sessions', 'user_profiles', 'user_course_progress'];
-    for (const col of collectionsToDelete) {
+      // Eliminar recordatorios
+      const remQ = query(collection(db, 'reminders'), where('userId', '==', uid));
+      const remSnap = await getDocs(remQ);
+      await Promise.all(remSnap.docs.map((d) => deleteReminder(d.id)));
+
+      // Eliminar colecciones adicionales
+      const collectionsToDelete = ['notifications', 'xp_states', 'achievements', 'study_sessions', 'user_profiles', 'user_course_progress'];
+      for (const col of collectionsToDelete) {
+        try {
+          const q = query(collection(db, col), where('userId', '==', uid));
+          const snap = await getDocs(q);
+          await Promise.all(snap.docs.map((d) => fsDeleteDoc(d.ref)));
+        } catch { /* ignorar si la colección no existe */ }
+      }
+
+      // 2. Eliminar archivos de Storage (avatares)
       try {
-        const q = query(collection(db, col), where('userId', '==', uid));
-        const snap = await getDocs(q);
-        await Promise.all(snap.docs.map((d) => fsDeleteDoc(d.ref)));
-      } catch { /* ignorar si la colección no existe */ }
-    }
+        const { getStorage, ref, listAll, deleteObject } = await import('firebase/storage');
+        const storage = getStorage();
+        const avatarsRef = ref(storage, `avatars/${uid}`);
+        const avatarsList = await listAll(avatarsRef);
+        await Promise.all(avatarsList.items.map((itemRef) => deleteObject(itemRef)));
+      } catch { /* ignorar si no hay archivos */ }
 
-    // Eliminar usuario de Firebase Auth
-    await deleteUser(user);
-    router.push('/login');
+      // 3. Eliminar usuario de Firebase Auth
+      await deleteUser(user);
+      router.push('/login');
+      return { success: true };
+    } catch (e: any) {
+      console.error('Error al eliminar cuenta:', e);
+      // Detectar error de re-authentication
+      if (e?.code === 'auth/requires-recent-login') {
+        return { success: false, needsReauth: true, error: 'Debes volver a iniciar sesión por seguridad antes de eliminar tu cuenta.' };
+      }
+      return { success: false, error: e?.message || 'Error desconocido al eliminar la cuenta.' };
+    }
   };
 
   return (

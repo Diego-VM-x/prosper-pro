@@ -92,3 +92,7 @@
   - `app/components/Dashboard.tsx`: Flechas de tarjetas usan `useRouter` para navegación. Modal CSV eliminado.
   - `app/configuracion/page.tsx`: Compresión de imagen con Canvas API antes de subir a Storage. Eliminación de cuenta: Storage → Firestore → Auth.
   - `AGENTS.md`: Agregada regla de preguntar push a Git después de actualizar CONTEXT.md.
+  - **UX/UI Ajustes Rediseño (01/04/2026)**:
+    - `app/configuracion/page.tsx`: Zona de Peligro rediseñada con tarjeta moderna (borde rojo, bg-white dark:bg-gray-800, icono AlertTriangle SVG inline, texto descriptivo completo, botón grande rojo). Todos los textos con clases Tailwind explícitas (`text-gray-900 dark:text-white`, `text-gray-600 dark:text-gray-300`). Modal de eliminación rediseñado con backdrop-blur. Aviso de re-authentication implementado (modal amarillo con opción de ir a login). ~250 líneas de CSS custom eliminadas, reemplazadas por Tailwind nativo.
+    - `app/calendario/page.tsx`: Suscripción `onSnapshot` implementada para metas en tiempo real usando `subscribeToGoals()`. Limpieza de suscripción con `unsubscribe()` para evitar fugas de memoria. Todos los textos con clases Tailwind explícitas. CSS custom reemplazado por clases Tailwind nativas. Modal rediseñado.
+    - `lib/contexts/AuthContext.tsx`: `deleteAccount()` ahora retorna `{ success: boolean; needsReauth?: boolean; error?: string }`. Orden correcto: Firestore → Storage → Auth. Detección de `auth/requires-recent-login` con flag `needsReauth`.
