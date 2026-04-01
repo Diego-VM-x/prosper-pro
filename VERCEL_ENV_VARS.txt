@@ -1,0 +1,11 @@
+# Variables de Entorno para Vercel
+# Copia estos valores en: https://vercel.com/dashboard > prosper-pro > Settings > Environment Variables
+# Configura para Production, Preview y Development
+
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBmrDThJ-J40ktiSWDkex1yjB-fa4lkDyg
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=prosper-197d4.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=prosper-197d4
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=prosper-197d4.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=183396372863
+NEXT_PUBLIC_FIREBASE_APP_ID=1:183396372863:web:1b3a5c2d1d5288c7a28a4a
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-PW6SZ1WP5Y
