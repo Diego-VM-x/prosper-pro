@@ -1224,25 +1224,110 @@ ul, ol {
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+
+/* Tablets grandes y laptops pequeñas */
 @media (max-width: 1280px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .content-grid { grid-template-columns: 1fr; }
   .content-grid-full { grid-template-columns: 1fr 1fr; }
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .page-header-actions { width: 100%; justify-content: flex-start; }
 }
 
+/* Tablets */
 @media (max-width: 1024px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
   .main-content { margin-left: 0; }
+  .topbar-search { max-width: 250px; }
+  .content-grid-full { grid-template-columns: 1fr; }
 }
 
+/* Móviles grandes */
 @media (max-width: 768px) {
   :root { --sidebar-width: 100%; }
-  .stats-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
   .content-grid-full { grid-template-columns: 1fr; }
   .page-content { padding: 16px; }
-  .topbar { padding: 0 16px; }
+  .topbar { padding: 0 12px; gap: 8px; }
   .topbar-user-info { display: none; }
+  .topbar-search { max-width: 180px; }
+  .topbar-search-shortcut { display: none; }
+  .page-title { font-size: 1.375rem; }
+  .page-subtitle { font-size: 0.8125rem; }
+  .btn { padding: 8px 14px; font-size: 0.8125rem; }
+  .stat-value { font-size: 1.5rem; }
+  .stat-card { padding: 16px; }
+  .card { padding: 16px; }
+  .timer-display { font-size: 1.5rem; }
+  .progress-ring { width: 100px; height: 100px; }
+  .progress-ring svg { width: 100px; height: 100px; }
+  .progress-ring-pct { font-size: 1.25rem; }
+  .sidebar-logo img { width: 28px; height: 28px; }
+  .sidebar-logo-text { font-size: 1.25rem; }
+  .sidebar-promo-card { padding: 12px; }
+  .sidebar-promo-card .promo-title { font-size: 0.75rem; }
+  .sidebar-promo-card .promo-sub { font-size: 0.625rem; }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .page-content { padding: 12px; }
+  .topbar { padding: 0 8px; }
+  .topbar-search { max-width: 120px; }
+  .topbar-search input { padding: 6px 10px 6px 30px; font-size: 0.8125rem; }
+  .topbar-icon-btn { width: 32px; height: 32px; }
+  .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
+  .page-title { font-size: 1.125rem; }
+  .page-header { margin-bottom: 16px; }
+  .stats-grid { gap: 8px; }
+  .stat-card { padding: 12px; }
+  .stat-label { font-size: 0.6875rem; }
+  .stat-value { font-size: 1.25rem; }
+  .stat-change { font-size: 0.6875rem; }
+  .btn { padding: 6px 12px; font-size: 0.75rem; gap: 4px; }
+  .btn svg { width: 14px; height: 14px; }
+  .card { padding: 12px; }
+  .card-title { font-size: 0.8125rem; }
+  .card-action { padding: 4px 8px; font-size: 0.6875rem; }
+  .chart-bars { height: 80px; }
+  .timer-display { font-size: 1.25rem; }
+  .timer-btn { width: 32px; height: 32px; }
+  .timer-btn svg { width: 14px; height: 14px; }
+  .progress-ring { width: 80px; height: 80px; }
+  .progress-ring svg { width: 80px; height: 80px; }
+  .progress-ring-pct { font-size: 1rem; }
+  .progress-ring-label { font-size: 0.5rem; }
+  .team-avatar { width: 28px; height: 28px; font-size: 0.625rem; }
+  .team-name { font-size: 0.75rem; }
+  .team-task { font-size: 0.625rem; }
+  .status-badge { padding: 2px 6px; font-size: 0.625rem; }
+  .project-color-dot { width: 24px; height: 24px; }
+  .project-name { font-size: 0.75rem; }
+  .project-due { font-size: 0.625rem; }
+  .modal-content { width: 95%; max-width: none; padding: 16px; }
+  .modal-title { font-size: 1.125rem; }
+  .form-input { padding: 8px 12px; font-size: 0.8125rem; }
+  .form-label { font-size: 0.75rem; }
+  .notifications-dropdown { width: 280px !important; right: -8px; }
+  .sidebar-logo { padding: 16px; }
+  .sidebar-nav { padding: 12px 8px; }
+  .nav-item { padding: 8px; font-size: 0.8125rem; }
+  .nav-item svg { width: 16px; height: 16px; }
+  .sidebar-footer { padding: 12px 8px; }
+}
+
+/* Móviles muy pequeños */
+@media (max-width: 360px) {
+  .page-content { padding: 8px; }
+  .topbar { padding: 0 6px; }
+  .topbar-search { display: none; }
+  .topbar-divider { display: none; }
+  .stat-value { font-size: 1.125rem; }
+  .stat-label { font-size: 0.625rem; }
+  .timer-display { font-size: 1rem; }
+  .progress-ring { width: 70px; height: 70px; }
+  .progress-ring svg { width: 70px; height: 70px; }
 }
 
 /* ============================================================

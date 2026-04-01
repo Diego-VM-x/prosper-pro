@@ -1,24 +1,52 @@
-# Lista de Problemas Técnicos y Optimizaciones (Logs de Desarrollo)
+# Lista de Problemas Técnicos y Optimizaciones
 
-## Firebase: Missing or insufficient permissions
-- **Descripción**: Los módulos de Firestore están fallando al intentar leer datos porque no tienen permisos suficientes (`Missing or insufficient permissions`).
-- **Archivos**: `lib/firestore/*.ts` (transactions, study, gamification, reminders, community, goals, achievements).
-- **Acción**: Revisar y actualizar `firestore.rules`.
+## ✅ Resueltos
 
-## React Hydration Mismatch
-- **Descripción**: Error de hidratación debido a cambios en atributos del DOM (posiblemente por extensiones de navegador o diferencias entre SSR y cliente).
-- **Archivos**: `app/layout.tsx` (estructura del body).
-- **Acción**: Verificar el uso de `suppressHydrationWarning` y componentes que acceden a `window` o datos variables durante la renderización inicial.
+### Firebase: Missing or insufficient permissions
+- **Estado**: ✅ Resuelto
+- **Solución**: Creado `firestore.rules` con reglas de seguridad por colección.
 
-## Unique Keys in React
-- **Descripción**: Se detectaron elementos con la misma llave (`key="Otro"`).
-- **Archivos**: Probablemente en componentes de renderizado de listas (filtros, selecciones).
-- **Acción**: Asegurar que todas las listas en `app/components/` tengan `key` únicos.
+### React Hydration Mismatch
+- **Estado**: ✅ Resuelto
+- **Solución**: Agregado `suppressHydrationWarning` en `<html>`.
 
-## Scroll Behavior
-- **Descripción**: Conflicto con `scroll-behavior: smooth` global.
-- **Acción**: Seguir recomendación de Next.js de usar `data-scroll-behavior="smooth"` en el `<html>`.
+### Metadata
+- **Estado**: ✅ Resuelto
+- **Solución**: Configurada `metadataBase` y metadata completa en `app/layout.tsx`.
 
-## Metadata
-- **Descripción**: Falta configurar `metadataBase` en el layout principal.
-- **Acción**: Añadir configuración en el objeto `metadata` de `app/layout.tsx`.
+### Login no redirige al dashboard
+- **Estado**: ✅ Resuelto
+- **Solución**: Agregado `window.location.href = '/'` tras login en `app/login/page.tsx`.
+
+### Logout no redirige al login
+- **Estado**: ✅ Resuelto
+- **Solución**: Agregado `router.push('/login')` en `AuthContext.tsx`.
+
+### Botón de usuario no funcional
+- **Estado**: ✅ Resuelto
+- **Solución**: Agregado menú desplegable en `Topbar.tsx`.
+
+### Responsividad
+- **Estado**: ✅ Resuelto
+- **Solución**: Media queries para 1280px, 1024px, 768px, 480px y 360px en `globals.css`.
+
+### SEO y Rendimiento
+- **Estado**: ✅ Resuelto
+- **Solución**: Metadata OG/Twitter, headers de seguridad, compresión, formatos AVIF/WebP.
+
+---
+
+## ⚠️ Pendientes
+
+### Variables de entorno en Vercel
+- **Descripción**: Las 7 variables `NEXT_PUBLIC_FIREBASE_*` deben configurarse en Vercel.
+- **Impacto**: Crítico - sin esto Firebase no funciona en producción.
+
+### Dominio autorizado en Firebase Auth
+- **Descripción**: Agregar `prosper-pro.vercel.app` en Authorized domains.
+
+### Página de Finanzas funcional
+- **Descripción**: Actualmente es un placeholder. Implementar con datos reales de Firestore.
+
+### Importación CSV
+- **Descripción**: El modal "Importar Datos" no tiene funcionalidad completa.
