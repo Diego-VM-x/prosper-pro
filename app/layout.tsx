@@ -1,23 +1,66 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#1A3C34',
+};
+
 export const metadata: Metadata = {
-  title: 'Prosper Pro | Dashboard de Libertad Financiera',
-  description: 'Gestiona tu camino hacia la libertad financiera con educación gamificada, seguimiento de proyectos y metas en Prosper Pro.',
-  keywords: 'finanzas personales, libertad financiera, educación financiera, dashboard, prosper',
+  title: {
+    default: 'Prosper Pro | Tu Camino a la Libertad Financiera',
+    template: '%s | Prosper Pro',
+  },
+  description: 'Plataforma de educación financiera gamificada. Gestiona tus metas de ahorro, inversión y aprendizaje con Prosper Pro.',
+  keywords: ['finanzas personales', 'libertad financiera', 'educación financiera', 'ahorro', 'inversión', 'dashboard financiero', 'prosper pro'],
+  authors: [{ name: 'Prosper Pro Team' }],
+  creator: 'Prosper Pro',
+  publisher: 'Prosper Pro',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
     icon: '/logo-icon.png',
     shortcut: '/logo-icon.png',
     apple: '/logo-icon.png',
   },
   openGraph: {
-    title: 'Prosper Pro | Dashboard de Libertad Financiera',
-    description: 'Gestiona tu camino hacia la libertad financiera con educación gamificada.',
-    images: ['/logo-full.png'],
     type: 'website',
     locale: 'es_ES',
+    url: 'https://prosper-pro.vercel.app',
+    siteName: 'Prosper Pro',
+    title: 'Prosper Pro | Tu Camino a la Libertad Financiera',
+    description: 'Plataforma de educación financiera gamificada. Gestiona tus metas de ahorro, inversión y aprendizaje.',
+    images: [
+      {
+        url: '/logo-full.png',
+        width: 1200,
+        height: 630,
+        alt: 'Prosper Pro - Dashboard Financiero',
+      },
+    ],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Prosper Pro | Tu Camino a la Libertad Financiera',
+    description: 'Plataforma de educación financiera gamificada.',
+    images: ['/logo-full.png'],
+  },
+  alternates: {
+    canonical: 'https://prosper-pro.vercel.app',
+  },
+  category: 'finance',
 };
 
 export default function RootLayout({
