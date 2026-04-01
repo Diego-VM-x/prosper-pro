@@ -34,6 +34,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginWithEmail(email, password);
+      window.location.href = '/';
     } catch (err: any) {
       switch (err.code) {
         case 'auth/invalid-credential':
