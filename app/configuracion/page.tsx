@@ -28,8 +28,7 @@ export default function ConfiguracionPage() {
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showReauthWarning, setShowReauthWarning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -233,100 +232,42 @@ export default function ConfiguracionPage() {
             </div>
           </div>
 
-          {/* ZONA DE PELIGRO */}
-          <div className="settings-card danger-card">
-            <div className="danger-card-content">
-              <div className="danger-header">
-                <div className="danger-icon-wrapper">
-                  <AlertTriangleIcon width={20} />
-                </div>
-                <div className="danger-text">
-                  <h3 className="danger-title">ZONA DE PELIGRO</h3>
-                  <p className="danger-desc">
-                    Al eliminar tu cuenta, perderás permanentemente todas tus metas, historial financiero y lecciones completadas. Esta acción no se puede deshacer.
-                  </p>
-                </div>
-              </div>
-              <div className="danger-action">
-                <button className="btn btn-danger" onClick={() => setShowDeleteConfirm(true)}>
-                  <AlertTriangleIcon width={16} />
-                  Eliminar Mi Cuenta Permanentemente
-                </button>
-              </div>
+          {/* ZONA DE PELIGRO - Tarjeta única con botón directo */}
+          <div className="danger-zone-card">
+            <div className="danger-zone-icon">
+              <AlertTriangleIcon width={24} />
+            </div>
+            <div className="danger-zone-content">
+              <h3 className="danger-zone-title">ADVERTENCIA</h3>
+              <p className="danger-zone-text">
+                Al hacer clic en el botón de abajo, se borrarán permanentemente tus metas, historial de ahorro, mensajes y tu acceso a la plataforma. Esta acción es irreversible.
+              </p>
+              <button
+                className="danger-zone-btn"
+                onClick={async () => {
+                  setErrorMsg('');
+                  setDeleting(true);
+                  try {
+                    const result = await deleteAccount();
+                    if (result.needsReauth) {
+                      setErrorMsg('Por seguridad, cierra sesión y vuelve a entrar antes de eliminar tu cuenta.');
+                    } else if (result.error) {
+                      setErrorMsg(result.error);
+                    }
+                  } catch {
+                    setErrorMsg('Error al eliminar la cuenta. Intenta de nuevo.');
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+              >
+                {deleting ? 'Eliminando...' : 'Confirmar y Eliminar mi cuenta para siempre'}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Modal confirmar eliminación */}
-        {showDeleteConfirm && (
-          <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-            <div className="modal-content modal-danger" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">
-                  <span className="modal-danger-icon"><AlertTriangleIcon width={20} /></span> Eliminar Cuenta
-                </h2>
-                <button className="modal-close" onClick={() => setShowDeleteConfirm(false)}><IconX width={20} /></button>
-              </div>
-              <div className="modal-body">
-                <p>¿Estás seguro? Se eliminarán <strong>permanentemente</strong> todos tus datos:</p>
-                <ul className="danger-list">
-                  <li><span className="danger-x">✕</span> Metas y progreso financiero</li>
-                  <li><span className="danger-x">✕</span> Transacciones y registros</li>
-                  <li><span className="danger-x">✕</span> Progreso de cursos</li>
-                  <li><span className="danger-x">✕</span> Logros y experiencia</li>
-                </ul>
-                <p className="danger-warning">⚠️ Esta acción no se puede deshacer.</p>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => setShowDeleteConfirm(false)}>Cancelar</button>
-                <button
-                  className="btn btn-danger"
-                  onClick={async () => {
-                    setErrorMsg('');
-                    const result = await deleteAccount();
-                    if (result.success) {
-                      setShowDeleteConfirm(false);
-                    } else if (result.needsReauth) {
-                      setShowReauthWarning(true);
-                      setShowDeleteConfirm(false);
-                    } else {
-                      setErrorMsg(result.error || 'Error al eliminar la cuenta.');
-                    }
-                  }}
-                >
-                  <AlertTriangleIcon width={14} />
-                  Confirmar Eliminación
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Aviso de re-authentication */}
-        {showReauthWarning && (
-          <div className="modal-overlay" onClick={() => setShowReauthWarning(false)}>
-            <div className="modal-content modal-reauth" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">
-                  <span className="modal-reauth-icon"><AlertTriangleIcon width={20} /></span> Verificación Requerida
-                </h2>
-                <button className="modal-close" onClick={() => setShowReauthWarning(false)}><IconX width={20} /></button>
-              </div>
-              <div className="modal-body">
-                <p>Por seguridad, debes <strong>volver a iniciar sesión</strong> antes de poder eliminar tu cuenta.</p>
-                <div className="reauth-notice">
-                  🔒 Esto es para confirmar que eres tú quien realiza esta acción sensible.
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => setShowReauthWarning(false)}>Entendido</button>
-                <button className="btn btn-primary" onClick={async () => { await logout(); }}>
-                  Ir a Iniciar Sesión
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <style>{`
           .success-toast {
@@ -546,25 +487,23 @@ export default function ConfiguracionPage() {
             margin: 2px 0 0 0;
           }
 
-          /* Danger card */
-          .danger-card {
-            border-color: rgba(239,68,68,0.3);
-          }
-          .danger-card:hover {
-            box-shadow: 0 4px 12px rgba(239,68,68,0.1);
-          }
-          .danger-card-content {
-            padding: 20px;
-          }
-          .danger-header {
+          /* Danger zone card - fondo rojo claro/oscuro */
+          .danger-zone-card {
+            background: var(--bg-red-50, #FEF2F2);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: var(--radius-xl);
+            padding: 24px;
             display: flex;
+            gap: 16px;
             align-items: flex-start;
-            gap: 14px;
-            margin-bottom: 16px;
           }
-          .danger-icon-wrapper {
-            width: 40px;
-            height: 40px;
+          [data-theme="dark"] .danger-zone-card {
+            background: rgba(127,29,29,0.2);
+            border-color: rgba(239,68,68,0.4);
+          }
+          .danger-zone-icon {
+            width: 48px;
+            height: 48px;
             border-radius: var(--radius-md);
             background: rgba(239,68,68,0.1);
             display: flex;
@@ -573,26 +512,52 @@ export default function ConfiguracionPage() {
             color: var(--color-error, #EF4444);
             flex-shrink: 0;
           }
-          .danger-text {
+          .danger-zone-content {
             flex: 1;
           }
-          .danger-title {
-            font-size: 0.75rem;
+          .danger-zone-title {
+            font-size: 0.875rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--color-error, #EF4444);
-            margin: 0 0 6px 0;
+            letter-spacing: 0.05em;
+            color: var(--color-red-900, #7F1D1D);
+            margin: 0 0 8px 0;
           }
-          .danger-desc {
+          [data-theme="dark"] .danger-zone-title {
+            color: var(--color-red-300, #FCA5A5);
+          }
+          .danger-zone-text {
             font-size: 0.8125rem;
-            color: var(--text-secondary);
-            margin: 0;
-            line-height: 1.5;
+            color: var(--color-red-900, #7F1D1D);
+            margin: 0 0 16px 0;
+            line-height: 1.6;
           }
-          .danger-action {
-            padding-top: 16px;
-            border-top: 1px solid rgba(239,68,68,0.15);
+          [data-theme="dark"] .danger-zone-text {
+            color: var(--color-red-200, #FECACA);
+          }
+          .danger-zone-btn {
+            width: 100%;
+            padding: 12px 20px;
+            background: var(--color-error, #EF4444);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+          }
+          .danger-zone-btn:hover:not(:disabled) {
+            background: #dc2626;
+            transform: translateY(-1px);
+          }
+          .danger-zone-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
           }
 
           /* Buttons */
@@ -615,61 +580,6 @@ export default function ConfiguracionPage() {
             color: var(--text-primary) !important;
           }
 
-          /* Modal */
-          .modal-danger {
-            border: 1px solid rgba(239,68,68,0.3);
-          }
-          .modal-danger .modal-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--color-error, #EF4444);
-          }
-          .modal-danger-icon {
-            display: inline-flex;
-          }
-          .modal-reauth .modal-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--color-gold-500);
-          }
-          .modal-reauth-icon {
-            display: inline-flex;
-            color: var(--color-gold-500);
-          }
-          .danger-list {
-            margin: 12px 0;
-            padding: 12px 16px;
-            background: rgba(239,68,68,0.05);
-            border-radius: var(--radius-md);
-            list-style: none;
-          }
-          .danger-list li {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            padding: 4px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-          }
-          .danger-x {
-            color: var(--color-error, #EF4444);
-            font-weight: 700;
-          }
-          .danger-warning {
-            font-size: 0.75rem;
-            color: var(--color-error, #EF4444);
-            font-weight: 600;
-          }
-          .reauth-notice {
-            margin-top: 12px;
-            padding: 12px 16px;
-            background: rgba(245,158,11,0.08);
-            border-radius: var(--radius-md);
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-          }
 
           @media (max-width: 768px) {
             .settings-layout { max-width: 100%; }
@@ -678,15 +588,11 @@ export default function ConfiguracionPage() {
             .edit-name-form .form-input { width: 100%; }
             .setting-item { padding: 12px 8px; }
             .setting-item-icon { width: 36px; height: 36px; }
-            .danger-header { flex-direction: column; align-items: center; text-align: center; }
-            .danger-action .btn { width: 100%; justify-content: center; }
+            .danger-zone-card { flex-direction: column; align-items: center; text-align: center; }
           }
           @media (max-width: 480px) {
             .profile-avatar { width: 64px; height: 64px; font-size: 1.5rem; }
             .profile-name { font-size: 1.125rem; }
-            .modal-content { width: 95%; padding: 16px; }
-            .modal-footer { flex-direction: column; }
-            .modal-footer .btn { width: 100%; justify-content: center; }
           }
         `}</style>
       </DashboardLayout>

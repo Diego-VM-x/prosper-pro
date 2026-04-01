@@ -93,6 +93,6 @@
   - `app/configuracion/page.tsx`: Compresión de imagen con Canvas API antes de subir a Storage. Eliminación de cuenta: Storage → Firestore → Auth.
   - `AGENTS.md`: Agregada regla de preguntar push a Git después de actualizar CONTEXT.md.
   - **UX/UI Ajustes Rediseño (01/04/2026)**:
-    - `app/configuracion/page.tsx`: Zona de Peligro rediseñada con tarjeta moderna (borde rojo, design tokens Prosper, icono AlertTriangle SVG inline, texto descriptivo completo, botón grande rojo). Modal de eliminación mejorado. Aviso de re-authentication implementado (modal amarillo con opción de ir a login). CSS usa variables semánticas (`var(--bg-card)`, `var(--text-primary)`, etc.) para consistencia con el design system.
+    - `app/configuracion/page.tsx`: Zona de Peligro con tarjeta única (`bg-red-50 dark:bg-red-900/20`), botón directo "Confirmar y Eliminar mi cuenta para siempre" sin modales. Textos legibles en modo claro (`text-red-900`). Manejo de re-authentication con mensaje inline. CSS usa variables semánticas Prosper.
     - `app/calendario/page.tsx`: Suscripción `onSnapshot` implementada para metas en tiempo real usando `subscribeToGoals()`. Limpieza de suscripción con `unsubscribe()` para evitar fugas de memoria. CSS usa design tokens Prosper originales.
     - `lib/contexts/AuthContext.tsx`: `deleteAccount()` ahora retorna `{ success: boolean; needsReauth?: boolean; error?: string }`. Orden correcto: Firestore → Storage → Auth. Detección de `auth/requires-recent-login` con flag `needsReauth`.
