@@ -6,7 +6,7 @@ import { DashboardLayout } from '../../components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   getCourseById,
-  subscribeToCourseModules,
+  getCourseModules,
   getUserCourseProgress,
   completeModule,
   enrollCourse,
@@ -34,10 +34,11 @@ export default function CourseDetail() {
 
   useEffect(() => {
     if (!id) return;
-    const unsub = subscribeToCourseModules(id, (mods) => {
-      setModules(mods);
-    });
-    return () => unsub();
+    let cancelled = false;
+    getCourseModules(id).then((mods) => {
+      if (!cancelled) setModules(mods);
+    }).catch(console.error);
+    return () => { cancelled = true; };
   }, [id]);
 
   useEffect(() => {

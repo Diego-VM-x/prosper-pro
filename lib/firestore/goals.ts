@@ -6,6 +6,7 @@ import {
   getDoc,
   updateDoc,
   deleteDoc,
+  setDoc,
   query,
   where,
   onSnapshot,
@@ -42,6 +43,16 @@ export async function createGoal(goal: Omit<Goal, 'id' | 'createdAt' | 'updatedA
   return docRef.id;
 }
 
+export async function createGoalWithId(goal: Goal) {
+  const docRef = doc(db, COLLECTION, goal.id);
+  await setDoc(docRef, {
+    ...goal,
+    createdAt: goal.createdAt || Date.now(),
+    updatedAt: Date.now(),
+  });
+  return goal.id;
+}
+
 export async function updateGoal(goalId: string, updates: Partial<Goal>) {
   const docRef = doc(db, COLLECTION, goalId);
   await updateDoc(docRef, { ...updates, updatedAt: Date.now() });
@@ -49,6 +60,17 @@ export async function updateGoal(goalId: string, updates: Partial<Goal>) {
 
 export async function deleteGoal(goalId: string) {
   await deleteDoc(doc(db, COLLECTION, goalId));
+}
+
+export async function getGoalsByUserId(userId: string): Promise<Goal[]> {
+  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  const goals: Goal[] = [];
+  snapshot.forEach((docSnap) => {
+    goals.push({ id: docSnap.id, ...docSnap.data() } as Goal);
+  });
+  goals.sort((a, b) => b.createdAt - a.createdAt);
+  return goals;
 }
 
 export async function getGoal(goalId: string): Promise<Goal | null> {

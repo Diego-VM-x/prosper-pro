@@ -96,13 +96,6 @@ export interface Notification {
   createdAt: number;
 }
 
-export interface StudySession {
-  userId: string;
-  totalSeconds: number;
-  lastUpdated: number;
-  isRunning: boolean;
-}
-
 export interface Course {
   id?: string;
   title: string;

@@ -3,6 +3,7 @@ import {
   doc,
   addDoc,
   getDocs,
+  getDoc,
   updateDoc,
   query,
   where,
@@ -29,6 +30,24 @@ export function subscribeToXP(userId: string, callback: (xp: XPState | null) => 
     console.error('subscribeToXP error:', error);
     callback(null);
   });
+}
+
+export async function getXPByUserId(userId: string): Promise<XPState | null> {
+  const q = query(collection(db, XP_COLLECTION), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return { ...snapshot.docs[0].data() } as XPState;
+}
+
+export async function getAchievementsByUserId(userId: string): Promise<Achievement[]> {
+  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  const achievements: Achievement[] = [];
+  snapshot.forEach((docSnap) => {
+    achievements.push({ id: docSnap.id, ...docSnap.data() } as Achievement);
+  });
+  achievements.sort((a, b) => b.unlockedAt - a.unlockedAt);
+  return achievements;
 }
 
 export async function updateXP(userId: string, xpGain: number) {

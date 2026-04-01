@@ -41,6 +41,25 @@ export async function getCourseById(courseId: string): Promise<Course | null> {
   return { id: docSnap.id, ...docSnap.data() } as Course;
 }
 
+export async function getCourses(): Promise<Course[]> {
+  const snapshot = await getDocs(collection(db, COURSES_COLLECTION));
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
+}
+
+export async function getUserProgressByUserId(userId: string): Promise<UserCourseProgress[]> {
+  const q = query(collection(db, PROGRESS_COLLECTION), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserCourseProgress));
+}
+
+export async function getCourseModules(courseId: string): Promise<CourseModule[]> {
+  const q = query(collection(db, MODULES_COLLECTION), where('courseId', '==', courseId));
+  const snapshot = await getDocs(q);
+  const modules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModule));
+  modules.sort((a, b) => a.order - b.order);
+  return modules;
+}
+
 export function subscribeToUserProgress(userId: string, callback: (progress: UserCourseProgress[]) => void) {
   const q = query(collection(db, PROGRESS_COLLECTION), where('userId', '==', userId));
   return onSnapshot(q, (snapshot) => {

@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { subscribeToUserProfile, updateUserProfile } from '@/lib/firestore/users';
+import { getUserProfile, updateUserProfile } from '@/lib/firestore/users';
 import { useTheme } from '../components/ThemeProvider';
 import { IconX, IconEdit, IconTrash, IconCheck, IconSun, IconMoon, IconLogout } from '../components/icons';
 import type { UserProfile } from '@/types';
@@ -20,12 +20,20 @@ export default function ConfiguracionPage() {
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    if (!user?.uid) return;
-    const unsub = subscribeToUserProfile(user.uid, (p) => {
-      setProfile(p);
-      if (p?.displayName) setNewName(p.displayName);
-    });
-    return () => unsub();
+    const uid = user?.uid as string;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadProfile() {
+      try {
+        const p = await getUserProfile(uid);
+        if (!cancelled) {
+          setProfile(p);
+          if (p?.displayName) setNewName(p.displayName);
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadProfile();
+    return () => { cancelled = true; };
   }, [user?.uid]);
 
   const handleSaveName = async () => {
@@ -43,21 +51,57 @@ export default function ConfiguracionPage() {
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.uid) return;
+
+    // Compresión con Canvas API nativa
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const reader = new FileReader();
+
+    reader.onload = async (ev) => {
+      img.src = ev.target?.result as string;
+      img.onload = async () => {
+        // Redimensionar a máximo 300px
+        const MAX_SIZE = 300;
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } }
+        else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
+        canvas.width = w;
+        canvas.height = h;
+        ctx?.drawImage(img, 0, 0, w, h);
+
+        // Convertir a blob con calidad 0.7
+        canvas.toBlob(async (blob) => {
+          if (!blob) return;
+          setSaving(true);
+          try {
+            const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
+            const storage = getStorage();
+            const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}.jpg`);
+            await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
+            const url = await getDownloadURL(storageRef);
+            await updateUserProfile(user.uid, { photoURL: url });
+            setProfile((prev) => prev ? { ...prev, photoURL: url } : prev);
+            setSuccessMsg('Foto actualizada correctamente');
+            setTimeout(() => setSuccessMsg(''), 3000);
+          } catch (err) {
+            console.error('Error subiendo foto:', err);
+          } finally {
+            setSaving(false);
+          }
+        }, 'image/jpeg', 0.7);
+      };
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handlePhotoURL = async () => {
-    if (!user?.uid) return;
-    const url = prompt('URL de la foto de perfil:');
-    if (url && url.trim()) {
-      setSaving(true);
-      try {
-        await updateUserProfile(user.uid, { photoURL: url.trim() });
-        setSuccessMsg('Foto actualizada correctamente');
-        setTimeout(() => setSuccessMsg(''), 3000);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setSaving(false);
-      }
-    }
+    fileInputRef.current?.click();
   };
 
   const userInitial = profile?.displayName ? profile.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : '?');
@@ -94,6 +138,13 @@ export default function ConfiguracionPage() {
                 <button className="profile-avatar-edit" onClick={handlePhotoURL} title="Cambiar foto">
                   📷
                 </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handlePhotoUpload}
+                />
               </div>
               <div className="profile-info">
                 {editingName ? (
@@ -207,6 +258,32 @@ export default function ConfiguracionPage() {
                   className="btn btn-danger"
                   onClick={async () => {
                     try {
+                      // 1. Borrar foto de Storage
+                      const { getStorage, ref, deleteObject, listAll } = await import('firebase/storage');
+                      const { db } = await import('@/lib/firebase');
+                      const { collection, query, where, getDocs, deleteDoc } = await import('firebase/firestore');
+                      const uid = user?.uid;
+                      if (uid) {
+                        // Borrar avatares
+                        try {
+                          const storage = getStorage();
+                          const avatarsRef = ref(storage, `avatars/${uid}`);
+                          const avatarsList = await listAll(avatarsRef);
+                          await Promise.all(avatarsList.items.map((itemRef) => deleteObject(itemRef)));
+                        } catch { /* ignorar si no hay fotos */ }
+
+                        // 2. Borrar documentos de Firestore
+                        const collections = ['goals', 'transactions', 'reminders', 'notifications', 'xp_states', 'achievements', 'study_sessions', 'user_course_progress'];
+                        for (const col of collections) {
+                          try {
+                            const q = query(collection(db, col), where('userId', '==', uid));
+                            const snap = await getDocs(q);
+                            await Promise.all(snap.docs.map((d) => deleteDoc(d.ref)));
+                          } catch { /* ignorar si la colección no existe */ }
+                        }
+                      }
+
+                      // 3. Eliminar usuario de Auth
                       await deleteAccount();
                     } catch (e) {
                       console.error('Error al eliminar cuenta:', e);
@@ -427,11 +504,14 @@ export default function ConfiguracionPage() {
           }
           .btn-danger {
             background: var(--color-error);
-            color: white;
+            color: white !important;
           }
           .btn-danger:hover {
             background: #dc2626;
             transform: translateY(-1px);
+          }
+          .btn-outline {
+            color: var(--text-primary) !important;
           }
 
           /* Modal */

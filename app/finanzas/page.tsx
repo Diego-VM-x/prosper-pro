@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { subscribeToTransactions, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { getTransactionsByUserId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import type { Transaction } from '@/types';
 
 // Sin datos por defecto
@@ -28,12 +28,23 @@ export default function FinanzasPage() {
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '' });
 
   useEffect(() => {
-    if (!user?.uid) return;
-    try {
-      const unsub = subscribeToTransactions(user.uid, (t) => { if (t.length) setTransactions(t); });
-      getMonthlySummary(user.uid).then(setSummary);
-      return () => unsub();
-    } catch (e) { console.error(e); }
+    const uid = user?.uid as string;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadData() {
+      try {
+        const [txs, summary] = await Promise.all([
+          getTransactionsByUserId(uid),
+          getMonthlySummary(uid),
+        ]);
+        if (!cancelled) {
+          if (txs.length) setTransactions(txs);
+          setSummary(summary);
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadData();
+    return () => { cancelled = true; };
   }, [user?.uid]);
 
   const categories = filterType === 'Todos' ? Object.values(CATEGORIES).flat() : (CATEGORIES[filterType as keyof typeof CATEGORIES] || []);

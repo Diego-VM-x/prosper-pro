@@ -96,6 +96,17 @@ export async function deleteTransaction(transactionId: string) {
   await deleteDoc(doc(db, COLLECTION, transactionId));
 }
 
+export async function getTransactionsByUserId(userId: string): Promise<Transaction[]> {
+  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  const transactions: Transaction[] = [];
+  snapshot.forEach((docSnap) => {
+    transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+  });
+  transactions.sort((a, b) => b.date - a.date);
+  return transactions;
+}
+
 export async function getMonthlySummary(userId: string) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();

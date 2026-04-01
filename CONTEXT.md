@@ -55,6 +55,12 @@
 - ✅ **Topbar Estético**: Dropdown de usuario con gradiente, animaciones y diseño moderno.
 - ✅ **Configuración Rediseñada**: Página con tarjeta de perfil gradiente, lista de ajustes con iconos, modal de eliminación mejorado.
 - ✅ **Sincronización Metas-Calendario**: Campo fecha en metas usa `input type="date"` que se sincroniza con el calendario.
+- ✅ **Timer de Estudio Eliminado**: Removido widget del Dashboard, archivo `lib/firestore/study.ts`, interfaz `StudySession` de `types/index.ts`, y referencia en `AuthContext.tsx`. Build exitoso.
+- ✅ **Optimización Firestore**: Todas las vistas cambiadas de `onSnapshot` a `getDocs` (una sola lectura por navegación). Eliminadas conexiones abiertas innecesarias en Dashboard, Metas, Finanzas, Calendario, Cursos, Sidebar y Configuración. Community query optimizada con `Promise.all` en vez de N+1.
+- ✅ **Bug Fixes Producción (01/04/2026)**:
+  - Dashboard: Eliminado botón "Importar Datos" y modal CSV. Flechas (↗) de tarjetas ahora son funcionales con `useRouter` → `/metas`, `/finanzas`, `/cursos`.
+  - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
+  - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
 
 ## Historial de Instrucciones
 ### 01/04/2026
@@ -62,6 +68,8 @@
 - **Datos en blanco**: Seed eliminado, datos por defecto removidos de todos los componentes.
 - **Skills ejecutadas**: orquestador-maestro, modo-produccion, guardian-del-diseno, firebase-connector, planificacion-pro, memoria-persistente.
 - **Responsive + Estética**: Todas las webs responsivas, Topbar con dropdown mejorado, Configuración rediseñada, fecha de metas sincronizada con calendario.
+- **Timer eliminado**: Widget de estudio removido por ser innecesario.
+- **Bug Fixes Producción**: Dashboard (flechas funcionales, import CSV eliminado), Metas (bug edición corregido), Configuración (foto con compresión + Storage, eliminación de cuenta refactorizada).
 
 ## Notas Técnicas
 - El modo oscuro se activa mediante `data-theme="dark"` en el tag `<html>`.
@@ -72,3 +80,15 @@
 - **Cursos**: Se crean manualmente (no hay seed automático).
 - **Fecha de metas**: Usa `input type="date"` que guarda formato ISO `YYYY-MM-DD`, compatible con el calendario.
 - **Build**: Next.js 16.2.1 con Turbopack, compilación exitosa sin errores TypeScript.
+- **Timer eliminado**: `lib/firestore/study.ts` borrado, `StudySession` removido de `types/index.ts`, referencias limpias en `Dashboard.tsx` y `AuthContext.tsx`.
+- **Optimización Firestore**:
+  - Nuevo hook `lib/hooks/useFirestoreCache.ts` para caché en memoria compartido entre vistas.
+  - Funciones `getDocs` agregadas: `getGoalsByUserId`, `getXPByUserId`, `getAchievementsByUserId`, `getRemindersByUserId`, `getTransactionsByUserId`, `getCourses`, `getUserProgressByUserId`, `getCourseModules`, `getCommunityUsers`.
+  - Vistas optimizadas: Dashboard, Metas, Finanzas, Calendario, Cursos, Curso detalle, Sidebar, Configuración.
+  - Topbar mantiene `onSnapshot` para notificaciones (necesita tiempo real).
+  - Todas las queries incluyen `.where('userId', '==', uid)`.
+- **Bug Fixes 01/04/2026**:
+  - `lib/firestore/goals.ts`: Nueva función `createGoalWithId()` con `setDoc` para IDs explícitos.
+  - `app/components/Dashboard.tsx`: Flechas de tarjetas usan `useRouter` para navegación. Modal CSV eliminado.
+  - `app/configuracion/page.tsx`: Compresión de imagen con Canvas API antes de subir a Storage. Eliminación de cuenta: Storage → Firestore → Auth.
+  - `AGENTS.md`: Agregada regla de preguntar push a Git después de actualizar CONTEXT.md.

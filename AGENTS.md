@@ -20,6 +20,7 @@ Actúa como un Desarrollador Senior enfocado en ahorro de recursos (Context-Spar
   - Cambios en la estructura de archivos
   - Notas técnicas relevantes
   - Historial de instrucciones con fecha actual
+- **PUSH A GIT:** Después de actualizar `CONTEXT.md`, pregunta al usuario si desea hacer push al repositorio remoto.
 
 ### 4. OPTIMIZACIÓN PARA PC DE BAJOS RECURSOS (i3/4GB RAM)
 - Prioriza soluciones que no requieran instalar nuevas librerías pesadas.

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { subscribeToCourses, subscribeToUserProgress, seedCoursesIfEmpty } from '@/lib/firestore/courses';
+import { getCourses, getUserProgressByUserId, seedCoursesIfEmpty } from '@/lib/firestore/courses';
 import type { Course, UserCourseProgress } from '@/types';
 import Link from 'next/link';
 
@@ -19,19 +19,23 @@ export default function CoursesPage() {
   }, []);
 
   useEffect(() => {
-    const unsubCourses = subscribeToCourses((data) => {
-      setCourses(data);
-      setLoading(false);
-    });
-    return () => unsubCourses();
-  }, []);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    const unsubProgress = subscribeToUserProgress(user.uid, (data) => {
-      setProgressList(data);
-    });
-    return () => unsubProgress();
+    const uid = user?.uid as string;
+    let cancelled = false;
+    async function loadData() {
+      try {
+        const [coursesData, progressData] = await Promise.all([
+          getCourses(),
+          uid ? getUserProgressByUserId(uid) : Promise.resolve([]),
+        ]);
+        if (!cancelled) {
+          setCourses(coursesData);
+          setProgressList(progressData);
+          setLoading(false);
+        }
+      } catch (e) { console.error(e); setLoading(false); }
+    }
+    loadData();
+    return () => { cancelled = true; };
   }, [user?.uid]);
 
   const getProgressForCourse = (courseId: string) => {

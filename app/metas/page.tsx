@@ -36,12 +36,18 @@ export default function MetasPage() {
   });
 
   useEffect(() => {
-    if (!userId) return;
-    try {
-      import('@/lib/firestore/goals').then(({ subscribeToGoals }) =>
-        subscribeToGoals(userId, (g) => { if (g.length) setGoals(g); })
-      );
-    } catch (e) { console.error(e); }
+    const uid = userId as string;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadGoals() {
+      try {
+        const { getGoalsByUserId } = await import('@/lib/firestore/goals');
+        const data = await getGoalsByUserId(uid);
+        if (!cancelled && data.length) setGoals(data);
+      } catch (e) { console.error(e); }
+    }
+    loadGoals();
+    return () => { cancelled = true; };
   }, [userId]);
 
   const filteredGoals = (filter === 'Todas'
@@ -77,7 +83,7 @@ export default function MetasPage() {
       };
       setGoals((prev) => [newGoal, ...prev]);
       if (userId) {
-        try { const { createGoal } = await import('@/lib/firestore/goals'); await createGoal(newGoal); } catch (e) { console.error(e); }
+        try { const { createGoalWithId } = await import('@/lib/firestore/goals'); await createGoalWithId(newGoal); } catch (e) { console.error(e); }
       }
     }
 
@@ -289,6 +295,8 @@ export default function MetasPage() {
       )}
 
       <style>{`
+        .btn-danger { background: var(--color-error); color: white !important; }
+        .btn-danger:hover { background: #dc2626; }
         .filter-chip { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
         .filter-chip:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
         .filter-chip.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); box-shadow: 0 4px 12px rgba(61, 204, 142, 0.2); }

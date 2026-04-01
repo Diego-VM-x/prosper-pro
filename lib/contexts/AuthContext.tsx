@@ -65,12 +65,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } catch (seedErr) {
               console.error('Seed error:', seedErr);
             }
-            try {
-              const { initStudySession } = await import('@/lib/firestore/study');
-              await initStudySession(firebaseUser.uid);
-            } catch (initErr) {
-              console.error('Init study session error:', initErr);
-            }
           }
         } catch (profileErr) {
           console.error('Profile error:', profileErr);

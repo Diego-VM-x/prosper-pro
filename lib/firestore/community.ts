@@ -86,6 +86,64 @@ export function subscribeToCommunityUsers(callback: (users: CommunityUser[]) => 
   });
 }
 
+/** Obtener usuarios de la comunidad (una sola lectura, sin suscripción) */
+export async function getCommunityUsers(): Promise<CommunityUser[]> {
+  const usersCol = collection(db, 'users');
+  const xpCol = collection(db, 'xp_states');
+  const achievementsCol = collection(db, 'achievements');
+  const goalsCol = collection(db, 'goals');
+
+  // Leer todo en paralelo para evitar N+1
+  const [usersSnap, xpSnap, achSnap, goalsSnap] = await Promise.all([
+    getDocs(usersCol),
+    getDocs(xpCol),
+    getDocs(achievementsCol),
+    getDocs(goalsCol),
+  ]);
+
+  // Indexar por userId
+  const xpMap = new Map<string, { level?: number; title?: string; currentXP?: number; maxXP?: number }>();
+  xpSnap.forEach((d) => {
+    const data = d.data();
+    xpMap.set(data.userId, data);
+  });
+
+  const achCountMap = new Map<string, number>();
+  achSnap.forEach((d) => {
+    const data = d.data();
+    achCountMap.set(data.userId, (achCountMap.get(data.userId) || 0) + 1);
+  });
+
+  const goalsCountMap = new Map<string, number>();
+  goalsSnap.forEach((d) => {
+    const data = d.data();
+    goalsCountMap.set(data.userId, (goalsCountMap.get(data.userId) || 0) + 1);
+  });
+
+  const users: CommunityUser[] = [];
+  usersSnap.forEach((userDoc) => {
+    const userData = userDoc.data();
+    const uid = userDoc.id;
+    const xpData = xpMap.get(uid);
+
+    users.push({
+      uid,
+      displayName: userData.displayName || null,
+      email: userData.email || null,
+      photoURL: userData.photoURL || null,
+      level: xpData?.level ?? 1,
+      title: xpData?.title ?? 'Novato',
+      currentXP: xpData?.currentXP ?? 0,
+      maxXP: xpData?.maxXP ?? 1000,
+      achievementsCount: achCountMap.get(uid) ?? 0,
+      goalsCount: goalsCountMap.get(uid) ?? 0,
+    });
+  });
+
+  users.sort((a, b) => b.level - a.level || b.currentXP - a.currentXP);
+  return users;
+}
+
 /** Enviar solicitud de amistad */
 export async function sendFriendRequest(userId: string, friendId: string) {
   if (userId === friendId) return;

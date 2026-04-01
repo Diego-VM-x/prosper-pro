@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { subscribeToReminders, createReminder, deleteReminder, updateReminder } from '@/lib/firestore/reminders';
-import { subscribeToGoals } from '@/lib/firestore/goals';
+import { getRemindersByUserId, createReminder, deleteReminder, updateReminder } from '@/lib/firestore/reminders';
+import { getGoalsByUserId } from '@/lib/firestore/goals';
 import type { Reminder, Goal } from '@/types';
 
 const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌', goal: '🎯' };
@@ -53,15 +53,24 @@ export default function CalendarioPage() {
   const [newReminder, setNewReminder] = useState({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' as Reminder['type'] });
 
   useEffect(() => {
-    if (!user?.uid) return;
-    try {
-      const unsubReminders = subscribeToReminders(user.uid, (r) => { if (r.length) setReminders(r); });
-      const unsubGoals = subscribeToGoals(user.uid, (goals) => {
-        const events = goals.map(goalToCalendarEvent).filter((e): e is CalendarGoalEvent => e !== null);
-        setGoalEvents(events);
-      });
-      return () => { unsubReminders(); unsubGoals(); };
-    } catch (e) { console.error(e); }
+    const uid = user?.uid as string;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadData() {
+      try {
+        const [remindersData, goalsData] = await Promise.all([
+          getRemindersByUserId(uid),
+          getGoalsByUserId(uid),
+        ]);
+        if (!cancelled) {
+          if (remindersData.length) setReminders(remindersData);
+          const events = goalsData.map(goalToCalendarEvent).filter((e): e is CalendarGoalEvent => e !== null);
+          setGoalEvents(events);
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadData();
+    return () => { cancelled = true; };
   }, [user?.uid]);
 
   const year = currentDate.getFullYear();

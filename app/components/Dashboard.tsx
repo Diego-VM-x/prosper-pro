@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -9,19 +10,15 @@ import {
   IconArrowUpRight,
   IconTrendUp,
   IconVideo,
-  IconPause,
-  IconStop,
   IconZap,
-  IconWallet,
-  IconTasks,
   IconX,
 } from './icons';
 import type { Goal, WeeklyData, Reminder, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
-import { importTransactionsFromCSV } from '@/lib/csvParser';
 
 // Sin datos por defecto - todo viene de Firebase
 
 export function Dashboard() {
+  const router = useRouter();
   const { user } = useAuth();
   const { query } = useSearch();
   const userId = user?.uid || '';
@@ -34,14 +31,7 @@ export function Dashboard() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [monthlySavings, setMonthlySavings] = useState(0);
 
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerRunning, setTimerRunning] = useState(false);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvDelimiter, setCsvDelimiter] = useState(';');
-  const [importStatus, setImportStatus] = useState<{ success: number; errors: string[] } | null>(null);
-  const [importing, setImporting] = useState(false);
 
   const [newGoal, setNewGoal] = useState({
     title: '',
@@ -53,80 +43,87 @@ export function Dashboard() {
     icon: '🎯',
   });
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const saveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Timer tick
+  // Carga optimizada con caché: una sola lectura por sesión, sin suscripciones abiertas
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      if (timerRunning) {
-        setTimerSeconds((prev) => prev + 1);
-      }
-    }, 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [timerRunning]);
+    const uid = userId as string;
+    if (!uid) return;
+    let cancelled = false;
 
-  // Auto-guardar timer en Firestore cada 30s
-  useEffect(() => {
-    if (!userId) return;
-    saveTimerRef.current = setInterval(() => {
-      import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
-        saveStudyTimer(userId, timerSeconds, timerRunning);
-      });
-    }, 30000);
-    return () => { if (saveTimerRef.current) clearInterval(saveTimerRef.current); };
-  }, [userId]);
+    async function loadData() {
+      try {
+        const [
+          { getGoalsByUserId },
+          { getTransactionsByUserId, getMonthlySavings },
+          { getRemindersByUserId },
+          { getXPByUserId, getAchievementsByUserId },
+          { getCommunityUsers },
+        ] = await Promise.all([
+          import('@/lib/firestore/goals'),
+          import('@/lib/firestore/transactions'),
+          import('@/lib/firestore/reminders'),
+          import('@/lib/firestore/gamification'),
+          import('@/lib/firestore/community'),
+        ]);
 
-  // Guardar timer al desmontar
-  useEffect(() => {
-    return () => {
-      if (userId && timerSeconds > 0) {
-        import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
-          saveStudyTimer(userId, timerSeconds, timerRunning);
-        });
-      }
-    };
-  }, [userId]);
+        if (cancelled) return;
 
-  useEffect(() => {
-    if (!userId) return;
-    try {
-      import('@/lib/firestore/goals').then(({ subscribeToGoals }) =>
-        subscribeToGoals(userId, (g) => { if (g.length) setGoals(g); })
-      );
-      import('@/lib/firestore/transactions').then(({ subscribeToWeeklyData, getMonthlySavings }) => {
-        subscribeToWeeklyData(userId, (w) => { if (w.length) setWeeklyData(w); });
-        getMonthlySavings(userId).then((s) => { if (s > 0) setMonthlySavings(s); });
-      });
-      import('@/lib/firestore/reminders').then(({ subscribeToReminders }) =>
-        subscribeToReminders(userId, (r) => { if (r.length) setReminders(r); })
-      );
-      import('@/lib/firestore/gamification').then(({ subscribeToXP, subscribeToAchievements }) => {
-        subscribeToXP(userId, (x) => { if (x) setXP(x); });
-        subscribeToAchievements(userId, (a) => { if (a.length) setAchievements(a); });
-      });
-      import('@/lib/firestore/community').then(({ subscribeToCommunityUsers }) =>
-        subscribeToCommunityUsers((m) => { if (m.length) setMembers(m); })
-      );
-      import('@/lib/firestore/study').then(({ subscribeToStudySession }) =>
-        subscribeToStudySession(userId, (s) => {
-          if (s) {
-            setTimerSeconds(s.totalSeconds);
-            setTimerRunning(s.isRunning);
+        const [goalsData, transactionsData, remindersData, xpData, achievementsData, membersData] = await Promise.all([
+          getGoalsByUserId(uid),
+          getTransactionsByUserId(uid),
+          getRemindersByUserId(uid),
+          getXPByUserId(uid),
+          getAchievementsByUserId(uid),
+          getCommunityUsers(),
+        ]);
+
+        if (cancelled) return;
+
+        if (goalsData.length) setGoals(goalsData);
+        if (remindersData.length) setReminders(remindersData);
+        if (xpData) setXP(xpData);
+        if (achievementsData.length) setAchievements(achievementsData);
+        if (membersData.length) setMembers(membersData);
+
+        // Calcular weekly data y monthly savings desde transacciones
+        if (transactionsData.length) {
+          const savings = transactionsData.filter((t) => t.type === 'saving');
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+          const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
+          if (monthSavings > 0) setMonthlySavings(monthSavings);
+
+          // Weekly data
+          const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+          const weekly: WeeklyData[] = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            weekly.push({ day: days[d.getDay()], income: 0, saving: 0 });
           }
-        })
-      );
-    } catch (e) {
-      console.error('Firestore load error (using local data):', e);
+          transactionsData.forEach((t) => {
+            const tDate = new Date(t.date);
+            const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
+            if (diff >= 0 && diff < 7) {
+              const idx = 6 - diff;
+              if (t.type === 'income') weekly[idx].income += t.amount;
+              if (t.type === 'saving') weekly[idx].saving += t.amount;
+            }
+          });
+          const maxVal = Math.max(...weekly.flatMap((d) => [d.income, d.saving]), 1);
+          setWeeklyData(weekly.map((d) => ({
+            day: d.day,
+            income: Math.round((d.income / maxVal) * 100),
+            saving: Math.round((d.saving / maxVal) * 100),
+          })));
+        }
+      } catch (e) {
+        console.error('Firestore load error:', e);
+      }
     }
-  }, [userId]);
 
-  const formatTime = useCallback((s: number): string => {
-    const hrs = String(Math.floor(s / 3600)).padStart(2, '0');
-    const min = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-    const sec = String(s % 60).padStart(2, '0');
-    return `${hrs}:${min}:${sec}`;
-  }, []);
+    loadData();
+    return () => { cancelled = true; };
+  }, [userId]);
 
   const activeGoals = goals.filter((g) => g.status !== 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
   const completedGoals = goals.filter((g) => g.status === 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
@@ -158,27 +155,6 @@ export function Dashboard() {
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
-  // Timer handlers con sync a Firestore
-  const handleToggleTimer = () => {
-    const newState = !timerRunning;
-    setTimerRunning(newState);
-    if (userId) {
-      import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
-        saveStudyTimer(userId, timerSeconds, newState);
-      });
-    }
-  };
-
-  const handleStopTimer = () => {
-    setTimerRunning(false);
-    setTimerSeconds(0);
-    if (userId) {
-      import('@/lib/firestore/study').then(({ saveStudyTimer }) => {
-        saveStudyTimer(userId, 0, false);
-      });
-    }
-  };
-
   const handleJoinSession = () => {
     alert('Funcionalidad de sesión de mentor: se abriría una ventana de video llamada.');
   };
@@ -198,9 +174,6 @@ export function Dashboard() {
           <button className="btn btn-primary" onClick={() => setShowNewGoalModal(true)}>
             <IconPlus /> Nueva Meta
           </button>
-          <button className="btn btn-outline" onClick={() => setShowImportModal(true)}>
-            <IconWallet /> Importar Datos
-          </button>
         </div>
       </div>
 
@@ -208,7 +181,7 @@ export function Dashboard() {
         <div className="stat-card animate-fadeInUp featured">
           <div className="stat-card-top">
             <span className="stat-label">Metas Activas</span>
-            <button className="stat-icon-link" aria-label="Ver Metas Activas"><IconArrowUpRight /></button>
+            <button className="stat-icon-link" aria-label="Ver Metas Activas" onClick={() => router.push('/metas')}><IconArrowUpRight /></button>
           </div>
           <p className="stat-value">{activeGoals.length}</p>
           <span className="stat-change positive"><IconTrendUp />{activeGoals.filter((g) => g.status === 'progress').length} en progreso</span>
@@ -216,7 +189,7 @@ export function Dashboard() {
         <div className="stat-card animate-fadeInUp">
           <div className="stat-card-top">
             <span className="stat-label">Metas Completadas</span>
-            <button className="stat-icon-link" aria-label="Ver Metas Completadas"><IconArrowUpRight /></button>
+            <button className="stat-icon-link" aria-label="Ver Metas Completadas" onClick={() => router.push('/metas')}><IconArrowUpRight /></button>
           </div>
           <p className="stat-value">{completedGoals.length}</p>
           <span className="stat-change positive"><IconTrendUp />{totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0}% del total</span>
@@ -224,7 +197,7 @@ export function Dashboard() {
         <div className="stat-card animate-fadeInUp">
           <div className="stat-card-top">
             <span className="stat-label">Ahorro Mensual</span>
-            <button className="stat-icon-link" aria-label="Ver Ahorro"><IconArrowUpRight /></button>
+            <button className="stat-icon-link" aria-label="Ver Ahorro" onClick={() => router.push('/finanzas')}><IconArrowUpRight /></button>
           </div>
           <p className="stat-value">${(monthlySavings / 1000).toFixed(1)}k</p>
           <span className="stat-change positive"><IconTrendUp />Incrementado</span>
@@ -232,7 +205,7 @@ export function Dashboard() {
         <div className="stat-card animate-fadeInUp">
           <div className="stat-card-top">
             <span className="stat-label">Lecciones Pendientes</span>
-            <button className="stat-icon-link" aria-label="Ver Lecciones"><IconArrowUpRight /></button>
+            <button className="stat-icon-link" aria-label="Ver Lecciones" onClick={() => router.push('/cursos')}><IconArrowUpRight /></button>
           </div>
           <p className="stat-value">{goals.filter((g) => g.category === 'Educación' && g.status !== 'completed').length}</p>
           <span className="stat-change">En progreso</span>
@@ -351,17 +324,8 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="animate-fadeInUp" style={{ animationDelay: '0.45s', display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div className="timer-card">
-            <p className="timer-title">Rastreador de Estudio</p>
-            <p className="timer-display">{formatTime(timerSeconds)}</p>
-            <div className="timer-controls">
-              <button className="timer-btn timer-btn-pause" onClick={handleToggleTimer} aria-label={timerRunning ? 'Pausar' : 'Reanudar'}><IconPause /></button>
-              <button className="timer-btn timer-btn-stop" onClick={handleStopTimer} aria-label="Detener"><IconStop /></button>
-            </div>
-          </div>
-
-          <div className="card" style={{ flex: 1 }}>
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.45s' }}>
+          <div className="card">
             <div className="card-header"><span className="card-title">Logros Recientes</span></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {achievements.slice(0, 3).map((ach) => (
@@ -422,85 +386,6 @@ export function Dashboard() {
         </div>
       )}
 
-      {showImportModal && (
-        <div className="modal-overlay" onClick={() => { setShowImportModal(false); setCsvFile(null); setImportStatus(null); }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal-header">
-              <h2 className="modal-title">Importar Datos CSV</h2>
-              <button className="modal-close" onClick={() => { setShowImportModal(false); setCsvFile(null); setImportStatus(null); }}><IconX width={20} /></button>
-            </div>
-            <div className="modal-body">
-              <p style={{ color: 'var(--text-secondary)', marginBottom: 12, fontSize: '0.8125rem' }}>
-                Formato requerido: <code style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>date,amount,type,category,description</code>
-              </p>
-              <p style={{ color: 'var(--text-tertiary)', marginBottom: 16, fontSize: '0.75rem' }}>
-                Tipos válidos: income, expense, saving. Fecha: YYYY-MM-DD o timestamp.
-              </p>
-
-              <label className="form-label">Delimitador</label>
-              <select className="form-input" value={csvDelimiter} onChange={(e) => setCsvDelimiter(e.target.value)} style={{ marginBottom: 12 }}>
-                <option value=";">Punto y coma (;)</option>
-                <option value=",">Coma (,)</option>
-                <option value="\t">Tabulación</option>
-              </select>
-
-              <label className="form-label">Archivo CSV</label>
-              <input
-                type="file"
-                accept=".csv,.txt"
-                className="form-input"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  setCsvFile(file);
-                  setImportStatus(null);
-                }}
-              />
-
-              {csvFile && (
-                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 8 }}>
-                  📄 {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)
-                </p>
-              )}
-
-              {importStatus && (
-                <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--radius-md)', background: importStatus.errors.length > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(61,204,142,0.1)' }}>
-                  <p style={{ fontWeight: 600, color: importStatus.errors.length > 0 ? 'var(--color-error)' : 'var(--color-prosper-green)', marginBottom: 4 }}>
-                    {importStatus.success > 0 ? `✅ ${importStatus.success} transacciones importadas` : '❌ Error al importar'}
-                  </p>
-                  {importStatus.errors.length > 0 && (
-                    <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      {importStatus.errors.slice(0, 5).map((err, i) => <li key={i}>{err}</li>)}
-                      {importStatus.errors.length > 5 && <li>...y {importStatus.errors.length - 5} errores más</li>}
-                    </ul>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-outline" onClick={() => { setShowImportModal(false); setCsvFile(null); setImportStatus(null); }}>Cancelar</button>
-              <button
-                className="btn btn-primary"
-                disabled={!csvFile || importing}
-                onClick={async () => {
-                  if (!csvFile || !userId) return;
-                  setImporting(true);
-                  try {
-                    const text = await csvFile.text();
-                    const result = await importTransactionsFromCSV(text, userId, csvDelimiter);
-                    setImportStatus(result);
-                  } catch (err) {
-                    setImportStatus({ success: 0, errors: [`Error: ${(err as Error).message}`] });
-                  } finally {
-                    setImporting(false);
-                  }
-                }}
-              >
-                {importing ? 'Importando...' : 'Importar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <style>{`
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
