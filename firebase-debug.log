@@ -54,3 +54,13 @@
 [debug] [2026-04-01T02:03:37.511Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
 [debug] [2026-04-01T02:03:48.378Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] [2026-04-01T02:03:48.383Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
+[debug] [2026-04-01T02:25:36.893Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-01T02:25:36.898Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
+[debug] [2026-04-01T02:26:17.261Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-01T02:26:17.267Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
+[debug] [2026-04-01T02:26:48.391Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-01T02:26:48.395Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
+[debug] [2026-04-01T02:27:59.327Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-01T02:27:59.333Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)
+[debug] [2026-04-01T02:30:20.758Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-01T02:30:20.765Z] > authorizing via signed-in user (mjsdiegoverde@gmail.com)

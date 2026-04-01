@@ -13,7 +13,12 @@ const firebaseConfig = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Auth solo en cliente para evitar errores en SSR/static build
+let auth: ReturnType<typeof getAuth> | null = null;
+if (typeof window !== 'undefined') {
+  auth = getAuth(app);
+}
 
 export { app, auth, db };

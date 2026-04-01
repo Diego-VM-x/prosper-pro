@@ -1,5 +1,8 @@
 import {
   collection,
+  doc,
+  addDoc,
+  deleteDoc,
   query,
   onSnapshot,
   type QuerySnapshot,
@@ -22,4 +25,13 @@ export function subscribeToCommunityMembers(callback: (members: CommunityMember[
     console.error('subscribeToCommunityMembers error:', error);
     callback([]);
   });
+}
+
+export async function addCommunityMember(member: Omit<CommunityMember, 'id'>) {
+  const docRef = await addDoc(collection(db, COLLECTION), member);
+  return docRef.id;
+}
+
+export async function deleteCommunityMember(memberId: string) {
+  await deleteDoc(doc(db, COLLECTION, memberId));
 }

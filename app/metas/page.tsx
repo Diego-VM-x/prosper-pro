@@ -15,19 +15,13 @@ import {
 } from '../components/icons';
 import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
-const DEFAULT_GOALS: Goal[] = [
-  { id: 'g1', userId: 'local', title: 'Fondo de Emergencia', category: 'Ahorro', current: 4500, target: 10000, deadline: 'Dic 2026', status: 'progress', color: '#3DCC8E', icon: '🛡️', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 12, streakDays: 5 },
-  { id: 'g2', userId: 'local', title: 'Inversión en ETFs (S&P 500)', category: 'Inversión', current: 12000, target: 50000, deadline: 'Jun 2028', status: 'progress', color: '#1E3A6E', icon: '📈', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 8, streakDays: 3 },
-  { id: 'g3', userId: 'local', title: 'Viaje a Japón 2027', category: 'Ahorro', current: 2500, target: 8000, deadline: 'Mar 2027', status: 'progress', color: '#F59E0B', icon: '✈️', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 15, streakDays: 7 },
-  { id: 'g4', userId: 'local', title: 'Curso de Blockchain Pro', category: 'Educación', current: 500, target: 500, deadline: 'Completado', status: 'completed', color: '#3DCC8E', icon: '🎓', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 0, streakDays: 10 },
-  { id: 'g5', userId: 'local', title: 'Compra de MacBook Pro', category: 'Ahorro', current: 1200, target: 2500, deadline: 'Oct 2026', status: 'progress', color: '#EF4444', icon: '💻', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 10, streakDays: 2 },
-];
+// Sin datos por defecto
 
 export default function MetasPage() {
   const { user } = useAuth();
   const userId = user?.uid || '';
 
-  const [goals, setGoals] = useState<Goal[]>(DEFAULT_GOALS);
+  const [goals, setGoals] = useState<Goal[]>([]);
   const [filter, setFilter] = useState('Todas');
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);

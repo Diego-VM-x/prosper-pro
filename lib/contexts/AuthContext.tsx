@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
@@ -79,20 +80,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginWithGoogle = async () => {
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
   const loginWithEmail = async (email: string, pass: string) => {
+    if (!auth) return;
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
   const registerWithEmail = async (email: string, pass: string, name: string) => {
+    if (!auth) return;
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(userCredential.user, { displayName: name });
   };
 
   const logout = async () => {
+    if (!auth) return;
     await signOut(auth);
     router.push('/login');
   };

@@ -7,15 +7,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { subscribeToTransactions, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import type { Transaction } from '@/types';
 
-const DEFAULT_TRANSACTIONS: Transaction[] = [
-  { id: 't1', userId: 'local', amount: 500, type: 'income', category: 'Salario', description: 'Pago quincenal', date: Date.now() - 86400000 * 6 },
-  { id: 't2', userId: 'local', amount: 200, type: 'saving', category: 'Ahorro', description: 'Ahorro automático', date: Date.now() - 86400000 * 5 },
-  { id: 't3', userId: 'local', amount: 800, type: 'income', category: 'Freelance', description: 'Proyecto web', date: Date.now() - 86400000 * 4 },
-  { id: 't4', userId: 'local', amount: 150, type: 'saving', category: 'Ahorro', description: 'Ahorro viaje', date: Date.now() - 86400000 * 3 },
-  { id: 't5', userId: 'local', amount: 600, type: 'income', category: 'Salario', description: 'Pago quincenal', date: Date.now() - 86400000 * 2 },
-  { id: 't6', userId: 'local', amount: 300, type: 'saving', category: 'Inversión', description: 'Compra ETFs', date: Date.now() - 86400000 * 1 },
-  { id: 't7', userId: 'local', amount: 100, type: 'expense', category: 'Comida', description: 'Supermercado', date: Date.now() },
-];
+// Sin datos por defecto
 
 const CATEGORIES = {
   income: ['Salario', 'Freelance', 'Inversiones', 'Negocio', 'Otro'],
@@ -28,7 +20,7 @@ const TYPE_COLORS: Record<string, string> = { income: 'var(--color-prosper-green
 
 export default function FinanzasPage() {
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState<Transaction[]>(DEFAULT_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState({ income: 0, expenses: 0, saving: 0, balance: 0 });
   const [filterType, setFilterType] = useState<string>('Todos');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');

@@ -7,9 +7,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { subscribeToReminders, createReminder, deleteReminder, updateReminder } from '@/lib/firestore/reminders';
 import type { Reminder } from '@/types';
 
-const DEFAULT_REMINDERS: Reminder[] = [
-  { id: 'r1', userId: 'local', title: 'Sesión con Mentor Financiero', description: 'Revisión de portafolio', startTime: '02:00 pm', endTime: '04:00 pm', date: new Date().toISOString().split('T')[0], type: 'mentor', isActive: true },
-];
+// Sin datos por defecto
 
 const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
 const TYPE_LABELS: Record<string, string> = { mentor: 'Mentor', course: 'Curso', meeting: 'Reunión', other: 'Otro' };
@@ -18,7 +16,7 @@ const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio
 
 export default function CalendarioPage() {
   const { user } = useAuth();
-  const [reminders, setReminders] = useState<Reminder[]>(DEFAULT_REMINDERS);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);

@@ -9,7 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { subscribeToNotifications, markNotificationRead, getUnreadCount } from '@/lib/firestore/notifications';
+import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification } from '@/lib/firestore/notifications';
 import {
   IconSearch,
   IconMail,
@@ -22,6 +22,7 @@ import {
   IconSettings,
 } from './icons';
 import type { Notification } from '@/types';
+import Link from 'next/link';
 
 interface TopbarProps {
   /** Función para alternar la visibilidad del sidebar en móvil */
@@ -42,6 +43,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [notifPermissioned, setNotifPermissioned] = useState(false);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
 
@@ -53,6 +55,21 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
     });
     return () => unsub();
   }, [user?.uid]);
+
+  // Solicitar permiso de notificaciones push al cargar
+  useEffect(() => {
+    if (!user?.uid) return;
+    requestNotificationPermission().then(granted => {
+      setNotifPermissioned(granted);
+    });
+  }, [user?.uid]);
+
+  // Enviar notificación push cuando hay nuevas notificaciones no leídas
+  useEffect(() => {
+    if (unreadCount > 0 && notifPermissioned) {
+      sendBrowserNotification('Prosper', `Tienes ${unreadCount} notificación${unreadCount > 1 ? 'es' : ''} nueva${unreadCount > 1 ? 's' : ''}`);
+    }
+  }, [unreadCount, notifPermissioned]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -227,7 +244,9 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
                   textAlign: 'left',
                 }}
               >
-                <IconSettings /> Configuración
+                <Link href="/configuracion" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 16px', fontSize: '0.875rem' }}>
+                  <IconSettings /> Configuración
+                </Link>
               </button>
               <div style={{ borderTop: '1px solid var(--border-default)' }}>
                 <button

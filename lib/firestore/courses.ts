@@ -9,18 +9,29 @@ import {
   setDoc,
   onSnapshot,
   arrayUnion,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { Course, UserCourseProgress } from '@/types';
+import type { Course, UserCourseProgress, CourseModule } from '@/types';
 
 const COURSES_COLLECTION = 'courses';
+const MODULES_COLLECTION = 'course_modules';
 const PROGRESS_COLLECTION = 'user_course_progress';
 
+// Suscribirse a todos los cursos (colección global)
 export function subscribeToCourses(callback: (courses: Course[]) => void) {
   return onSnapshot(collection(db, COURSES_COLLECTION), (snapshot) => {
     const courses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
     callback(courses);
+  });
+}
+
+// Suscribirse a módulos de un curso
+export function subscribeToCourseModules(courseId: string, callback: (modules: CourseModule[]) => void) {
+  const q = query(collection(db, MODULES_COLLECTION), where('courseId', '==', courseId));
+  return onSnapshot(q, (snapshot) => {
+    const modules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CourseModule));
+    modules.sort((a, b) => a.order - b.order);
+    callback(modules);
   });
 }
 
@@ -38,6 +49,26 @@ export function subscribeToUserProgress(userId: string, callback: (progress: Use
   });
 }
 
+// Obtener progreso de un curso específico
+export async function getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | null> {
+  const q = query(collection(db, PROGRESS_COLLECTION), where('userId', '==', userId), where('courseId', '==', courseId));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as UserCourseProgress;
+}
+
+// Inscribirse en un curso
+export async function enrollCourse(userId: string, courseId: string) {
+  const docId = `${userId}_${courseId}`;
+  await setDoc(doc(db, PROGRESS_COLLECTION, docId), {
+    userId,
+    courseId,
+    completedModules: [],
+    startedAt: Date.now(),
+  });
+}
+
+// Completar módulo
 export async function completeModule(userId: string, courseId: string, moduleId: string) {
   const docRef = doc(db, PROGRESS_COLLECTION, `${userId}_${courseId}`);
   const docSnap = await getDoc(docRef);
@@ -45,15 +76,19 @@ export async function completeModule(userId: string, courseId: string, moduleId:
   if (docSnap.exists()) {
     await updateDoc(docRef, {
       completedModules: arrayUnion(moduleId),
-      completedAt: Timestamp.now(),
     });
   } else {
-    // Si no existe, crear registro inicial
     await setDoc(docRef, {
       userId,
       courseId,
       completedModules: [moduleId],
-      startedAt: Timestamp.now(),
+      startedAt: Date.now(),
     });
   }
+}
+
+// Sin cursos por defecto - el administrador los crea manualmente
+export async function seedCoursesIfEmpty() {
+  // No crear cursos automáticamente
+  return;
 }

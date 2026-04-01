@@ -16,60 +16,30 @@ import {
   IconX,
 } from './icons';
 import type { Goal, WeeklyData, Reminder, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
+import { importTransactionsFromCSV } from '@/lib/csvParser';
 
-const DEFAULT_GOALS: Goal[] = [
-  { id: 'g1', userId: 'local', title: 'Fondo de Emergencia', category: 'Ahorro', current: 4500, target: 10000, deadline: 'Dic 2026', status: 'progress', color: '#3DCC8E', icon: '🛡️', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 12, streakDays: 5 },
-  { id: 'g2', userId: 'local', title: 'Inversión en ETFs (S&P 500)', category: 'Inversión', current: 12000, target: 50000, deadline: 'Jun 2028', status: 'progress', color: '#1E3A6E', icon: '📈', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 8, streakDays: 3 },
-  { id: 'g3', userId: 'local', title: 'Viaje a Japón 2027', category: 'Ahorro', current: 2500, target: 8000, deadline: 'Mar 2027', status: 'progress', color: '#F59E0B', icon: '✈️', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 15, streakDays: 7 },
-  { id: 'g4', userId: 'local', title: 'Curso de Blockchain Pro', category: 'Educación', current: 500, target: 500, deadline: 'Completado', status: 'completed', color: '#3DCC8E', icon: '🎓', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 0, streakDays: 10 },
-  { id: 'g5', userId: 'local', title: 'Compra de MacBook Pro', category: 'Ahorro', current: 1200, target: 2500, deadline: 'Oct 2026', status: 'progress', color: '#EF4444', icon: '💻', createdAt: Date.now(), updatedAt: Date.now(), monthlyGrowth: 10, streakDays: 2 },
-];
-
-const DEFAULT_WEEKLY: WeeklyData[] = [
-  { day: 'L', income: 40, saving: 55 },
-  { day: 'M', income: 65, saving: 80 },
-  { day: 'Mi', income: 50, saving: 90 },
-  { day: 'J', income: 70, saving: 60 },
-  { day: 'V', income: 55, saving: 75 },
-  { day: 'S', income: 30, saving: 45 },
-  { day: 'D', income: 25, saving: 35 },
-];
-
-const DEFAULT_REMINDERS: Reminder[] = [
-  { id: 'r1', userId: 'local', title: 'Sesión con Mentor Financiero', description: 'Revisión de portafolio', startTime: '02:00 pm', endTime: '04:00 pm', date: new Date().toISOString().split('T')[0], type: 'mentor', isActive: true },
-];
-
-const DEFAULT_XP: XPState = { userId: 'local', level: 7, title: 'Inversionista', currentXP: 2450, maxXP: 3000, achievements: [] };
-
-const DEFAULT_MEMBERS: CommunityMember[] = [
-  { id: 'm1', name: 'Alexandra Deff', avatarInitials: 'AD', task: 'Completó', highlight: 'Módulo de Presupuesto Básico', status: 'completed' },
-  { id: 'm2', name: 'Edwin Adenike', avatarInitials: 'EA', task: 'En progreso', highlight: 'Reto de Ahorro 30 Días', status: 'progress' },
-  { id: 'm3', name: 'Isaac Oluwatem.', avatarInitials: 'IO', task: 'Buscando', highlight: 'Mentor de Inversiones', status: 'pending' },
-  { id: 'm4', name: 'David Oshodi', avatarInitials: 'DO', task: 'En progreso', highlight: 'Simulador de Portafolio', status: 'progress' },
-];
-
-const DEFAULT_ACHIEVEMENTS: Achievement[] = [
-  { id: 'a1', userId: 'local', title: 'Primer Ahorro', description: 'Completaste tu primera meta de ahorro', icon: '🏅', unlockedAt: Date.now() },
-  { id: 'a2', userId: 'local', title: 'Racha de 7 Días', description: '7 días consecutivos de lecciones', icon: '🔥', unlockedAt: Date.now() },
-  { id: 'a3', userId: 'local', title: 'Nivel Inversionista', description: 'Alcanzaste el Nivel 7', icon: '💎', unlockedAt: Date.now() },
-];
+// Sin datos por defecto - todo viene de Firebase
 
 export function Dashboard() {
   const { user } = useAuth();
   const userId = user?.uid || '';
 
-  const [goals, setGoals] = useState<Goal[]>(DEFAULT_GOALS);
-  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>(DEFAULT_WEEKLY);
-  const [reminders, setReminders] = useState<Reminder[]>(DEFAULT_REMINDERS);
-  const [xp, setXP] = useState<XPState | null>(DEFAULT_XP);
-  const [members, setMembers] = useState<CommunityMember[]>(DEFAULT_MEMBERS);
-  const [achievements, setAchievements] = useState<Achievement[]>(DEFAULT_ACHIEVEMENTS);
-  const [monthlySavings, setMonthlySavings] = useState(1200);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [xp, setXP] = useState<XPState | null>(null);
+  const [members, setMembers] = useState<CommunityMember[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [monthlySavings, setMonthlySavings] = useState(0);
 
-  const [timerSeconds, setTimerSeconds] = useState(5048);
-  const [timerRunning, setTimerRunning] = useState(true);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvDelimiter, setCsvDelimiter] = useState(';');
+  const [importStatus, setImportStatus] = useState<{ success: number; errors: string[] } | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const [newGoal, setNewGoal] = useState({
     title: '',
@@ -442,19 +412,80 @@ export function Dashboard() {
       )}
 
       {showImportModal && (
-        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => { setShowImportModal(false); setCsvFile(null); setImportStatus(null); }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
             <div className="modal-header">
-              <h2 className="modal-title">Importar Datos</h2>
-              <button className="modal-close" onClick={() => setShowImportModal(false)}><IconX width={20} /></button>
+              <h2 className="modal-title">Importar Datos CSV</h2>
+              <button className="modal-close" onClick={() => { setShowImportModal(false); setCsvFile(null); setImportStatus(null); }}><IconX width={20} /></button>
             </div>
             <div className="modal-body">
-              <p style={{ color: 'var(--text-secondary)', marginBottom: 16 }}>Selecciona un archivo CSV con tus transacciones para importar.</p>
-              <input type="file" accept=".csv" className="form-input" />
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 12, fontSize: '0.8125rem' }}>
+                Formato requerido: <code style={{ background: 'var(--bg-input)', padding: '2px 6px', borderRadius: 4 }}>date,amount,type,category,description</code>
+              </p>
+              <p style={{ color: 'var(--text-tertiary)', marginBottom: 16, fontSize: '0.75rem' }}>
+                Tipos válidos: income, expense, saving. Fecha: YYYY-MM-DD o timestamp.
+              </p>
+
+              <label className="form-label">Delimitador</label>
+              <select className="form-input" value={csvDelimiter} onChange={(e) => setCsvDelimiter(e.target.value)} style={{ marginBottom: 12 }}>
+                <option value=";">Punto y coma (;)</option>
+                <option value=",">Coma (,)</option>
+                <option value="\t">Tabulación</option>
+              </select>
+
+              <label className="form-label">Archivo CSV</label>
+              <input
+                type="file"
+                accept=".csv,.txt"
+                className="form-input"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setCsvFile(file);
+                  setImportStatus(null);
+                }}
+              />
+
+              {csvFile && (
+                <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 8 }}>
+                  📄 {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)
+                </p>
+              )}
+
+              {importStatus && (
+                <div style={{ marginTop: 16, padding: 12, borderRadius: 'var(--radius-md)', background: importStatus.errors.length > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(61,204,142,0.1)' }}>
+                  <p style={{ fontWeight: 600, color: importStatus.errors.length > 0 ? 'var(--color-error)' : 'var(--color-prosper-green)', marginBottom: 4 }}>
+                    {importStatus.success > 0 ? `✅ ${importStatus.success} transacciones importadas` : '❌ Error al importar'}
+                  </p>
+                  {importStatus.errors.length > 0 && (
+                    <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      {importStatus.errors.slice(0, 5).map((err, i) => <li key={i}>{err}</li>)}
+                      {importStatus.errors.length > 5 && <li>...y {importStatus.errors.length - 5} errores más</li>}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
             <div className="modal-footer">
-              <button className="btn btn-outline" onClick={() => setShowImportModal(false)}>Cancelar</button>
-              <button className="btn btn-primary" onClick={() => setShowImportModal(false)}>Importar</button>
+              <button className="btn btn-outline" onClick={() => { setShowImportModal(false); setCsvFile(null); setImportStatus(null); }}>Cancelar</button>
+              <button
+                className="btn btn-primary"
+                disabled={!csvFile || importing}
+                onClick={async () => {
+                  if (!csvFile || !userId) return;
+                  setImporting(true);
+                  try {
+                    const text = await csvFile.text();
+                    const result = await importTransactionsFromCSV(text, userId, csvDelimiter);
+                    setImportStatus(result);
+                  } catch (err) {
+                    setImportStatus({ success: 0, errors: [`Error: ${(err as Error).message}`] });
+                  } finally {
+                    setImporting(false);
+                  }
+                }}
+              >
+                {importing ? 'Importando...' : 'Importar'}
+              </button>
             </div>
           </div>
         </div>

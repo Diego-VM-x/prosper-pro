@@ -4,6 +4,7 @@ import {
   addDoc,
   getDocs,
   updateDoc,
+  deleteDoc,
   query,
   where,
   onSnapshot,
@@ -50,4 +51,35 @@ export async function getUnreadCount(userId: string): Promise<number> {
     console.error('getUnreadCount error:', err);
     return 0;
   }
+}
+
+export async function deleteNotification(notificationId: string) {
+  await deleteDoc(doc(db, COLLECTION, notificationId));
+}
+
+export async function markAllNotificationsRead(userId: string) {
+  const q = query(collection(db, COLLECTION), where('userId', '==', userId), where('read', '==', false));
+  const snapshot = await getDocs(q);
+  const promises = snapshot.docs.map(docSnap => updateDoc(docSnap.ref, { read: true }));
+  await Promise.all(promises);
+}
+
+// Notificaciones push del navegador
+export function requestNotificationPermission(): Promise<boolean> {
+  if (!('Notification' in window)) {
+    console.warn('Este navegador no soporta notificaciones push');
+    return Promise.resolve(false);
+  }
+  return Notification.requestPermission().then(permission => permission === 'granted');
+}
+
+export function sendBrowserNotification(title: string, body: string) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  new Notification(title, {
+    body,
+    icon: '/logo-icon.png',
+    badge: '/logo-icon.png',
+    tag: 'prosper-notification',
+  });
 }

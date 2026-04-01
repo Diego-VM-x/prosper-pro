@@ -1,10 +1,11 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (31 de Marzo, 2026)
+## Estado Actual (01 de Abril, 2026)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
+- **Modo**: App inicia en BLANCO - sin datos de ejemplo. Todo dato viene de Firebase.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -17,17 +18,23 @@
 - `app/components/Dashboard.tsx` → Widgets (stats, gráficos, metas, XP, comunidad, timer)
 - `app/components/DashboardLayout.tsx` → Layout con Sidebar + Topbar + ThemeProvider
 - `app/components/Sidebar.tsx` → Navegación lateral
-- `app/components/Topbar.tsx` → Barra superior (búsqueda, tema, notificaciones)
+- `app/components/Topbar.tsx` → Barra superior (búsqueda, tema, notificaciones push)
 - `app/components/ProtectedRoute.tsx` → Protección de rutas autenticadas
-- `app/components/icons.tsx` → 20+ iconos SVG inline
+- `app/components/icons.tsx` → 21 iconos SVG inline (incluye IconCheck)
 - `app/login/page.tsx` → Login (Google + Email)
 - `app/register/page.tsx` → Registro (Google + Email)
 - `app/metas/page.tsx` → CRUD de metas con filtros
+- `app/cursos/page.tsx` → Listado de cursos con progreso
+- `app/cursos/[id]/page.tsx` → Detalle de curso con módulos
+- `app/calendario/page.tsx` → Calendario con recordatorios
+- `app/finanzas/page.tsx` → Transacciones con filtros
+- `app/configuracion/page.tsx` → Perfil, tema, cuenta
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
-- `lib/seed.ts` → Datos de prueba para nuevos usuarios
-- `lib/firestore/` → 8 módulos Firestore (goals, users, transactions, gamification, reminders, notifications, community, study)
-- `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, etc.)
+- `lib/seed.ts` → Vacío (sin datos de ejemplo)
+- `lib/csvParser.ts` → Parser e importador de CSV a Firestore
+- `lib/firestore/` → 8 módulos Firestore (goals, users, transactions, gamification, reminders, notifications, community, study, courses)
+- `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
 - ✅ **Simplificación Web**: Eliminación de Capacitor/App nativa, aplanamiento de rutas.
@@ -38,22 +45,23 @@
 - ✅ **Firestore Integration**: 8 colecciones con suscripciones en tiempo real.
 - ✅ **Mis Metas**: CRUD completo con filtrado, edición, eliminación y agregar fondos.
 - ✅ **Gamificación**: Sistema de XP, niveles y logros.
-- ✅ **Seed Data**: Datos automáticos para nuevos usuarios.
-- ✅ **Túnel VS Code Activado**: Túnel `prosper-dev` iniciado para desarrollo remoto desde móvil.
-
-## Pendientes Próximos
-- [ ] Desarrollar módulo de "Cursos" de Academia Prosper.
-- [ ] Páginas adicionales: Calendario, Finanzas, Comunidad, Configuración, Ayuda, Logros.
+- ✅ **Datos en Blanco**: Eliminados todos los datos de ejemplo. App inicia vacía.
+- ✅ **Cursos Academia**: Listado con progreso, detalle con módulos, inscripción, XP reward.
+- ✅ **Importar CSV**: Modal funcional con parser, validación y reporte de errores.
+- ✅ **Configuración**: Página de perfil (nombre, foto, email, tema, cuenta).
+- ✅ **Comunidad CRUD**: Funciones add/delete miembros.
+- ✅ **Notificaciones Push**: Permiso del navegador + envío automático.
 
 ## Historial de Instrucciones
-### 31/03/2026
-- **Inicio de servidor**: `npm run dev` en localhost:3000 (nueva ventana PowerShell).
-- **Commit local**: `2212c8e` - "feat: integración completa de Firebase con Firestore, CRUD de metas, auth mejorado y sistema de gamificación" (25 archivos, +1527/-669 líneas).
-- **Nota**: No hay repositorio remoto configurado para push.
+### 01/04/2026
+- **Sincronización Firebase completa**: Todos los datos modificables conectados a Firestore.
+- **Datos en blanco**: Seed eliminado, datos por defecto removidos de todos los componentes.
+- **Skills ejecutadas**: orquestador-maestro, modo-produccion, guardian-del-diseno, firebase-connector, planificacion-pro, memoria-persistente.
 
 ## Notas Técnicas
 - El modo oscuro se activa mediante `data-theme="dark"` en el tag `<html>`.
 - Usar variables CSS (`var(--token)`) para todos los estilos.
 - El servidor de desarrollo corre en puerto 3000.
 - Firestore usa `onSnapshot` para actualizaciones en tiempo real.
-- Los datos locales se usan como fallback si Firestore no está disponible.
+- **Sin datos de ejemplo**: Todo dato debe ser creado por el usuario o importado via CSV.
+- **Cursos**: Se crean manualmente (no hay seed automático).
