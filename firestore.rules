@@ -3,30 +3,35 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users: solo el propio usuario puede leer/escribir su perfil
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // Goals: solo el propietario
     match /goals/{goalId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Transactions: solo el propietario
     match /transactions/{transactionId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Study sessions: solo el propietario
     match /study_sessions/{sessionId} {
-      allow read, write: if request.auth != null && (resource.data.userId == request.auth.uid || sessionId == request.auth.uid);
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Reminders: solo el propietario
     match /reminders/{reminderId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Courses: lectura pública, escritura solo admin
@@ -37,7 +42,9 @@ service cloud.firestore {
     
     // User course progress: solo el propietario
     match /user_course_progress/{progressId} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Community members: lectura pública
@@ -48,17 +55,30 @@ service cloud.firestore {
     
     // Achievements: solo el propietario
     match /achievements/{achievementId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // XP states: solo el propietario
     match /xp_states/{xpId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Notifications: solo el propietario
     match /notifications/{notificationId} {
-      allow read, write: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // User profiles: solo el propietario
+    match /user_profiles/{profileId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
   }
 }
