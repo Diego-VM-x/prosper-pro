@@ -19,6 +19,7 @@ import {
   IconMenu,
   IconLogout,
   IconX,
+  IconSettings,
 } from './icons';
 import type { Notification } from '@/types';
 
@@ -40,6 +41,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
 
@@ -61,6 +63,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
       if (e.key === 'Escape') {
         setShowSearch(false);
         setShowNotifications(false);
+        setShowUserMenu(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -177,22 +180,77 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div className="topbar-avatar" style={{ overflow: 'hidden' }}>
+        <div className="topbar-user" id="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+          <div
+            className="topbar-avatar"
+            style={{ overflow: 'hidden', cursor: 'pointer' }}
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
             {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
           </div>
-          <div className="topbar-user-info">
+          <div className="topbar-user-info" style={{ cursor: 'pointer' }} onClick={() => setShowUserMenu(!showUserMenu)}>
             <span className="topbar-user-name">{user?.displayName || 'Usuario Pro'}</span>
             <span className="topbar-user-email">{user?.email}</span>
           </div>
-          <button 
-            className="topbar-icon-btn logout-btn" 
-            onClick={logout} 
-            title="Cerrar sesión"
-            style={{ marginLeft: '8px' }}
-          >
-            <IconLogout />
-          </button>
+
+          {showUserMenu && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              width: 220,
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              zIndex: 100,
+              overflow: 'hidden',
+              animation: 'fadeInUp 0.2s ease',
+            }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-default)' }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{user?.displayName || 'Usuario'}</p>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>{user?.email}</p>
+              </div>
+              <button
+                onClick={() => { setShowUserMenu(false); }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <IconSettings /> Configuración
+              </button>
+              <div style={{ borderTop: '1px solid var(--border-default)' }}>
+                <button
+                  onClick={() => { setShowUserMenu(false); logout(); }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--color-error)',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <IconLogout /> Cerrar Sesión
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -17,6 +17,7 @@ export default function LoginPage() {
       setError(null);
       setLoading(true);
       await loginWithGoogle();
+      window.location.href = '/';
     } catch {
       setError('Error al conectar con Google.');
       setLoading(false);
