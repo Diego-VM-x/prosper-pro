@@ -229,7 +229,13 @@ ul, ol {
 
 /* Sidebar header - solo en móvil */
 .sidebar-header {
-  display: none;
+  display: none !important;
+  visibility: hidden;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
 }
 
 @media (max-width: 1024px) {
@@ -238,13 +244,15 @@ ul, ol {
     top: 0;
   }
   .sidebar-header {
-    display: flex;
+    display: flex !important;
+    visibility: visible;
     align-items: center;
     justify-content: flex-end;
     padding: 8px 12px;
     border-bottom: 1px solid var(--border-default);
     flex-shrink: 0;
     min-height: 48px;
+    height: auto;
   }
 }
 
