@@ -45,35 +45,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      if (firebaseUser) {
-        try {
-          const profile = await getUserProfile(firebaseUser.uid);
-          if (!profile) {
-            await createUserProfile({
-              uid: firebaseUser.uid,
-              displayName: firebaseUser.displayName,
-              email: firebaseUser.email,
-              photoURL: firebaseUser.photoURL,
-              createdAt: Date.now(),
-              isSeeded: false,
-            });
-            try {
-              await seedUserData(firebaseUser.uid);
-            } catch (seedErr) {
-              console.error('Seed error:', seedErr);
-            }
-          }
-        } catch (profileErr) {
-          console.error('Profile error:', profileErr);
-        }
-      }
+    if (!auth) {
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+      return;
+    }
+    try {
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        setUser(firebaseUser);
+        if (firebaseUser) {
+          try {
+            const profile = await getUserProfile(firebaseUser.uid);
+            if (!profile) {
+              await createUserProfile({
+                uid: firebaseUser.uid,
+                displayName: firebaseUser.displayName,
+                email: firebaseUser.email,
+                photoURL: firebaseUser.photoURL,
+                createdAt: Date.now(),
+                isSeeded: false,
+              });
+              try {
+                await seedUserData(firebaseUser.uid);
+              } catch (seedErr) {
+                console.error('Seed error:', seedErr);
+              }
+            }
+          } catch (profileErr) {
+            console.error('Profile error:', profileErr);
+          }
+        }
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } catch (e) {
+      console.error('Auth init error:', e);
+      setLoading(false);
+    }
   }, []);
 
   const loginWithGoogle = async () => {
