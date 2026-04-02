@@ -59,14 +59,14 @@ export default function MetasPage() {
       await updateGoalFn(editingGoal.id, updated);
     } else {
       console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo CREACIÓN');
-      const goalData = {
+      const goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'> = {
         userId: userId || 'local',
         title: formData.title,
         category: formData.category,
         current: formData.current,
         target: formData.target,
         deadline: formData.deadline,
-        status: formData.current >= formData.target ? 'completed' : 'pending',
+        status: (formData.current >= formData.target ? 'completed' : 'pending') as GoalStatus,
         color: formData.color,
         icon: formData.icon,
       };
