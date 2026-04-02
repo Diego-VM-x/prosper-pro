@@ -86,18 +86,20 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
       )}
 
       <aside className={`sidebar${isOpen ? ' open' : ''}${isCollapsed ? ' collapsed' : ''}`} id="main-sidebar">
-        {/* Logo */}
-        <div className="sidebar-logo">
-          <img
-            src="/logo-icon.png"
-            alt="Prosper Logo"
-            width={36}
-            height={36}
-            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
-          />
-          <span className="sidebar-logo-text">
-            Prosper<span style={{ color: 'var(--color-prosper-green)' }}>.</span>
-          </span>
+        {/* Header: Logo + collapse + close */}
+        <div className="sidebar-header">
+          <Link href="/" className="sidebar-logo" onClick={onClose}>
+            <img
+              src="/logo-icon.png"
+              alt="Prosper Logo"
+              width={36}
+              height={36}
+              style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
+            />
+            <span className="sidebar-logo-text">
+              Prosper<span style={{ color: 'var(--color-prosper-green)' }}>.</span>
+            </span>
+          </Link>
           {/* Botón colapsar para desktop */}
           <button
             className="sidebar-collapse-btn"
@@ -105,7 +107,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
             aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
             title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               {isCollapsed ? (
                 <polyline points="9 18 15 12 9 6" />
               ) : (
@@ -118,17 +120,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
             className="sidebar-close-btn"
             onClick={onClose}
             aria-label="Cerrar menú"
-            style={{
-              marginLeft: 'auto',
-              display: 'none',
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-            }}
           >
             <IconX width={16} height={16} />
           </button>
@@ -194,11 +185,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         </div>
       </aside>
 
-      {/* Estilos responsivos inline para overlay y botón close */}
+      {/* Estilos para overlay en móvil */}
       <style>{`
         @media (max-width: 1024px) {
           .sidebar-overlay { display: block !important; }
-          .sidebar-close-btn { display: flex !important; }
         }
       `}</style>
     </>
