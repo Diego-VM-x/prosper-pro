@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 import { SearchProvider } from '@/lib/contexts/SearchContext';
+import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 import { ThemeProvider } from './components/ThemeProvider';
 
 export const viewport: Viewport = {
@@ -91,9 +92,11 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AuthProvider>
-            <SearchProvider>
-              {children}
-            </SearchProvider>
+            <GoalsProvider>
+              <SearchProvider>
+                {children}
+              </SearchProvider>
+            </GoalsProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
