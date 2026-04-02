@@ -215,6 +215,26 @@ ul, ol {
   box-shadow: var(--shadow-sm);
 }
 
+/* Sidebar header - sin logo, solo botón cerrar en móvil */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+/* En desktop, el sidebar header es mínimo */
+@media (min-width: 1025px) {
+  .sidebar-header {
+    min-height: 0;
+    padding: 0;
+    border-bottom: none;
+  }
+}
+
 /* Sidebar colapsada (solo iconos) */
 .sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
@@ -281,17 +301,6 @@ ul, ol {
   width: 24px;
   height: 24px;
   color: white;
-}
-
-/* Header del sidebar (solo botón cerrar en móvil) */
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border-default);
-  flex-shrink: 0;
-  min-height: 48px;
 }
 
 /* Botón cerrar móvil */
