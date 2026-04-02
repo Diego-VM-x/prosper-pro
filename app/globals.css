@@ -1275,15 +1275,15 @@ ul, ol {
 }
 
 .progress-ring-pct {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   line-height: 1;
 }
 
 .progress-ring-label {
-  font-size: 0.625rem;
+  font-size: 0.5rem;
   color: var(--text-secondary);
   text-align: center;
   margin-top: 2px;
