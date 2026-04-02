@@ -146,8 +146,6 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const remindersToday = reminders.filter((r) => r.date === todayISO && r.isActive);
 
-  if (loading) return null;
-
   return (
     <GoalsContext.Provider value={{
       userId: user?.uid || '',
