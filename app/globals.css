@@ -845,15 +845,15 @@ ul, ol {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  border-radius: var(--radius-md);
+  padding: 10px;
   position: relative;
   overflow: hidden;
   transition: all var(--transition-fast);
@@ -862,7 +862,7 @@ ul, ol {
 
 .stat-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: var(--border-strong);
 }
 
@@ -870,7 +870,7 @@ ul, ol {
   background: linear-gradient(135deg, var(--color-prosper-navy) 0%, var(--color-prosper-green) 100%);
   border-color: transparent;
   color: white;
-  box-shadow: 0 10px 20px -5px rgba(30, 58, 110, 0.25);
+  box-shadow: 0 4px 12px -3px rgba(30, 58, 110, 0.25);
 }
 
 .stat-card.featured .stat-label { color: rgba(255,255,255,0.75); }
@@ -881,12 +881,12 @@ ul, ol {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .stat-icon-link {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 1.5px solid var(--border-default);
   display: flex;
@@ -912,30 +912,30 @@ ul, ol {
 .stat-icon-link svg { width: 14px; height: 14px; }
 
 .stat-label {
-  font-size: 0.8125rem;
+  font-size: 0.625rem;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .stat-value {
-  font-size: 2rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .stat-change {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
+  gap: 3px;
+  font-size: 0.625rem;
   color: var(--text-secondary);
 }
 
-.stat-change svg { width: 14px; height: 14px; }
+.stat-change svg { width: 12px; height: 12px; }
 
 .stat-change.positive { color: var(--color-pine-500); }
 .stat-change.negative { color: var(--color-red-500); }
