@@ -232,7 +232,8 @@ export function Dashboard() {
       </div>
 
       <div className="content-grid">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {/* Columna izquierda: Gráfico + Fechas */}
+        <div className="content-grid-left">
           <div className="card animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             <div className="card-header"><span className="card-title">Progreso Financiero Semanal</span></div>
             <div className="chart-bars">
@@ -246,7 +247,7 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Próximas Fechas Límite - sincronizado con metas */}
+          {/* Próximas Fechas Límite */}
           <div className="card animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
             <div className="card-header">
               <span className="card-title">📅 Próximas Fechas</span>
@@ -260,38 +261,38 @@ export function Dashboard() {
                 .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
                 .slice(0, 4);
               return upcoming.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {upcoming.map((g) => {
                     const daysLeft = getDaysUntil(g.iso as string);
                     const pct = Math.min((g.current / g.target) * 100, 100);
                     const urgency = daysLeft <= 0 ? 'var(--color-red-500)' : daysLeft <= 7 ? 'var(--color-gold-500)' : 'var(--text-secondary)';
                     return (
-                      <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: `3px solid ${g.color}` }}>
-                        <span style={{ fontSize: '1.125rem' }}>{g.icon}</span>
+                      <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: `3px solid ${g.color}` }}>
+                        <span style={{ fontSize: '0.875rem' }}>{g.icon}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</p>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                            <div style={{ flex: 1, height: 4, background: 'var(--bg-card)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                          <p style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                            <div style={{ flex: 1, height: 3, background: 'var(--bg-card)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
                               <div style={{ width: `${pct}%`, height: '100%', background: g.color, borderRadius: 'var(--radius-full)' }} />
                             </div>
-                            <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{Math.round(pct)}%</span>
+                            <span style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{Math.round(pct)}%</span>
                           </div>
                         </div>
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: urgency }}>{daysLeft <= 0 ? 'Vencida' : daysLeft === 1 ? '1 día' : `${daysLeft}d`}</span>
-                          <span style={{ display: 'block', fontSize: '0.625rem', color: CATEGORY_COLORS[g.category] || '#888', fontWeight: 600 }}>{g.category}</span>
+                          <span style={{ fontSize: '0.625rem', fontWeight: 700, color: urgency }}>{daysLeft <= 0 ? 'Vencida' : daysLeft === 1 ? '1d' : `${daysLeft}d`}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p style={{ padding: '16px 0', color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>No hay metas con fecha límite</p>
+                <p style={{ padding: '10px 0', color: 'var(--text-secondary)', fontSize: '0.75rem', textAlign: 'center' }}>No hay metas con fecha límite</p>
               );
             })()}
           </div>
         </div>
 
+        {/* Columna derecha: Metas Activas + XP */}
         <div className="card animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
           <div className="card-header">
             <span className="card-title">Metas Activas</span>
@@ -302,28 +303,28 @@ export function Dashboard() {
               const pct = Math.min((goal.current / goal.target) * 100, 100);
               return (
                 <div className="project-list-item" key={goal.id}>
-                  <div className="project-color-dot" style={{ background: goal.color }}><span style={{ fontSize: '0.875rem' }}>{goal.icon}</span></div>
+                  <div className="project-color-dot" style={{ background: goal.color }}><span style={{ fontSize: '0.75rem' }}>{goal.icon}</span></div>
                   <div className="project-info" style={{ flex: 1 }}>
                     <p className="project-name">{goal.title}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <div style={{ flex: 1, height: 4, background: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                      <div style={{ flex: 1, height: 3, background: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
                         <div style={{ width: `${pct}%`, height: '100%', background: goal.color, borderRadius: 'var(--radius-full)', transition: 'width 0.5s ease' }} />
                       </div>
-                      <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-secondary)', minWidth: 28 }}>{Math.round(pct)}%</span>
+                      <span style={{ fontSize: '0.5rem', fontWeight: 600, color: 'var(--text-secondary)', minWidth: 24 }}>{Math.round(pct)}%</span>
                     </div>
                     <p className="project-due" style={{ marginTop: 2 }}>${goal.current.toLocaleString()} / ${goal.target.toLocaleString()} &middot; {goal.deadline}</p>
                   </div>
                 </div>
               );
             }) : (
-              <p style={{ padding: '16px 0', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No hay metas activas. ¡Crea una!</p>
+              <p style={{ padding: '10px 0', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>No hay metas activas. ¡Crea una!</p>
             )}
           </div>
 
           {xp && (
-            <div className="xp-bar-wrapper" style={{ marginTop: 16 }}>
+            <div className="xp-bar-wrapper" style={{ marginTop: 10 }}>
               <div className="xp-bar-header">
-                <span className="xp-bar-label"><IconZap style={{ display: 'inline-block', verticalAlign: 'middle', width: 14, height: 14, marginRight: 4 }} />Nivel {xp.level} — {xp.title}</span>
+                <span className="xp-bar-label"><IconZap style={{ display: 'inline-block', verticalAlign: 'middle', width: 12, height: 12, marginRight: 3 }} />Nivel {xp.level}</span>
                 <span className="xp-bar-value">{xp.currentXP.toLocaleString()} / {xp.maxXP.toLocaleString()} XP</span>
               </div>
               <div className="xp-bar-track"><div className="xp-bar-fill" style={{ width: `${(xp.currentXP / xp.maxXP) * 100}%` }} /></div>

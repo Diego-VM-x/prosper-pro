@@ -952,9 +952,15 @@ ul, ol {
    ============================================================ */
 .content-grid {
   display: grid;
-  grid-template-columns: 1fr 240px;
+  grid-template-columns: 1fr 260px;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.content-grid-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .content-grid-full {
