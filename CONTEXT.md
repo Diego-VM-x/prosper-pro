@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (02 de Abril, 2026 - Reset Firebase Completo)
+## Estado Actual (02 de Abril, 2026 - Sync con Remote + Firebase Error Handling)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -17,7 +17,7 @@
 ## Estructura de Archivos Clave
 - `app/page.tsx` → Dashboard principal
 - `app/components/Dashboard.tsx` → Widgets (stats, gráficos, metas, XP, comunidad, avisos recientes)
-- `app/components/DashboardLayout.tsx` → Layout con Sidebar + Topbar + ThemeProvider + GoalsProvider
+- `app/components/DashboardLayout.tsx` → Layout con Sidebar + Topbar (GoalsProvider movido a layout.tsx)
 - `app/components/Sidebar.tsx` → Navegación lateral
 - `app/components/Topbar.tsx` → Barra superior (búsqueda, tema, notificaciones push)
 - `app/components/ProtectedRoute.tsx` → Protección de rutas autenticadas
@@ -39,6 +39,13 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Sync con Remote + Firebase Error Handling (02/04/2026)**: Pull de 10 commits del remoto. Firebase init con try-catch, AuthContext protegido contra crashes.
+- ✅ **GoalsProvider en Root Layout**: Movido de DashboardLayout a layout.tsx para jerarquía correcta de contextos. Soluciona metas no sincronizadas con calendario/dashboard.
+- ✅ **GoalsContext Loading Fix**: Eliminado `return null` durante loading en GoalsProvider. Ahora renderiza children inmediatamente con datos vacíos.
+- ✅ **Metas Page con GoalsContext**: Refactorizado para usar `useGoals()` en lugar de estado local. Sync completa con calendario y dashboard.
+- ✅ **Calendar Redesign**: Vista mes/agenda, barras de progreso de metas, widget de próximas metas, resumen mensual.
+- ✅ **Dashboard Updates**: Widget de próximas fechas límite, barras de progreso en metas activas, colores por categoría.
+- ✅ **Submodule Huérfano Eliminado**: Removida referencia `.agent/recursos/prosper-repo` que causaba fallos en builds de Vercel.
 - ✅ **Sincronización Metas-Calendario Corregida (02/04/2026)**: Corregida creación de metas que no aparecían por falta de `userId` y problemas de formato de fecha en el calendario.
 - ✅ **Simplificación Web**: Eliminación de Capacitor/App nativa, aplanamiento de rutas.
 - ✅ **Design Tokens**: Configuración de `globals.css` con soporte para Modo Oscuro/Claro.
@@ -80,6 +87,7 @@
 
 ## Historial de Instrucciones
 ### 02/04/2026
+- **Pull de Remote (10 commits)**: Sincronizados cambios del remoto con fast-forward. Commits: calendar-goals-sync-redesign, goals-sync-context, goals-loading-state, goals-provider-placement, remove-submodule, firebase-error-handling.
 - **Bug Fix Metas y Calendario**: Corregida la creación de metas que no aparecían por falta de validación de `userId` y problemas de formato de fecha en el calendario.
 - **Git Push + Dev Server**: Cambios subidos al repositorio y servidor de desarrollo activo.
 
@@ -124,6 +132,24 @@
   - `createGoal` ahora incluye `ownerId` automáticamente.
   - `.env.local` creado con placeholders para nuevas credenciales.
 
+- **Firebase Error Handling (02/04/2026)**:
+  - `lib/firebase.ts`: Init envuelto en try-catch con fallback. Previene crash si config es incorrecta.
+  - `lib/contexts/AuthContext.tsx`: `loading=false` si auth es null. `onAuthStateChanged` con try-catch.
+
+- **GoalsProvider en Root Layout (02/04/2026)**:
+  - `app/layout.tsx`: GoalsProvider añadido después de AuthProvider.
+  - `app/components/DashboardLayout.tsx`: GoalsProvider eliminado (ya no necesario aquí).
+
+- **GoalsContext Loading Fix (02/04/2026)**:
+  - `lib/contexts/GoalsContext.tsx`: Eliminado `return null` durante loading. Renderiza children con datos vacíos.
+
+- **Metas Page GoalsContext (02/04/2026)**:
+  - `app/metas/page.tsx`: Usa `addGoal()` de GoalsContext. Eliminado `localGoals` state y `refreshGoals()`.
+
+- **Calendar Redesign (02/04/2026)**:
+  - `app/calendario/page.tsx`: Vistas mes/agenda, barras de progreso, widget próximas metas, resumen mensual.
+  - `app/components/Dashboard.tsx`: Widget próximas fechas límite, barras progreso en metas, colores categoría.
+
 - **Reactividad Global (01/04/2026)**:
   - `lib/contexts/GoalsContext.tsx`: Nuevo contexto con `onSnapshot` para goals y reminders. Expone `goals`, `reminders`, `userId`, `goalsToday`, `remindersToday` y funciones CRUD.
   - `app/components/DashboardLayout.tsx`: GoalsProvider añadido como wrapper global.
@@ -135,6 +161,7 @@
 1. **Configurar variables de entorno en Vercel**: Las 7 variables NEXT_PUBLIC_FIREBASE_* deben agregarse manualmente en Vercel Dashboard → prosper-pro → Settings → Environment Variables. Ver `VERCEL_ENV_VARS.txt` para los valores del nuevo proyecto `prospeweb`.
 2. **Redeploy en Vercel**: Después de agregar las variables, hacer un redeploy para que los cambios surtan efecto.
 3. **Activar Firebase Storage** (opcional): Para fotos de perfil en Configuración.
+4. **Verificar build en Vercel**: Confirmar que el fix del submodule huérfano resolvió los fallos de build.
 
 ## Instrucciones para errores conocidos
 ### Error: "No se ven las metas en producción (Vercel)"
