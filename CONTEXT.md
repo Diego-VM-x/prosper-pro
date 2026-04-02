@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (02 de Abril, 2026 - Fix Login Bug)
+## Estado Actual (02 de Abril, 2026 - Login Fix Completo + ProtectedRoute en Home)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -87,6 +87,10 @@
 
 ## Historial de Instrucciones
 ### 02/04/2026
+- **Login Fix Completo**:
+  - `app/login/page.tsx`: Redirección con `setTimeout(500ms)` + `router.replace('/')` después de login exitoso. Evita necesidad de refresh manual.
+  - `app/page.tsx`: `ProtectedRoute` envuelve Dashboard para evitar queries Firestore sin autenticación.
+  - `lib/contexts/AuthContext.tsx`: `loginWithGoogle` y `loginWithEmail` lanzan error explícito si `auth` es null.
 - **Pull de Remote (10 commits)**: Sincronizados cambios del remoto con fast-forward. Commits: calendar-goals-sync-redesign, goals-sync-context, goals-loading-state, goals-provider-placement, remove-submodule, firebase-error-handling.
 - **Bug Fix Metas y Calendario**: Corregida la creación de metas que no aparecían por falta de validación de `userId` y problemas de formato de fecha en el calendario.
 - **Git Push + Dev Server**: Cambios subidos al repositorio y servidor de desarrollo activo.
@@ -135,6 +139,11 @@
 - **Login Bug Fix (02/04/2026)**:
   - `app/login/page.tsx`: Redirección via `useEffect` + `router.replace('/')` en lugar de `window.location.href`. Evita race condition con `onAuthStateChanged`.
   - `lib/contexts/AuthContext.tsx`: Funciones de login lanzan error explícito si `auth` es null.
+
+- **Login Fix Completo (02/04/2026)**:
+  - `app/login/page.tsx`: `setTimeout(500ms)` + `router.replace('/')` después de login. `useEffect` con `user` sin dependencia de `loading`.
+  - `app/page.tsx`: `ProtectedRoute` envuelve `<Dashboard>`.
+  - `lib/contexts/AuthContext.tsx`: Login functions lanzan error si `auth` es null.
 
 - **Firebase Error Handling (02/04/2026)**:
   - `lib/firebase.ts`: Init envuelto en try-catch con fallback. Previene crash si config es incorrecta.
