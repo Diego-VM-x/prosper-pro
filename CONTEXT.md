@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (02 de Abril, 2026 - Sync con Remote + Firebase Error Handling)
+## Estado Actual (02 de Abril, 2026 - Fix Login Bug)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -131,6 +131,10 @@
   - Funciones renombradas: `getGoalsByOwnerId`, `getTransactionsByOwnerId`, `getXPByOwnerId`, `getAchievementsByOwnerId`, `getUserProgressByOwnerId`, `getRemindersByOwnerId`, `getUnreadCount(ownerId)`, `markAllNotificationsRead(ownerId)`, `getMonthlySavings(ownerId)`, `getMonthlySummary(ownerId)`, `subscribeToGoals(ownerId)`, `subscribeToReminders(ownerId)`, `subscribeToTransactions(ownerId)`, `subscribeToWeeklyData(ownerId)`, `subscribeToXP(ownerId)`, `subscribeToAchievements(ownerId)`, `subscribeToNotifications(ownerId)`, `subscribeToUserProgress(ownerId)`.
   - `createGoal` ahora incluye `ownerId` automáticamente.
   - `.env.local` creado con placeholders para nuevas credenciales.
+
+- **Login Bug Fix (02/04/2026)**:
+  - `app/login/page.tsx`: Redirección via `useEffect` + `router.replace('/')` en lugar de `window.location.href`. Evita race condition con `onAuthStateChanged`.
+  - `lib/contexts/AuthContext.tsx`: Funciones de login lanzan error explícito si `auth` es null.
 
 - **Firebase Error Handling (02/04/2026)**:
   - `lib/firebase.ts`: Init envuelto en try-catch con fallback. Previene crash si config es incorrecta.
