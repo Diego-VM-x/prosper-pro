@@ -918,30 +918,30 @@ ul, ol {
 .stat-icon-link svg { width: 14px; height: 14px; }
 
 .stat-label {
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .stat-value {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.5px;
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .stat-change {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  font-size: 0.5rem;
+  gap: 3px;
+  font-size: 0.625rem;
   color: var(--text-secondary);
 }
 
-.stat-change svg { width: 10px; height: 10px; }
+.stat-change svg { width: 12px; height: 12px; }
 
 .stat-change.positive { color: var(--color-pine-500); }
 .stat-change.negative { color: var(--color-red-500); }
@@ -988,7 +988,7 @@ ul, ol {
 }
 
 .card-title {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -1176,7 +1176,7 @@ ul, ol {
 
 .project-info { flex: 1; min-width: 0; }
 .project-name {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
@@ -1185,7 +1185,7 @@ ul, ol {
 }
 
 .project-due {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   color: var(--text-tertiary);
 }
 
@@ -1287,7 +1287,7 @@ ul, ol {
 }
 
 .progress-ring-pct {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.5px;
@@ -1295,7 +1295,7 @@ ul, ol {
 }
 
 .progress-ring-label {
-  font-size: 0.5rem;
+  font-size: 0.5625rem;
   color: var(--text-secondary);
   text-align: center;
   margin-top: 2px;
