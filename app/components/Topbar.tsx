@@ -29,6 +29,10 @@ import Link from 'next/link';
 interface TopbarProps {
   /** Función para alternar la visibilidad del sidebar en móvil */
   onToggleSidebar: () => void;
+  /** Indica si el sidebar está colapsado */
+  isCollapsed: boolean;
+  /** Función para alternar el estado colapsado */
+  onToggleCollapse: () => void;
 }
 
 /**
@@ -36,7 +40,7 @@ interface TopbarProps {
  * Incluye la barra de búsqueda global, botones de acción rápida,
  * toggle de modo oscuro/claro y el perfil del usuario.
  */
-export function Topbar({ onToggleSidebar }: TopbarProps) {
+export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
@@ -95,14 +99,45 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
   return (
     <header className="topbar" id="main-topbar">
-      {/* Menú hamburguesa para móvil */}
-      <button
-        className="topbar-icon-btn sidebar-toggle"
-        onClick={onToggleSidebar}
-        aria-label="Abrir menú"
-      >
-        <IconMenu />
-      </button>
+      {/* Logo + colapsar + menú móvil */}
+      <div className="topbar-left">
+        <Link href="/" className="topbar-logo-link">
+          <img
+            src="/logo-icon.png"
+            alt="Prosper Logo"
+            width={32}
+            height={32}
+            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
+          />
+        </Link>
+        {/* Botón colapsar para desktop */}
+        <button
+          className="topbar-collapse-btn"
+          onClick={onToggleCollapse}
+          aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {isCollapsed ? (
+              <polyline points="9 18 15 12 9 6" />
+            ) : (
+              <polyline points="15 18 9 12 15 6" />
+            )}
+          </svg>
+        </button>
+        {/* Menú hamburguesa para móvil */}
+        <button
+          className="topbar-icon-btn sidebar-toggle"
+          onClick={onToggleSidebar}
+          aria-label="Abrir menú"
+        >
+          <IconMenu />
+        </button>
+        {/* Título dinámico */}
+        <span className="topbar-title-dynamic">
+          {isCollapsed ? 'Navegación Rápida' : `Hola, ${user?.displayName || 'Usuario'}`}
+        </span>
+      </div>
 
       {/* Búsqueda */}
       <div className="topbar-search" onClick={() => setShowSearch(true)} style={{ cursor: 'pointer' }}>
@@ -221,9 +256,53 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
       {/* Estilos inline */}
       <style>{`
+        /* Logo y colapsar en topbar */
+        .topbar-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-shrink: 0;
+        }
+        .topbar-logo-link {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          transition: opacity var(--transition-fast);
+        }
+        .topbar-logo-link:hover { opacity: 0.85; }
+        .topbar-collapse-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: var(--radius-md);
+          background: var(--bg-input);
+          border: 1px solid var(--border-default);
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          flex-shrink: 0;
+        }
+        .topbar-collapse-btn:hover {
+          background: var(--bg-accent-soft);
+          border-color: var(--color-prosper-green);
+          color: var(--color-prosper-green);
+        }
+        .topbar-title-dynamic {
+          font-size: 0.9375rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 200px;
+        }
         .sidebar-toggle { display: none; }
         @media (max-width: 1024px) {
           .sidebar-toggle { display: flex !important; }
+          .topbar-collapse-btn { display: none; }
+          .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
 
         /* Notificaciones dropdown */
