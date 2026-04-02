@@ -1,6 +1,6 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,13 +12,21 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth | null = null;
 
-// Auth solo en cliente para evitar errores en SSR/static build
-let auth: ReturnType<typeof getAuth> | null = null;
-if (typeof window !== 'undefined') {
-  auth = getAuth(app);
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  db = getFirestore(app);
+  if (typeof window !== 'undefined') {
+    auth = getAuth(app);
+  }
+} catch (e) {
+  console.error('Firebase init error:', e);
+  // Fallback: create app with empty config to prevent crashes
+  app = !getApps().length ? initializeApp({ apiKey: 'invalid', projectId: 'invalid', appId: 'invalid' }) : getApp();
+  db = getFirestore(app);
 }
 
 export { app, auth, db };
