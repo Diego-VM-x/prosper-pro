@@ -84,13 +84,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const loginWithGoogle = async () => {
-    if (!auth) return;
+    if (!auth) throw new Error('Firebase Auth no está disponible. Verifica las variables de entorno.');
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   };
 
   const loginWithEmail = async (email: string, pass: string) => {
-    if (!auth) return;
+    if (!auth) throw new Error('Firebase Auth no está disponible. Verifica las variables de entorno.');
     await signInWithEmailAndPassword(auth, email, pass);
   };
 

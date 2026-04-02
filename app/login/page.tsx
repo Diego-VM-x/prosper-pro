@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import './auth.css';
 
@@ -10,14 +11,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail } = useAuth();
+  const { loginWithGoogle, loginWithEmail, user } = useAuth();
+  const router = useRouter();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (user && !loading) {
+      router.replace('/');
+    }
+  }, [user, loading]);
 
   const handleGoogleLogin = async () => {
     try {
       setError(null);
       setLoading(true);
       await loginWithGoogle();
-      window.location.href = '/';
+      // No redirigir aquí, el useEffect lo hará cuando user se actualice
     } catch {
       setError('Error al conectar con Google.');
       setLoading(false);
@@ -35,8 +44,9 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginWithEmail(email, password);
-      window.location.href = '/';
+      // No redirigir aquí, el useEffect lo hará cuando user se actualice
     } catch (err: any) {
+      setLoading(false);
       switch (err.code) {
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
@@ -47,9 +57,8 @@ export default function LoginPage() {
           setError('Demasiados intentos fallidos. Inténtalo más tarde.');
           break;
         default:
-          setError('Error al iniciar sesión. Inténtalo de nuevo.');
+          setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
       }
-      setLoading(false);
     }
   };
 
