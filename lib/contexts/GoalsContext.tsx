@@ -81,9 +81,12 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user?.uid]);
 
   const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user?.uid) {
+      console.error('[DEBUG GoalsContext addGoal] ERROR: Usuario no autenticado');
+      throw new Error('Usuario no autenticado');
+    }
     console.log('[DEBUG GoalsContext addGoal] Llamado con:', JSON.stringify(goal, null, 2));
-    console.log('[DEBUG GoalsContext addGoal] user?.uid:', user?.uid);
-    const goalData = { ...goal, userId: user?.uid || goal.userId };
+    const goalData = { ...goal, userId: user.uid };
     console.log('[DEBUG GoalsContext addGoal] Datos finales:', JSON.stringify(goalData, null, 2));
     try {
       const id = await createGoal(goalData);
@@ -91,8 +94,6 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
       return id;
     } catch (error: any) {
       console.error('[DEBUG GoalsContext addGoal] ERROR:', error);
-      console.error('[DEBUG GoalsContext addGoal] Error code:', error?.code);
-      console.error('[DEBUG GoalsContext addGoal] Error message:', error?.message);
       throw error;
     }
   }, [user?.uid]);

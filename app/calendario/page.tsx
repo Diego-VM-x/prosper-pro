@@ -61,7 +61,10 @@ export default function CalendarioPage() {
     return days;
   };
 
-  const getDateStr = (day: number) => `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const getDateStr = (day: number) => {
+    const d = new Date(year, month, day);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
   const getRemindersForDate = (dateStr: string) => reminders.filter((r) => r.date === dateStr);
   const getGoalEventsForDate = (dateStr: string) => goalEvents.filter((e) => e.date === dateStr);
   const getAllEventsForDate = (dateStr: string) => [...getRemindersForDate(dateStr), ...getGoalEventsForDate(dateStr)];

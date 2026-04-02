@@ -60,7 +60,7 @@ export default function MetasPage() {
     } else {
       console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo CREACIÓN');
       const goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'> = {
-        userId: userId || 'local',
+        userId: userId!,
         title: formData.title,
         category: formData.category,
         current: formData.current,
