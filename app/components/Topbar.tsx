@@ -21,6 +21,7 @@ import {
   IconLogout,
   IconX,
   IconSettings,
+  IconLogin,
 } from './icons';
 import type { Notification } from '@/types';
 import Link from 'next/link';
@@ -178,34 +179,42 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
 
         {/* Usuario */}
         <div className="topbar-user" id="user-profile">
-          <div
-            className="topbar-avatar"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-          >
-            {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
-          </div>
-          <div className="topbar-user-info" onClick={() => setShowUserMenu(!showUserMenu)}>
-            <span className="topbar-user-name">{user?.displayName || 'Usuario'}</span>
-            <span className="topbar-user-email">{user?.email}</span>
-          </div>
-
-          {showUserMenu && (
-            <div className="user-dropdown">
-              <div className="user-dropdown-header">
-                <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                <p className="user-dropdown-email">{user?.email}</p>
-              </div>
-              <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
-                <IconSettings /> Configuración
-              </Link>
-              <div className="user-dropdown-divider" />
-              <button
-                className="user-dropdown-item user-dropdown-logout"
-                onClick={() => { setShowUserMenu(false); logout(); }}
+          {user ? (
+            <>
+              <div
+                className="topbar-avatar"
+                onClick={() => setShowUserMenu(!showUserMenu)}
               >
-                <IconLogout /> Cerrar Sesión
-              </button>
-            </div>
+                {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+              </div>
+              <div className="topbar-user-info" onClick={() => setShowUserMenu(!showUserMenu)}>
+                <span className="topbar-user-name">{user?.displayName || 'Usuario'}</span>
+                <span className="topbar-user-email">{user?.email}</span>
+              </div>
+
+              {showUserMenu && (
+                <div className="user-dropdown">
+                  <div className="user-dropdown-header">
+                    <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
+                    <p className="user-dropdown-email">{user?.email}</p>
+                  </div>
+                  <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                    <IconSettings /> Configuración
+                  </Link>
+                  <div className="user-dropdown-divider" />
+                  <button
+                    className="user-dropdown-item user-dropdown-logout"
+                    onClick={() => { setShowUserMenu(false); logout(); }}
+                  >
+                    <IconLogout /> Cerrar Sesión
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <Link href="/login" className="topbar-login-btn" onClick={() => setShowUserMenu(false)}>
+              <IconLogin /> Iniciar Sesión
+            </Link>
           )}
         </div>
       </div>
@@ -360,6 +369,27 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         .user-dropdown-logout:hover::before { background: var(--color-error) !important; }
         .user-dropdown-logout svg { color: var(--color-error); }
 
+        /* Login button en topbar */
+        .topbar-login-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: var(--radius-full);
+          background: var(--color-prosper-green);
+          color: white;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          text-decoration: none;
+          transition: all var(--transition-fast);
+          white-space: nowrap;
+        }
+        .topbar-login-btn:hover {
+          background: #34BB81;
+          transform: translateY(-1px);
+        }
+        .topbar-login-btn svg { width: 16px; height: 16px; }
+
         /* Responsive */
         @media (max-width: 768px) {
           .topbar-search { max-width: 180px; }
@@ -367,6 +397,8 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           .topbar-user-info { display: none; }
           .notifications-dropdown { width: 280px; right: -8px; }
           .user-dropdown { width: 220px; }
+          .topbar-login-btn span { display: none; }
+          .topbar-login-btn { padding: 8px; }
         }
         @media (max-width: 480px) {
           .topbar-search { max-width: 120px; }

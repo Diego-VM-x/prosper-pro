@@ -33,6 +33,10 @@ interface SidebarProps {
   isOpen: boolean;
   /** Función para cerrar el sidebar en vista móvil */
   onClose: () => void;
+  /** Indica si el sidebar está colapsado (solo iconos) */
+  isCollapsed: boolean;
+  /** Función para alternar el estado colapsado */
+  onToggleCollapse: () => void;
 }
 
 /**
@@ -40,7 +44,7 @@ interface SidebarProps {
  * Renderiza la navegación principal con items de menú agrupados y una tarjeta
  * promocional de enlace a la academia Prosper en el footer.
  */
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [activeGoalsCount, setActiveGoalsCount] = useState(0);
@@ -81,7 +85,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         />
       )}
 
-      <aside className={`sidebar${isOpen ? ' open' : ''}`} id="main-sidebar">
+      <aside className={`sidebar${isOpen ? ' open' : ''}${isCollapsed ? ' collapsed' : ''}`} id="main-sidebar">
         {/* Logo */}
         <div className="sidebar-logo">
           <img
@@ -94,6 +98,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span className="sidebar-logo-text">
             Prosper<span style={{ color: 'var(--color-prosper-green)' }}>.</span>
           </span>
+          {/* Botón colapsar para desktop */}
+          <button
+            className="sidebar-collapse-btn"
+            onClick={onToggleCollapse}
+            aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+            title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              {isCollapsed ? (
+                <polyline points="9 18 15 12 9 6" />
+              ) : (
+                <polyline points="15 18 9 12 15 6" />
+              )}
+            </svg>
+          </button>
           {/* Botón cerrar para móvil */}
           <button
             className="sidebar-close-btn"
@@ -117,55 +136,61 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
         {/* Navegación Principal */}
         <nav className="sidebar-nav">
-          <p className="sidebar-label">Menú</p>
-          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard">
-            <IconDashboard /> Dashboard
+          {!isCollapsed && <p className="sidebar-label">Menú</p>}
+          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? 'Dashboard' : undefined}>
+            <IconDashboard /> {!isCollapsed && 'Dashboard'}
           </Link>
-          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks">
-            <IconTasks /> Mis Metas
-            {activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}
+          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? 'Mis Metas' : undefined}>
+            <IconTasks /> {!isCollapsed && <>Mis Metas{activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}</>}
+            {isCollapsed && activeGoalsCount > 0 && <span className="nav-badge nav-badge-collapsed">{activeGoalsCount}</span>}
           </Link>
-          <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar">
-            <IconCalendar /> Calendario
+          <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar" title={isCollapsed ? 'Calendario' : undefined}>
+            <IconCalendar /> {!isCollapsed && 'Calendario'}
           </Link>
-          <Link href="/finanzas" className={`nav-item ${isActive('/finanzas') ? 'active' : ''}`} id="nav-analytics">
-            <IconAnalytics /> Finanzas
+          <Link href="/finanzas" className={`nav-item ${isActive('/finanzas') ? 'active' : ''}`} id="nav-analytics" title={isCollapsed ? 'Finanzas' : undefined}>
+            <IconAnalytics /> {!isCollapsed && 'Finanzas'}
           </Link>
-          <Link href="/comunidad" className={`nav-item ${isActive('/comunidad') ? 'active' : ''}`} id="nav-team">
-            <IconTeam /> Comunidad
-          </Link>
-
-          <p className="sidebar-label">Aprendizaje</p>
-          <Link href="/cursos" className={`nav-item ${isActive('/cursos') ? 'active' : ''}`} id="nav-courses">
-            <IconBook /> Cursos
-          </Link>
-          <Link href="/logros" className={`nav-item ${isActive('/logros') ? 'active' : ''}`} id="nav-achievements">
-            <IconTrophy /> Logros
+          <Link href="/comunidad" className={`nav-item ${isActive('/comunidad') ? 'active' : ''}`} id="nav-team" title={isCollapsed ? 'Comunidad' : undefined}>
+            <IconTeam /> {!isCollapsed && 'Comunidad'}
           </Link>
 
-          <p className="sidebar-label">General</p>
-          <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings">
-            <IconSettings /> Configuración
+          {!isCollapsed && <p className="sidebar-label">Aprendizaje</p>}
+          <Link href="/cursos" className={`nav-item ${isActive('/cursos') ? 'active' : ''}`} id="nav-courses" title={isCollapsed ? 'Cursos' : undefined}>
+            <IconBook /> {!isCollapsed && 'Cursos'}
           </Link>
-          <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help">
-            <IconHelp /> Ayuda
+          <Link href="/logros" className={`nav-item ${isActive('/logros') ? 'active' : ''}`} id="nav-achievements" title={isCollapsed ? 'Logros' : undefined}>
+            <IconTrophy /> {!isCollapsed && 'Logros'}
           </Link>
-          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }}>
-            <IconLogout /> Cerrar Sesión
+
+          {!isCollapsed && <p className="sidebar-label">General</p>}
+          <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings" title={isCollapsed ? 'Configuración' : undefined}>
+            <IconSettings /> {!isCollapsed && 'Configuración'}
+          </Link>
+          <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help" title={isCollapsed ? 'Ayuda' : undefined}>
+            <IconHelp /> {!isCollapsed && 'Ayuda'}
+          </Link>
+          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }} title={isCollapsed ? 'Cerrar Sesión' : undefined}>
+            <IconLogout /> {!isCollapsed && 'Cerrar Sesión'}
           </div>
         </nav>
 
         {/* Footer / Promo Card */}
         <div className="sidebar-footer">
-          <div className="sidebar-promo-card">
-            <p className="promo-title">Academia Prosper</p>
-            <p className="promo-sub">
-              Aprende educación financiera con lecciones gamificadas.
-            </p>
-            <button className="promo-btn" id="promo-cta">
-              Comenzar Curso
-            </button>
-          </div>
+          {isCollapsed ? (
+            <div className="sidebar-promo-card sidebar-promo-card-collapsed" title="Academia Prosper">
+              <IconBook />
+            </div>
+          ) : (
+            <div className="sidebar-promo-card">
+              <p className="promo-title">Academia Prosper</p>
+              <p className="promo-sub">
+                Aprende educación financiera con lecciones gamificadas.
+              </p>
+              <button className="promo-btn" id="promo-cta">
+                Comenzar Curso
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
