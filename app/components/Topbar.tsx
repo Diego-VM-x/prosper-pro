@@ -31,8 +31,6 @@ interface TopbarProps {
   onToggleSidebar: () => void;
   /** Indica si el sidebar está colapsado */
   isCollapsed: boolean;
-  /** Función para alternar el estado colapsado */
-  onToggleCollapse: () => void;
 }
 
 /**
@@ -40,7 +38,7 @@ interface TopbarProps {
  * Incluye la barra de búsqueda global, botones de acción rápida,
  * toggle de modo oscuro/claro y el perfil del usuario.
  */
-export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
+export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
@@ -97,34 +95,31 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     await markNotificationRead(id);
   };
 
+  // Rutas disponibles para búsqueda
+  const searchRoutes = [
+    { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
+    { name: 'Mis Metas', route: '/metas', icon: '🎯', keywords: 'metas objetivos tareas' },
+    { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
+    { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos' },
+    { name: 'Comunidad', route: '/comunidad', icon: '👥', keywords: 'comunidad gente usuarios' },
+    { name: 'Cursos', route: '/cursos', icon: '📚', keywords: 'cursos aprendizaje educación' },
+    { name: 'Logros', route: '/logros', icon: '🏆', keywords: 'logros trofeos premios' },
+    { name: 'Configuración', route: '/configuracion', icon: '⚙️', keywords: 'configuración ajustes preferencias' },
+    { name: 'Ayuda', route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
+  ];
+
+  // Filtrar resultados según query
+  const searchResults = searchQuery.trim()
+    ? searchRoutes.filter(r =>
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.keywords.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   return (
     <header className="topbar" id="main-topbar">
-      {/* Logo + colapsar + menú móvil */}
+      {/* Menú móvil + título */}
       <div className="topbar-left">
-        <Link href="/" className="topbar-logo-link">
-          <img
-            src="/logo-icon.png"
-            alt="Prosper Logo"
-            width={32}
-            height={32}
-            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
-          />
-        </Link>
-        {/* Botón colapsar para desktop */}
-        <button
-          className="topbar-collapse-btn"
-          onClick={onToggleCollapse}
-          aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
-          title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            {isCollapsed ? (
-              <polyline points="9 18 15 12 9 6" />
-            ) : (
-              <polyline points="15 18 9 12 15 6" />
-            )}
-          </svg>
-        </button>
         {/* Menú hamburguesa para móvil */}
         <button
           className="topbar-icon-btn sidebar-toggle"
@@ -139,19 +134,52 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         </span>
       </div>
 
-      {/* Búsqueda */}
-      <div className="topbar-search" onClick={() => setShowSearch(true)} style={{ cursor: 'pointer' }}>
-        <IconSearch className="topbar-search-icon" />
-        <input
-          type="text"
-          placeholder="Buscar metas, cursos..."
-          id="global-search"
-          aria-label="Buscador global"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-        />
-        <span className="topbar-search-shortcut">⌘F</span>
+      {/* Búsqueda con resultados */}
+      <div className="topbar-search-wrapper">
+        <div className="topbar-search" onClick={() => document.getElementById('global-search')?.focus()}>
+          <IconSearch className="topbar-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar metas, cursos..."
+            id="global-search"
+            aria-label="Buscador global"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setShowSearch(true)}
+            onBlur={() => setTimeout(() => setShowSearch(false), 200)}
+          />
+          {searchQuery && (
+            <button className="search-clear-btn" onClick={() => setSearchQuery('')}>
+              <IconX width={14} height={14} />
+            </button>
+          )}
+          <span className="topbar-search-shortcut">⌘F</span>
+        </div>
+
+        {/* Resultados de búsqueda */}
+        {showSearch && searchResults.length > 0 && (
+          <div className="search-results-dropdown">
+            {searchResults.map((result) => (
+              <Link
+                key={result.route}
+                href={result.route}
+                className="search-result-item"
+                onClick={() => setSearchQuery('')}
+              >
+                <span className="search-result-icon">{result.icon}</span>
+                <span className="search-result-name">{result.name}</span>
+                <span className="search-result-arrow">→</span>
+              </Link>
+            ))}
+          </div>
+        )}
+        {showSearch && searchQuery.trim() && searchResults.length === 0 && (
+          <div className="search-results-dropdown">
+            <div className="search-no-results">
+              <p>No se encontraron resultados para "{searchQuery}"</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Acciones */}
@@ -256,38 +284,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
 
       {/* Estilos inline */}
       <style>{`
-        /* Logo y colapsar en topbar */
         .topbar-left {
           display: flex;
           align-items: center;
           gap: 10px;
           flex-shrink: 0;
-        }
-        .topbar-logo-link {
-          display: flex;
-          align-items: center;
-          text-decoration: none;
-          transition: opacity var(--transition-fast);
-        }
-        .topbar-logo-link:hover { opacity: 0.85; }
-        .topbar-collapse-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-md);
-          background: var(--bg-input);
-          border: 1px solid var(--border-default);
-          color: var(--text-primary);
-          cursor: pointer;
-          transition: all var(--transition-fast);
-          flex-shrink: 0;
-        }
-        .topbar-collapse-btn:hover {
-          background: var(--bg-accent-soft);
-          border-color: var(--color-prosper-green);
-          color: var(--color-prosper-green);
         }
         .topbar-title-dynamic {
           font-size: 0.9375rem;
@@ -298,10 +299,72 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           text-overflow: ellipsis;
           max-width: 200px;
         }
+        .topbar-search-wrapper {
+          position: relative;
+          flex: 1;
+          max-width: 400px;
+        }
+        .search-clear-btn {
+          position: absolute;
+          right: 36px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          color: var(--text-tertiary);
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          transition: all var(--transition-fast);
+        }
+        .search-clear-btn:hover {
+          color: var(--text-primary);
+          background: var(--bg-input);
+        }
+        .search-results-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          right: 0;
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-lg);
+          z-index: 200;
+          max-height: 320px;
+          overflow-y: auto;
+          animation: fadeInUp 0.2s ease;
+        }
+        .search-result-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 16px;
+          text-decoration: none;
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: background var(--transition-fast);
+          border-bottom: 1px solid var(--border-default);
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover {
+          background: var(--bg-accent-soft);
+        }
+        .search-result-icon { font-size: 1.25rem; flex-shrink: 0; }
+        .search-result-name { font-size: 0.875rem; font-weight: 500; flex: 1; }
+        .search-result-arrow { color: var(--text-tertiary); font-size: 1rem; }
+        .search-no-results {
+          padding: 20px 16px;
+          text-align: center;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+        }
         .sidebar-toggle { display: none; }
         @media (max-width: 1024px) {
           .sidebar-toggle { display: flex !important; }
-          .topbar-collapse-btn { display: none; }
           .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
 

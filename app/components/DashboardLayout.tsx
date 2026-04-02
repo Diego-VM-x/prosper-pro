@@ -28,7 +28,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className={`app-shell${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} isCollapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)} />
         <main className="main-content">
-          <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isCollapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)} />
+          <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isCollapsed={sidebarCollapsed} />
           <div className="page-content">
             {children}
           </div>

@@ -86,8 +86,32 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
       )}
 
       <aside className={`sidebar${isOpen ? ' open' : ''}${isCollapsed ? ' collapsed' : ''}`} id="main-sidebar">
-        {/* Header: solo botón cerrar en móvil */}
+        {/* Header: logo + colapsar + cerrar móvil */}
         <div className="sidebar-header">
+          <Link href="/" className="sidebar-logo-link" onClick={onClose}>
+            <img
+              src="/logo-icon.png"
+              alt="Prosper Logo"
+              width={28}
+              height={28}
+              style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
+            />
+          </Link>
+          {/* Botón colapsar para desktop */}
+          <button
+            className="sidebar-collapse-btn"
+            onClick={onToggleCollapse}
+            aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+            title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              {isCollapsed ? (
+                <polyline points="9 18 15 12 9 6" />
+              ) : (
+                <polyline points="15 18 9 12 15 6" />
+              )}
+            </svg>
+          </button>
           {/* Botón cerrar para móvil */}
           <button
             className="sidebar-close-btn"
