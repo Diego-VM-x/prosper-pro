@@ -14,19 +14,21 @@ export default function LoginPage() {
   const { loginWithGoogle, loginWithEmail, user } = useAuth();
   const router = useRouter();
 
-  // Redirigir si ya está autenticado
+  // Redirigir si ya está autenticado (sin loading check)
   useEffect(() => {
-    if (user && !loading) {
+    if (user) {
       router.replace('/');
     }
-  }, [user, loading]);
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
     try {
       setError(null);
       setLoading(true);
       await loginWithGoogle();
-      // No redirigir aquí, el useEffect lo hará cuando user se actualice
+      // Esperar a que onAuthStateChanged actualice user
+      await new Promise(r => setTimeout(r, 500));
+      router.replace('/');
     } catch {
       setError('Error al conectar con Google.');
       setLoading(false);
@@ -44,7 +46,9 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginWithEmail(email, password);
-      // No redirigir aquí, el useEffect lo hará cuando user se actualice
+      // Esperar a que onAuthStateChanged actualice user
+      await new Promise(r => setTimeout(r, 500));
+      router.replace('/');
     } catch (err: any) {
       setLoading(false);
       switch (err.code) {
