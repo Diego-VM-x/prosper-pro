@@ -138,22 +138,13 @@ body {
   padding: 0;
 }
 
-/* Eliminar espacio en esquina superior izquierda */
-.app-shell {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg-primary);
-  transition: background var(--transition-base);
-  position: relative;
-}
-
 /* El topbar debe extenderse sobre el sidebar */
 .topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 90;
+  z-index: 110;
   margin-left: 0 !important;
 }
 
