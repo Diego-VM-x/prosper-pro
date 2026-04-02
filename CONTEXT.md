@@ -130,3 +130,18 @@
   - `app/components/Dashboard.tsx`: Usa `useGoals()` en lugar de carga manual. Sección "Avisos Recientes" añadida.
   - `app/metas/page.tsx`: Refactorizado para usar `useGoals()`. Sin useState/useEffect manual.
   - `app/calendario/page.tsx`: Refactorizado para usar `useGoals()`. Botón "+ Recordatorio" añadido.
+
+## Tareas Pendientes
+1. **Configurar variables de entorno en Vercel**: Las 7 variables NEXT_PUBLIC_FIREBASE_* deben agregarse manualmente en Vercel Dashboard → prosper-pro → Settings → Environment Variables. Ver `VERCEL_ENV_VARS.txt` para los valores del nuevo proyecto `prospeweb`.
+2. **Redeploy en Vercel**: Después de agregar las variables, hacer un redeploy para que los cambios surtan efecto.
+3. **Activar Firebase Storage** (opcional): Para fotos de perfil en Configuración.
+
+## Instrucciones para errores conocidos
+### Error: "No se ven las metas en producción (Vercel)"
+- **Causa**: Variables de entorno de Firebase no configuradas en Vercel.
+- **Solución**: Agregar las 7 variables NEXT_PUBLIC_FIREBASE_* en Vercel Dashboard → Settings → Environment Variables. Luego hacer redeploy.
+- **Archivo de referencia**: `VERCEL_ENV_VARS.txt` contiene los valores actualizados del proyecto `prospeweb`.
+
+### Error: "404 en /logros, /ayuda, /comunidad"
+- **Causa**: Esas páginas no existen aún en el proyecto.
+- **Solución**: Ignorar los errores o crear esas páginas cuando sea necesario.
