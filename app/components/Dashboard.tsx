@@ -9,11 +9,33 @@ import {
   IconPlus,
   IconArrowUpRight,
   IconTrendUp,
-  IconVideo,
   IconZap,
   IconX,
 } from './icons';
 import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
+
+const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
+
+function parseDeadlineToISO(deadline: string): string | null {
+  if (!deadline) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return deadline;
+  const monthMap: Record<string, string> = {
+    ene: '01', feb: '02', mar: '03', abr: '04', may: '05', jun: '06',
+    jul: '07', ago: '08', sep: '09', oct: '10', nov: '11', dic: '12',
+  };
+  const match = deadline.toLowerCase().match(/^([a-záéíóú]+)\s+(\d{4})$/);
+  if (match) {
+    const month = monthMap[match[1]] || monthMap[match[1].substring(0, 3)];
+    if (month) return `${match[2]}-${month}-01`;
+  }
+  return null;
+}
+
+function getDaysUntil(dateStr: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr + 'T12:00:00'); target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 export function Dashboard() {
   const router = useRouter();
@@ -135,14 +157,6 @@ export function Dashboard() {
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
-  const handleJoinSession = () => {
-    alert('Funcionalidad de sesión de mentor: se abriría una ventana de video llamada.');
-  };
-
-  const handleInviteMember = () => {
-    alert('Funcionalidad de invitación: se abriría un formulario para compartir enlace.');
-  };
-
   return (
     <DashboardLayout>
       <div className="page-header">
@@ -232,18 +246,50 @@ export function Dashboard() {
             </div>
           </div>
 
-          {reminders.length > 0 ? (
-            <div className="reminder-card animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
-              <span className="reminder-title">Recordatorios</span>
-              <p className="reminder-event-name" style={{ marginTop: 12 }}>{reminders[0].title}</p>
-              <p className="reminder-time">Hora: {reminders[0].startTime} - {reminders[0].endTime}</p>
-              <button className="reminder-cta" onClick={handleJoinSession}><IconVideo /> Iniciar Sesión</button>
+          {/* Próximas Fechas Límite - sincronizado con metas */}
+          <div className="card animate-fadeInUp" style={{ animationDelay: '0.25s' }}>
+            <div className="card-header">
+              <span className="card-title">📅 Próximas Fechas</span>
+              <button className="card-action" onClick={() => router.push('/calendario')}>Ver calendario</button>
             </div>
-          ) : (
-            <div className="card animate-fadeInUp" style={{ animationDelay: '0.25s', padding: 20, textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No hay recordatorios pendientes</p>
-            </div>
-          )}
+            {(() => {
+              const upcoming = goals
+                .filter((g: Goal) => g.status !== 'completed' && g.deadline)
+                .map((g: Goal) => ({ ...g, iso: parseDeadlineToISO(g.deadline) }))
+                .filter((g) => g.iso !== null)
+                .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
+                .slice(0, 4);
+              return upcoming.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {upcoming.map((g) => {
+                    const daysLeft = getDaysUntil(g.iso as string);
+                    const pct = Math.min((g.current / g.target) * 100, 100);
+                    const urgency = daysLeft <= 0 ? 'var(--color-red-500)' : daysLeft <= 7 ? 'var(--color-gold-500)' : 'var(--text-secondary)';
+                    return (
+                      <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: `3px solid ${g.color}` }}>
+                        <span style={{ fontSize: '1.125rem' }}>{g.icon}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                            <div style={{ flex: 1, height: 4, background: 'var(--bg-card)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                              <div style={{ width: `${pct}%`, height: '100%', background: g.color, borderRadius: 'var(--radius-full)' }} />
+                            </div>
+                            <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{Math.round(pct)}%</span>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: urgency }}>{daysLeft <= 0 ? 'Vencida' : daysLeft === 1 ? '1 día' : `${daysLeft}d`}</span>
+                          <span style={{ display: 'block', fontSize: '0.625rem', color: CATEGORY_COLORS[g.category] || '#888', fontWeight: 600 }}>{g.category}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p style={{ padding: '16px 0', color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center' }}>No hay metas con fecha límite</p>
+              );
+            })()}
+          </div>
         </div>
 
         <div className="card animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
@@ -252,15 +298,24 @@ export function Dashboard() {
             <button className="card-action" onClick={() => setShowNewGoalModal(true)}><IconPlus /> Nueva</button>
           </div>
           <div className="project-list">
-            {activeGoals.length > 0 ? activeGoals.slice(0, 5).map((goal) => (
-              <div className="project-list-item" key={goal.id}>
-                <div className="project-color-dot" style={{ background: goal.color }}><span style={{ fontSize: '0.875rem' }}>{goal.icon}</span></div>
-                <div className="project-info">
-                  <p className="project-name">{goal.title}</p>
-                  <p className="project-due">Fecha: {goal.deadline}</p>
+            {activeGoals.length > 0 ? activeGoals.slice(0, 5).map((goal: Goal) => {
+              const pct = Math.min((goal.current / goal.target) * 100, 100);
+              return (
+                <div className="project-list-item" key={goal.id}>
+                  <div className="project-color-dot" style={{ background: goal.color }}><span style={{ fontSize: '0.875rem' }}>{goal.icon}</span></div>
+                  <div className="project-info" style={{ flex: 1 }}>
+                    <p className="project-name">{goal.title}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <div style={{ flex: 1, height: 4, background: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: goal.color, borderRadius: 'var(--radius-full)', transition: 'width 0.5s ease' }} />
+                      </div>
+                      <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--text-secondary)', minWidth: 28 }}>{Math.round(pct)}%</span>
+                    </div>
+                    <p className="project-due" style={{ marginTop: 2 }}>${goal.current.toLocaleString()} / ${goal.target.toLocaleString()} &middot; {goal.deadline}</p>
+                  </div>
                 </div>
-              </div>
-            )) : (
+              );
+            }) : (
               <p style={{ padding: '16px 0', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>No hay metas activas. ¡Crea una!</p>
             )}
           </div>

@@ -64,30 +64,27 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = authContext;
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  console.log('[GoalsProvider] loading:', loading, 'user:', user?.uid, 'goals:', goals.length);
+  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   // Cargar metas directamente
   useEffect(() => {
     if (loading) return;
     const uid = user?.uid;
-    console.log('[GoalsContext] Cargando metas para uid:', uid);
     if (!uid) { setGoals([]); return; }
     let cancelled = false;
     async function loadGoals() {
       try {
         const data = await getGoalsByOwnerId(uid as string);
-        if (!cancelled) {
-          console.log('[GoalsContext] Metas cargadas:', data.length);
-          setGoals(data);
-        }
+        if (!cancelled) setGoals(data);
       } catch (e) {
         console.error('[GoalsContext] Error cargando metas:', e);
       }
     }
     loadGoals();
     return () => { cancelled = true; };
-  }, [user?.uid, loading]);
+  }, [user?.uid, loading, refreshKey]);
 
   // Cargar recordatorios directamente
   useEffect(() => {
@@ -105,64 +102,41 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     }
     loadReminders();
     return () => { cancelled = true; };
-  }, [user?.uid, loading]);
+  }, [user?.uid, loading, refreshKey]);
 
   const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => {
-    console.log('[DEBUG GoalsContext addGoal] Llamado con:', JSON.stringify(goal, null, 2));
-    const ownerId = goal.ownerId;
-    if (!ownerId) {
-      console.error('[DEBUG GoalsContext addGoal] ERROR: ownerId vacío en goal');
-      throw new Error('Usuario no autenticado');
-    }
+    if (!goal.ownerId) throw new Error('Usuario no autenticado');
     const goalData = { ...goal, createdAt: Date.now(), updatedAt: Date.now() };
-    console.log('[DEBUG GoalsContext addGoal] Datos finales:', JSON.stringify(goalData, null, 2));
-    try {
-      const id = await createGoal(goalData);
-      console.log('[DEBUG GoalsContext addGoal] Meta creada con ID:', id);
-      return id;
-    } catch (error: any) {
-      console.error('[DEBUG GoalsContext addGoal] ERROR:', error);
-      throw error;
-    }
-  }, []);
+    const id = await createGoal(goalData);
+    refresh();
+    return id;
+  }, [refresh]);
 
   const updateGoalFn = useCallback(async (id: string, updates: Partial<Goal>) => {
-    console.log('[DEBUG GoalsContext updateGoalFn] ID:', id, 'Updates:', JSON.stringify(updates, null, 2));
-    try {
-      await updateGoal(id, updates);
-      console.log('[DEBUG GoalsContext updateGoalFn] Meta actualizada exitosamente');
-    } catch (error: any) {
-      console.error('[DEBUG GoalsContext updateGoalFn] ERROR:', error);
-      console.error('[DEBUG GoalsContext updateGoalFn] Error code:', error?.code);
-      console.error('[DEBUG GoalsContext updateGoalFn] Error message:', error?.message);
-      throw error;
-    }
-  }, []);
+    await updateGoal(id, updates);
+    refresh();
+  }, [refresh]);
 
   const deleteGoalFn = useCallback(async (id: string) => {
-    console.log('[DEBUG GoalsContext deleteGoalFn] Eliminando meta ID:', id);
-    try {
-      await deleteGoal(id);
-      console.log('[DEBUG GoalsContext deleteGoalFn] Meta eliminada exitosamente');
-    } catch (error: any) {
-      console.error('[DEBUG GoalsContext deleteGoalFn] ERROR:', error);
-      console.error('[DEBUG GoalsContext deleteGoalFn] Error code:', error?.code);
-      console.error('[DEBUG GoalsContext deleteGoalFn] Error message:', error?.message);
-      throw error;
-    }
-  }, []);
+    await deleteGoal(id);
+    refresh();
+  }, [refresh]);
 
   const addReminder = useCallback(async (reminder: Omit<Reminder, 'id'>) => {
-    return await createReminder(reminder);
-  }, []);
+    const id = await createReminder(reminder);
+    refresh();
+    return id;
+  }, [refresh]);
 
   const updateReminderFn = useCallback(async (id: string, updates: Partial<Reminder>) => {
     await updateReminder(id, updates);
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const deleteReminderFn = useCallback(async (id: string) => {
     await deleteReminder(id);
-  }, []);
+    refresh();
+  }, [refresh]);
 
   // Filtrar metas y recordatorios que vencen hoy
   const todayISO = getTodayISO();
@@ -172,12 +146,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   });
   const remindersToday = reminders.filter((r) => r.date === todayISO && r.isActive);
 
-  if (loading) {
-    console.log('[GoalsProvider] Esperando auth...');
-    return null;
-  }
-
-  console.log('[GoalsProvider] Renderizando con user:', user?.uid, 'goals:', goals.length);
+  if (loading) return null;
 
   return (
     <GoalsContext.Provider value={{
