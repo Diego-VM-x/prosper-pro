@@ -217,7 +217,6 @@ ul, ol {
   height: calc(100vh - var(--topbar-height));
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-default);
-  border-top: none;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -551,9 +550,11 @@ ul, ol {
   align-items: center;
   padding: 0 24px;
   gap: 16px;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 50;
+  left: 0;
+  right: 0;
+  z-index: 110;
   transition: background var(--transition-base), border-color var(--transition-base);
   box-shadow: var(--shadow-sm);
 }
