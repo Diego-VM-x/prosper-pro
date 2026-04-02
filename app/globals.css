@@ -242,6 +242,10 @@ ul, ol {
   .sidebar {
     height: 100vh;
     top: 0;
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
   }
   .sidebar-header {
     display: flex !important;
