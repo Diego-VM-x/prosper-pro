@@ -217,6 +217,7 @@ ul, ol {
   height: calc(100vh - var(--topbar-height));
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-default);
+  border-top: none;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -224,7 +225,7 @@ ul, ol {
   left: 0;
   z-index: 100;
   transition: width var(--transition-base), background var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 /* Sidebar header - solo en móvil */
