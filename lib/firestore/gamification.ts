@@ -17,8 +17,8 @@ import type { XPState, Achievement } from '@/types';
 const XP_COLLECTION = 'xp_states';
 const ACHIEVEMENTS_COLLECTION = 'achievements';
 
-export function subscribeToXP(userId: string, callback: (xp: XPState | null) => void) {
-  const q = query(collection(db, XP_COLLECTION), where('userId', '==', userId));
+export function subscribeToXP(ownerId: string, callback: (xp: XPState | null) => void) {
+  const q = query(collection(db, XP_COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     if (snapshot.empty) {
       callback(null);
@@ -32,15 +32,15 @@ export function subscribeToXP(userId: string, callback: (xp: XPState | null) => 
   });
 }
 
-export async function getXPByUserId(userId: string): Promise<XPState | null> {
-  const q = query(collection(db, XP_COLLECTION), where('userId', '==', userId));
+export async function getXPByOwnerId(ownerId: string): Promise<XPState | null> {
+  const q = query(collection(db, XP_COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   return { ...snapshot.docs[0].data() } as XPState;
 }
 
-export async function getAchievementsByUserId(userId: string): Promise<Achievement[]> {
-  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('userId', '==', userId));
+export async function getAchievementsByOwnerId(ownerId: string): Promise<Achievement[]> {
+  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   const achievements: Achievement[] = [];
   snapshot.forEach((docSnap) => {
@@ -50,8 +50,8 @@ export async function getAchievementsByUserId(userId: string): Promise<Achieveme
   return achievements;
 }
 
-export async function updateXP(userId: string, xpGain: number) {
-  const q = query(collection(db, XP_COLLECTION), where('userId', '==', userId));
+export async function updateXP(ownerId: string, xpGain: number) {
+  const q = query(collection(db, XP_COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return;
   const docSnap = snapshot.docs[0];
@@ -67,8 +67,8 @@ export async function updateXP(userId: string, xpGain: number) {
   await updateDoc(docSnap.ref, { currentXP: newXP, level: newLevel, maxXP: newMax });
 }
 
-export function subscribeToAchievements(userId: string, callback: (achievements: Achievement[]) => void) {
-  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('userId', '==', userId));
+export function subscribeToAchievements(ownerId: string, callback: (achievements: Achievement[]) => void) {
+  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const achievements: Achievement[] = [];
     snapshot.forEach((docSnap) => {
@@ -83,7 +83,7 @@ export function subscribeToAchievements(userId: string, callback: (achievements:
 }
 
 export async function unlockAchievement(achievement: Omit<Achievement, 'id' | 'unlockedAt'>) {
-  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('userId', '==', achievement.userId), where('title', '==', achievement.title));
+  const q = query(collection(db, ACHIEVEMENTS_COLLECTION), where('ownerId', '==', achievement.ownerId), where('title', '==', achievement.title));
   const snapshot = await getDocs(q);
   if (!snapshot.empty) return;
   await addDoc(collection(db, ACHIEVEMENTS_COLLECTION), {

@@ -42,7 +42,7 @@ export function parseTransactions(csvString: string, delimiter: string = ';'): R
 // Importar transacciones desde CSV a Firestore
 export async function importTransactionsFromCSV(
   csvString: string,
-  userId: string,
+  ownerId: string,
   delimiter: string = ';'
 ): Promise<{ success: number; errors: string[] }> {
   const result = { success: 0, errors: [] as string[] };
@@ -84,7 +84,7 @@ export async function importTransactionsFromCSV(
         }
 
         const transaction: Omit<Transaction, 'id'> = {
-          userId,
+          ownerId,
           amount,
           type: row.type as Transaction['type'],
           category: row.category || 'Otro',

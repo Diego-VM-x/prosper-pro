@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getCourses, getUserProgressByUserId, seedCoursesIfEmpty } from '@/lib/firestore/courses';
+import { getCourses, getUserProgressByOwnerId, seedCoursesIfEmpty } from '@/lib/firestore/courses';
 import type { Course, UserCourseProgress } from '@/types';
 import Link from 'next/link';
 
@@ -25,7 +25,7 @@ export default function CoursesPage() {
       try {
         const [coursesData, progressData] = await Promise.all([
           getCourses(),
-          uid ? getUserProgressByUserId(uid) : Promise.resolve([]),
+          uid ? getUserProgressByOwnerId(uid) : Promise.resolve([]),
         ]);
         if (!cancelled) {
           setCourses(coursesData);

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { createGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
 import {
   IconPlus,
   IconTrendUp,
@@ -18,7 +20,31 @@ import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
 export default function MetasPage() {
   const { query } = useSearch();
-  const { goals, userId, addGoal, updateGoalFn, deleteGoalFn } = useGoals();
+  const { addGoal, updateGoalFn, deleteGoalFn } = useGoals();
+  const { user } = useAuth();
+  const userId = user?.uid || '';
+  const [localGoals, setLocalGoals] = useState<Goal[]>([]);
+
+  // Cargar metas directamente
+  React.useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    async function load() {
+      const data = await getGoalsByOwnerId(userId);
+      if (!cancelled) setLocalGoals(data);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Recargar después de crear/editar
+  const refreshGoals = React.useCallback(async () => {
+    if (!userId) return;
+    const data = await getGoalsByOwnerId(userId);
+    setLocalGoals(data);
+  }, [userId]);
+
+  const goals = localGoals;
   const [filter, setFilter] = useState('Todas');
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -51,6 +77,11 @@ export default function MetasPage() {
       return;
     }
 
+    if (!userId) {
+      console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] ERROR: userId vacío, usuario no autenticado');
+      return;
+    }
+
     if (editingGoal) {
       console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo EDICIÓN');
       const newStatus: GoalStatus = formData.current >= formData.target ? 'completed' : editingGoal.status === 'pending' && formData.current > 0 ? 'progress' : editingGoal.status;
@@ -59,8 +90,8 @@ export default function MetasPage() {
       await updateGoalFn(editingGoal.id, updated);
     } else {
       console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo CREACIÓN');
-      const goalData: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'> = {
-        userId: userId!,
+      const goalData = {
+        ownerId: userId,
         title: formData.title,
         category: formData.category,
         current: formData.current,
@@ -69,9 +100,19 @@ export default function MetasPage() {
         status: (formData.current >= formData.target ? 'completed' : 'pending') as GoalStatus,
         color: formData.color,
         icon: formData.icon,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
       };
       console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] goalData:', JSON.stringify(goalData, null, 2));
-      await addGoal(goalData);
+      try {
+        const id = await createGoal(goalData as any);
+        console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Meta creada con ID:', id);
+        await refreshGoals();
+      } catch (error: any) {
+        console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Error al crear meta:', error);
+        console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Error code:', error?.code);
+        console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Error message:', error?.message);
+      }
     }
 
     console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Cerrando modal...');
@@ -82,6 +123,7 @@ export default function MetasPage() {
   const handleDeleteGoal = async (goalId: string) => {
     if (confirm('¿Estás seguro de eliminar esta meta?')) {
       await deleteGoalFn(goalId);
+      await refreshGoals();
     }
   };
 
@@ -103,6 +145,7 @@ export default function MetasPage() {
   };
 
   return (
+    <ProtectedRoute>
     <DashboardLayout>
       <div className="page-header animate-fadeInDown">
         <div className="page-header-left">
@@ -344,5 +387,6 @@ export default function MetasPage() {
         }
       `}</style>
     </DashboardLayout>
+    </ProtectedRoute>
   );
 }

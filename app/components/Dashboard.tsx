@@ -47,8 +47,8 @@ export function Dashboard() {
     async function loadData() {
       try {
         const [
-          { getTransactionsByUserId },
-          { getXPByUserId, getAchievementsByUserId },
+          { getTransactionsByOwnerId },
+          { getXPByOwnerId, getAchievementsByOwnerId },
           { getCommunityUsers },
         ] = await Promise.all([
           import('@/lib/firestore/transactions'),
@@ -59,9 +59,9 @@ export function Dashboard() {
         if (cancelled) return;
 
         const [transactionsData, xpData, achievementsData, membersData] = await Promise.all([
-          getTransactionsByUserId(uid),
-          getXPByUserId(uid),
-          getAchievementsByUserId(uid),
+          getTransactionsByOwnerId(uid),
+          getXPByOwnerId(uid),
+          getAchievementsByOwnerId(uid),
           getCommunityUsers(),
         ]);
 
@@ -121,7 +121,7 @@ export function Dashboard() {
   const handleCreateGoal = async () => {
     if (!newGoal.title || !newGoal.target) return;
     await addGoal({
-      userId: userId || 'local',
+      ownerId: userId || 'local',
       title: newGoal.title,
       category: newGoal.category,
       current: newGoal.current,

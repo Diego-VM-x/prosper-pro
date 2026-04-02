@@ -11,7 +11,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getGoalsByUserId } from '@/lib/firestore/goals';
+import { getGoalsByOwnerId } from '@/lib/firestore/goals';
 import { useState, useEffect } from 'react';
 import {
   IconDashboard,
@@ -51,7 +51,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     let cancelled = false;
     async function loadGoals() {
       try {
-        const goals = await getGoalsByUserId(uid);
+        const goals = await getGoalsByOwnerId(uid);
         if (!cancelled) setActiveGoalsCount(goals.filter((g) => g.status !== 'completed').length);
       } catch (e) { console.error(e); }
     }

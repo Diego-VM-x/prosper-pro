@@ -12,7 +12,7 @@ export type GoalStatus = 'pending' | 'progress' | 'completed';
 
 export interface Goal {
   id: string;
-  userId: string;
+  ownerId: string;
   title: string;
   category: GoalCategory;
   current: number;
@@ -29,7 +29,7 @@ export interface Goal {
 
 export interface Transaction {
   id: string;
-  userId: string;
+  ownerId: string;
   amount: number;
   type: 'income' | 'expense' | 'saving';
   category: string;
@@ -45,7 +45,7 @@ export interface WeeklyData {
 
 export interface Reminder {
   id: string;
-  userId: string;
+  ownerId: string;
   title: string;
   description: string;
   startTime: string;
@@ -56,7 +56,7 @@ export interface Reminder {
 }
 
 export interface XPState {
-  userId: string;
+  ownerId: string;
   level: number;
   title: string;
   currentXP: number;
@@ -66,7 +66,7 @@ export interface XPState {
 
 export interface Achievement {
   id: string;
-  userId: string;
+  ownerId: string;
   title: string;
   description: string;
   icon: string;
@@ -88,7 +88,7 @@ export interface CommunityMember {
 
 export interface Notification {
   id: string;
-  userId: string;
+  ownerId: string;
   title: string;
   message: string;
   type: 'goal' | 'achievement' | 'community' | 'system';
@@ -119,7 +119,7 @@ export interface CourseModule {
 
 export interface UserCourseProgress {
   id?: string;
-  userId: string;
+  ownerId: string;
   courseId: string;
   completedModules: string[];
   startedAt: number;

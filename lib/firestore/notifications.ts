@@ -16,8 +16,8 @@ import type { Notification } from '@/types';
 
 const COLLECTION = 'notifications';
 
-export function subscribeToNotifications(userId: string, callback: (notifications: Notification[]) => void) {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+export function subscribeToNotifications(ownerId: string, callback: (notifications: Notification[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const notifications: Notification[] = [];
     snapshot.forEach((docSnap) => {
@@ -42,8 +42,8 @@ export async function addNotification(notification: Omit<Notification, 'id' | 'c
   });
 }
 
-export async function getUnreadCount(userId: string): Promise<number> {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId), where('read', '==', false));
+export async function getUnreadCount(ownerId: string): Promise<number> {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('read', '==', false));
   try {
     const snapshot = await getDocs(q);
     return snapshot.size;
@@ -57,8 +57,8 @@ export async function deleteNotification(notificationId: string) {
   await deleteDoc(doc(db, COLLECTION, notificationId));
 }
 
-export async function markAllNotificationsRead(userId: string) {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId), where('read', '==', false));
+export async function markAllNotificationsRead(ownerId: string) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('read', '==', false));
   const snapshot = await getDocs(q);
   const promises = snapshot.docs.map(docSnap => updateDoc(docSnap.ref, { read: true }));
   await Promise.all(promises);

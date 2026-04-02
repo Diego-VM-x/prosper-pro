@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -63,56 +63,6 @@ export default function ConfiguracionPage() {
     }
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user?.uid) return;
-
-    const img = new Image();
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const reader = new FileReader();
-
-    reader.onload = async (ev) => {
-      img.src = ev.target?.result as string;
-      img.onload = async () => {
-        const MAX_SIZE = 300;
-        let w = img.width, h = img.height;
-        if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } }
-        else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
-        canvas.width = w;
-        canvas.height = h;
-        ctx?.drawImage(img, 0, 0, w, h);
-
-        canvas.toBlob(async (blob) => {
-          if (!blob) return;
-          setSaving(true);
-          try {
-            const { getStorage, ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-            const storage = getStorage();
-            const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}.jpg`);
-            await uploadBytes(storageRef, blob, { contentType: 'image/jpeg' });
-            const url = await getDownloadURL(storageRef);
-            await updateUserProfile(user.uid, { photoURL: url });
-            setProfile((prev) => prev ? { ...prev, photoURL: url } : prev);
-            setSuccessMsg('Foto actualizada correctamente');
-            setTimeout(() => setSuccessMsg(''), 3000);
-          } catch (err) {
-            console.error('Error subiendo foto:', err);
-          } finally {
-            setSaving(false);
-          }
-        }, 'image/jpeg', 0.7);
-      };
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handlePhotoURL = async () => {
-    fileInputRef.current?.click();
-  };
-
   const userInitial = profile?.displayName ? profile.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : '?');
 
   return (
@@ -146,22 +96,8 @@ export default function ConfiguracionPage() {
             <div className="profile-header">
               <div className="profile-avatar-wrapper">
                 <div className="profile-avatar">
-                  {profile?.photoURL ? (
-                    <img src={profile.photoURL} alt="Foto" />
-                  ) : (
-                    userInitial
-                  )}
+                  {userInitial}
                 </div>
-                <button className="profile-avatar-edit" onClick={handlePhotoURL} title="Cambiar foto">
-                  📷
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handlePhotoUpload}
-                />
               </div>
               <div className="profile-info">
                 {editingName ? (

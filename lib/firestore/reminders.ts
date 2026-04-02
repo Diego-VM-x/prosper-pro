@@ -16,8 +16,8 @@ import type { Reminder } from '@/types';
 
 const COLLECTION = 'reminders';
 
-export function subscribeToReminders(userId: string, callback: (reminders: Reminder[]) => void) {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId), where('isActive', '==', true));
+export function subscribeToReminders(ownerId: string, callback: (reminders: Reminder[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('isActive', '==', true));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const reminders: Reminder[] = [];
     snapshot.forEach((docSnap) => {
@@ -43,8 +43,8 @@ export async function deleteReminder(reminderId: string) {
   await deleteDoc(doc(db, COLLECTION, reminderId));
 }
 
-export async function getRemindersByUserId(userId: string): Promise<Reminder[]> {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId), where('isActive', '==', true));
+export async function getRemindersByOwnerId(ownerId: string): Promise<Reminder[]> {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('isActive', '==', true));
   const snapshot = await getDocs(q);
   const reminders: Reminder[] = [];
   snapshot.forEach((docSnap) => {

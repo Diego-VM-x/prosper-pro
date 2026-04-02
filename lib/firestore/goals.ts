@@ -18,9 +18,8 @@ import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
 const COLLECTION = 'goals';
 
-export function subscribeToGoals(userId: string, callback: (goals: Goal[]) => void) {
-  console.log('[DEBUG subscribeToGoals] userId:', userId);
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+export function subscribeToGoals(ownerId: string, callback: (goals: Goal[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   console.log('[DEBUG subscribeToGoals] Query creado');
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     console.log('[DEBUG subscribeToGoals] Snapshot recibido, docs:', snapshot.size);
@@ -41,22 +40,18 @@ export function subscribeToGoals(userId: string, callback: (goals: Goal[]) => vo
 }
 
 export async function createGoal(goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) {
-  console.log('[DEBUG createGoal] Iniciando creación de meta:', JSON.stringify(goal, null, 2));
-  console.log('[DEBUG createGoal] db instance:', db ? 'OK' : 'UNDEFINED');
-  console.log('[DEBUG createGoal] COLLECTION:', COLLECTION);
+  const now = Date.now();
+  const data = { ...goal, ownerId: goal.ownerId, createdAt: now, updatedAt: now };
+  console.log('[createGoal] Intentando crear meta con datos:', JSON.stringify(data, null, 2));
   try {
-    const now = Date.now();
-    const data = { ...goal, createdAt: now, updatedAt: now };
-    console.log('[DEBUG createGoal] Datos a guardar:', JSON.stringify(data, null, 2));
     const colRef = collection(db, COLLECTION);
-    console.log('[DEBUG createGoal] Collection ref creada');
     const docRef = await addDoc(colRef, data);
-    console.log('[DEBUG createGoal] Meta creada exitosamente con ID:', docRef.id);
+    console.log('[createGoal] Meta creada con ID:', docRef.id);
     return docRef.id;
   } catch (error: any) {
-    console.error('[DEBUG createGoal] ERROR:', error);
-    console.error('[DEBUG createGoal] Error code:', error?.code);
-    console.error('[DEBUG createGoal] Error message:', error?.message);
+    console.error('[createGoal] ERROR al crear meta:', error);
+    console.error('[createGoal] Error code:', error?.code);
+    console.error('[createGoal] Error message:', error?.message);
     throw error;
   }
 }
@@ -100,8 +95,8 @@ export async function deleteGoal(goalId: string) {
   }
 }
 
-export async function getGoalsByUserId(userId: string): Promise<Goal[]> {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+export async function getGoalsByOwnerId(ownerId: string): Promise<Goal[]> {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   const goals: Goal[] = [];
   snapshot.forEach((docSnap) => {

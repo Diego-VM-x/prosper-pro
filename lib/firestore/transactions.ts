@@ -16,8 +16,8 @@ import type { Transaction, WeeklyData } from '@/types';
 
 const COLLECTION = 'transactions';
 
-export function subscribeToTransactions(userId: string, callback: (transactions: Transaction[]) => void) {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+export function subscribeToTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const transactions: Transaction[] = [];
     snapshot.forEach((docSnap) => {
@@ -31,8 +31,8 @@ export function subscribeToTransactions(userId: string, callback: (transactions:
   });
 }
 
-export function subscribeToWeeklyData(userId: string, callback: (data: WeeklyData[]) => void) {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+export function subscribeToWeeklyData(ownerId: string, callback: (data: WeeklyData[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
     const data: WeeklyData[] = [];
@@ -65,10 +65,10 @@ export function subscribeToWeeklyData(userId: string, callback: (data: WeeklyDat
   });
 }
 
-export async function getMonthlySavings(userId: string): Promise<number> {
+export async function getMonthlySavings(ownerId: string): Promise<number> {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId), where('type', '==', 'saving'));
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('type', '==', 'saving'));
   try {
     const snapshot = await getDocs(q);
     let total = 0;
@@ -96,8 +96,8 @@ export async function deleteTransaction(transactionId: string) {
   await deleteDoc(doc(db, COLLECTION, transactionId));
 }
 
-export async function getTransactionsByUserId(userId: string): Promise<Transaction[]> {
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+export async function getTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   const transactions: Transaction[] = [];
   snapshot.forEach((docSnap) => {
@@ -107,10 +107,10 @@ export async function getTransactionsByUserId(userId: string): Promise<Transacti
   return transactions;
 }
 
-export async function getMonthlySummary(userId: string) {
+export async function getMonthlySummary(ownerId: string) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const q = query(collection(db, COLLECTION), where('userId', '==', userId));
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   try {
     const snapshot = await getDocs(q);
     let income = 0, expenses = 0, saving = 0;

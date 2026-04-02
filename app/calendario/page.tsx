@@ -75,7 +75,7 @@ export default function CalendarioPage() {
   const handleAddReminder = async () => {
     if (!newReminder.title || !selectedDate) return;
     await addReminder({
-      userId: userId || 'local',
+      ownerId: userId || 'local',
       title: newReminder.title,
       description: newReminder.description,
       startTime: newReminder.startTime,

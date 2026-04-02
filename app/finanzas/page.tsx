@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getTransactionsByUserId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import type { Transaction } from '@/types';
 
 // Sin datos por defecto
@@ -34,7 +34,7 @@ export default function FinanzasPage() {
     async function loadData() {
       try {
         const [txs, summary] = await Promise.all([
-          getTransactionsByUserId(uid),
+          getTransactionsByOwnerId(uid),
           getMonthlySummary(uid),
         ]);
         if (!cancelled) {
@@ -58,7 +58,7 @@ export default function FinanzasPage() {
     if (!newTx.amount || !newTx.description) return;
     const tx: Transaction = {
       id: 't' + Date.now(),
-      userId: user?.uid || 'local',
+      ownerId: user?.uid || 'local',
       amount: Number(newTx.amount),
       type: newTx.type,
       category: newTx.category,

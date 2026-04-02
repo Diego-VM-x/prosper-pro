@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { subscribeToGoals, createGoal, updateGoal, deleteGoal, createGoalWithId } from '@/lib/firestore/goals';
-import { subscribeToReminders, createReminder, updateReminder, deleteReminder } from '@/lib/firestore/reminders';
+import { subscribeToGoals, createGoal, updateGoal, deleteGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
+import { subscribeToReminders, createReminder, updateReminder, deleteReminder, getRemindersByOwnerId } from '@/lib/firestore/reminders';
 import type { Goal, Reminder } from '@/types';
 
 interface GoalsContextType {
@@ -60,33 +60,61 @@ function getTodayISO(): string {
 }
 
 export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const authContext = useAuth();
+  const { user, loading } = authContext;
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
-  // Suscribirse a metas en tiempo real
-  useEffect(() => {
-    const uid = user?.uid;
-    if (!uid) { setGoals([]); return; }
-    const unsubscribe = subscribeToGoals(uid, (data) => setGoals(data));
-    return () => unsubscribe();
-  }, [user?.uid]);
+  console.log('[GoalsProvider] loading:', loading, 'user:', user?.uid, 'goals:', goals.length);
 
-  // Suscribirse a recordatorios en tiempo real
+  // Cargar metas directamente
   useEffect(() => {
+    if (loading) return;
+    const uid = user?.uid;
+    console.log('[GoalsContext] Cargando metas para uid:', uid);
+    if (!uid) { setGoals([]); return; }
+    let cancelled = false;
+    async function loadGoals() {
+      try {
+        const data = await getGoalsByOwnerId(uid as string);
+        if (!cancelled) {
+          console.log('[GoalsContext] Metas cargadas:', data.length);
+          setGoals(data);
+        }
+      } catch (e) {
+        console.error('[GoalsContext] Error cargando metas:', e);
+      }
+    }
+    loadGoals();
+    return () => { cancelled = true; };
+  }, [user?.uid, loading]);
+
+  // Cargar recordatorios directamente
+  useEffect(() => {
+    if (loading) return;
     const uid = user?.uid;
     if (!uid) { setReminders([]); return; }
-    const unsubscribe = subscribeToReminders(uid, (data) => setReminders(data));
-    return () => unsubscribe();
-  }, [user?.uid]);
+    let cancelled = false;
+    async function loadReminders() {
+      try {
+        const data = await getRemindersByOwnerId(uid as string);
+        if (!cancelled) setReminders(data);
+      } catch (e) {
+        console.error('[GoalsContext] Error cargando recordatorios:', e);
+      }
+    }
+    loadReminders();
+    return () => { cancelled = true; };
+  }, [user?.uid, loading]);
 
   const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => {
-    if (!user?.uid) {
-      console.error('[DEBUG GoalsContext addGoal] ERROR: Usuario no autenticado');
+    console.log('[DEBUG GoalsContext addGoal] Llamado con:', JSON.stringify(goal, null, 2));
+    const ownerId = goal.ownerId;
+    if (!ownerId) {
+      console.error('[DEBUG GoalsContext addGoal] ERROR: ownerId vacío en goal');
       throw new Error('Usuario no autenticado');
     }
-    console.log('[DEBUG GoalsContext addGoal] Llamado con:', JSON.stringify(goal, null, 2));
-    const goalData = { ...goal, userId: user.uid };
+    const goalData = { ...goal, createdAt: Date.now(), updatedAt: Date.now() };
     console.log('[DEBUG GoalsContext addGoal] Datos finales:', JSON.stringify(goalData, null, 2));
     try {
       const id = await createGoal(goalData);
@@ -96,7 +124,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('[DEBUG GoalsContext addGoal] ERROR:', error);
       throw error;
     }
-  }, [user?.uid]);
+  }, []);
 
   const updateGoalFn = useCallback(async (id: string, updates: Partial<Goal>) => {
     console.log('[DEBUG GoalsContext updateGoalFn] ID:', id, 'Updates:', JSON.stringify(updates, null, 2));
@@ -143,6 +171,13 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     return iso === todayISO && g.status !== 'completed';
   });
   const remindersToday = reminders.filter((r) => r.date === todayISO && r.isActive);
+
+  if (loading) {
+    console.log('[GoalsProvider] Esperando auth...');
+    return null;
+  }
+
+  console.log('[GoalsProvider] Renderizando con user:', user?.uid, 'goals:', goals.length);
 
   return (
     <GoalsContext.Provider value={{

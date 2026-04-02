@@ -51,16 +51,16 @@ export function subscribeToCommunityUsers(callback: (users: CommunityUser[]) => 
       const uid = userDoc.id;
 
       // Obtener XP
-      const xpQ = query(xpCol, where('userId', '==', uid));
+      const xpQ = query(xpCol, where('ownerId', '==', uid));
       const xpSnap = await getDocs(xpQ);
       const xpData = xpSnap.empty ? null : (xpSnap.docs[0].data() as { level?: number; title?: string; currentXP?: number; maxXP?: number });
 
       // Obtener logros
-      const achQ = query(achievementsCol, where('userId', '==', uid));
+      const achQ = query(achievementsCol, where('ownerId', '==', uid));
       const achSnap = await getDocs(achQ);
 
       // Obtener metas
-      const goalsQ = query(goalsCol, where('userId', '==', uid));
+      const goalsQ = query(goalsCol, where('ownerId', '==', uid));
       const goalsSnap = await getDocs(goalsQ);
 
       users.push({
@@ -101,23 +101,23 @@ export async function getCommunityUsers(): Promise<CommunityUser[]> {
     getDocs(goalsCol),
   ]);
 
-  // Indexar por userId
+  // Indexar por ownerId
   const xpMap = new Map<string, { level?: number; title?: string; currentXP?: number; maxXP?: number }>();
   xpSnap.forEach((d) => {
     const data = d.data();
-    xpMap.set(data.userId, data);
+    xpMap.set(data.ownerId, data);
   });
 
   const achCountMap = new Map<string, number>();
   achSnap.forEach((d) => {
     const data = d.data();
-    achCountMap.set(data.userId, (achCountMap.get(data.userId) || 0) + 1);
+    achCountMap.set(data.ownerId, (achCountMap.get(data.ownerId) || 0) + 1);
   });
 
   const goalsCountMap = new Map<string, number>();
   goalsSnap.forEach((d) => {
     const data = d.data();
-    goalsCountMap.set(data.userId, (goalsCountMap.get(data.userId) || 0) + 1);
+    goalsCountMap.set(data.ownerId, (goalsCountMap.get(data.ownerId) || 0) + 1);
   });
 
   const users: CommunityUser[] = [];

@@ -46,8 +46,8 @@ export async function getCourses(): Promise<Course[]> {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
 }
 
-export async function getUserProgressByUserId(userId: string): Promise<UserCourseProgress[]> {
-  const q = query(collection(db, PROGRESS_COLLECTION), where('userId', '==', userId));
+export async function getUserProgressByOwnerId(ownerId: string): Promise<UserCourseProgress[]> {
+  const q = query(collection(db, PROGRESS_COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserCourseProgress));
 }
@@ -60,8 +60,8 @@ export async function getCourseModules(courseId: string): Promise<CourseModule[]
   return modules;
 }
 
-export function subscribeToUserProgress(userId: string, callback: (progress: UserCourseProgress[]) => void) {
-  const q = query(collection(db, PROGRESS_COLLECTION), where('userId', '==', userId));
+export function subscribeToUserProgress(ownerId: string, callback: (progress: UserCourseProgress[]) => void) {
+  const q = query(collection(db, PROGRESS_COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot) => {
     const progress = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserCourseProgress));
     callback(progress);
@@ -69,18 +69,18 @@ export function subscribeToUserProgress(userId: string, callback: (progress: Use
 }
 
 // Obtener progreso de un curso específico
-export async function getUserCourseProgress(userId: string, courseId: string): Promise<UserCourseProgress | null> {
-  const q = query(collection(db, PROGRESS_COLLECTION), where('userId', '==', userId), where('courseId', '==', courseId));
+export async function getUserCourseProgress(ownerId: string, courseId: string): Promise<UserCourseProgress | null> {
+  const q = query(collection(db, PROGRESS_COLLECTION), where('ownerId', '==', ownerId), where('courseId', '==', courseId));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as UserCourseProgress;
 }
 
 // Inscribirse en un curso
-export async function enrollCourse(userId: string, courseId: string) {
-  const docId = `${userId}_${courseId}`;
+export async function enrollCourse(ownerId: string, courseId: string) {
+  const docId = `${ownerId}_${courseId}`;
   await setDoc(doc(db, PROGRESS_COLLECTION, docId), {
-    userId,
+    ownerId,
     courseId,
     completedModules: [],
     startedAt: Date.now(),
@@ -88,8 +88,8 @@ export async function enrollCourse(userId: string, courseId: string) {
 }
 
 // Completar módulo
-export async function completeModule(userId: string, courseId: string, moduleId: string) {
-  const docRef = doc(db, PROGRESS_COLLECTION, `${userId}_${courseId}`);
+export async function completeModule(ownerId: string, courseId: string, moduleId: string) {
+  const docRef = doc(db, PROGRESS_COLLECTION, `${ownerId}_${courseId}`);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -98,7 +98,7 @@ export async function completeModule(userId: string, courseId: string, moduleId:
     });
   } else {
     await setDoc(docRef, {
-      userId,
+      ownerId,
       courseId,
       completedModules: [moduleId],
       startedAt: Date.now(),

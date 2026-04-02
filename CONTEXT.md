@@ -1,11 +1,12 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (01 de Abril, 2026 - Actualizado)
+## Estado Actual (02 de Abril, 2026 - Reset Firebase Completo)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
 - **Modo**: App inicia en BLANCO - sin datos de ejemplo. Todo dato viene de Firebase.
+- **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -71,6 +72,12 @@
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
 
+### 02/04/2026 - Reset Total de Firebase
+- **Reset Firebase Completo**: Eliminado todo rastro de `userId` y reemplazado por `ownerId` en todos los módulos Firestore, tipos TypeScript, reglas de seguridad y componentes de la app.
+- **Archivos modificados**: `types/index.ts`, `lib/firestore/*.ts` (8 módulos), `firestore.rules`, `app/metas/page.tsx`, `app/calendario/page.tsx`, `app/finanzas/page.tsx`, `app/components/Dashboard.tsx`, `app/components/Sidebar.tsx`, `app/cursos/page.tsx`, `lib/csvParser.ts`.
+- **Nuevo archivo creado**: `.env.local` con variables de Firebase vacías listas para configurar.
+- **Build verificado**: `tsc --noEmit` exitoso sin errores.
+
 ## Historial de Instrucciones
 ### 02/04/2026
 - **Bug Fix Metas y Calendario**: Corregida la creación de metas que no aparecían por falta de validación de `userId` y problemas de formato de fecha en el calendario.
@@ -110,6 +117,13 @@
     - `app/configuracion/page.tsx`: Zona de Peligro con tarjeta única (`bg-red-50 dark:bg-red-900/20`), botón directo "Confirmar y Eliminar mi cuenta para siempre" sin modales. Textos legibles en modo claro (`text-red-900`). Manejo de re-authentication con mensaje inline. CSS usa variables semánticas Prosper.
     - `app/calendario/page.tsx`: Suscripción `onSnapshot` implementada para metas en tiempo real usando `subscribeToGoals()`. Limpieza de suscripción con `unsubscribe()` para evitar fugas de memoria. CSS usa design tokens Prosper originales.
     - `lib/contexts/AuthContext.tsx`: `deleteAccount()` ahora retorna `{ success: boolean; needsReauth?: boolean; error?: string }`. Orden correcto: Firestore → Storage → Auth. Detección de `auth/requires-recent-login` con flag `needsReauth`.
+- **Reset Firebase (02/04/2026)**:
+  - `userId` → `ownerId` en todas las colecciones Firestore.
+  - Reglas de seguridad actualizadas para validar `ownerId == request.auth.uid`.
+  - Funciones renombradas: `getGoalsByOwnerId`, `getTransactionsByOwnerId`, `getXPByOwnerId`, `getAchievementsByOwnerId`, `getUserProgressByOwnerId`, `getRemindersByOwnerId`, `getUnreadCount(ownerId)`, `markAllNotificationsRead(ownerId)`, `getMonthlySavings(ownerId)`, `getMonthlySummary(ownerId)`, `subscribeToGoals(ownerId)`, `subscribeToReminders(ownerId)`, `subscribeToTransactions(ownerId)`, `subscribeToWeeklyData(ownerId)`, `subscribeToXP(ownerId)`, `subscribeToAchievements(ownerId)`, `subscribeToNotifications(ownerId)`, `subscribeToUserProgress(ownerId)`.
+  - `createGoal` ahora incluye `ownerId` automáticamente.
+  - `.env.local` creado con placeholders para nuevas credenciales.
+
 - **Reactividad Global (01/04/2026)**:
   - `lib/contexts/GoalsContext.tsx`: Nuevo contexto con `onSnapshot` para goals y reminders. Expone `goals`, `reminders`, `userId`, `goalsToday`, `remindersToday` y funciones CRUD.
   - `app/components/DashboardLayout.tsx`: GoalsProvider añadido como wrapper global.
