@@ -41,14 +41,25 @@ export default function MetasPage() {
   };
 
   const handleCreateOrUpdateGoal = async () => {
-    if (!formData.title || !formData.target) return;
+    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Llamado!');
+    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] formData:', JSON.stringify(formData, null, 2));
+    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] userId:', userId);
+    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] editingGoal:', editingGoal);
+    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Validación - title:', formData.title, 'target:', formData.target);
+    if (!formData.title || !formData.target) {
+      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Validación fallida - title o target vacíos');
+      return;
+    }
 
     if (editingGoal) {
+      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo EDICIÓN');
       const newStatus: GoalStatus = formData.current >= formData.target ? 'completed' : editingGoal.status === 'pending' && formData.current > 0 ? 'progress' : editingGoal.status;
       const updated: Partial<Goal> = { ...editingGoal, ...formData, status: newStatus, updatedAt: Date.now() };
+      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Datos actualizados:', JSON.stringify(updated, null, 2));
       await updateGoalFn(editingGoal.id, updated);
     } else {
-      await addGoal({
+      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo CREACIÓN');
+      const goalData = {
         userId: userId || 'local',
         title: formData.title,
         category: formData.category,
@@ -58,9 +69,12 @@ export default function MetasPage() {
         status: formData.current >= formData.target ? 'completed' : 'pending',
         color: formData.color,
         icon: formData.icon,
-      });
+      };
+      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] goalData:', JSON.stringify(goalData, null, 2));
+      await addGoal(goalData);
     }
 
+    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Cerrando modal...');
     setShowNewGoalModal(false);
     resetForm();
   };
