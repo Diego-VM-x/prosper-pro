@@ -6,7 +6,6 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { createGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
 import {
   IconPlus,
   IconTrendUp,
@@ -21,31 +20,9 @@ import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
 export default function MetasPage() {
   const { query } = useSearch();
-  const { addGoal, updateGoalFn, deleteGoalFn } = useGoals();
+  const { goals, addGoal, updateGoalFn, deleteGoalFn } = useGoals();
   const { user } = useAuth();
   const userId = user?.uid || '';
-  const [localGoals, setLocalGoals] = useState<Goal[]>([]);
-
-  // Cargar metas directamente
-  React.useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    async function load() {
-      const data = await getGoalsByOwnerId(userId);
-      if (!cancelled) setLocalGoals(data);
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [userId]);
-
-  // Recargar después de crear/editar
-  const refreshGoals = React.useCallback(async () => {
-    if (!userId) return;
-    const data = await getGoalsByOwnerId(userId);
-    setLocalGoals(data);
-  }, [userId]);
-
-  const goals = localGoals;
   const [filter, setFilter] = useState('Todas');
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -68,29 +45,14 @@ export default function MetasPage() {
   };
 
   const handleCreateOrUpdateGoal = async () => {
-    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Llamado!');
-    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] formData:', JSON.stringify(formData, null, 2));
-    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] userId:', userId);
-    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] editingGoal:', editingGoal);
-    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Validación - title:', formData.title, 'target:', formData.target);
-    if (!formData.title || !formData.target) {
-      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Validación fallida - title o target vacíos');
-      return;
-    }
-
-    if (!userId) {
-      console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] ERROR: userId vacío, usuario no autenticado');
-      return;
-    }
+    if (!formData.title || !formData.target) return;
+    if (!userId) return;
 
     if (editingGoal) {
-      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo EDICIÓN');
       const newStatus: GoalStatus = formData.current >= formData.target ? 'completed' : editingGoal.status === 'pending' && formData.current > 0 ? 'progress' : editingGoal.status;
       const updated: Partial<Goal> = { ...editingGoal, ...formData, status: newStatus, updatedAt: Date.now() };
-      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Datos actualizados:', JSON.stringify(updated, null, 2));
       await updateGoalFn(editingGoal.id, updated);
     } else {
-      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Modo CREACIÓN');
       const goalData = {
         ownerId: userId,
         title: formData.title,
@@ -104,19 +66,13 @@ export default function MetasPage() {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
-      console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] goalData:', JSON.stringify(goalData, null, 2));
       try {
-        const id = await createGoal(goalData as any);
-        console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Meta creada con ID:', id);
-        await refreshGoals();
+        await addGoal(goalData as any);
       } catch (error: any) {
-        console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Error al crear meta:', error);
-        console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Error code:', error?.code);
-        console.error('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Error message:', error?.message);
+        console.error('[Metas] Error al crear meta:', error?.message);
       }
     }
 
-    console.log('[DEBUG METAS PAGE handleCreateOrUpdateGoal] Cerrando modal...');
     setShowNewGoalModal(false);
     resetForm();
   };
@@ -124,7 +80,6 @@ export default function MetasPage() {
   const handleDeleteGoal = async (goalId: string) => {
     if (confirm('¿Estás seguro de eliminar esta meta?')) {
       await deleteGoalFn(goalId);
-      await refreshGoals();
     }
   };
 
