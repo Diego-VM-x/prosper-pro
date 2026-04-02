@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
+import ProtectedRoute from '../components/ProtectedRoute';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
