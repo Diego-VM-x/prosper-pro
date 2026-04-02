@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
+import { useGoals } from '@/lib/contexts/GoalsContext';
 import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification } from '@/lib/firestore/notifications';
 import {
   IconSearch,
@@ -31,6 +32,8 @@ interface TopbarProps {
   onToggleSidebar: () => void;
   /** Indica si el sidebar está colapsado */
   isCollapsed: boolean;
+  /** Función para alternar el estado colapsado */
+  onToggleCollapse: () => void;
 }
 
 /**
@@ -38,10 +41,11 @@ interface TopbarProps {
  * Incluye la barra de búsqueda global, botones de acción rápida,
  * toggle de modo oscuro/claro y el perfil del usuario.
  */
-export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
+export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
+  const { goals } = useGoals();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -116,10 +120,42 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
       )
     : [];
 
+  // Filtrar metas según query
+  const goalResults = searchQuery.trim()
+    ? goals.filter(g =>
+        g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        g.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   return (
     <header className="topbar" id="main-topbar">
-      {/* Menú móvil + título */}
+      {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
+        <Link href="/" className="topbar-logo-link">
+          <img
+            src="/logo-icon.png"
+            alt="Prosper Logo"
+            width={32}
+            height={32}
+            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
+          />
+        </Link>
+        {/* Botón colapsar para desktop */}
+        <button
+          className="topbar-collapse-btn"
+          onClick={onToggleCollapse}
+          aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {isCollapsed ? (
+              <polyline points="9 18 15 12 9 6" />
+            ) : (
+              <polyline points="15 18 9 12 15 6" />
+            )}
+          </svg>
+        </button>
         {/* Menú hamburguesa para móvil */}
         <button
           className="topbar-icon-btn sidebar-toggle"
@@ -134,15 +170,15 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
         </span>
       </div>
 
-      {/* Búsqueda con resultados */}
+      {/* Búsqueda con resultados de metas */}
       <div className="topbar-search-wrapper">
         <div className="topbar-search" onClick={() => document.getElementById('global-search')?.focus()}>
           <IconSearch className="topbar-search-icon" />
           <input
             type="text"
-            placeholder="Buscar metas, cursos..."
+            placeholder="Buscar metas..."
             id="global-search"
-            aria-label="Buscador global"
+            aria-label="Buscador de metas"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setShowSearch(true)}
@@ -156,27 +192,41 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
           <span className="topbar-search-shortcut">⌘F</span>
         </div>
 
-        {/* Resultados de búsqueda */}
-        {showSearch && searchResults.length > 0 && (
+        {/* Resultados de metas */}
+        {showSearch && goalResults.length > 0 && (
           <div className="search-results-dropdown">
-            {searchResults.map((result) => (
+            <div className="search-results-header">
+              <span>Metas encontradas</span>
+              <span className="search-results-count">{goalResults.length}</span>
+            </div>
+            {goalResults.slice(0, 8).map((goal) => (
               <Link
-                key={result.route}
-                href={result.route}
+                key={goal.id}
+                href="/metas"
                 className="search-result-item"
                 onClick={() => setSearchQuery('')}
               >
-                <span className="search-result-icon">{result.icon}</span>
-                <span className="search-result-name">{result.name}</span>
+                <span className={`search-result-status ${goal.status === 'completed' ? 'completed' : goal.status === 'progress' ? 'in-progress' : 'pending'}`} />
+                <div className="search-result-content">
+                  <span className="search-result-name">{goal.title}</span>
+                  <span className="search-result-desc">{goal.category} · {goal.target.toLocaleString()}</span>
+                </div>
                 <span className="search-result-arrow">→</span>
               </Link>
             ))}
           </div>
         )}
-        {showSearch && searchQuery.trim() && searchResults.length === 0 && (
+        {showSearch && searchQuery.trim() && goalResults.length === 0 && goals.length > 0 && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>No se encontraron resultados para "{searchQuery}"</p>
+              <p>No se encontraron metas para "{searchQuery}"</p>
+            </div>
+          </div>
+        )}
+        {showSearch && goals.length === 0 && (
+          <div className="search-results-dropdown">
+            <div className="search-no-results">
+              <p>No tienes metas creadas aún</p>
             </div>
           </div>
         )}
@@ -290,6 +340,32 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
           gap: 10px;
           flex-shrink: 0;
         }
+        .topbar-logo-link {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          transition: opacity var(--transition-fast);
+        }
+        .topbar-logo-link:hover { opacity: 0.85; }
+        .topbar-collapse-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: var(--radius-md);
+          background: var(--bg-input);
+          border: 1px solid var(--border-default);
+          color: var(--text-primary);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          flex-shrink: 0;
+        }
+        .topbar-collapse-btn:hover {
+          background: var(--bg-accent-soft);
+          border-color: var(--color-prosper-green);
+          color: var(--color-prosper-green);
+        }
         .topbar-title-dynamic {
           font-size: 0.9375rem;
           font-weight: 600;
@@ -334,14 +410,32 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-lg);
           z-index: 200;
-          max-height: 320px;
+          max-height: 360px;
           overflow-y: auto;
           animation: fadeInUp 0.2s ease;
         }
-        .search-result-item {
+        .search-results-header {
+          padding: 10px 16px;
+          border-bottom: 1px solid var(--border-default);
           display: flex;
           align-items: center;
-          gap: 12px;
+          justify-content: space-between;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          color: var(--text-primary);
+        }
+        .search-results-count {
+          background: var(--color-prosper-green);
+          color: white;
+          font-size: 0.6875rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: var(--radius-full);
+        }
+        .search-result-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
           padding: 10px 16px;
           text-decoration: none;
           color: var(--text-primary);
@@ -353,9 +447,28 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
         .search-result-item:hover {
           background: var(--bg-accent-soft);
         }
-        .search-result-icon { font-size: 1.25rem; flex-shrink: 0; }
-        .search-result-name { font-size: 0.875rem; font-weight: 500; flex: 1; }
-        .search-result-arrow { color: var(--text-tertiary); font-size: 1rem; }
+        .search-result-status {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          margin-top: 4px;
+        }
+        .search-result-status.completed { background: var(--color-pine-500); }
+        .search-result-status.in-progress { background: var(--color-gold-500); }
+        .search-result-status.pending { background: var(--border-default); }
+        .search-result-content { flex: 1; min-width: 0; }
+        .search-result-name { font-size: 0.8125rem; font-weight: 600; display: block; }
+        .search-result-desc {
+          font-size: 0.6875rem;
+          color: var(--text-secondary);
+          display: block;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-top: 2px;
+        }
+        .search-result-arrow { color: var(--text-tertiary); font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
         .search-no-results {
           padding: 20px 16px;
           text-align: center;
@@ -365,6 +478,7 @@ export function Topbar({ onToggleSidebar, isCollapsed }: TopbarProps) {
         .sidebar-toggle { display: none; }
         @media (max-width: 1024px) {
           .sidebar-toggle { display: flex !important; }
+          .topbar-collapse-btn { display: none; }
           .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
 

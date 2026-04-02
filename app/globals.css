@@ -215,47 +215,15 @@ ul, ol {
   box-shadow: var(--shadow-sm);
 }
 
-/* Sidebar header - logo + colapsar + cerrar móvil */
+/* Sidebar header - solo botón cerrar en móvil */
 .sidebar-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 12px 12px 14px;
+  justify-content: flex-end;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--border-default);
   flex-shrink: 0;
-  min-height: 56px;
-}
-
-.sidebar-logo-link {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  transition: opacity var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.sidebar-logo-link:hover { opacity: 0.85; }
-
-/* Botón colapsar en sidebar */
-.sidebar-collapse-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.sidebar-collapse-btn:hover {
-  background: var(--bg-accent-soft);
-  border-color: var(--color-prosper-green);
-  color: var(--color-prosper-green);
+  min-height: 48px;
 }
 
 /* Botón cerrar móvil */
@@ -270,7 +238,6 @@ ul, ol {
   cursor: pointer;
   flex-shrink: 0;
   transition: all var(--transition-fast);
-  margin-left: auto;
 }
 
 .sidebar-close-btn:hover {
@@ -279,9 +246,6 @@ ul, ol {
 }
 
 @media (max-width: 1024px) {
-  .sidebar-collapse-btn {
-    display: none;
-  }
   .sidebar-close-btn {
     display: flex !important;
   }
