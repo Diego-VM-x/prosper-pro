@@ -38,6 +38,7 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Sincronización Metas-Calendario Corregida (02/04/2026)**: Corregida creación de metas que no aparecían por falta de `userId` y problemas de formato de fecha en el calendario.
 - ✅ **Simplificación Web**: Eliminación de Capacitor/App nativa, aplanamiento de rutas.
 - ✅ **Design Tokens**: Configuración de `globals.css` con soporte para Modo Oscuro/Claro.
 - ✅ **Dashboard Core**: Sidebar, Topbar, Widgets de Metas, Analíticas, Comunidad y Gamificación.
@@ -71,6 +72,10 @@
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
 
 ## Historial de Instrucciones
+### 02/04/2026
+- **Bug Fix Metas y Calendario**: Corregida la creación de metas que no aparecían por falta de validación de `userId` y problemas de formato de fecha en el calendario.
+- **Git Push + Dev Server**: Cambios subidos al repositorio y servidor de desarrollo activo.
+
 ### 01/04/2026
 - **Sincronización Firebase completa**: Todos los datos modificables conectados a Firestore.
 - **Datos en blanco**: Seed eliminado, datos por defecto removidos de todos los componentes.
