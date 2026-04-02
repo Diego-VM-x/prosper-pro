@@ -81,15 +81,46 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user?.uid]);
 
   const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => {
-    return await createGoal({ ...goal, userId: user?.uid || goal.userId });
+    console.log('[DEBUG GoalsContext addGoal] Llamado con:', JSON.stringify(goal, null, 2));
+    console.log('[DEBUG GoalsContext addGoal] user?.uid:', user?.uid);
+    const goalData = { ...goal, userId: user?.uid || goal.userId };
+    console.log('[DEBUG GoalsContext addGoal] Datos finales:', JSON.stringify(goalData, null, 2));
+    try {
+      const id = await createGoal(goalData);
+      console.log('[DEBUG GoalsContext addGoal] Meta creada con ID:', id);
+      return id;
+    } catch (error: any) {
+      console.error('[DEBUG GoalsContext addGoal] ERROR:', error);
+      console.error('[DEBUG GoalsContext addGoal] Error code:', error?.code);
+      console.error('[DEBUG GoalsContext addGoal] Error message:', error?.message);
+      throw error;
+    }
   }, [user?.uid]);
 
   const updateGoalFn = useCallback(async (id: string, updates: Partial<Goal>) => {
-    await updateGoal(id, updates);
+    console.log('[DEBUG GoalsContext updateGoalFn] ID:', id, 'Updates:', JSON.stringify(updates, null, 2));
+    try {
+      await updateGoal(id, updates);
+      console.log('[DEBUG GoalsContext updateGoalFn] Meta actualizada exitosamente');
+    } catch (error: any) {
+      console.error('[DEBUG GoalsContext updateGoalFn] ERROR:', error);
+      console.error('[DEBUG GoalsContext updateGoalFn] Error code:', error?.code);
+      console.error('[DEBUG GoalsContext updateGoalFn] Error message:', error?.message);
+      throw error;
+    }
   }, []);
 
   const deleteGoalFn = useCallback(async (id: string) => {
-    await deleteGoal(id);
+    console.log('[DEBUG GoalsContext deleteGoalFn] Eliminando meta ID:', id);
+    try {
+      await deleteGoal(id);
+      console.log('[DEBUG GoalsContext deleteGoalFn] Meta eliminada exitosamente');
+    } catch (error: any) {
+      console.error('[DEBUG GoalsContext deleteGoalFn] ERROR:', error);
+      console.error('[DEBUG GoalsContext deleteGoalFn] Error code:', error?.code);
+      console.error('[DEBUG GoalsContext deleteGoalFn] Error message:', error?.message);
+      throw error;
+    }
   }, []);
 
   const addReminder = useCallback(async (reminder: Omit<Reminder, 'id'>) => {
