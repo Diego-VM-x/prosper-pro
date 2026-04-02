@@ -845,15 +845,15 @@ ul, ol {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 8px;
+  padding: 6px;
   position: relative;
   overflow: hidden;
   transition: all var(--transition-fast);
@@ -887,12 +887,12 @@ ul, ol {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stat-icon-link {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 1.5px solid var(--border-default);
   display: flex;
@@ -918,30 +918,30 @@ ul, ol {
 .stat-icon-link svg { width: 14px; height: 14px; }
 
 .stat-label {
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.5px;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stat-change {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 0.625rem;
+  gap: 2px;
+  font-size: 0.5625rem;
   color: var(--text-secondary);
 }
 
-.stat-change svg { width: 12px; height: 12px; }
+.stat-change svg { width: 10px; height: 10px; }
 
 .stat-change.positive { color: var(--color-pine-500); }
 .stat-change.negative { color: var(--color-red-500); }
