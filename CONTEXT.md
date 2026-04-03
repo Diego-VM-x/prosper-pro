@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (02 de Abril, 2026 - UI Rediseño Completo + Sidebar Colapsable + Dashboard Grid)
+## Estado Actual (03 de Abril, 2026 - Dashboard Rediseño "Libro Esmeralda")
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -39,6 +39,7 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Dashboard Rediseño "Libro Esmeralda" (03/04/2026)**: Nuevo layout con 4 stat cards superiores con iconos emoji y badges, gráfico de línea SVG con gradiente y anotación "MAYOR RENDIMIENTO", panel lateral derecho con metas activas en formato card con barras de progreso horizontales, fila inferior con 3 cards (Flujo de Actividad, Progreso Circular, Próximos Hitos). Estética esmeralda oscura mantenida.
 - ✅ **UI Rediseño Completo (02/04/2026)**: Dashboard con grid system profesional, stat cards cuadradas compactas, sidebar colapsable con persistencia localStorage, topbar con logo y búsqueda funcional de metas.
 - ✅ **Sidebar Colapsable**: Botón de colapsar en topbar, estado persistido en localStorage, modo semi-desplegable (solo iconos).
 - ✅ **Topbar Mejorado**: Logo Prosper como botón, título dinámico ("Hola, Usuario" / "Navegación Rápida"), búsqueda funcional con resultados de metas, login/logout condicional.
@@ -91,6 +92,10 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 03/04/2026
+- **Dashboard Rediseño "Libro Esmeralda"**:
+  - `app/components/Dashboard.tsx`: Rediseño completo con nuevo layout. 4 stat cards con iconos emoji, gráfico de línea SVG con gradiente, panel lateral de metas activas, fila inferior con actividad/progreso/hitos. Build exitoso.
+
 ### 02/04/2026
 - **Login Fix Completo**:
   - `app/login/page.tsx`: Redirección con `setTimeout(500ms)` + `router.replace('/')` después de login exitoso. Evita necesidad de refresh manual.

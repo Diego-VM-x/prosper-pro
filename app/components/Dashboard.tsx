@@ -99,12 +99,12 @@ export function Dashboard() {
           const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
           if (monthSavings > 0) setMonthlySavings(monthSavings);
 
-          const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+          const days = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
           const weekly: WeeklyData[] = [];
           for (let i = 6; i >= 0; i--) {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
-            weekly.push({ day: days[d.getDay()], income: 0, saving: 0 });
+            weekly.push({ day: days[d.getDay() === 0 ? 6 : d.getDay() - 1], income: 0, saving: 0 });
           }
           transactionsData.forEach((t) => {
             const tDate = new Date(t.date);
@@ -115,12 +115,7 @@ export function Dashboard() {
               if (t.type === 'saving') weekly[idx].saving += t.amount;
             }
           });
-          const maxVal = Math.max(...weekly.flatMap((d) => [d.income, d.saving]), 1);
-          setWeeklyData(weekly.map((d) => ({
-            day: d.day,
-            income: Math.round((d.income / maxVal) * 100),
-            saving: Math.round((d.saving / maxVal) * 100),
-          })));
+          setWeeklyData(weekly);
         }
       } catch (e) {
         console.error('Firestore load error:', e);
@@ -155,10 +150,20 @@ export function Dashboard() {
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
+  // Calcular puntos para el gráfico de línea
+  const linePoints = weeklyData.length > 0 ? weeklyData.map((d, i) => {
+    const maxVal = Math.max(...weeklyData.flatMap((w) => [w.income, w.saving]), 1);
+    const x = (i / (weeklyData.length - 1)) * 100;
+    const y = 100 - ((d.saving / maxVal) * 80 + 10);
+    return `${x},${y}`;
+  }).join(' ') : '';
+
+  const areaPoints = linePoints ? `0,100 ${linePoints} 100,100` : '';
+
   return (
     <DashboardLayout>
       <div className="dashboard-container">
-        {/* Header compacto */}
+        {/* Header */}
         <div className="dashboard-header">
           <div>
             <h1 className="dashboard-title">Dashboard</h1>
@@ -169,196 +174,190 @@ export function Dashboard() {
           </button>
         </div>
 
-        {/* Fila Maestra: 4 indicadores */}
+        {/* 4 Stat Cards Superiores */}
         <div className="stats-row">
-          <div className="stat-box featured">
-            <div className="stat-box-top">
-              <span className="stat-box-label">Metas Activas</span>
-              <button className="stat-box-link" onClick={() => router.push('/metas')}><IconArrowUpRight width={14} /></button>
+          <div className="stat-card">
+            <div className="stat-card-icon">
+              <span className="stat-icon-bg">🎯</span>
+              <span className="stat-badge">+12%</span>
             </div>
-            <p className="stat-box-value">{activeGoals.length}</p>
-            <span className="stat-box-change positive"><IconTrendUp width={12} />{activeGoals.filter((g) => g.status === 'progress').length} en progreso</span>
+            <p className="stat-card-label">METAS ACTIVAS</p>
+            <p className="stat-card-value">{activeGoals.length}</p>
           </div>
-          <div className="stat-box">
-            <div className="stat-box-top">
-              <span className="stat-box-label">Completadas</span>
-              <button className="stat-box-link" onClick={() => router.push('/metas')}><IconArrowUpRight width={14} /></button>
+          <div className="stat-card">
+            <div className="stat-card-icon">
+              <span className="stat-icon-bg">✓</span>
             </div>
-            <p className="stat-box-value">{completedGoals.length}</p>
-            <span className="stat-box-change positive"><IconTrendUp width={12} />{totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0}%</span>
+            <p className="stat-card-label">COMPLETADAS</p>
+            <p className="stat-card-value">{completedGoals.length}</p>
           </div>
-          <div className="stat-box">
-            <div className="stat-box-top">
-              <span className="stat-box-label">Ahorro Mensual</span>
-              <button className="stat-box-link" onClick={() => router.push('/finanzas')}><IconArrowUpRight width={14} /></button>
+          <div className="stat-card featured">
+            <div className="stat-card-icon">
+              <span className="stat-icon-bg">💰</span>
             </div>
-            <p className="stat-box-value">${(monthlySavings / 1000).toFixed(1)}k</p>
-            <span className="stat-box-change positive"><IconTrendUp width={12} />Incrementado</span>
+            <p className="stat-card-label">AHORRO MENSUAL</p>
+            <p className="stat-card-value stat-value-green">${monthlySavings.toLocaleString()}</p>
           </div>
-          <div className="stat-box">
-            <div className="stat-box-top">
-              <span className="stat-box-label">Lecciones</span>
-              <button className="stat-box-link" onClick={() => router.push('/cursos')}><IconArrowUpRight width={14} /></button>
+          <div className="stat-card">
+            <div className="stat-card-icon">
+              <span className="stat-icon-bg">📖</span>
             </div>
-            <p className="stat-box-value">{goals.filter((g) => g.category === 'Educación' && g.status !== 'completed').length}</p>
-            <span className="stat-box-change">Pendientes</span>
+            <p className="stat-card-label">LECCIONES</p>
+            <p className="stat-card-value">{goals.filter((g) => g.category === 'Educación' && g.status !== 'completed').length}</p>
           </div>
         </div>
 
-        {/* Sección Dual: Gráfico + Fechas */}
-        <div className="dual-grid">
-          <div className="dual-main">
-            <div className="dash-card">
-              <div className="dash-card-header">
-                <span className="dash-card-title">Progreso Financiero Semanal</span>
+        {/* Sección Principal: Gráfico + Metas Activas */}
+        <div className="main-grid">
+          {/* Gráfico de Línea */}
+          <div className="dash-card chart-card">
+            <div className="dash-card-header">
+              <div>
+                <h3 className="dash-card-title">Progreso Financiero Semanal</h3>
+                <p className="dash-card-subtitle">Comparación entre el objetivo y el crecimiento real</p>
               </div>
-              <div className="chart-bars">
-                {weeklyData.map((bar, i) => (
-                  <div className="chart-bar-wrapper" key={i}>
-                    <div className="chart-bar style-stripe" style={{ height: `${Math.max(bar.income, 10)}%` }}><span className="chart-tooltip">{bar.income}%</span></div>
-                    <div className="chart-bar style-solid" style={{ height: `${Math.max(bar.saving, 10)}%` }}><span className="chart-tooltip">{bar.saving}%</span></div>
-                    <span className="chart-day">{bar.day}</span>
-                  </div>
+              <div className="chart-legend">
+                <span className="legend-item"><span className="legend-dot legend-real"></span> REAL</span>
+                <span className="legend-item"><span className="legend-dot legend-objetivo"></span> OBJETIVO</span>
+              </div>
+            </div>
+            <div className="line-chart-container">
+              <svg className="line-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="var(--color-prosper-green)" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="var(--color-prosper-green)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Grid lines */}
+                {[20, 40, 60, 80].map((y) => (
+                  <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="var(--border-default)" strokeWidth="0.3" strokeDasharray="2,2" />
+                ))}
+                {/* Area fill */}
+                {areaPoints && <polygon points={areaPoints} fill="url(#lineGradient)" />}
+                {/* Line */}
+                {linePoints && <polyline points={linePoints} fill="none" stroke="var(--color-prosper-green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />}
+                {/* Annotation */}
+                {weeklyData.length > 3 && (
+                  <g>
+                    <rect x="35" y="35" width="30" height="10" rx="2" fill="var(--color-prosper-green)" />
+                    <text x="50" y="42" textAnchor="middle" fill="white" fontSize="5" fontWeight="600">MAYOR RENDIMIENTO</text>
+                  </g>
+                )}
+              </svg>
+              <div className="chart-x-axis">
+                {weeklyData.map((d, i) => (
+                  <span key={i} className={`chart-day-label ${i === 3 ? 'active' : ''}`}>{d.day}</span>
                 ))}
               </div>
             </div>
-
-            <div className="dash-card">
-              <div className="dash-card-header">
-                <span className="dash-card-title">📅 Próximas Fechas</span>
-                <button className="dash-card-action" onClick={() => router.push('/calendario')}>Ver calendario</button>
-              </div>
-              {(() => {
-                const upcoming = goals
-                  .filter((g: Goal) => g.status !== 'completed' && g.deadline)
-                  .map((g: Goal) => ({ ...g, iso: parseDeadlineToISO(g.deadline) }))
-                  .filter((g) => g.iso !== null)
-                  .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
-                  .slice(0, 4);
-                return upcoming.length > 0 ? (
-                  <div className="date-list">
-                    {upcoming.map((g) => {
-                      const daysLeft = getDaysUntil(g.iso as string);
-                      const pct = Math.min((g.current / g.target) * 100, 100);
-                      const urgency = daysLeft <= 0 ? 'var(--color-red-500)' : daysLeft <= 7 ? 'var(--color-gold-500)' : 'var(--text-secondary)';
-                      return (
-                        <div key={g.id} className="date-item" style={{ borderLeft: `3px solid ${g.color}` }}>
-                          <span className="date-icon">{g.icon}</span>
-                          <div className="date-info">
-                            <p className="date-title">{g.title}</p>
-                            <div className="date-progress">
-                              <div className="date-progress-bar"><div style={{ width: `${pct}%`, height: '100%', background: g.color }} /></div>
-                              <span className="date-pct">{Math.round(pct)}%</span>
-                            </div>
-                          </div>
-                          <span className="date-days" style={{ color: urgency }}>{daysLeft <= 0 ? 'Vencida' : daysLeft === 1 ? '1d' : `${daysLeft}d`}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="empty-msg">No hay metas con fecha límite</p>
-                );
-              })()}
-            </div>
           </div>
 
-          <div className="dash-card">
+          {/* Panel Lateral: Metas Activas */}
+          <div className="dash-card goals-panel">
             <div className="dash-card-header">
-              <span className="dash-card-title">Metas Activas</span>
-              <button className="dash-card-action" onClick={() => setShowNewGoalModal(true)}><IconPlus width={12} /> Nueva</button>
+              <h3 className="dash-card-title">Metas Activas</h3>
+              <button className="dash-card-action" onClick={() => router.push('/metas')}>VER TODO</button>
             </div>
-            <div className="goal-list">
-              {activeGoals.length > 0 ? activeGoals.slice(0, 5).map((goal: Goal) => {
+            <div className="goals-list">
+              {activeGoals.slice(0, 4).map((goal: Goal) => {
                 const pct = Math.min((goal.current / goal.target) * 100, 100);
+                const goalColor = pct >= 75 ? 'var(--color-prosper-green)' : pct >= 50 ? 'var(--color-prosper-green)' : 'var(--color-red-500)';
                 return (
-                  <div className="goal-item" key={goal.id}>
-                    <div className="goal-dot" style={{ background: goal.color }}>{goal.icon}</div>
-                    <div className="goal-info">
-                      <p className="goal-name">{goal.title}</p>
-                      <div className="goal-bar">
-                        <div className="goal-bar-track"><div style={{ width: `${pct}%`, height: '100%', background: goal.color }} /></div>
-                        <span className="goal-pct">{Math.round(pct)}%</span>
-                      </div>
-                      <p className="goal-due">${goal.current.toLocaleString()} / ${goal.target.toLocaleString()}</p>
+                  <div className="goal-card" key={goal.id}>
+                    <div className="goal-card-header">
+                      <span className="goal-card-title">{goal.title}</span>
+                      <span className="goal-card-pct" style={{ color: goalColor }}>{Math.round(pct)}%</span>
+                    </div>
+                    <div className="goal-progress-bar">
+                      <div className="goal-progress-fill" style={{ width: `${pct}%`, background: goalColor }} />
                     </div>
                   </div>
                 );
-              }) : (
-                <p className="empty-msg">No hay metas activas</p>
-              )}
+              })}
+              {activeGoals.length === 0 && <p className="empty-msg">No hay metas activas</p>}
             </div>
-            {xp && (
-              <div className="xp-mini">
-                <div className="xp-mini-header">
-                  <span className="xp-mini-label"><IconZap width={10} /> Nivel {xp.level}</span>
-                  <span className="xp-mini-value">{xp.currentXP}/{xp.maxXP} XP</span>
-                </div>
-                <div className="xp-mini-track"><div className="xp-mini-fill" style={{ width: `${(xp.currentXP / xp.maxXP) * 100}%` }} /></div>
-              </div>
-            )}
+            <button className="btn-add-goal" onClick={() => setShowNewGoalModal(true)}>
+              + Añadir Nuevo Objetivo
+            </button>
           </div>
         </div>
 
-        {/* Fila inferior: Comunidad + Progreso + Logros */}
+        {/* Fila Inferior: 3 Cards */}
         <div className="bottom-grid">
-          <div className="dash-card">
+          {/* Flujo de Actividad */}
+          <div className="dash-card activity-card">
             <div className="dash-card-header">
-              <span className="dash-card-title">Comunidad</span>
-              <span className="dash-card-count">{members.length} miembros</span>
+              <h3 className="dash-card-title">FLUJO DE ACTIVIDAD</h3>
             </div>
-            <div className="member-list">
-              {members.length > 0 ? members.slice(0, 4).map((member) => (
-                <div className="member-item" key={member.uid}>
-                  <div className="member-avatar">
-                    {member.photoURL ? (
-                      <img src={member.photoURL} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
-                    ) : (member.displayName || '?').charAt(0).toUpperCase()}
-                  </div>
-                  <div className="member-info">
-                    <p className="member-name">{member.displayName || 'Usuario'}</p>
-                    <p className="member-level">Nivel {member.level}</p>
-                  </div>
-                </div>
-              )) : (
-                <p className="empty-msg">Aún no hay miembros</p>
-              )}
+            <div className="activity-item">
+              <div className="activity-icon">🚀</div>
+              <div className="activity-info">
+                <p className="activity-text">Has alcanzado el estatus de <strong>Arquitecto Nivel 2</strong>.</p>
+                <span className="activity-time">Hace 2 horas</span>
+              </div>
             </div>
-          </div>
-
-          <div className="dash-card">
-            <div className="dash-card-header"><span className="dash-card-title">Progreso de Metas</span></div>
-            <div className="progress-mini">
-              <div className="progress-ring-small">
-                <svg width="80" height="80" viewBox="0 0 80 80">
-                  <circle className="progress-ring-track" cx="40" cy="40" r="34" />
-                  <circle className="progress-ring-fill" cx="40" cy="40" r="34" style={{ strokeDashoffset }} />
-                </svg>
-                <div className="progress-ring-inner">
-                  <span className="progress-ring-pct">{progressPct}%</span>
+            {achievements.slice(0, 2).map((ach) => (
+              <div className="activity-item" key={ach.id}>
+                <div className="activity-icon">{ach.icon}</div>
+                <div className="activity-info">
+                  <p className="activity-text">{ach.title}</p>
+                  <span className="activity-time">Reciente</span>
                 </div>
               </div>
-              <div className="progress-legend-small">
-                <span className="legend-dot" style={{ background: 'var(--color-pine-500)' }} /> Completadas
-                <span className="legend-dot" style={{ background: 'var(--color-blue-500)' }} /> Progreso
-                <span className="legend-dot" style={{ background: 'var(--color-gold-500)' }} /> Pendientes
+            ))}
+          </div>
+
+          {/* Progreso Circular */}
+          <div className="dash-card progress-card">
+            <div className="progress-ring-container">
+              <svg className="progress-ring" viewBox="0 0 120 120">
+                <circle className="progress-ring-track" cx="60" cy="60" r="50" />
+                <circle className="progress-ring-fill" cx="60" cy="60" r="50" style={{ strokeDashoffset }} />
+              </svg>
+              <div className="progress-ring-center">
+                <span className="progress-pct">{progressPct}%</span>
+                <span className="progress-label">Completado</span>
               </div>
             </div>
           </div>
 
-          <div className="dash-card">
-            <div className="dash-card-header"><span className="dash-card-title">Logros</span></div>
-            <div className="achievement-list">
-              {achievements.slice(0, 3).map((ach) => (
-                <div className="achievement-item" key={ach.id}>
-                  <span className="achievement-icon">{ach.icon}</span>
-                  <div>
-                    <p className="achievement-title">{ach.title}</p>
-                  </div>
-                </div>
-              ))}
-              {achievements.length === 0 && <p className="empty-msg">Sin logros aún</p>}
+          {/* Próximos Hitos */}
+          <div className="dash-card milestones-card">
+            <div className="dash-card-header">
+              <h3 className="dash-card-title">PRÓXIMOS HITOS</h3>
             </div>
+            {(() => {
+              const upcoming = goals
+                .filter((g: Goal) => g.status !== 'completed' && g.deadline)
+                .map((g: Goal) => ({ ...g, iso: parseDeadlineToISO(g.deadline) }))
+                .filter((g) => g.iso !== null)
+                .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
+                .slice(0, 2);
+              return upcoming.length > 0 ? (
+                <div className="milestones-list">
+                  {upcoming.map((g) => {
+                    const daysLeft = getDaysUntil(g.iso as string);
+                    const urgency = daysLeft <= 0 ? 'var(--color-red-500)' : daysLeft <= 7 ? 'var(--color-gold-500)' : 'var(--text-secondary)';
+                    return (
+                      <div className="milestone-item" key={g.id}>
+                        <div className="milestone-date">
+                          <span className="milestone-month">OCT</span>
+                          <span className="milestone-day">{daysLeft <= 0 ? '!' : daysLeft}</span>
+                        </div>
+                        <div className="milestone-info">
+                          <p className="milestone-title">{g.title}</p>
+                          <p className="milestone-desc">${g.current.toLocaleString()} / ${g.target.toLocaleString()}</p>
+                        </div>
+                        <span className="milestone-arrow" style={{ color: urgency }}>›</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="empty-msg">No hay hitos próximos</p>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -410,119 +409,118 @@ export function Dashboard() {
 
       <style>{`
         .dashboard-container { padding: 0; }
-        .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .dashboard-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-        .dashboard-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin: 2px 0 0 0; }
-        .btn-sm { padding: 6px 12px; font-size: 0.75rem; }
+        .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .dashboard-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .dashboard-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0 0; }
+        .btn-sm { padding: 8px 16px; font-size: 0.875rem; }
 
-        /* Fila Maestra */
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-        .stat-box { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; aspect-ratio: 1/1; justify-content: center; transition: all var(--transition-fast); }
-        .stat-box:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
-        .stat-box.featured { background: linear-gradient(135deg, var(--color-prosper-navy), var(--color-prosper-green)); border-color: transparent; color: white; }
-        .stat-box.featured .stat-box-label { color: rgba(255,255,255,0.8); }
-        .stat-box.featured .stat-box-value { color: white; }
-        .stat-box.featured .stat-box-change { color: rgba(255,255,255,0.85); }
-        .stat-box-top { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 4px; }
-        .stat-box-label { font-size: 0.625rem; font-weight: 500; color: var(--text-secondary); }
-        .stat-box-link { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 0; display: flex; }
-        .stat-box-link:hover { color: var(--text-primary); }
-        .stat-box-value { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1; }
-        .stat-box-change { display: inline-flex; align-items: center; gap: 2px; font-size: 0.5625rem; color: var(--text-secondary); }
-        .stat-box-change.positive { color: var(--color-pine-500); }
+        /* Stat Cards */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 20px; position: relative; transition: all var(--transition-fast); }
+        .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .stat-card.featured { border-color: var(--color-prosper-green); background: linear-gradient(135deg, rgba(61,204,142,0.1), transparent); }
+        .stat-card-icon { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .stat-icon-bg { width: 40px; height: 40px; border-radius: var(--radius-sm); background: rgba(61,204,142,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .stat-badge { font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); background: rgba(61,204,142,0.15); padding: 2px 8px; border-radius: var(--radius-full); }
+        .stat-card-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card-value { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1; }
+        .stat-value-green { color: var(--color-prosper-green) !important; }
 
-        /* Dual Grid */
-        .dual-grid { display: grid; grid-template-columns: 1fr 260px; gap: 10px; margin-bottom: 10px; }
-        .dual-main { display: flex; flex-direction: column; gap: 10px; }
-        .dash-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 10px; }
-        .dash-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .dash-card-title { font-size: 0.6875rem; font-weight: 700; color: var(--text-primary); }
-        .dash-card-action { background: none; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 3px 8px; font-size: 0.625rem; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 3px; }
-        .dash-card-action:hover { background: var(--bg-accent-soft); color: var(--color-pine-600); }
-        .dash-card-count { font-size: 0.625rem; color: var(--text-secondary); }
+        /* Main Grid */
+        .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; margin-bottom: 24px; }
+        .dash-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 24px; }
+        .dash-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+        .dash-card-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .dash-card-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0 0; }
+        .dash-card-action { background: none; border: none; font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dash-card-action:hover { opacity: 0.8; }
 
-        /* Date List */
-        .date-list { display: flex; flex-direction: column; gap: 6px; }
-        .date-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-input); border-radius: var(--radius-sm); border-left: 3px solid var(--color-pine-500); }
-        .date-icon { font-size: 0.875rem; }
-        .date-info { flex: 1; min-width: 0; }
-        .date-title { font-size: 0.6875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .date-progress { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-        .date-progress-bar { flex: 1; height: 3px; background: var(--bg-card); border-radius: var(--radius-full); overflow: hidden; }
-        .date-pct { font-size: 0.5rem; font-weight: 600; color: var(--text-secondary); }
-        .date-days { font-size: 0.625rem; font-weight: 700; flex-shrink: 0; }
+        /* Line Chart */
+        .chart-card { min-height: 320px; }
+        .chart-legend { display: flex; gap: 16px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .legend-real { background: var(--color-prosper-green); }
+        .legend-objetivo { background: var(--color-stone-600); }
+        .line-chart-container { position: relative; height: 240px; }
+        .line-chart { width: 100%; height: 200px; }
+        .chart-x-axis { display: flex; justify-content: space-between; margin-top: 12px; padding: 0 0; }
+        .chart-day-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .chart-day-label.active { color: var(--color-prosper-green); }
 
-        /* Goal List */
-        .goal-list { display: flex; flex-direction: column; gap: 6px; }
-        .goal-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border-default); }
-        .goal-item:last-child { border-bottom: none; }
-        .goal-dot { width: 20px; height: 20px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.625rem; flex-shrink: 0; }
-        .goal-info { flex: 1; min-width: 0; }
-        .goal-name { font-size: 0.6875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .goal-bar { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-        .goal-bar-track { flex: 1; height: 3px; background: var(--bg-input); border-radius: var(--radius-full); overflow: hidden; }
-        .goal-pct { font-size: 0.5rem; font-weight: 600; color: var(--text-secondary); min-width: 24px; }
-        .goal-due { font-size: 0.5625rem; color: var(--text-tertiary); margin: 2px 0 0 0; }
-
-        /* XP Mini */
-        .xp-mini { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-default); }
-        .xp-mini-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .xp-mini-label { font-size: 0.5625rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 3px; }
-        .xp-mini-value { font-size: 0.5625rem; font-weight: 700; color: var(--color-pine-500); }
-        .xp-mini-track { width: 100%; height: 4px; background: var(--border-default); border-radius: var(--radius-full); overflow: hidden; }
-        .xp-mini-fill { height: 100%; background: linear-gradient(90deg, var(--color-pine-400), var(--color-pine-600)); border-radius: var(--radius-full); }
+        /* Goals Panel */
+        .goals-panel { display: flex; flex-direction: column; }
+        .goals-list { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+        .goal-card { background: var(--bg-input); border-radius: var(--radius-sm); padding: 12px 16px; }
+        .goal-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .goal-card-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+        .goal-card-pct { font-size: 0.875rem; font-weight: 700; }
+        .goal-progress-bar { width: 100%; height: 6px; background: var(--border-default); border-radius: var(--radius-full); overflow: hidden; }
+        .goal-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.5s ease; }
+        .btn-add-goal { width: 100%; padding: 12px; margin-top: 16px; background: transparent; border: 1px dashed var(--border-default); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; cursor: pointer; transition: all var(--transition-fast); }
+        .btn-add-goal:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
 
         /* Bottom Grid */
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr 200px; gap: 10px; }
+        .bottom-grid { display: grid; grid-template-columns: 1fr 200px 1fr; gap: 20px; }
 
-        /* Member List */
-        .member-list { display: flex; flex-direction: column; gap: 6px; }
-        .member-item { display: flex; align-items: center; gap: 8px; }
-        .member-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--color-pine-400), var(--color-pine-600)); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.625rem; font-weight: 700; flex-shrink: 0; overflow: hidden; }
-        .member-info { flex: 1; }
-        .member-name { font-size: 0.6875rem; font-weight: 600; color: var(--text-primary); margin: 0; }
-        .member-level { font-size: 0.5625rem; color: var(--text-secondary); margin: 0; }
+        /* Activity Card */
+        .activity-card { }
+        .activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-default); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(61,204,142,0.15); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; flex-shrink: 0; }
+        .activity-info { flex: 1; }
+        .activity-text { font-size: 0.875rem; color: var(--text-primary); margin: 0; line-height: 1.4; }
+        .activity-time { font-size: 0.75rem; color: var(--text-tertiary); }
 
-        /* Progress Mini */
-        .progress-mini { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .progress-ring-small { position: relative; width: 80px; height: 80px; }
-        .progress-ring-small svg { transform: rotate(-90deg); }
-        .progress-ring-small .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 6; }
-        .progress-ring-small .progress-ring-fill { fill: none; stroke: var(--color-pine-500); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 213.6; transition: stroke-dashoffset 1s var(--transition-slow); }
-        .progress-ring-small .progress-ring-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-        .progress-ring-small .progress-ring-pct { font-size: 1rem; font-weight: 800; color: var(--text-primary); }
-        .progress-legend-small { display: flex; align-items: center; gap: 8px; font-size: 0.5rem; color: var(--text-secondary); flex-wrap: wrap; justify-content: center; }
-        .legend-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        /* Progress Card */
+        .progress-card { display: flex; align-items: center; justify-content: center; }
+        .progress-ring-container { position: relative; width: 160px; height: 160px; }
+        .progress-ring { transform: rotate(-90deg); }
+        .progress-ring .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 8; }
+        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 314; transition: stroke-dashoffset 1s ease; }
+        .progress-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .progress-pct { font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+        .progress-label { font-size: 0.75rem; color: var(--text-secondary); }
 
-        /* Achievement List */
-        .achievement-list { display: flex; flex-direction: column; gap: 6px; }
-        .achievement-item { display: flex; align-items: center; gap: 8px; }
-        .achievement-icon { font-size: 1rem; }
-        .achievement-title { font-size: 0.625rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+        /* Milestones Card */
+        .milestones-list { display: flex; flex-direction: column; gap: 12px; }
+        .milestone-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: var(--radius-sm); }
+        .milestone-date { width: 40px; height: 48px; background: var(--bg-card); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+        .milestone-month { font-size: 0.625rem; font-weight: 700; color: var(--color-prosper-green); text-transform: uppercase; }
+        .milestone-day { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+        .milestone-info { flex: 1; min-width: 0; }
+        .milestone-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .milestone-desc { font-size: 0.75rem; color: var(--text-secondary); margin: 2px 0 0 0; }
+        .milestone-arrow { font-size: 1.25rem; font-weight: 700; flex-shrink: 0; }
 
-        .empty-msg { padding: 8px 0; color: var(--text-secondary); font-size: 0.6875rem; text-align: center; margin: 0; }
+        .empty-msg { padding: 16px 0; color: var(--text-secondary); font-size: 0.875rem; text-align: center; margin: 0; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-        .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 440px; max-height: 85vh; overflow-y: auto; padding: 20px; animation: fadeInUp 0.3s ease; }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 440px; max-height: 85vh; overflow-y: auto; padding: 24px; animation: fadeInUp 0.3s ease; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; }
-        .modal-body { display: flex; flex-direction: column; gap: 10px; }
-        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-        .form-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-primary); }
-        .form-input { width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-primary); font-size: 0.8125rem; outline: none; box-sizing: border-box; }
+        .modal-body { display: flex; flex-direction: column; gap: 12px; }
+        .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+        .form-label { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+        .form-input { width: 100%; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-primary); font-size: 0.875rem; outline: none; box-sizing: border-box; }
         .form-input:focus { border-color: var(--color-prosper-green); }
         select.form-input { cursor: pointer; }
 
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
         @media (max-width: 1024px) {
           .stats-row { grid-template-columns: repeat(2, 1fr); }
-          .dual-grid { grid-template-columns: 1fr; }
+          .main-grid { grid-template-columns: 1fr; }
           .bottom-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 640px) {
-          .stats-row { grid-template-columns: 1fr 1fr; }
-          .dashboard-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+          .stats-row { grid-template-columns: 1fr; }
+          .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
         }
       `}</style>
     </DashboardLayout>
