@@ -23,6 +23,13 @@ import {
   IconX,
   IconSettings,
   IconLogin,
+  IconDashboard,
+  IconTasks,
+  IconCalendar,
+  IconAnalytics,
+  IconTeam,
+  IconBook,
+  IconTrophy,
 } from './icons';
 import type { Notification } from '@/types';
 import Link from 'next/link';
@@ -51,6 +58,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifPermissioned, setNotifPermissioned] = useState(false);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
@@ -89,6 +97,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         setShowSearch(false);
         setShowNotifications(false);
         setShowUserMenu(false);
+        setShowMobileMenu(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -158,11 +167,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         </button>
         {/* Menú hamburguesa para móvil */}
         <button
-          className="topbar-icon-btn sidebar-toggle"
-          onClick={onToggleSidebar}
+          className="topbar-icon-btn mobile-menu-btn"
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
           aria-label="Abrir menú"
         >
-          <IconMenu />
+          {showMobileMenu ? <IconX width={20} /> : <IconMenu />}
         </button>
         {/* Título dinámico */}
         <span className="topbar-title-dynamic">
@@ -204,7 +213,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 key={goal.id}
                 href="/metas"
                 className="search-result-item"
-                onClick={() => setSearchQuery('')}
+                onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
               >
                 <span className={`search-result-status ${goal.status === 'completed' ? 'completed' : goal.status === 'progress' ? 'in-progress' : 'pending'}`} />
                 <div className="search-result-content">
@@ -232,8 +241,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         )}
       </div>
 
-      {/* Acciones */}
-      <div className="topbar-actions">
+      {/* Acciones desktop */}
+      <div className="topbar-actions desktop-actions">
         {/* Toggle de tema */}
         <button
           className="theme-toggle"
@@ -332,8 +341,173 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         </div>
       </div>
 
+      {/* Menú móvil desplegable */}
+      {showMobileMenu && (
+        <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
+          <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-menu-header">
+              <div className="mobile-menu-user">
+                <div className="mobile-menu-avatar">
+                  {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+                </div>
+                <div>
+                  <p className="mobile-menu-name">{user?.displayName || 'Usuario'}</p>
+                  <p className="mobile-menu-email">{user?.email}</p>
+                </div>
+              </div>
+              <button className="mobile-menu-close" onClick={() => setShowMobileMenu(false)}>
+                <IconX width={20} />
+              </button>
+            </div>
+            <nav className="mobile-menu-nav">
+              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconDashboard /> Dashboard
+              </Link>
+              <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconTasks /> Mis Metas
+              </Link>
+              <Link href="/calendario" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconCalendar /> Calendario
+              </Link>
+              <Link href="/finanzas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconAnalytics /> Finanzas
+              </Link>
+              <Link href="/comunidad" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconTeam /> Comunidad
+              </Link>
+              <Link href="/cursos" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconBook /> Cursos
+              </Link>
+              <Link href="/logros" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconTrophy /> Logros
+              </Link>
+              <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconSettings /> Configuración
+              </Link>
+            </nav>
+            <div className="mobile-menu-footer">
+              <button className="mobile-menu-theme" onClick={() => { toggleTheme(); setShowMobileMenu(false); }}>
+                {theme === 'light' ? <IconMoon /> : <IconSun />}
+                {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
+              </button>
+              <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
+                <IconLogout /> Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Estilos inline */}
       <style>{`
+        .mobile-menu-btn { display: none; }
+        .desktop-actions { display: flex; align-items: center; gap: 8px; }
+        .mobile-menu-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 1000;
+          display: flex;
+          justify-content: flex-end;
+          animation: fadeIn 0.2s ease;
+        }
+        .mobile-menu {
+          width: 300px;
+          max-width: 85vw;
+          height: 100%;
+          background: var(--bg-card);
+          display: flex;
+          flex-direction: column;
+          animation: slideInRight 0.3s ease;
+        }
+        .mobile-menu-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px;
+          border-bottom: 1px solid var(--border-default);
+        }
+        .mobile-menu-user {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .mobile-menu-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--color-prosper-green), var(--color-prosper-navy));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 1rem;
+          font-weight: 700;
+          overflow: hidden;
+        }
+        .mobile-menu-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .mobile-menu-name { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+        .mobile-menu-email { font-size: 0.75rem; color: var(--text-secondary); margin: 0; }
+        .mobile-menu-close {
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+        }
+        .mobile-menu-nav {
+          flex: 1;
+          overflow-y: auto;
+          padding: 12px;
+        }
+        .mobile-menu-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 14px 16px;
+          border-radius: var(--radius-md);
+          color: var(--text-primary);
+          text-decoration: none;
+          font-size: 0.9375rem;
+          font-weight: 500;
+          transition: background var(--transition-fast);
+        }
+        .mobile-menu-item:hover { background: var(--bg-input); }
+        .mobile-menu-item svg { width: 20px; height: 20px; color: var(--text-secondary); }
+        .mobile-menu-footer {
+          padding: 16px;
+          border-top: 1px solid var(--border-default);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .mobile-menu-theme,
+        .mobile-menu-logout {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 12px;
+          border-radius: var(--radius-md);
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          border: none;
+          transition: all var(--transition-fast);
+        }
+        .mobile-menu-theme {
+          background: var(--bg-input);
+          color: var(--text-primary);
+        }
+        .mobile-menu-logout {
+          background: rgba(239,68,68,0.1);
+          color: var(--color-red-500);
+        }
+        .mobile-menu-theme svg,
+        .mobile-menu-logout svg { width: 18px; height: 18px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
         .topbar-left {
           display: flex;
           align-items: center;
@@ -475,9 +649,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           font-size: 0.875rem;
           color: var(--text-secondary);
         }
-        .sidebar-toggle { display: none; }
         @media (max-width: 1024px) {
-          .sidebar-toggle { display: flex !important; }
+          .mobile-menu-btn { display: flex !important; }
+          .desktop-actions { display: none; }
           .topbar-collapse-btn { display: none; }
           .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
@@ -662,6 +836,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-icon-btn { width: 32px; height: 32px; }
           .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
           .notifications-dropdown { width: 260px; }
+          .mobile-menu { width: 100%; max-width: 100%; }
         }
       `}</style>
     </header>
