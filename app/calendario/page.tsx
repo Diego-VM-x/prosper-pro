@@ -9,7 +9,7 @@ import type { Reminder, Goal } from '@/types';
 const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌', goal: '🎯' };
 const TYPE_LABELS: Record<string, string> = { mentor: 'Mentor', course: 'Curso', meeting: 'Reunión', other: 'Otro', goal: 'Meta' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
-const DAYS_ES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const DAYS_ES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 function parseDeadlineToISO(deadline: string): string | null {
@@ -62,12 +62,13 @@ export default function CalendarioPage() {
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
+  // Lunes como primer día de la semana
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const firstDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  // Upcoming goals (next 30 days)
   const upcomingGoals = useMemo(() => {
     return goalEvents
       .filter((e) => {
@@ -81,6 +82,11 @@ export default function CalendarioPage() {
     const days: (number | null)[] = [];
     for (let i = 0; i < firstDay; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) days.push(i);
+    // Rellenar semanas completas
+    const remainder = days.length % 7;
+    if (remainder > 0) {
+      for (let i = 0; i < 7 - remainder; i++) days.push(null);
+    }
     return days;
   };
 
@@ -124,7 +130,6 @@ export default function CalendarioPage() {
 
   const selectedEvents = selectedDate ? getAllEventsForDate(selectedDate) : [];
 
-  // Agenda view: all events in the month sorted by date
   const monthEvents = useMemo(() => {
     const events: { date: string; items: (Reminder | CalendarGoalEvent)[] }[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
@@ -135,6 +140,15 @@ export default function CalendarioPage() {
     return events;
   }, [goals, reminders, year, month, daysInMonth]);
 
+  // Stats del mes
+  const monthGoalsCount = goalEvents.filter((e) => {
+    const d = new Date(e.date + 'T12:00:00');
+    return d.getMonth() === month && d.getFullYear() === year;
+  }).length;
+  const monthRemindersCount = reminders.filter((r) => r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length;
+  const monthCompletedCount = goals.filter((g) => g.status === 'completed').length;
+  const monthProgress = goals.length > 0 ? Math.round((monthCompletedCount / goals.length) * 100) : 0;
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
@@ -142,7 +156,7 @@ export default function CalendarioPage() {
         <div className="cal-page-header">
           <div>
             <h1 className="cal-page-title">Calendario</h1>
-            <p className="cal-page-subtitle">Sincronizado con tus metas y recordatorios</p>
+            <p className="cal-page-subtitle">Sincronizado con tus metas y recordatorios.</p>
           </div>
           <div className="cal-header-actions">
             <div className="cal-view-toggle">
@@ -160,12 +174,18 @@ export default function CalendarioPage() {
               <div className="cal-card">
                 {/* Month navigation */}
                 <div className="cal-month-nav">
-                  <button className="cal-nav-arrow" onClick={handlePrevMonth}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
-                  <h2 className="cal-month-label">{MONTHS_ES[month]} {year}</h2>
-                  <button className="cal-nav-arrow" onClick={handleNextMonth}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <div className="cal-month-nav-left">
+                    <button className="cal-nav-arrow" onClick={handlePrevMonth}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <h2 className="cal-month-label">{MONTHS_ES[month]} {year}</h2>
+                    <button className="cal-nav-arrow" onClick={handleNextMonth}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                  </div>
+                  <button className="cal-add-event-btn" onClick={() => { if (selectedDate) setShowModal(true); }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                    Añadir Evento
                   </button>
                 </div>
 
@@ -180,21 +200,20 @@ export default function CalendarioPage() {
                     const totalEvents = dayReminders.length + dayGoals.length;
                     const isToday = dateStr === todayStr;
                     const isSelected = dateStr === selectedDate;
-                    const isPast = dateStr < todayStr;
 
                     return (
                       <div
                         key={dateStr}
-                        className={`cal-cell ${isToday ? 'cal-today' : ''} ${isSelected ? 'cal-selected' : ''} ${isPast ? 'cal-past' : ''} ${totalEvents > 0 ? 'cal-has-events' : ''}`}
+                        className={`cal-cell ${isToday ? 'cal-today' : ''} ${isSelected ? 'cal-selected' : ''} ${totalEvents > 0 ? 'cal-has-events' : ''}`}
                         onClick={() => handleDayClick(day)}
                       >
                         <span className="cal-day-num">{day}</span>
                         {totalEvents > 0 && (
                           <div className="cal-event-indicators">
-                            {dayGoals.slice(0, 2).map((g, idx) => (
+                            {dayGoals.slice(0, 3).map((g, idx) => (
                               <span key={`g-${idx}`} className="cal-indicator cal-indicator-goal" style={{ background: g.color }} />
                             ))}
-                            {dayReminders.slice(0, 2).map((r, idx) => (
+                            {dayReminders.slice(0, 3).map((r, idx) => (
                               <span key={`r-${idx}`} className="cal-indicator cal-indicator-reminder" />
                             ))}
                           </div>
@@ -206,21 +225,29 @@ export default function CalendarioPage() {
 
                 {/* Legend */}
                 <div className="cal-legend">
-                  <span className="cal-legend-item"><span className="cal-legend-dot" style={{ background: 'var(--color-prosper-green)' }} /> Metas</span>
-                  <span className="cal-legend-item"><span className="cal-legend-dot" style={{ background: 'var(--color-blue-500)' }} /> Recordatorios</span>
+                  <div className="cal-legend-item">
+                    <div className="cal-legend-dot" style={{ background: 'var(--color-prosper-green)' }} />
+                    <span>Metas Financieras</span>
+                  </div>
+                  <div className="cal-legend-item">
+                    <div className="cal-legend-dot" style={{ background: 'var(--color-blue-500)' }} />
+                    <span>Recordatorios</span>
+                  </div>
                 </div>
               </div>
             ) : (
               /* Agenda View */
               <div className="cal-card">
                 <div className="cal-month-nav">
-                  <button className="cal-nav-arrow" onClick={handlePrevMonth}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
-                  <h2 className="cal-month-label">{MONTHS_ES[month]} {year}</h2>
-                  <button className="cal-nav-arrow" onClick={handleNextMonth}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </button>
+                  <div className="cal-month-nav-left">
+                    <button className="cal-nav-arrow" onClick={handlePrevMonth}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <h2 className="cal-month-label">{MONTHS_ES[month]} {year}</h2>
+                    <button className="cal-nav-arrow" onClick={handleNextMonth}>
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                  </div>
                 </div>
                 <div className="cal-agenda-list">
                   {monthEvents.length > 0 ? monthEvents.map(({ date, items }) => (
@@ -304,7 +331,7 @@ export default function CalendarioPage() {
             <div className="cal-card cal-detail-panel">
               <div className="cal-detail-header">
                 <h3 className="cal-detail-title">
-                  {selectedDate ? formatDateLong(selectedDate) : 'Selecciona un día'}
+                  {selectedDate ? formatDateLong(selectedDate) : 'Selecciona Un Día'}
                 </h3>
                 {selectedDate && (
                   <button className="cal-add-btn" onClick={() => setShowModal(true)}>
@@ -332,7 +359,7 @@ export default function CalendarioPage() {
                               </button>
                             )}
                           </div>
-                          <p className="cal-event-card-title">{isGoal ? `${goalData?.icon} ${ev.title}` : ev.title}</p>
+                          <p className="cal-event-card-label">{isGoal ? `${goalData?.icon} ${ev.title}` : ev.title}</p>
 
                           {isGoal && goalData && (
                             <div className="cal-goal-detail">
@@ -371,27 +398,58 @@ export default function CalendarioPage() {
                 </div>
               ) : (
                 <div className="cal-empty-state">
-                  <span className="cal-empty-icon">👈</span>
+                  <div className="cal-empty-state-icon-wrapper">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-prosper-green)" strokeWidth="1.5" opacity="0.4">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
                   <p>Haz clic en un día para ver los detalles</p>
                 </div>
               )}
             </div>
 
-            {/* Goals summary for the month */}
+            {/* Resumen del Mes */}
             <div className="cal-card cal-month-summary">
-              <h3 className="cal-section-title">📊 Resumen del Mes</h3>
+              <h3 className="cal-section-title">Resumen del Mes</h3>
               <div className="cal-summary-stats">
                 <div className="cal-summary-stat">
-                  <span className="cal-summary-num">{goalEvents.filter((e) => e.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length}</span>
+                  <div className="cal-summary-stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-prosper-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22c0-6 4-10 10-10-6 0-10-4-10-10 0 6-4 10-10 10 6 0 10 4 10 10z"/>
+                    </svg>
+                  </div>
+                  <span className="cal-summary-num">{monthGoalsCount}</span>
                   <span className="cal-summary-label">Metas</span>
                 </div>
                 <div className="cal-summary-stat">
-                  <span className="cal-summary-num">{reminders.filter((r) => r.date.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)).length}</span>
+                  <div className="cal-summary-stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-blue-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                  </div>
+                  <span className="cal-summary-num" style={{ color: 'var(--color-blue-500)' }}>{monthRemindersCount}</span>
                   <span className="cal-summary-label">Recordatorios</span>
                 </div>
                 <div className="cal-summary-stat">
-                  <span className="cal-summary-num">{goals.filter((g) => g.status === 'completed').length}</span>
+                  <div className="cal-summary-stat-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <span className="cal-summary-num" style={{ color: 'var(--color-secondary)' }}>{monthCompletedCount}</span>
                   <span className="cal-summary-label">Completadas</span>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="cal-month-progress">
+                <div className="cal-month-progress-header">
+                  <span className="cal-month-progress-label">Progreso de Metas</span>
+                  <span className="cal-month-progress-pct">{monthProgress}%</span>
+                </div>
+                <div className="cal-month-progress-bar">
+                  <div className="cal-month-progress-fill" style={{ width: `${monthProgress}%` }} />
                 </div>
               </div>
             </div>
@@ -443,11 +501,11 @@ export default function CalendarioPage() {
         <style>{`
           /* === PAGE HEADER === */
           .cal-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-          .cal-page-title { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0; }
+          .cal-page-title { font-size: 1.75rem; font-weight: 900; color: var(--text-primary); margin: 0; letter-spacing: -0.02em; }
           .cal-page-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0; }
           .cal-header-actions { display: flex; gap: 10px; align-items: center; }
           .cal-view-toggle { display: flex; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
-          .cal-view-btn { padding: 6px 14px; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
+          .cal-view-btn { padding: 6px 16px; border: none; background: transparent; border-radius: var(--radius-sm); font-size: 0.8125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
           .cal-view-btn.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
           .cal-btn-today { padding: 6px 16px; border: 1px solid var(--border-default); background: var(--bg-card); border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); cursor: pointer; transition: all var(--transition-fast); }
           .cal-btn-today:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
@@ -460,35 +518,35 @@ export default function CalendarioPage() {
 
           /* === MONTH NAV === */
           .cal-month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+          .cal-month-nav-left { display: flex; align-items: center; gap: 12px; }
           .cal-nav-arrow { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-card); color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
           .cal-nav-arrow:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: rgba(61,204,142,0.06); }
-          .cal-month-label { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+          .cal-month-label { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.01em; }
+          .cal-add-event-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; background: var(--color-prosper-green); color: white; border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); }
+          .cal-add-event-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
           /* === CALENDAR GRID === */
-          .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+          .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
           .cal-weekday { text-align: center; font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); padding: 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-          .cal-cell { position: relative; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--radius-md); cursor: pointer; transition: all var(--transition-fast); min-height: 52px; }
-          .cal-cell:hover:not(.cal-cell-empty) { background: var(--bg-input); }
+          .cal-cell { position: relative; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--radius-lg); cursor: pointer; transition: all var(--transition-fast); min-height: 56px; border: 1px solid transparent; }
+          .cal-cell:hover:not(.cal-cell-empty) { background: var(--bg-input); border-color: var(--border-default); }
           .cal-cell-empty { cursor: default; }
           .cal-day-num { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); z-index: 1; }
-          .cal-past .cal-day-num { color: var(--text-tertiary); }
-          .cal-today { background: rgba(61,204,142,0.08); }
-          .cal-today .cal-day-num { color: var(--color-prosper-green); font-weight: 700; }
-          .cal-today::before { content: ''; position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--color-prosper-green); }
-          .cal-selected { background: var(--color-prosper-green) !important; }
-          .cal-selected .cal-day-num { color: white !important; font-weight: 700; }
-          .cal-selected::before { background: white !important; }
+          .cal-today { background: rgba(61,204,142,0.08); border-color: var(--color-prosper-green) !important; }
+          .cal-today .cal-day-num { color: var(--color-prosper-green); font-weight: 800; }
+          .cal-selected { background: var(--color-prosper-green) !important; border-color: var(--color-prosper-green) !important; }
+          .cal-selected .cal-day-num { color: white !important; font-weight: 800; }
           .cal-selected .cal-indicator { background: white !important; opacity: 0.8; }
           .cal-has-events { font-weight: 600; }
 
           /* === EVENT INDICATORS === */
-          .cal-event-indicators { display: flex; gap: 3px; margin-top: 2px; }
-          .cal-indicator { width: 5px; height: 5px; border-radius: 50%; transition: all var(--transition-fast); }
+          .cal-event-indicators { display: flex; gap: 3px; margin-top: 3px; flex-wrap: wrap; justify-content: center; }
+          .cal-indicator { width: 6px; height: 6px; border-radius: 50%; transition: all var(--transition-fast); }
           .cal-indicator-reminder { background: var(--color-blue-500); }
 
           /* === LEGEND === */
-          .cal-legend { display: flex; gap: 16px; justify-content: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-default); }
-          .cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-secondary); }
+          .cal-legend { display: flex; gap: 20px; justify-content: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-default); }
+          .cal-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
           .cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
           /* === DETAIL PANEL === */
@@ -509,7 +567,7 @@ export default function CalendarioPage() {
           .cal-event-card-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); flex: 1; }
           .cal-event-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 2px; display: flex; border-radius: 50%; transition: all var(--transition-fast); }
           .cal-event-delete:hover { color: var(--color-red-500); background: rgba(239,68,68,0.1); }
-          .cal-event-card-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; }
+          .cal-event-card-body > .cal-event-card-label { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0 0 8px; text-transform: none; letter-spacing: normal; }
           .cal-event-time { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 4px; }
           .cal-event-desc { font-size: 0.75rem; color: var(--text-tertiary); margin: 0; }
 
@@ -527,6 +585,7 @@ export default function CalendarioPage() {
           /* === EMPTY STATE === */
           .cal-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
           .cal-empty-icon { font-size: 2rem; margin-bottom: 12px; }
+          .cal-empty-state-icon-wrapper { margin-bottom: 16px; }
           .cal-empty-state p { color: var(--text-secondary); font-size: 0.875rem; margin: 0; }
           .cal-empty-cta { margin-top: 12px; padding: 8px 16px; background: var(--color-prosper-green); color: white; border: none; border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
 
@@ -548,9 +607,18 @@ export default function CalendarioPage() {
 
           /* === MONTH SUMMARY === */
           .cal-summary-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-          .cal-summary-stat { text-align: center; padding: 12px 8px; background: var(--bg-input); border-radius: var(--radius-md); }
-          .cal-summary-num { display: block; font-size: 1.25rem; font-weight: 800; color: var(--color-prosper-green); }
+          .cal-summary-stat { text-align: center; padding: 16px 8px; background: var(--bg-input); border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+          .cal-summary-stat-icon { display: flex; align-items: center; justify-content: center; }
+          .cal-summary-num { display: block; font-size: 1.25rem; font-weight: 800; }
           .cal-summary-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; }
+
+          /* Month progress */
+          .cal-month-progress { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-default); }
+          .cal-month-progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+          .cal-month-progress-label { font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+          .cal-month-progress-pct { font-size: 0.75rem; font-weight: 700; color: var(--color-prosper-green); }
+          .cal-month-progress-bar { height: 8px; background: var(--bg-input); border-radius: var(--radius-full); overflow: hidden; }
+          .cal-month-progress-fill { height: 100%; background: linear-gradient(to right, var(--color-prosper-green), var(--color-prosper-green)cc); border-radius: var(--radius-full); transition: width 0.5s ease; }
 
           /* === AGENDA VIEW === */
           .cal-agenda-list { display: flex; flex-direction: column; gap: 0; }
@@ -596,16 +664,49 @@ export default function CalendarioPage() {
           @keyframes calSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
           /* === RESPONSIVE === */
-          @media (max-width: 900px) {
-            .cal-main-layout { grid-template-columns: 1fr; }
-            .cal-right-col { order: -1; }
+          @media (max-width: 1024px) {
+            .cal-main-layout { grid-template-columns: 1fr; gap: 16px; }
+            .cal-right-col { order: -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
             .cal-detail-panel { min-height: auto; }
-            .cal-page-header { flex-direction: column; }
+            .cal-month-summary { margin-top: 0; }
+          }
+          @media (max-width: 768px) {
+            .cal-page-header { flex-direction: column; gap: 12px; }
+            .cal-header-actions { width: 100%; justify-content: space-between; }
+            .cal-card { padding: 16px; }
+            .cal-add-event-btn span { display: none; }
+            .cal-add-event-btn { padding: 8px 12px; }
+            .cal-right-col { grid-template-columns: 1fr; }
+            .cal-grid { gap: 2px; }
+            .cal-cell { min-height: 48px; }
+            .cal-day-num { font-size: 0.75rem; }
+            .cal-indicator { width: 5px; height: 5px; }
+            .cal-legend { gap: 12px; flex-wrap: wrap; justify-content: flex-start; }
           }
           @media (max-width: 480px) {
-            .cal-card { padding: 16px; }
-            .cal-cell { min-height: 40px; }
-            .cal-day-num { font-size: 0.75rem; }
+            .cal-page-title { font-size: 1.375rem; }
+            .cal-page-subtitle { font-size: 0.8125rem; }
+            .cal-view-toggle { width: 100%; }
+            .cal-view-btn { flex: 1; }
+            .cal-btn-today { flex-shrink: 0; }
+            .cal-month-nav { flex-direction: column; gap: 12px; align-items: stretch; }
+            .cal-month-nav-left { justify-content: space-between; }
+            .cal-add-event-btn { width: 100%; justify-content: center; }
+            .cal-grid { gap: 1px; }
+            .cal-cell { min-height: 40px; border-radius: var(--radius-sm); }
+            .cal-day-num { font-size: 0.6875rem; }
+            .cal-weekday { font-size: 0.625rem; padding: 4px 0; }
+            .cal-indicator { width: 4px; height: 4px; }
+            .cal-summary-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+            .cal-summary-stat { padding: 10px 4px; }
+            .cal-summary-num { font-size: 1rem; }
+            .cal-summary-label { font-size: 0.625rem; }
+            .cal-summary-stat-icon svg { width: 16px; height: 16px; }
+            .cal-upcoming-item { flex-direction: column; align-items: stretch; gap: 8px; }
+            .cal-upcoming-icon { width: 36px; height: 36px; font-size: 1rem; }
+            .cal-upcoming-amount { text-align: left; }
+            .cal-modal { width: 95%; padding: 16px; max-width: none; }
+            .cal-form-row { grid-template-columns: 1fr; }
           }
         `}</style>
       </DashboardLayout>

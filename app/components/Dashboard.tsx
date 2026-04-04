@@ -130,7 +130,8 @@ export function Dashboard() {
   const completedGoals = goals.filter((g) => g.status === 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
   const totalGoals = goals.length;
   const progressPct = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
-  const circumference = 2 * Math.PI * 54;
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progressPct / 100);
 
   const handleCreateGoal = async () => {
@@ -422,8 +423,8 @@ export function Dashboard() {
         .stat-card-icon { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .stat-icon-bg { width: 40px; height: 40px; border-radius: var(--radius-sm); background: rgba(61,204,142,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
         .stat-badge { font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); background: rgba(61,204,142,0.15); padding: 2px 8px; border-radius: var(--radius-full); }
-        .stat-card-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-card-value { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1; }
+        .stat-card-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card-value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.1; word-break: break-word; overflow-wrap: break-word; }
         .stat-value-green { color: var(--color-prosper-green) !important; }
 
         /* Main Grid */
@@ -473,14 +474,14 @@ export function Dashboard() {
         .activity-time { font-size: 0.75rem; color: var(--text-tertiary); }
 
         /* Progress Card */
-        .progress-card { display: flex; align-items: center; justify-content: center; }
-        .progress-ring-container { position: relative; width: 160px; height: 160px; }
-        .progress-ring { transform: rotate(-90deg); }
+        .progress-card { display: flex; align-items: center; justify-content: center; min-height: 200px; }
+        .progress-ring-container { position: relative; width: 140px; height: 140px; }
+        .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
         .progress-ring .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 8; }
-        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 314; transition: stroke-dashoffset 1s ease; }
+        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.292; transition: stroke-dashoffset 1s ease; }
         .progress-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .progress-pct { font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
-        .progress-label { font-size: 0.75rem; color: var(--text-secondary); }
+        .progress-pct { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+        .progress-label { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 2px; }
 
         /* Milestones Card */
         .milestones-list { display: flex; flex-direction: column; gap: 12px; }
@@ -514,13 +515,50 @@ export function Dashboard() {
         }
 
         @media (max-width: 1024px) {
-          .stats-row { grid-template-columns: repeat(2, 1fr); }
-          .main-grid { grid-template-columns: 1fr; }
-          .bottom-grid { grid-template-columns: 1fr; }
+          .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .main-grid { grid-template-columns: 1fr; gap: 16px; }
+          .bottom-grid { grid-template-columns: 1fr; gap: 16px; }
+          .progress-ring-container { width: 120px; height: 120px; }
+          .progress-pct { font-size: 1.5rem; }
         }
         @media (max-width: 640px) {
-          .stats-row { grid-template-columns: 1fr; }
+          .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+          .stat-card { padding: 14px; }
+          .stat-card-value { font-size: 1.25rem; }
+          .stat-card-label { font-size: 0.625rem; }
+          .stat-icon-bg { width: 32px; height: 32px; font-size: 1rem; }
           .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+          .main-grid { gap: 12px; }
+          .bottom-grid { gap: 12px; }
+          .dash-card { padding: 16px; }
+          .progress-ring-container { width: 100px; height: 100px; }
+          .progress-pct { font-size: 1.25rem; }
+          .progress-label { font-size: 0.625rem; }
+          .progress-card { min-height: 140px; }
+        }
+        @media (max-width: 480px) {
+          .stats-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+          .stat-card { padding: 10px; }
+          .stat-card-value { font-size: 1.125rem; }
+          .stat-card-label { font-size: 0.5625rem; margin-bottom: 4px; }
+          .stat-icon-bg { width: 28px; height: 28px; font-size: 0.875rem; }
+          .stat-badge { font-size: 0.625rem; padding: 1px 6px; }
+          .dashboard-title { font-size: 1.25rem; }
+          .dashboard-subtitle { font-size: 0.75rem; }
+          .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
+          .progress-ring-container { width: 90px; height: 90px; }
+          .progress-pct { font-size: 1.125rem; }
+          .progress-label { font-size: 0.5625rem; }
+          .progress-card { min-height: 120px; }
+          .dash-card-title { font-size: 1rem; }
+          .dash-card-subtitle { font-size: 0.75rem; }
+          .goal-card { padding: 10px 12px; }
+          .goal-card-title { font-size: 0.8125rem; }
+          .milestone-item { padding: 10px; }
+          .milestone-date { width: 36px; height: 42px; }
+          .milestone-day { font-size: 1rem; }
+          .activity-icon { width: 28px; height: 28px; font-size: 0.75rem; }
+          .activity-text { font-size: 0.8125rem; }
         }
       `}</style>
     </DashboardLayout>

@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (03 de Abril, 2026 - Dashboard Rediseño "Libro Esmeralda" + Menú Móvil Responsivo)
+## Estado Actual (04 de Abril, 2026 - Rediseño Stitch Metas/Calendario + Dashboard Fix + Menú Izquierda)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -21,7 +21,7 @@
 - `app/components/Sidebar.tsx` → Navegación lateral colapsable (solo iconos)
 - `app/components/Topbar.tsx` → Barra superior con logo, búsqueda funcional, login/logout
 - `app/components/ProtectedRoute.tsx` → Protección de rutas autenticadas
-- `app/components/icons.tsx` → 21 iconos SVG inline (incluye IconCheck)
+- `app/components/icons.tsx` → 25 iconos SVG inline (incluye IconCheck, IconFlight, IconSchool, IconArrowForward, IconReceipt)
 - `app/login/page.tsx` → Login (Google + Email)
 - `app/register/page.tsx` → Registro (Google + Email)
 - `app/metas/page.tsx` → CRUD de metas con filtros (reactivo via GoalsContext)
@@ -39,6 +39,9 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Rediseño Stitch Metas + Calendario + Dashboard Fix (04/04/2026)**: Metas con stats bar, cards horizontales enriquecidas con sparkline SVG, acciones rápidas, card de insight. Calendario con grid aspect-square, indicadores de puntos, panel lateral mejorado, resumen del mes con iconos SVG. Dashboard con números corregidos (stat-cards, progress ring). Menú móvil ahora desliza desde la izquierda. Responsive completo en 3 breakpoints.
+- ✅ **Menú Móvil desde Izquierda (04/04/2026)**: Cambiado de `slideInRight` a `slideInLeft`. Overlay usa `justify-content: flex-start`.
+- ✅ **Dashboard Fix Números (04/04/2026)**: Stat cards con font-size reducido (1.5rem), word-break, progress ring con circumference corregido (339.292), responsive 3 breakpoints.
 - ✅ **Menú Móvil Responsivo (03/04/2026)**: Topbar con menú hamburguesa desplegable desde la derecha con navegación completa, avatar de usuario, toggle de tema y botón de logout. Overlay con animación fadeIn + slideInRight. Responsive en 3 breakpoints (1024px, 768px, 480px). Todas las páginas ya tienen responsive completo.
 - ✅ **Dashboard Rediseño "Libro Esmeralda" (03/04/2026)**: Nuevo layout con 4 stat cards superiores con iconos emoji y badges, gráfico de línea SVG con gradiente y anotación "MAYOR RENDIMIENTO", panel lateral derecho con metas activas en formato card con barras de progreso horizontales, fila inferior con 3 cards (Flujo de Actividad, Progreso Circular, Próximos Hitos). Estética esmeralda oscura mantenida.
 - ✅ **UI Rediseño Completo (02/04/2026)**: Dashboard con grid system profesional, stat cards cuadradas compactas, sidebar colapsable con persistencia localStorage, topbar con logo y búsqueda funcional de metas.
@@ -93,6 +96,17 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 04/04/2026
+- **Rediseño Stitch Metas**:
+  - `app/metas/page.tsx`: Reescritura completa con diseño Stitch. Stats bar superior (4 métricas), cards horizontales enriquecidas con icono grande, barra de progreso con gradiente, sparkline SVG dinámico, metadata estimada, acciones rápidas (añadir fondos, editar, eliminar, detalles). Card de insight decorativa al final. Responsive 3 breakpoints.
+  - `app/components/icons.tsx`: Agregados IconFlight, IconSchool, IconArrowForward, IconReceipt.
+- **Rediseño Stitch Calendario**:
+  - `app/calendario/page.tsx`: Grid de celdas aspect-square con bordes redondeados, indicadores como puntos (6px), panel lateral con detalle de eventos y barra de color, resumen del mes con iconos SVG (escudo, campana, check) + barra de progreso mensual. Botón "Añadir Evento" en navegación. Responsive 3 breakpoints con panel derecho en grid 2 columnas a 1024px.
+- **Dashboard Fix**:
+  - `app/components/Dashboard.tsx`: Stat cards con font-size reducido (1.5rem), word-break/overflow-wrap. Progress ring con circumference corregido (2*PI*54=339.292), container 140px, pct 1.75rem. Responsive mejorado 3 breakpoints (1024px, 640px, 480px) con ajustes progresivos.
+- **Menú Móvil desde Izquierda**:
+  - `app/components/Topbar.tsx`: Overlay `justify-content: flex-start`, animación `slideInLeft` (translateX(-100%) → 0).
+
 ### 03/04/2026
 - **Menú Móvil Responsivo**:
   - `app/components/Topbar.tsx`: Menú hamburguesa con panel deslizante desde la derecha. Navegación completa (Dashboard, Metas, Calendario, Finanzas, Comunidad, Cursos, Logros, Configuración). Avatar de usuario, toggle de tema, botón de logout. Overlay con animaciones fadeIn + slideInRight. Responsive en 3 breakpoints.
@@ -125,7 +139,7 @@
 - **Sin datos de ejemplo**: Todo dato debe ser creado por el usuario o importado via CSV.
 - **Cursos**: Se crean manualmente (no hay seed automático).
 - **Fecha de metas**: Usa `input type="date"` que guarda formato ISO `YYYY-MM-DD`, compatible con el calendario.
-- **Build**: Next.js 16.2.1 con Turbopack, compilación exitosa sin errores TypeScript.
+- **Build**: Next.js 16.2.1 con Turbopack, compilación exitosa sin errores TypeScript. `tsc --noEmit` verificado después de cada cambio.
 - **Timer eliminado**: `lib/firestore/study.ts` borrado, `StudySession` removido de `types/index.ts`, referencias limpias en `Dashboard.tsx` y `AuthContext.tsx`.
 - **Optimización Firestore**:
   - Nuevo hook `lib/hooks/useFirestoreCache.ts` para caché en memoria compartido entre vistas.

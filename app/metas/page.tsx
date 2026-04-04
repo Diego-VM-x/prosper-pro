@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -15,8 +15,45 @@ import {
   IconX,
   IconTrash,
   IconEdit,
+  IconArrowForward,
+  IconReceipt,
 } from '../components/icons';
 import type { Goal, GoalCategory, GoalStatus } from '@/types';
+
+const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
+
+function generateSparklineData(progress: number): string {
+  const points = 8;
+  const data: number[] = [];
+  let current = 10 + Math.random() * 20;
+  for (let i = 0; i < points; i++) {
+    const target = (progress / 100) * 35 + 5;
+    current += (target - current) * 0.3 + (Math.random() - 0.5) * 10;
+    current = Math.max(5, Math.min(38, current));
+    data.push(current);
+  }
+  const normalized = data.map((v, i) => `${(i / (points - 1)) * 100},${v}`);
+  return normalized.join(' ');
+}
+
+function getDaysRemaining(deadline: string): string {
+  if (!deadline) return 'Sin fecha';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(deadline + 'T12:00:00');
+  target.setHours(0, 0, 0, 0);
+  const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 0) return 'Vencida';
+  if (days === 0) return 'Hoy';
+  if (days === 1) return 'Mañana';
+  return `${days} días rest.`;
+}
+
+function getEstimatedDate(deadline: string): string {
+  if (!deadline) return 'Sin estimar';
+  const d = new Date(deadline + 'T12:00:00');
+  return d.toLocaleDateString('es', { month: 'short', year: 'numeric' });
+}
 
 export default function MetasPage() {
   const { query } = useSearch();
@@ -34,10 +71,20 @@ export default function MetasPage() {
     title: '', category: 'Ahorro' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯',
   });
 
-  const filteredGoals = (filter === 'Todas'
-    ? goals
-    : goals.filter((g) => g.category === filter || (filter === 'Completadas' && g.status === 'completed')
-  )).filter((g) => !query || g.title.toLowerCase().includes(query.toLowerCase()));
+  const filteredGoals = useMemo(() => {
+    return (filter === 'Todas'
+      ? goals
+      : goals.filter((g) => g.category === filter || (filter === 'Completadas' && g.status === 'completed')
+    )).filter((g) => !query || g.title.toLowerCase().includes(query.toLowerCase()));
+  }, [goals, filter, query]);
+
+  const stats = useMemo(() => {
+    const totalSaved = goals.reduce((sum, g) => sum + g.current, 0);
+    const totalPending = goals.reduce((sum, g) => sum + Math.max(0, g.target - g.current), 0);
+    const completedCount = goals.filter((g) => g.status === 'completed').length;
+    const successRate = goals.length > 0 ? Math.round((completedCount / goals.length) * 100) : 0;
+    return { totalSaved, totalPending, successRate, activeGoals: goals.filter((g) => g.status !== 'completed').length };
+  }, [goals]);
 
   const resetForm = () => {
     setFormData({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
@@ -100,6 +147,8 @@ export default function MetasPage() {
     setShowNewGoalModal(true);
   };
 
+  const completedGoal = goals.find((g) => g.status === 'completed');
+
   return (
     <ProtectedRoute>
     <DashboardLayout>
@@ -115,65 +164,148 @@ export default function MetasPage() {
         </div>
       </div>
 
-      <div className="filters-bar animate-fadeInUp" style={{ marginBottom: 24, display: 'flex', gap: 12 }}>
+      {/* Stats Bar */}
+      <div className="stats-bar animate-fadeInUp">
+        <div className="stat-card">
+          <div className="stat-label">Total Invertido</div>
+          <div className="stat-value stat-value-green">${stats.totalSaved.toLocaleString()}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Pendiente</div>
+          <div className="stat-value stat-value-default">${stats.totalPending.toLocaleString()}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Tasa de Éxito</div>
+          <div className="stat-value stat-value-secondary">{stats.successRate}%</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Metas Activas</div>
+          <div className="stat-value stat-value-default">{stats.activeGoals}</div>
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="filters-bar animate-fadeInUp">
         {['Todas', 'Ahorro', 'Inversión', 'Educación', 'Completadas'].map((item) => (
           <button key={item} className={`filter-chip ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item}</button>
         ))}
       </div>
 
-      <div className="metas-grid animate-fadeInUp">
+      {/* Goals List */}
+      <div className="goals-list animate-fadeInUp">
         {filteredGoals.length > 0 ? filteredGoals.map((goal, i) => {
           const pct = Math.min(100, (goal.current / goal.target) * 100);
+          const remaining = goal.target - goal.current;
+          const sparklineData = generateSparklineData(pct);
+          const isCompleted = goal.status === 'completed';
+          const color = CATEGORY_COLORS[goal.category] || goal.color;
+
           return (
-            <div key={goal.id} className="goal-wide-card" style={{ animationDelay: `${i * 0.1}s` }}>
-              <div className="goal-header">
-                <div className="goal-icon-wrapper" style={{ background: `${goal.color}20`, color: goal.color }}>
-                  <span style={{ fontSize: '1.25rem' }}>{goal.icon}</span>
+            <div key={goal.id} className={`goal-card ${isCompleted ? 'goal-card-completed' : ''}`} style={{ animationDelay: `${i * 0.1}s` }}>
+              {/* Icon & Basic Info */}
+              <div className="goal-card-header">
+                <div className="goal-card-icon" style={{ background: `${color}30`, color }}>
+                  <span style={{ fontSize: '1.5rem' }}>{goal.icon}</span>
                 </div>
-                <div className="goal-main-info">
-                  <h3 className="goal-title">{goal.title}</h3>
-                  <span className="goal-category">{goal.category}</span>
-                </div>
-                <div className="goal-status-group">
-                  <div className="goal-values">
-                    <span className="current">${goal.current.toLocaleString()}</span>
-                    <span className="separator">/</span>
-                    <span className="target">${goal.target.toLocaleString()}</span>
+                <div className="goal-card-info">
+                  <h3 className="goal-card-title">{goal.title}</h3>
+                  <div className="goal-card-tags">
+                    <span className="goal-tag" style={{ background: `${color}20`, color }}>{goal.category}</span>
+                    {isCompleted && <span className="goal-tag goal-tag-completed">Completada</span>}
                   </div>
-                  <span className="goal-deadline">{goal.deadline}</span>
                 </div>
               </div>
-              <div className="goal-progress-section">
-                <div className="progress-info">
-                  <span className="pct-label">{pct.toFixed(1)}% completado</span>
-                  <span className="remaining-label">${(goal.target - goal.current).toLocaleString()} restante</span>
+
+              {/* Progress Section */}
+              <div className="goal-card-progress">
+                <div className="goal-card-values">
+                  <span className="goal-card-current">${goal.current.toLocaleString()}</span>
+                  <span className="goal-card-separator">/</span>
+                  <span className="goal-card-target">${goal.target.toLocaleString()}</span>
+                  <span className="goal-card-pct" style={{ color }}>{pct.toFixed(0)}%</span>
                 </div>
                 <div className="goal-progress-track">
-                  <div className="goal-progress-fill" style={{ width: `${pct}%`, background: goal.status === 'completed' ? 'var(--color-prosper-green)' : goal.color }} />
+                  <div className="goal-progress-fill" style={{ width: `${pct}%`, background: isCompleted ? color : `linear-gradient(to right, ${color}, ${color}cc)` }} />
+                </div>
+                <div className="goal-card-meta">
+                  <span>Iniciado: {goal.createdAt ? new Date(goal.createdAt).toLocaleDateString('es', { month: 'short', year: 'numeric' }) : 'N/A'}</span>
+                  <span>{isCompleted ? '$0 restante' : `Restan $${remaining.toLocaleString()}`}</span>
                 </div>
               </div>
-              <div className="goal-footer">
-                <div className="goal-stats">
-                  <div className="stat"><IconTrendUp width={14} /><span>{goal.monthlyGrowth ? `+${goal.monthlyGrowth}% este mes` : 'Sin datos'}</span></div>
-                  <div className="stat"><IconZap width={14} /><span>{goal.streakDays ? `Racha de ${goal.streakDays} días` : 'Sin racha'}</span></div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button className="goal-action-btn" onClick={() => setShowAddFundsModal(goal)} title="Agregar fondos"><IconWallet width={14} /></button>
-                  <button className="goal-action-btn" onClick={() => openEditModal(goal)} title="Editar"><IconEdit width={14} /></button>
-                  <button className="goal-action-btn goal-action-btn-danger" onClick={() => handleDeleteGoal(goal.id)} title="Eliminar"><IconTrash width={14} /></button>
-                  <button className="goal-detail-btn" onClick={() => setShowDetailModal(goal)}>Detalles <IconChevronRight width={14} /></button>
-                </div>
+
+              {/* Sparkline */}
+              <div className="goal-card-sparkline">
+                <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+                  <polyline
+                    points={sparklineData}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.6"
+                  />
+                  <polygon
+                    points={`${sparklineData} 100,40 0,40`}
+                    fill={color}
+                    opacity="0.05"
+                  />
+                </svg>
+              </div>
+
+              {/* Meta Data */}
+              <div className="goal-card-estimated">
+                <div className="goal-card-estimated-label">Estimado</div>
+                <div className="goal-card-estimated-date">{getEstimatedDate(goal.deadline)}</div>
+                <div className="goal-card-estimated-days" style={{ color: isCompleted ? 'var(--text-tertiary)' : color }}>{getDaysRemaining(goal.deadline)}</div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="goal-card-actions">
+                {!isCompleted && (
+                  <button className="goal-action-btn goal-action-btn-add" onClick={() => setShowAddFundsModal(goal)} title="Añadir fondos">
+                    <IconWallet width={16} />
+                  </button>
+                )}
+                <button className="goal-action-btn" onClick={() => openEditModal(goal)} title="Editar">
+                  <IconEdit width={16} />
+                </button>
+                {isCompleted ? (
+                  <button className="goal-action-btn" onClick={() => setShowDetailModal(goal)} title="Ver recibo">
+                    <IconReceipt width={16} />
+                  </button>
+                ) : (
+                  <button className="goal-action-btn goal-action-btn-danger" onClick={() => handleDeleteGoal(goal.id)} title="Eliminar">
+                    <IconTrash width={16} />
+                  </button>
+                )}
+                <button className="goal-action-btn goal-action-btn-arrow" onClick={() => setShowDetailModal(goal)} title="Detalles">
+                  <IconArrowForward width={16} />
+                </button>
               </div>
             </div>
           );
         }) : (
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ fontSize: '3rem', marginBottom: 12 }}>🎯</p>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>{goals.length === 0 ? 'No tienes metas aún. ¡Crea tu primera meta!' : 'No hay metas con este filtro.'}</p>
+          <div className="goals-empty-state">
+            <p className="goals-empty-icon">🎯</p>
+            <p className="goals-empty-text">{goals.length === 0 ? 'No tienes metas aún. ¡Crea tu primera meta!' : 'No hay metas con este filtro.'}</p>
           </div>
         )}
       </div>
 
+      {/* Insight Card */}
+      {completedGoal && (
+        <div className="insight-card animate-fadeInUp">
+          <div className="insight-card-content">
+            <h3 className="insight-card-title">¡Increíble progreso este mes!</h3>
+            <p className="insight-card-desc">Has completado "{completedGoal.title}". Esto te acerca un paso más a tu objetivo de libertad financiera anual.</p>
+            <button className="insight-card-btn" onClick={() => setShowDetailModal(completedGoal)}>Ver Reporte</button>
+          </div>
+          <div className="insight-card-decoration"></div>
+        </div>
+      )}
+
+      {/* New Goal / Edit Modal */}
       {showNewGoalModal && (
         <div className="modal-overlay" onClick={() => { setShowNewGoalModal(false); resetForm(); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -218,6 +350,7 @@ export default function MetasPage() {
         </div>
       )}
 
+      {/* Detail Modal */}
       {showDetailModal && (
         <div className="modal-overlay" onClick={() => setShowDetailModal(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -252,6 +385,7 @@ export default function MetasPage() {
         </div>
       )}
 
+      {/* Add Funds Modal */}
       {showAddFundsModal && (
         <div className="modal-overlay" onClick={() => { setShowAddFundsModal(null); setAddAmount(''); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 360 }}>
@@ -274,47 +408,82 @@ export default function MetasPage() {
       )}
 
       <style>{`
-        .btn-danger { background: var(--color-error); color: white !important; }
-        .btn-danger:hover { background: #dc2626; }
-        .filter-chip { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+        /* === STATS BAR === */
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; }
+        .stat-label { font-size: 0.625rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 4px; }
+        .stat-value { font-size: 1.5rem; font-weight: 900; }
+        .stat-value-green { color: var(--color-prosper-green); }
+        .stat-value-secondary { color: var(--color-blue-500); }
+        .stat-value-default { color: var(--text-primary); }
+
+        /* === FILTER BAR === */
+        .filters-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 24px; scrollbar-width: none; }
+        .filters-bar::-webkit-scrollbar { display: none; }
+        .filter-chip { padding: 8px 20px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
         .filter-chip:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
         .filter-chip.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); box-shadow: 0 4px 12px rgba(61, 204, 142, 0.2); }
-        .metas-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-        .goal-wide-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 20px; transition: all var(--transition-base); }
-        .goal-wide-card:hover { transform: translateX(4px); border-color: var(--color-prosper-green); box-shadow: var(--shadow-md); }
-        .goal-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-        .goal-icon-wrapper { width: 48px; height: 48px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .goal-main-info { flex: 1; }
-        .goal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
-        .goal-category { font-size: 0.75rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
-        .goal-status-group { text-align: right; }
-        .goal-values { display: flex; align-items: baseline; gap: 4px; margin-bottom: 2px; }
-        .current { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); }
-        .separator { color: var(--text-tertiary); font-size: 0.875rem; }
-        .target { font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
-        .goal-deadline { font-size: 0.75rem; color: var(--text-tertiary); font-weight: 500; }
-        .goal-progress-section { margin-bottom: 20px; }
-        .progress-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8125rem; font-weight: 600; }
-        .pct-label { color: var(--color-prosper-green); }
-        .remaining-label { color: var(--text-secondary); }
-        .goal-progress-track { height: 8px; background: var(--bg-input); border-radius: var(--radius-full); overflow: hidden; }
-        .goal-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
-        .goal-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--border-default); }
-        .goal-stats { display: flex; gap: 16px; }
-        .stat { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
-        .stat span { color: var(--text-primary); font-weight: 600; }
-        .goal-detail-btn { display: flex; align-items: center; gap: 4px; font-size: 0.8125rem; font-weight: 700; color: var(--color-prosper-navy); cursor: pointer; transition: color var(--transition-fast); background: none; border: none; padding: 0; }
-        [data-theme="dark"] .goal-detail-btn { color: var(--color-prosper-green); }
-        .goal-detail-btn:hover { opacity: 0.8; }
-        .goal-action-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-default); color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
-        .goal-action-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+
+        /* === GOALS LIST === */
+        .goals-list { display: flex; flex-direction: column; gap: 16px; }
+        .goal-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; transition: all var(--transition-base); }
+        .goal-card:hover { border-color: var(--color-prosper-green); box-shadow: var(--shadow-md); transform: translateX(2px); }
+        .goal-card-completed { opacity: 0.8; border-color: var(--color-prosper-green); }
+
+        .goal-card-header { display: flex; align-items: center; gap: 16px; min-width: 200px; flex: 1; }
+        .goal-card-icon { width: 56px; height: 56px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .goal-card-info { flex: 1; min-width: 0; }
+        .goal-card-title { font-size: 1.0625rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .goal-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .goal-tag { font-size: 0.625rem; font-weight: 700; padding: 2px 8px; border-radius: var(--radius-sm); text-transform: uppercase; letter-spacing: 0.05em; }
+        .goal-tag-completed { background: var(--bg-input); color: var(--text-tertiary); }
+
+        .goal-card-progress { flex: 1; min-width: 200px; }
+        .goal-card-values { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
+        .goal-card-current { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); }
+        .goal-card-separator { color: var(--text-tertiary); font-size: 0.875rem; }
+        .goal-card-target { font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); }
+        .goal-card-pct { font-size: 0.75rem; font-weight: 700; margin-left: auto; }
+        .goal-progress-track { height: 10px; background: var(--bg-input); border-radius: var(--radius-full); overflow: hidden; margin-bottom: 6px; }
+        .goal-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        .goal-card-meta { display: flex; justify-content: space-between; font-size: 0.625rem; color: var(--text-tertiary); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+
+        .goal-card-sparkline { width: 96px; height: 48px; flex-shrink: 0; }
+
+        .goal-card-estimated { width: 100px; text-align: right; flex-shrink: 0; }
+        .goal-card-estimated-label { font-size: 0.625rem; color: var(--text-tertiary); text-transform: uppercase; font-weight: 700; }
+        .goal-card-estimated-date { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+        .goal-card-estimated-days { font-size: 0.625rem; font-weight: 600; }
+
+        .goal-card-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+        .goal-action-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--bg-input); border: 1px solid var(--border-default); color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
+        .goal-action-btn:hover { background: var(--bg-input-hover); border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+        .goal-action-btn-add:hover { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
         .goal-action-btn-danger:hover { border-color: var(--color-red-500); color: var(--color-red-500); }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .goal-action-btn-arrow { background: transparent; border: none; }
+        .goal-action-btn-arrow:hover { color: var(--color-prosper-green); background: transparent; }
+
+        /* === EMPTY STATE === */
+        .goals-empty-state { text-align: center; padding: 60px 20px; }
+        .goals-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+        .goals-empty-text { color: var(--text-secondary); font-size: 1rem; }
+
+        /* === INSIGHT CARD === */
+        .insight-card { margin-top: 32px; background: linear-gradient(135deg, var(--bg-card), var(--bg-input)); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 32px; display: flex; align-items: center; justify-content: space-between; overflow: hidden; position: relative; }
+        .insight-card-content { position: relative; z-index: 1; max-width: 500px; }
+        .insight-card-title { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0 0 8px; }
+        .insight-card-desc { color: var(--text-secondary); margin: 0 0 20px; line-height: 1.5; }
+        .insight-card-btn { padding: 10px 24px; background: var(--color-prosper-green); color: white; border: none; border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 700; cursor: pointer; transition: all var(--transition-fast); box-shadow: 0 4px 12px rgba(61, 204, 142, 0.2); }
+        .insight-card-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .insight-card-decoration { position: absolute; right: 0; top: 0; height: 100%; width: 30%; opacity: 0.15; background: linear-gradient(135deg, var(--color-prosper-green), transparent); pointer-events: none; }
+
+        /* === MODAL === */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 480px; max-height: 85vh; overflow-y: auto; padding: 24px; animation: fadeInUp 0.3s ease; }
         .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
-        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
-        .modal-close:hover { color: var(--text-primary); }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+        .modal-close:hover { color: var(--text-primary); background: var(--bg-input); }
         .modal-body { display: flex; flex-direction: column; gap: 14px; }
         .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
         .form-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: -6px; }
@@ -323,23 +492,46 @@ export default function MetasPage() {
         .form-input::placeholder { color: var(--text-tertiary); }
         select.form-input { cursor: pointer; }
 
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 1024px) {
+          .goal-card-sparkline { display: none; }
+          .goal-card-estimated { width: 90px; }
+        }
         @media (max-width: 768px) {
-          .goal-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-          .goal-status-group { text-align: left; }
-          .goal-footer { flex-direction: column; align-items: stretch; }
-          .goal-stats { justify-content: space-between; }
-          .goal-footer > div:last-child { display: flex; gap: 8px; justify-content: center; }
-          .filters-bar { flex-wrap: wrap; }
+          .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .stat-card { padding: 12px; }
+          .stat-value { font-size: 1.25rem; }
+          .goal-card { flex-wrap: wrap; padding: 16px; gap: 12px; }
+          .goal-card-header { width: 100%; min-width: auto; }
+          .goal-card-progress { width: 100%; min-width: auto; }
+          .goal-card-sparkline { display: none; }
+          .goal-card-estimated { width: 100%; text-align: left; display: flex; gap: 12px; align-items: baseline; flex-shrink: 0; }
+          .goal-card-actions { width: auto; margin-left: auto; }
+          .insight-card { flex-direction: column; text-align: center; padding: 24px; }
+          .insight-card-decoration { display: none; }
           .modal-content { width: 95%; padding: 16px; }
         }
         @media (max-width: 480px) {
-          .goal-wide-card { padding: 16px; }
-          .goal-icon-wrapper { width: 40px; height: 40px; }
-          .goal-title { font-size: 1rem; }
-          .current { font-size: 1.125rem; }
-          .goal-action-btn { width: 28px; height: 28px; }
-          .goal-action-btn svg { width: 12px; height: 12px; }
-          .filter-chip { padding: 6px 12px; font-size: 0.75rem; }
+          .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+          .stat-card { padding: 10px; }
+          .stat-label { font-size: 0.5625rem; }
+          .stat-value { font-size: 1.125rem; }
+          .page-header { flex-direction: column; gap: 12px; }
+          .page-header-actions { width: 100%; }
+          .page-header-actions .btn { width: 100%; justify-content: center; }
+          .goal-card { padding: 14px; }
+          .goal-card-icon { width: 44px; height: 44px; }
+          .goal-card-title { font-size: 0.9375rem; }
+          .goal-card-current { font-size: 1rem; }
+          .goal-card-target { font-size: 0.8125rem; }
+          .goal-card-actions { gap: 6px; }
+          .goal-action-btn { width: 32px; height: 32px; }
+          .goal-action-btn svg { width: 14px; height: 14px; }
+          .filter-chip { padding: 6px 14px; font-size: 0.75rem; }
+          .filters-bar { gap: 6px; }
         }
       `}</style>
     </DashboardLayout>

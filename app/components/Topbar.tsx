@@ -408,7 +408,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           background: rgba(0,0,0,0.5);
           z-index: 1000;
           display: flex;
-          justify-content: flex-end;
+          justify-content: flex-start;
           animation: fadeIn 0.2s ease;
         }
         .mobile-menu {
@@ -418,7 +418,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           background: var(--bg-card);
           display: flex;
           flex-direction: column;
-          animation: slideInRight 0.3s ease;
+          animation: slideInLeft 0.3s ease;
         }
         .mobile-menu-header {
           display: flex;
@@ -507,7 +507,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .mobile-menu-theme svg,
         .mobile-menu-logout svg { width: 18px; height: 18px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .topbar-left {
           display: flex;
           align-items: center;
