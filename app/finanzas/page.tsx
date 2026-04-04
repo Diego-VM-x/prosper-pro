@@ -177,41 +177,69 @@ export default function FinanzasPage() {
   };
 
   const handleTransfer = async () => {
-    if (!transfer.amount || !transfer.fromAccountId || !transfer.toAccountId) return;
-    if (transfer.fromAccountId === transfer.toAccountId) return;
+    console.log('[Transfer] Iniciando...', transfer);
+    if (!transfer.amount || !transfer.fromAccountId || !transfer.toAccountId) {
+      console.warn('[Transfer] Campos incompletos');
+      alert('Completa todos los campos.');
+      return;
+    }
+    if (transfer.fromAccountId === transfer.toAccountId) {
+      alert('Las cuentas de origen y destino deben ser diferentes.');
+      return;
+    }
     const amount = Number(transfer.amount);
-    if (amount <= 0) return;
+    if (isNaN(amount) || amount <= 0) {
+      alert('Monto inválido.');
+      return;
+    }
 
     const fromAcc = accounts.find((a) => a.id === transfer.fromAccountId);
-    if (!fromAcc || fromAcc.balance < amount) {
-      alert('Fondos insuficientes en la cuenta de origen.');
+    const toAcc = accounts.find((a) => a.id === transfer.toAccountId);
+    console.log('[Transfer] From:', fromAcc, 'To:', toAcc, 'Amount:', amount);
+
+    if (!fromAcc) {
+      alert('Cuenta de origen no encontrada.');
+      return;
+    }
+    if (!toAcc) {
+      alert('Cuenta de destino no encontrada.');
+      return;
+    }
+    if (fromAcc.balance < amount) {
+      alert(`Fondos insuficientes en "${fromAcc.name}". Balance: $${fromAcc.balance.toLocaleString()}`);
       return;
     }
 
     try {
       const { updateAccountBalance } = await import('@/lib/firestore/accounts');
+      console.log('[Transfer] Debitando', amount, 'de', fromAcc.name);
       // Debitar de origen
       await updateAccountBalance(transfer.fromAccountId, -amount);
+      console.log('[Transfer] Acreditando', amount, 'en', toAcc.name);
       // Acreditar en destino
       await updateAccountBalance(transfer.toAccountId, amount);
 
-      // Crear transacciones de registro
+      // Crear transacción de registro
       const txData: any = {
         ownerId: user?.uid || 'local',
         amount,
         type: 'saving',
         category: 'Transferencia',
-        description: `Transferencia: ${fromAcc.name} → ${accounts.find((a) => a.id === transfer.toAccountId)?.name}`,
+        description: `Transferencia: ${fromAcc.name} → ${toAcc.name}`,
         date: Date.now(),
         accountId: transfer.fromAccountId,
-        toAccountId: transfer.toAccountId,
       };
+      console.log('[Transfer] Creando transacción:', txData);
       await createTransaction(txData);
       setTransactions((prev) => [{ id: 't' + Date.now(), ...txData }, ...prev]);
 
+      console.log('[Transfer] Completada exitosamente');
       setShowTransferModal(false);
       setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
-    } catch (e) { console.error(e); }
+    } catch (e: any) {
+      console.error('[Transfer] Error:', e);
+      alert(`Error al transferir: ${e?.message || 'Error desconocido'}`);
+    }
   };
 
   const handleAddAccount = async () => {
