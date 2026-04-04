@@ -283,8 +283,22 @@ export default function FinanzasPage() {
             <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
               <IconWallet width={14} /> Transferir
             </button>
-            <button className="btn btn-outline" onClick={toggleShowAmounts} title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}>
-              {showAmounts ? '🙈' : '👁️'}
+            <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {showAmounts ? (
+                  <>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </>
+                ) : (
+                  <>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </>
+                )}
+              </svg>
+              <span>{showAmounts ? 'Montos visibles' : 'Montos ocultos'}</span>
             </button>
             <button className="btn btn-primary" onClick={() => setShowModal(true)}>
               <IconPlus width={14} /> Nueva Transacción
@@ -338,19 +352,29 @@ export default function FinanzasPage() {
 
         {/* Filtros */}
         <div className="filter-bar">
-          <select className="filter-select" value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)}>
-            <option value="all">Todas las cuentas</option>
-            {accounts.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name}</option>)}
-          </select>
+          <CustomSelect
+            value={selectedAccount}
+            onChange={(val) => setSelectedAccount(val)}
+            options={[
+              { value: 'all', label: 'Todas las cuentas', icon: '📊' },
+              ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+            ]}
+            placeholder="Seleccionar cuenta..."
+          />
           {['Todos', 'income', 'expense', 'saving'].map((t) => (
             <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
               {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
             </button>
           ))}
-          <select className="filter-select" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
-            <option value="Todas">Todas las categorías</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <CustomSelect
+            value={filterCategory}
+            onChange={(val) => setFilterCategory(val)}
+            options={[
+              { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
+              ...categories.map((c) => ({ value: c, label: c })),
+            ]}
+            placeholder="Seleccionar categoría..."
+          />
         </div>
 
         {/* Tabla de transacciones */}
