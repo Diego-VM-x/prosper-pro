@@ -15,7 +15,8 @@ import {
 } from './icons';
 import { CustomSelect } from './CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
-import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
+import { subscribeToAccounts } from '@/lib/firestore/accounts';
+import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory, FinancialAccount } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
@@ -54,6 +55,8 @@ export function Dashboard() {
   const [monthlySavings, setMonthlySavings] = useState(0);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
   const [customCats, setCustomCats] = useState<string[]>([]);
+  const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
+  const [chartView, setChartView] = useState<'cuentas' | 'metas'>('cuentas');
 
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
 
@@ -87,6 +90,14 @@ export function Dashboard() {
     }
     loadPrefs();
     return () => { cancelled = true; };
+  }, [user?.uid]);
+
+  // Suscribirse a cuentas
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    const unsub = subscribeToAccounts(uid, (accs) => setAccounts(accs));
+    return () => unsub();
   }, [user?.uid]);
 
   useEffect(() => {
@@ -239,47 +250,101 @@ export function Dashboard() {
 
         {/* Sección Principal: Gráfico + Metas Activas */}
         <div className="main-grid">
-          {/* Gráfico de Línea */}
+          {/* Gráfico con selector */}
           <div className="dash-card chart-card">
             <div className="dash-card-header">
               <div>
-                <h3 className="dash-card-title">Progreso Financiero Semanal</h3>
-                <p className="dash-card-subtitle">Comparación entre el objetivo y el crecimiento real</p>
+                <h3 className="dash-card-title">
+                  {chartView === 'cuentas' ? 'Balances por Cuenta' : 'Progreso de Metas'}
+                </h3>
+                <p className="dash-card-subtitle">
+                  {chartView === 'cuentas'
+                    ? 'Distribución actual de tus cuentas'
+                    : 'Avance de cada meta activa'}
+                </p>
               </div>
-              <div className="chart-legend">
-                <span className="legend-item"><span className="legend-dot legend-real"></span> REAL</span>
-                <span className="legend-item"><span className="legend-dot legend-objetivo"></span> OBJETIVO</span>
+              <div className="chart-view-toggle">
+                <button
+                  className={`toggle-btn ${chartView === 'cuentas' ? 'active' : ''}`}
+                  onClick={() => setChartView('cuentas')}
+                >
+                  🏦 Cuentas
+                </button>
+                <button
+                  className={`toggle-btn ${chartView === 'metas' ? 'active' : ''}`}
+                  onClick={() => setChartView('metas')}
+                >
+                  🎯 Metas
+                </button>
               </div>
             </div>
-            <div className="line-chart-container">
-              <svg className="line-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="var(--color-prosper-green)" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="var(--color-prosper-green)" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {/* Grid lines */}
-                {[20, 40, 60, 80].map((y) => (
-                  <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="var(--border-default)" strokeWidth="0.3" strokeDasharray="2,2" />
-                ))}
-                {/* Area fill */}
-                {areaPoints && <polygon points={areaPoints} fill="url(#lineGradient)" />}
-                {/* Line */}
-                {linePoints && <polyline points={linePoints} fill="none" stroke="var(--color-prosper-green)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />}
-                {/* Annotation */}
-                {weeklyData.length > 3 && (
-                  <g>
-                    <rect x="35" y="35" width="30" height="10" rx="2" fill="var(--color-prosper-green)" />
-                    <text x="50" y="42" textAnchor="middle" fill="white" fontSize="5" fontWeight="600">MAYOR RENDIMIENTO</text>
-                  </g>
-                )}
-              </svg>
-              <div className="chart-x-axis">
-                {weeklyData.map((d, i) => (
-                  <span key={i} className={`chart-day-label ${i === 3 ? 'active' : ''}`}>{d.day}</span>
-                ))}
-              </div>
+            <div className="bar-chart-container">
+              {chartView === 'cuentas' ? (
+                accounts.length > 0 ? (
+                  <div className="bar-chart">
+                    {accounts.map((acc) => {
+                      const maxBalance = Math.max(...accounts.map(a => a.balance), 1);
+                      const heightPct = Math.max((acc.balance / maxBalance) * 100, 4);
+                      const typeColors: Record<string, string> = {
+                        checking: 'var(--color-blue-500)',
+                        savings: 'var(--color-prosper-green)',
+                        cash: 'var(--color-gold-500)',
+                      };
+                      return (
+                        <div className="bar-item" key={acc.id}>
+                          <div className="bar-value">${acc.balance.toLocaleString()}</div>
+                          <div className="bar-track">
+                            <div
+                              className="bar-fill"
+                              style={{ height: `${heightPct}%`, background: typeColors[acc.type] || 'var(--color-prosper-green)' }}
+                            />
+                          </div>
+                          <div className="bar-label">
+                            <span className="bar-name">{acc.icon} {acc.name}</span>
+                            <span className="bar-type">{acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="chart-empty">
+                    <span style={{ fontSize: '2rem' }}>🏦</span>
+                    <p>No hay cuentas creadas</p>
+                    <button className="chart-empty-btn" onClick={() => router.push('/finanzas')}>Crear cuenta</button>
+                  </div>
+                )
+              ) : (
+                activeGoals.length > 0 ? (
+                  <div className="bar-chart">
+                    {activeGoals.slice(0, 6).map((goal) => {
+                      const pct = Math.min((goal.current / goal.target) * 100, 100);
+                      const goalColor = pct >= 75 ? 'var(--color-prosper-green)' : pct >= 50 ? 'var(--color-blue-500)' : 'var(--color-gold-500)';
+                      return (
+                        <div className="bar-item" key={goal.id}>
+                          <div className="bar-value">{pct.toFixed(0)}%</div>
+                          <div className="bar-track">
+                            <div
+                              className="bar-fill"
+                              style={{ height: `${Math.max(pct, 4)}%`, background: goalColor }}
+                            />
+                          </div>
+                          <div className="bar-label">
+                            <span className="bar-name">{goal.icon} {goal.title}</span>
+                            <span className="bar-type">${goal.current.toLocaleString()} / ${goal.target.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="chart-empty">
+                    <span style={{ fontSize: '2rem' }}>🎯</span>
+                    <p>No hay metas activas</p>
+                    <button className="chart-empty-btn" onClick={() => setShowNewGoalModal(true)}>Crear meta</button>
+                  </div>
+                )
+              )}
             </div>
           </div>
 
@@ -477,18 +542,28 @@ export function Dashboard() {
         .dash-card-action { background: none; border: none; font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
         .dash-card-action:hover { opacity: 0.8; }
 
-        /* Line Chart */
-        .chart-card { min-height: 320px; }
-        .chart-legend { display: flex; gap: 16px; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .legend-real { background: var(--color-prosper-green); }
-        .legend-objetivo { background: var(--color-stone-600); }
-        .line-chart-container { position: relative; height: 240px; }
-        .line-chart { width: 100%; height: 200px; }
-        .chart-x-axis { display: flex; justify-content: space-between; margin-top: 12px; padding: 0 0; }
-        .chart-day-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
-        .chart-day-label.active { color: var(--color-prosper-green); }
+        /* Chart View Toggle */
+        .chart-view-toggle { display: flex; gap: 4px; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
+        .toggle-btn { padding: 6px 14px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
+        .toggle-btn.active { background: var(--color-prosper-green); color: white; }
+        .toggle-btn:hover:not(.active) { color: var(--text-primary); }
+
+        /* Bar Chart */
+        .bar-chart-container { min-height: 260px; display: flex; align-items: flex-end; justify-content: center; padding-top: 16px; }
+        .bar-chart { display: flex; gap: 16px; align-items: flex-end; width: 100%; justify-content: space-around; height: 240px; padding: 0 8px; }
+        .bar-item { display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 120px; }
+        .bar-value { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        .bar-track { width: 100%; height: 160px; background: var(--bg-input); border-radius: var(--radius-sm); position: relative; overflow: hidden; display: flex; align-items: flex-end; }
+        .bar-fill { width: 100%; border-radius: var(--radius-sm); transition: height 0.5s ease; min-height: 4px; }
+        .bar-label { margin-top: 8px; text-align: center; }
+        .bar-name { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }
+        .bar-type { display: block; font-size: 0.6875rem; color: var(--text-tertiary); margin-top: 2px; }
+
+        /* Chart Empty State */
+        .chart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--text-secondary); }
+        .chart-empty p { font-size: 0.875rem; margin: 0; }
+        .chart-empty-btn { padding: 8px 20px; border-radius: var(--radius-md); background: var(--color-prosper-green); color: white; border: none; font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
+        .chart-empty-btn:hover { filter: brightness(1.1); }
 
         /* Goals Panel */
         .goals-panel { display: flex; flex-direction: column; }
