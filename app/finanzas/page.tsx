@@ -11,6 +11,7 @@ import { subscribeToAccounts, createAccount, deleteAccount, createDefaultAccount
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet } from '@/app/components/icons';
+import { LineChart } from '@/app/components/LineChart';
 import type { Transaction, FinancialAccount, AccountType } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
@@ -61,6 +62,53 @@ export default function FinanzasPage() {
     }
     return false;
   });
+  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
+
+  // Datos para gráfico ingresos vs gastos
+  const incomeVsExpenseData = React.useMemo(() => {
+    const now = new Date();
+    const days = chartPeriod === 'week' ? 7 : 30;
+    const labels = chartPeriod === 'week'
+      ? ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
+      : Array.from({ length: 4 }, (_, i) => `Sem ${i + 1}`);
+
+    const incomeData: number[] = [];
+    const expenseData: number[] = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const dayEnd = d.getTime() + 86400000;
+
+      const dayTxs = transactions.filter((t) => {
+        const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
+        return txDate >= d.getTime() && txDate < dayEnd;
+      });
+
+      const dayIncome = dayTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+      const dayExpense = dayTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+      if (chartPeriod === 'week') {
+        incomeData.push(dayIncome);
+        expenseData.push(dayExpense);
+      } else {
+        const weekIdx = Math.floor(i / 7);
+        if (!incomeData[3 - weekIdx]) incomeData[3 - weekIdx] = 0;
+        if (!expenseData[3 - weekIdx]) expenseData[3 - weekIdx] = 0;
+        incomeData[3 - weekIdx] += dayIncome;
+        expenseData[3 - weekIdx] += dayExpense;
+      }
+    }
+
+    return {
+      datasets: [
+        { label: 'Ingresos', color: '#4edea3', data: incomeData },
+        { label: 'Gastos', color: '#ffb3af', data: expenseData },
+      ],
+      labels,
+    };
+  }, [transactions, chartPeriod]);
 
   // Suscribirse a cuentas en tiempo real
   useEffect(() => {
@@ -365,6 +413,27 @@ export default function FinanzasPage() {
           </div>
         </div>
 
+        {/* Gráfico Ingresos vs Gastos */}
+        <div className="chart-card">
+          <div className="chart-card-header">
+            <div>
+              <h3 className="chart-card-title">Flujo Financiero</h3>
+              <p className="chart-card-subtitle">Ingresos vs. Gastos {chartPeriod === 'week' ? 'Diarios' : 'Semanales'}</p>
+            </div>
+            <div className="chart-period-toggle">
+              <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')}>Semana</button>
+              <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')}>Mes</button>
+            </div>
+          </div>
+          <LineChart
+            datasets={incomeVsExpenseData.datasets}
+            labels={incomeVsExpenseData.labels}
+            height={280}
+            showArea={true}
+            strokeWidth={3}
+          />
+        </div>
+
         {/* Filtros */}
         <div className="filter-bar">
           <CustomSelect
@@ -556,6 +625,14 @@ export default function FinanzasPage() {
         )}
 
         <style>{`
+          .chart-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+          .chart-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+          .chart-card-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+          .chart-card-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0 0; }
+          .chart-period-toggle { display: flex; gap: 2px; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
+          .period-btn { padding: 5px 10px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); text-transform: uppercase; letter-spacing: 0.5px; }
+          .period-btn.active { background: var(--color-prosper-green); color: white; }
+          .period-btn:hover:not(.active) { color: var(--text-primary); }
           .page-header-actions { display: flex; gap: 10px; }
           .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
           .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }

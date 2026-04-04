@@ -17,6 +17,7 @@ import { CustomSelect } from './CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts } from '@/lib/firestore/accounts';
 import { subscribeToTransactions } from '@/lib/firestore/transactions';
+import { LineChart } from './LineChart';
 import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory, FinancialAccount, Transaction } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
@@ -355,73 +356,24 @@ export function Dashboard() {
 
             {chartView === 'cuentas' ? (
               accountHistory.length > 0 ? (
-                <div className="line-chart-container">
-                  <svg className="line-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    {/* Vertical grid bands (alternating) */}
-                    {accountHistory.length > 0 && accountHistory[0].balances.map((_, i) => {
-                      const numPoints = accountHistory[0].balances.length;
-                      const xStart = numPoints > 1 ? (i / (numPoints - 1)) * 100 : 0;
-                      const xEnd = numPoints > 1 ? ((i + 0.5) / (numPoints - 1)) * 100 : 100;
-                      if (i % 2 === 0) {
-                        return <rect key={`band-${i}`} x={xStart} y="5" width={xEnd - xStart} height="80" fill="var(--bg-input)" opacity="0.5" />;
-                      }
-                      return null;
-                    })}
-                    {/* Horizontal grid lines */}
-                    {[10, 30, 50, 70, 90].map((y) => (
-                      <line key={y} x1="8" y1={y} x2="100" y2={y} stroke="var(--border-default)" strokeWidth="0.3" />
-                    ))}
-                    {/* Y-axis labels */}
-                    {(() => {
-                      const maxVal = Math.max(...accountHistory.flatMap(a => a.balances), 1);
-                      const minVal = Math.min(...accountHistory.flatMap(a => a.balances), 0);
-                      const range = maxVal - minVal || 1;
-                      return [0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
-                        const val = minVal + range * (1 - pct);
-                        const y = 10 + pct * 80;
-                        return (
-                          <text key={`yl-${i}`} x="7" y={y + 1.5} textAnchor="end" fill="var(--text-tertiary)" fontSize="4" fontWeight="600">
-                            {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
-                          </text>
-                        );
-                      });
-                    })()}
-                    {/* Lines per account (no area fill, thicker lines) */}
-                    {accountHistory.map((acc) => {
-                      const maxVal = Math.max(...accountHistory.flatMap(a => a.balances), 1);
-                      const minVal = Math.min(...accountHistory.flatMap(a => a.balances), 0);
-                      const range = maxVal - minVal || 1;
-                      const numPoints = acc.balances.length;
-                      const points = acc.balances.map((v, i) => {
-                        const x = 10 + (numPoints > 1 ? (i / (numPoints - 1)) * 88 : 54);
-                        const y = 90 - ((v - minVal) / range) * 80;
-                        return `${x},${y}`;
-                      }).join(' ');
-                      return (
-                        <polyline key={acc.id} points={points} fill="none" stroke={acc.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      );
-                    })}
-                  </svg>
-                  <div className="chart-x-axis">
-                    {accountHistory.length > 0 && accountHistory[0].balances.map((_, i) => {
-                      const cfg = {
-                        day: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-                        week: ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'],
-                        month: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
-                      };
-                      const labels = cfg[chartPeriod];
-                      return <span key={i} className="chart-day-label">{labels[i] || ''}</span>;
-                    })}
-                  </div>
-                  <div className="chart-legend-inline">
-                    {accountHistory.map((acc) => (
-                      <span key={acc.id} className="legend-item">
-                        <span className="legend-dot" style={{ background: acc.color }}></span>
-                        {acc.icon} {acc.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <LineChart
+                  datasets={accountHistory.map(acc => ({
+                    label: `${acc.icon} ${acc.name}`,
+                    color: acc.color,
+                    data: acc.balances,
+                  }))}
+                  labels={(() => {
+                    const cfg = {
+                      day: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                      week: ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'],
+                      month: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                    };
+                    return cfg[chartPeriod];
+                  })()}
+                  height={280}
+                  showArea={true}
+                  strokeWidth={3}
+                />
               ) : (
                 <div className="chart-empty">
                   <span style={{ fontSize: '2rem' }}>🏦</span>
