@@ -16,18 +16,17 @@ import {
 import type { Community, CommunityMessage, CommunityRoomMember } from '@/types';
 
 const DEFAULT_COMMUNITIES: Community[] = [
-  { id: 'general', name: 'General', description: 'Conversación abierta sobre finanzas', icon: '💬', color: 'var(--color-prosper-green)', memberCount: 0, createdBy: 'system', createdAt: 0 },
-  { id: 'ahorro', name: 'Ahorro Inteligente', description: 'Tips y estrategias para ahorrar mejor', icon: '💰', color: 'var(--color-prosper-navy)', memberCount: 0, createdBy: 'system', createdAt: 1 },
-  { id: 'inversion', name: 'Inversión Joven', description: 'Inversiones para principiantes', icon: '📈', color: '#F59E0B', memberCount: 0, createdBy: 'system', createdAt: 2 },
-  { id: 'educacion', name: 'Educación Financiera', description: 'Aprende juntos sobre finanzas', icon: '📚', color: '#3B82F6', memberCount: 0, createdBy: 'system', createdAt: 3 },
+  { id: 'general', name: 'General', description: 'Conversación abierta', icon: '💬', color: 'var(--color-prosper-green)', memberCount: 0, createdBy: 'system', createdAt: 0 },
+  { id: 'ahorro', name: 'Ahorro', description: 'Tips para ahorrar mejor', icon: '💰', color: 'var(--color-prosper-navy)', memberCount: 0, createdBy: 'system', createdAt: 1 },
+  { id: 'inversion', name: 'Inversión', description: 'Inversiones para todos', icon: '📈', color: '#F59E0B', memberCount: 0, createdBy: 'system', createdAt: 2 },
+  { id: 'educacion', name: 'Educación', description: 'Aprende finanzas', icon: '📚', color: '#3B82F6', memberCount: 0, createdBy: 'system', createdAt: 3 },
 ];
 
 // ==================== MessageItem (React.memo) ====================
-const MessageItem = ({ msg, isOwn, onLike, members }: {
+const MessageItem = ({ msg, isOwn, onLike }: {
   msg: CommunityMessage;
   isOwn: boolean;
   onLike: () => void;
-  members: CommunityRoomMember[];
 }) => {
   const liked = msg.likes.includes(msg.senderId);
   const timeStr = useMemo(() => {
@@ -70,7 +69,6 @@ export default function ComunidadPage() {
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
   const [members, setMembers] = useState<CommunityRoomMember[]>([]);
   const [inputText, setInputText] = useState('');
-  const [showSidebar, setShowSidebar] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState('');
   const [loading, setLoading] = useState(true);
@@ -114,7 +112,6 @@ export default function ComunidadPage() {
   // Join community on select
   const handleSelectCommunity = useCallback(async (commId: string) => {
     setActiveCommunity(commId);
-    setShowSidebar(false);
     if (user) {
       await joinCommunity(commId, {
         uid: user.uid,
@@ -173,7 +170,7 @@ export default function ComunidadPage() {
     if (!user || !newCommunityName.trim()) return;
     await createCommunity({
       name: newCommunityName.trim(),
-      description: newCommunityDesc.trim() || 'Comunidad de Prosper',
+      description: newCommunityDesc.trim() || 'Grupo de Prosper',
       icon: '🏘️',
       color: 'var(--color-prosper-green)',
       memberCount: 1,
@@ -196,38 +193,39 @@ export default function ComunidadPage() {
           <style jsx>{`
             .community-page {
               display: flex;
-              height: calc(100vh - 120px);
-              max-height: calc(100vh - 120px);
+              height: calc(100vh - 140px);
+              max-height: calc(100vh - 140px);
               overflow: hidden;
-              position: relative;
+              gap: 16px;
             }
-            /* Sidebar */
+            /* Sidebar de grupos */
             .sidebar {
-              width: 280px;
-              min-width: 280px;
+              width: 260px;
+              min-width: 260px;
               background: var(--bg-card);
-              border-right: 1px solid var(--border-default);
+              border-radius: var(--radius-lg);
+              border: 1px solid var(--border-default);
               display: flex;
               flex-direction: column;
               overflow: hidden;
             }
             .sidebar-header {
-              padding: 16px;
+              padding: 14px 16px;
               border-bottom: 1px solid var(--border-default);
               display: flex;
               justify-content: space-between;
               align-items: center;
             }
             .sidebar-title {
-              font-size: 1rem;
+              font-size: 0.875rem;
               font-weight: 800;
               color: var(--text-primary);
               margin: 0;
             }
             .sidebar-btn {
-              width: 32px;
-              height: 32px;
-              border-radius: 8px;
+              width: 28px;
+              height: 28px;
+              border-radius: 6px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-secondary);
@@ -235,7 +233,7 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 1rem;
+              font-size: 0.875rem;
             }
             .sidebar-btn:hover {
               border-color: var(--color-prosper-green);
@@ -250,7 +248,7 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               gap: 10px;
-              padding: 10px 12px;
+              padding: 8px 10px;
               border-radius: 8px;
               cursor: pointer;
               transition: all 0.15s;
@@ -266,13 +264,13 @@ export default function ComunidadPage() {
               background: var(--bg-accent-soft);
             }
             .comm-icon {
-              width: 32px;
-              height: 32px;
+              width: 28px;
+              height: 28px;
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 0.875rem;
+              font-size: 0.75rem;
               flex-shrink: 0;
             }
             .comm-info {
@@ -280,7 +278,7 @@ export default function ComunidadPage() {
               min-width: 0;
             }
             .comm-name {
-              font-size: 0.8125rem;
+              font-size: 0.75rem;
               font-weight: 600;
               color: var(--text-primary);
               margin: 0;
@@ -289,7 +287,7 @@ export default function ComunidadPage() {
               text-overflow: ellipsis;
             }
             .comm-members {
-              font-size: 0.6875rem;
+              font-size: 0.625rem;
               color: var(--text-tertiary);
               margin: 0;
             }
@@ -299,40 +297,39 @@ export default function ComunidadPage() {
               display: flex;
               flex-direction: column;
               min-width: 0;
-              background: var(--bg-primary);
+              background: var(--bg-card);
+              border-radius: var(--radius-lg);
+              border: 1px solid var(--border-default);
+              overflow: hidden;
             }
             .chat-header {
               padding: 12px 16px;
               border-bottom: 1px solid var(--border-default);
-              background: var(--bg-card);
               display: flex;
               align-items: center;
-              gap: 12px;
+              gap: 10px;
             }
-            .chat-menu-btn {
-              display: none;
+            .chat-header-icon {
               width: 32px;
               height: 32px;
-              border-radius: 8px;
-              border: 1px solid var(--border-default);
-              background: var(--bg-input);
-              cursor: pointer;
+              border-radius: 50%;
+              display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 1rem;
+              font-size: 0.875rem;
             }
             .chat-header-info {
               flex: 1;
               min-width: 0;
             }
             .chat-header-name {
-              font-size: 0.875rem;
+              font-size: 0.8125rem;
               font-weight: 700;
               color: var(--text-primary);
               margin: 0;
             }
             .chat-header-desc {
-              font-size: 0.6875rem;
+              font-size: 0.625rem;
               color: var(--text-tertiary);
               margin: 0;
             }
@@ -343,21 +340,21 @@ export default function ComunidadPage() {
               padding: 12px;
               display: flex;
               flex-direction: column;
-              gap: 8px;
+              gap: 6px;
             }
             .msg-item {
               display: flex;
-              gap: 8px;
+              gap: 6px;
               align-items: flex-end;
-              max-width: 85%;
+              max-width: 80%;
             }
             .msg-item.msg-own {
               align-self: flex-end;
               flex-direction: row-reverse;
             }
             .msg-avatar {
-              width: 28px;
-              height: 28px;
+              width: 24px;
+              height: 24px;
               border-radius: 50%;
               overflow: hidden;
               flex-shrink: 0;
@@ -375,14 +372,14 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 0.75rem;
+              font-size: 0.625rem;
               font-weight: 700;
             }
             .msg-bubble {
-              background: var(--bg-card);
+              background: var(--bg-input);
               border: 1px solid var(--border-default);
-              border-radius: 12px;
-              padding: 8px 12px;
+              border-radius: 10px;
+              padding: 6px 10px;
               max-width: 100%;
             }
             .msg-item.msg-own .msg-bubble {
@@ -390,13 +387,13 @@ export default function ComunidadPage() {
               border-color: var(--color-prosper-green);
             }
             .msg-sender {
-              font-size: 0.6875rem;
+              font-size: 0.625rem;
               font-weight: 700;
               color: var(--color-prosper-green);
               margin-bottom: 2px;
             }
             .msg-text {
-              font-size: 0.8125rem;
+              font-size: 0.75rem;
               color: var(--text-primary);
               line-height: 1.4;
               word-break: break-word;
@@ -404,20 +401,20 @@ export default function ComunidadPage() {
             .msg-footer {
               display: flex;
               align-items: center;
-              gap: 8px;
-              margin-top: 4px;
+              gap: 6px;
+              margin-top: 2px;
             }
             .msg-time {
-              font-size: 0.625rem;
+              font-size: 0.5625rem;
               color: var(--text-tertiary);
             }
             .msg-like-btn {
               background: none;
               border: none;
-              font-size: 0.6875rem;
+              font-size: 0.625rem;
               cursor: pointer;
-              padding: 2px 4px;
-              border-radius: 4px;
+              padding: 1px 3px;
+              border-radius: 3px;
               transition: background 0.15s;
             }
             .msg-like-btn:hover {
@@ -428,32 +425,31 @@ export default function ComunidadPage() {
             }
             /* Input */
             .chat-input-area {
-              padding: 12px;
+              padding: 10px 12px;
               border-top: 1px solid var(--border-default);
-              background: var(--bg-card);
               position: relative;
             }
             .chat-input-row {
               display: flex;
-              gap: 8px;
+              gap: 6px;
               align-items: center;
             }
             .chat-input {
               flex: 1;
-              padding: 10px 14px;
-              border-radius: 20px;
+              padding: 8px 12px;
+              border-radius: 16px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-primary);
-              font-size: 0.8125rem;
+              font-size: 0.75rem;
               outline: none;
             }
             .chat-input:focus {
               border-color: var(--color-prosper-green);
             }
             .chat-send-btn {
-              width: 36px;
-              height: 36px;
+              width: 32px;
+              height: 32px;
               border-radius: 50%;
               border: none;
               background: var(--color-prosper-green);
@@ -462,7 +458,7 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 1rem;
+              font-size: 0.875rem;
               flex-shrink: 0;
             }
             .chat-send-btn:hover {
@@ -478,7 +474,7 @@ export default function ComunidadPage() {
               border: 1px solid var(--border-default);
               border-radius: 8px;
               padding: 4px;
-              max-height: 160px;
+              max-height: 140px;
               overflow-y: auto;
               box-shadow: var(--shadow-md);
               z-index: 10;
@@ -486,28 +482,28 @@ export default function ComunidadPage() {
             .mention-item {
               display: flex;
               align-items: center;
-              gap: 8px;
-              padding: 8px 10px;
-              border-radius: 6px;
+              gap: 6px;
+              padding: 6px 8px;
+              border-radius: 5px;
               border: none;
               background: none;
               width: 100%;
               cursor: pointer;
-              font-size: 0.8125rem;
+              font-size: 0.75rem;
               color: var(--text-primary);
             }
             .mention-item:hover {
               background: var(--bg-card-hover);
             }
             .mention-avatar {
-              width: 24px;
-              height: 24px;
+              width: 20px;
+              height: 20px;
               border-radius: 50%;
               background: var(--bg-accent-soft);
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 0.625rem;
+              font-size: 0.5625rem;
               color: var(--color-prosper-green);
               font-weight: 700;
               flex-shrink: 0;
@@ -524,42 +520,42 @@ export default function ComunidadPage() {
             }
             .new-comm-card {
               background: var(--bg-card);
-              border-radius: 16px;
-              padding: 24px;
+              border-radius: var(--radius-lg);
+              padding: 20px;
               width: 90%;
-              max-width: 360px;
+              max-width: 320px;
               border: 1px solid var(--border-default);
             }
             .new-comm-title {
-              font-size: 1rem;
+              font-size: 0.875rem;
               font-weight: 800;
               color: var(--text-primary);
-              margin: 0 0 16px 0;
+              margin: 0 0 12px 0;
             }
             .new-comm-input {
               width: 100%;
-              padding: 10px 14px;
-              border-radius: 8px;
+              padding: 8px 12px;
+              border-radius: 6px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-primary);
-              font-size: 0.8125rem;
-              margin-bottom: 12px;
+              font-size: 0.75rem;
+              margin-bottom: 10px;
               outline: none;
             }
             .new-comm-actions {
               display: flex;
-              gap: 8px;
-              margin-top: 8px;
+              gap: 6px;
+              margin-top: 6px;
             }
             .new-comm-btn {
               flex: 1;
-              padding: 10px;
-              border-radius: 8px;
+              padding: 8px;
+              border-radius: 6px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-secondary);
-              font-size: 0.8125rem;
+              font-size: 0.75rem;
               font-weight: 600;
               cursor: pointer;
             }
@@ -577,76 +573,81 @@ export default function ComunidadPage() {
               justify-content: center;
               color: var(--text-tertiary);
               text-align: center;
-              padding: 24px;
+              padding: 20px;
             }
             .empty-messages-icon {
-              font-size: 2.5rem;
-              margin-bottom: 12px;
+              font-size: 2rem;
+              margin-bottom: 8px;
             }
             .empty-messages-title {
-              font-size: 0.875rem;
+              font-size: 0.8125rem;
               font-weight: 600;
               color: var(--text-secondary);
-              margin: 0 0 4px 0;
+              margin: 0 0 2px 0;
             }
             .empty-messages-desc {
-              font-size: 0.75rem;
+              font-size: 0.6875rem;
               margin: 0;
             }
             /* Mobile */
             @media (max-width: 768px) {
+              .community-page {
+                flex-direction: column;
+                height: auto;
+                max-height: none;
+              }
               .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                z-index: 50;
-                transform: translateX(-100%);
-                transition: transform 0.2s;
+                width: 100%;
+                min-width: 100%;
+                max-height: 180px;
               }
-              .sidebar.open {
-                transform: translateX(0);
-              }
-              .sidebar-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.4);
-                z-index: 49;
-              }
-              .chat-menu-btn {
+              .comm-list {
                 display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                padding: 8px;
+              }
+              .comm-item {
+                min-width: 120px;
+                flex-direction: column;
+                text-align: center;
+                padding: 8px;
+              }
+              .comm-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+              }
+              .chat-window {
+                height: calc(100vh - 340px);
+                min-height: 300px;
               }
               .msg-item {
-                max-width: 92%;
+                max-width: 90%;
               }
             }
             @media (max-width: 480px) {
               .community-page {
-                height: calc(100vh - 100px);
+                gap: 8px;
               }
               .msg-text {
-                font-size: 0.75rem;
+                font-size: 0.6875rem;
               }
             }
           `}</style>
 
           {loading ? (
             <div className="empty-messages">
-              <div className="loading-spinner" style={{ width: 32, height: 32, border: '3px solid var(--border-default)', borderTopColor: 'var(--color-prosper-green)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-              <p>Cargando comunidades...</p>
+              <div className="loading-spinner" style={{ width: 28, height: 28, border: '3px solid var(--border-default)', borderTopColor: 'var(--color-prosper-green)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cargando grupos...</p>
             </div>
           ) : (
             <>
-              {/* Sidebar Overlay (Mobile) */}
-              {showSidebar && (
-                <div className="sidebar-overlay" onClick={() => setShowSidebar(false)} />
-              )}
-
-              {/* Sidebar */}
-              <aside className={`sidebar ${showSidebar ? 'open' : ''}`}>
+              {/* Sidebar de grupos */}
+              <aside className="sidebar">
                 <div className="sidebar-header">
-                  <h2 className="sidebar-title">Comunidades</h2>
-                  <button className="sidebar-btn" onClick={() => setShowNewCommunity(true)} title="Nueva comunidad">+</button>
+                  <h2 className="sidebar-title">Grupos y Chats</h2>
+                  <button className="sidebar-btn" onClick={() => setShowNewCommunity(true)} title="Nuevo grupo">+</button>
                 </div>
                 <div className="comm-list">
                   {communities.map(comm => (
@@ -670,9 +671,11 @@ export default function ComunidadPage() {
               {/* Chat Window */}
               <main className="chat-window">
                 <div className="chat-header">
-                  <button className="chat-menu-btn" onClick={() => setShowSidebar(true)}>☰</button>
+                  <div className="chat-header-icon" style={{ background: `${activeComm?.color}20` }}>
+                    {activeComm?.icon}
+                  </div>
                   <div className="chat-header-info">
-                    <p className="chat-header-name">{activeComm?.icon} {activeComm?.name}</p>
+                    <p className="chat-header-name">{activeComm?.name}</p>
                     <p className="chat-header-desc">{activeComm?.description}</p>
                   </div>
                 </div>
@@ -692,7 +695,6 @@ export default function ComunidadPage() {
                         msg={msg}
                         isOwn={msg.senderId === user?.uid}
                         onLike={() => handleLike(msg.id)}
-                        members={members}
                       />
                     ))
                   )}
@@ -715,7 +717,7 @@ export default function ComunidadPage() {
                     <input
                       ref={inputRef}
                       className="chat-input"
-                      placeholder="Escribe un mensaje... usa @ para mencionar"
+                      placeholder="Escribe... usa @ para mencionar"
                       value={inputText}
                       onChange={handleInputChange}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -729,10 +731,10 @@ export default function ComunidadPage() {
               {showNewCommunity && (
                 <div className="new-comm-modal" onClick={() => setShowNewCommunity(false)}>
                   <div className="new-comm-card" onClick={(e) => e.stopPropagation()}>
-                    <h3 className="new-comm-title">Nueva Comunidad</h3>
+                    <h3 className="new-comm-title">Nuevo Grupo</h3>
                     <input
                       className="new-comm-input"
-                      placeholder="Nombre de la comunidad"
+                      placeholder="Nombre del grupo"
                       value={newCommunityName}
                       onChange={(e) => setNewCommunityName(e.target.value)}
                     />
