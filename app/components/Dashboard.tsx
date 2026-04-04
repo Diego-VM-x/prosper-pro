@@ -16,9 +16,8 @@ import {
 import { CustomSelect } from './CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts } from '@/lib/firestore/accounts';
-import { subscribeToTransactions } from '@/lib/firestore/transactions';
-import { LineChart } from './LineChart';
-import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory, FinancialAccount, Transaction } from '@/types';
+import { FinancialStatusChart } from './FinancialStatusChart';
+import type { Goal, XPState, CommunityMember, Achievement, GoalCategory, FinancialAccount } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
@@ -50,7 +49,6 @@ export function Dashboard() {
   const { goals, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
 
-  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [xp, setXP] = useState<XPState | null>(null);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -58,9 +56,6 @@ export function Dashboard() {
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
   const [customCats, setCustomCats] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [chartView, setChartView] = useState<'cuentas' | 'metas'>('cuentas');
-  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
 
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
 
@@ -104,14 +99,6 @@ export function Dashboard() {
     return () => unsub();
   }, [user?.uid]);
 
-  // Suscribirse a transacciones
-  useEffect(() => {
-    const uid = user?.uid;
-    if (!uid) return;
-    const unsub = subscribeToTransactions(uid, (txs) => setTransactions(txs));
-    return () => unsub();
-  }, [user?.uid]);
-
   useEffect(() => {
     const uid = userId as string;
     if (!uid) return;
@@ -150,24 +137,6 @@ export function Dashboard() {
           const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
           const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
           if (monthSavings > 0) setMonthlySavings(monthSavings);
-
-          const days = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
-          const weekly: WeeklyData[] = [];
-          for (let i = 6; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(d.getDate() - i);
-            weekly.push({ day: days[d.getDay() === 0 ? 6 : d.getDay() - 1], income: 0, saving: 0 });
-          }
-          transactionsData.forEach((t) => {
-            const tDate = new Date(t.date);
-            const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
-            if (diff >= 0 && diff < 7) {
-              const idx = 6 - diff;
-              if (t.type === 'income') weekly[idx].income += t.amount;
-              if (t.type === 'saving') weekly[idx].saving += t.amount;
-            }
-          });
-          setWeeklyData(weekly);
         }
       } catch (e) {
         console.error('Firestore load error:', e);
@@ -202,43 +171,6 @@ export function Dashboard() {
     setShowNewGoalModal(false);
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
-
-  // Datos para gráfico ingresos vs gastos (igual que finanzas)
-  const incomeVsExpenseData = React.useMemo(() => {
-    const now = new Date();
-    const periodConfig = {
-      day: { count: 24, getLabel: (i: number) => `${i}:00`, ms: 3600000 },
-      week: { count: 7, getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
-      month: { count: 4, getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
-    };
-    const cfg = periodConfig[chartPeriod];
-    const labels = Array.from({ length: cfg.count }, (_, i) => cfg.getLabel(i));
-
-    const incomeData: number[] = [];
-    const expenseData: number[] = [];
-
-    for (let i = cfg.count - 1; i >= 0; i--) {
-      const d = new Date(now.getTime() - i * cfg.ms);
-      d.setHours(0, 0, 0, 0);
-      const periodEnd = d.getTime() + cfg.ms;
-
-      const periodTxs = transactions.filter((t) => {
-        const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
-        return txDate >= d.getTime() && txDate < periodEnd;
-      });
-
-      incomeData.push(periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
-      expenseData.push(periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
-    }
-
-    return {
-      datasets: [
-        { label: 'Ingresos', color: '#4edea3', data: incomeData },
-        { label: 'Gastos', color: '#ffb3af', data: expenseData },
-      ],
-      labels,
-    };
-  }, [transactions, chartPeriod]);
 
   // 4 metas más recientemente actualizadas
   const recentGoals = React.useMemo(() => {
@@ -295,85 +227,10 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Sección Principal: Gráfico + Metas Activas */}
+        {/* Sección Principal: Gráfico Financiero + Metas Activas */}
         <div className="main-grid">
-          {/* Gráfico con selector */}
-          <div className="dash-card chart-card">
-            <div className="dash-card-header">
-              <div>
-                <h3 className="dash-card-title">
-                  {chartView === 'cuentas' ? 'Flujo Financiero' : 'Progreso de Metas'}
-                </h3>
-                <p className="dash-card-subtitle">
-                  {chartView === 'cuentas'
-                    ? 'Ingresos vs. Gastos ' + (chartPeriod === 'week' ? 'Últimos 7 días' : 'Último mes')
-                    : '4 metas más recientemente actualizadas'}
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                {chartView === 'cuentas' && (
-                  <div className="chart-period-toggle">
-                    <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')} title="Semana">Semana</button>
-                    <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')} title="Mes">Mes</button>
-                  </div>
-                )}
-                <div className="chart-view-toggle">
-                  <button
-                    className={`toggle-btn ${chartView === 'cuentas' ? 'active' : ''}`}
-                    onClick={() => setChartView('cuentas')}
-                  >
-                    🏦 Cuentas
-                  </button>
-                  <button
-                    className={`toggle-btn ${chartView === 'metas' ? 'active' : ''}`}
-                    onClick={() => setChartView('metas')}
-                  >
-                    🎯 Metas
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {chartView === 'cuentas' ? (
-              <LineChart
-                datasets={incomeVsExpenseData.datasets}
-                labels={incomeVsExpenseData.labels}
-                height={280}
-                showArea={true}
-                strokeWidth={3}
-              />
-            ) : (
-              recentGoals.length > 0 ? (
-                <div className="hbar-chart">
-                  {recentGoals.map((goal) => {
-                    const pct = Math.min((goal.current / goal.target) * 100, 100);
-                    const goalColor = pct >= 75 ? 'var(--color-prosper-green)' : pct >= 50 ? 'var(--color-blue-500)' : 'var(--color-gold-500)';
-                    return (
-                      <div className="hbar-item" key={goal.id}>
-                        <div className="hbar-header">
-                          <span className="hbar-title">{goal.icon} {goal.title}</span>
-                          <span className="hbar-pct" style={{ color: goalColor }}>{pct.toFixed(0)}%</span>
-                        </div>
-                        <div className="hbar-track">
-                          <div className="hbar-fill" style={{ width: `${pct}%`, background: goalColor }} />
-                        </div>
-                        <div className="hbar-amounts">
-                          <span>${goal.current.toLocaleString()}</span>
-                          <span>/ ${goal.target.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="chart-empty">
-                  <span style={{ fontSize: '2rem' }}>🎯</span>
-                  <p>No hay metas activas</p>
-                  <button className="chart-empty-btn" onClick={() => setShowNewGoalModal(true)}>Crear meta</button>
-                </div>
-              )
-            )}
-          </div>
+          {/* Gráfico Financiero Premium con Recharts */}
+          <FinancialStatusChart />
 
           {/* Panel Lateral: Metas Activas */}
           <div className="dash-card goals-panel">

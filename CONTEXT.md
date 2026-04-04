@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Cuentas Financieras + Transacciones Vinculadas + Finanzas Full Firebase)
+## Estado Actual (04 de Abril, 2026 - Gráfica Financiera Recharts + Cuentas + Transacciones + Finanzas Full Firebase)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -30,6 +30,7 @@
 - `app/cursos/[id]/page.tsx` → Detalle de curso con módulos
 - `app/calendario/page.tsx` → Calendario con recordatorios, tipos custom
 - `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
+- `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
 - `app/configuracion/page.tsx` → Perfil, tema, cuenta
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
@@ -39,7 +40,7 @@
 - `lib/firestore/` → 9 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
-- `lib/firestore/accounts.ts` → CRUD de cuentas financieras, suscripción en tiempo real, balance total
+- `lib/firestore/accounts.ts` → CRUD de cuentas financieras, suscripción en tiempo real, balance total, deleteAccountWithTransactions
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
@@ -127,6 +128,14 @@
   - `lib/firestore/users.ts`: Nuevas funciones `addCustomCategory`, `addCustomReminderType`, `addCustomTransactionCategory`, `getUserPreferences`. Usa `arrayUnion` para evitar duplicados.
 - **Firestore Transactions**:
   - `lib/firestore/transactions.ts`: Nuevas funciones `getGoalSavingsHistory`, `getMonthlyGrowthForGoal`, `getStreakDaysForGoal`. Calculan estadísticas reales desde transacciones.
+  
+  ### 04/04/2026 - Gráfica Financiera Premium con Recharts
+  - **Dependencias**:
+    - `package.json`: Agregadas `recharts` y `@types/recharts`.
+  - **FinancialStatusChart Component**:
+    - `app/components/FinancialStatusChart.tsx`: Nuevo componente con AreaChart de Recharts. Curvas monotone, degradado opacity 0.2→0.0. onSnapshot de Firestore para datos en tiempo real. Selectores de rango (1D, 1S, 1M, 3M, 6M, YTD). CustomTooltip con formato moneda EUR. Skeleton loading. ResponsiveContainer. Limpieza de listener con unsubscribe().
+  - **Dashboard Integration**:
+    - `app/components/Dashboard.tsx`: Reemplazado LineChart por FinancialStatusChart. Eliminadas variables no usadas (chartView, chartPeriod, weeklyData, incomeVsExpenseData). Limpieza de imports.
 
 ### 04/04/2026
 - **Overflow-X Fix**:
