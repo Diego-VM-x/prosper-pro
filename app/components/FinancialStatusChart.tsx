@@ -79,6 +79,7 @@ export function FinancialStatusChart() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('week');
+  const [showAmounts, setShowAmounts] = useState(true);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -194,33 +195,57 @@ export function FinancialStatusChart() {
           </p>
         </div>
 
-        {/* Time Range Selector */}
-        <div style={{
-          display: 'flex',
-          gap: '4px',
-          background: 'var(--bg-input)',
-          borderRadius: 'var(--radius-full)',
-          padding: '3px',
-        }}>
-          {TIME_RANGES.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setSelectedRange(key)}
-              style={{
-                padding: '4px 12px',
-                fontSize: '12px',
-                fontWeight: selectedRange === key ? 600 : 400,
-                color: selectedRange === key ? 'var(--text-on-accent)' : 'var(--text-secondary)',
-                background: selectedRange === key ? 'var(--bg-accent)' : 'transparent',
-                border: 'none',
-                borderRadius: 'var(--radius-full)',
-                cursor: 'pointer',
-                transition: 'var(--transition-fast)',
-              }}
-            >
-              {label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Toggle Amounts */}
+          <button
+            onClick={() => setShowAmounts(!showAmounts)}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'var(--transition-fast)',
+            }}
+            title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
+          >
+            {showAmounts ? '👁️' : '🙈'} {showAmounts ? 'Ocultar' : 'Mostrar'}
+          </button>
+
+          {/* Time Range Selector */}
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            background: 'var(--bg-input)',
+            borderRadius: 'var(--radius-full)',
+            padding: '3px',
+          }}>
+            {TIME_RANGES.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setSelectedRange(key)}
+                style={{
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  fontWeight: selectedRange === key ? 600 : 400,
+                  color: selectedRange === key ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                  background: selectedRange === key ? 'var(--bg-accent)' : 'transparent',
+                  border: 'none',
+                  borderRadius: 'var(--radius-full)',
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -236,7 +261,7 @@ export function FinancialStatusChart() {
             Ingresos
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-prosper-green)' }}>
-            {formatCurrency(totals.income)}
+            {showAmounts ? formatCurrency(totals.income) : '••••••'}
           </p>
         </div>
         <div>
@@ -244,7 +269,7 @@ export function FinancialStatusChart() {
             Gastos
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-error)' }}>
-            {formatCurrency(totals.expense)}
+            {showAmounts ? formatCurrency(totals.expense) : '••••••'}
           </p>
         </div>
         <div>
@@ -252,7 +277,7 @@ export function FinancialStatusChart() {
             Ahorro
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-pine-500)' }}>
-            {formatCurrency(totals.saving)}
+            {showAmounts ? formatCurrency(totals.saving) : '••••••'}
           </p>
         </div>
         <div>
@@ -263,9 +288,9 @@ export function FinancialStatusChart() {
             margin: '4px 0 0',
             fontSize: '18px',
             fontWeight: 700,
-            color: totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)',
+            color: showAmounts ? (totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)',
           }}>
-            {formatCurrency(totals.balance)}
+            {showAmounts ? formatCurrency(totals.balance) : '••••••'}
           </p>
         </div>
       </div>
@@ -306,9 +331,13 @@ export function FinancialStatusChart() {
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
               formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}
             />
-            <Bar dataKey="income" fill="var(--color-prosper-green)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="expense" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="saving" fill="var(--color-pine-500)" radius={[4, 4, 0, 0]} />
+            {showAmounts && (
+              <>
+                <Bar dataKey="income" fill="var(--color-prosper-green)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expense" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="saving" fill="var(--color-pine-500)" radius={[4, 4, 0, 0]} />
+              </>
+            )}
           </BarChart>
         </ResponsiveContainer>
       )}
