@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Rediseño Stitch Metas/Calendario + Dashboard Fix + Menú Izquierda)
+## Estado Actual (04 de Abril, 2026 - Rediseño Stitch + Dashboard Funcional + Overflow-X Fix)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -39,6 +39,8 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Overflow-X Global Fix (04/04/2026)**: Agregado `overflow-x: hidden` y `max-width: 100vw` a html/body en globals.css. Clase `.page-content-overflow-fix` en DashboardLayout. Elimina scroll horizontal en móvil para Finanzas y Metas.
+- ✅ **Dashboard Funcional (04/04/2026)**: Stat cards clickeables (navegan a /metas, /finanzas, /cursos). Círculo de progreso corregido (r=54, circumference=339.292). Botón "+ Añadir Nuevo Objetivo" navega a /metas. Milestone items clickeables.
 - ✅ **Rediseño Stitch Metas + Calendario + Dashboard Fix (04/04/2026)**: Metas con stats bar, cards horizontales enriquecidas con sparkline SVG, acciones rápidas, card de insight. Calendario con grid aspect-square, indicadores de puntos, panel lateral mejorado, resumen del mes con iconos SVG. Dashboard con números corregidos (stat-cards, progress ring). Menú móvil ahora desliza desde la izquierda. Responsive completo en 3 breakpoints.
 - ✅ **Menú Móvil desde Izquierda (04/04/2026)**: Cambiado de `slideInRight` a `slideInLeft`. Overlay usa `justify-content: flex-start`.
 - ✅ **Dashboard Fix Números (04/04/2026)**: Stat cards con font-size reducido (1.5rem), word-break, progress ring con circumference corregido (339.292), responsive 3 breakpoints.
@@ -97,6 +99,13 @@
 
 ## Historial de Instrucciones
 ### 04/04/2026
+- **Overflow-X Fix**:
+  - `app/globals.css`: Agregado `overflow-x: hidden; max-width: 100vw` a html y body. Clase `.page-content-overflow-fix` con `max-width: 100vw; overflow-x: hidden`.
+  - `app/components/DashboardLayout.tsx`: Agregada clase `page-content-overflow-fix` al div `.page-content`.
+  - `app/finanzas/page.tsx`: Eliminado wrapper `.finanzas-wrapper` redundante.
+  - `app/metas/page.tsx`: Eliminado wrapper `.metas-wrapper` redundante.
+- **Dashboard Funcional**:
+  - `app/components/Dashboard.tsx`: Stat cards con clase `stat-card-clickable` (cursor pointer). Metas Activas→/metas, Completadas→/metas, Ahorro→/finanzas, Lecciones→/cursos. Círculo progreso: r cambiado de 50 a 54 (coincide con circumference 339.292). Botón "+ Añadir Nuevo Objetivo" usa `router.push('/metas')`. Milestone items con `milestone-item-clickable`→/metas.
 - **Rediseño Stitch Metas**:
   - `app/metas/page.tsx`: Reescritura completa con diseño Stitch. Stats bar superior (4 métricas), cards horizontales enriquecidas con icono grande, barra de progreso con gradiente, sparkline SVG dinámico, metadata estimada, acciones rápidas (añadir fondos, editar, eliminar, detalles). Card de insight decorativa al final. Responsive 3 breakpoints.
   - `app/components/icons.tsx`: Agregados IconFlight, IconSchool, IconArrowForward, IconReceipt.
