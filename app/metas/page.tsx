@@ -21,7 +21,8 @@ import {
 import { CustomSelect } from '../components/CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { getTransactionsByOwnerId, createTransaction, getMonthlyGrowthForGoal, getStreakDaysForGoal } from '@/lib/firestore/transactions';
-import type { Goal, GoalCategory, GoalStatus, Transaction } from '@/types';
+import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accounts';
+import type { Goal, GoalCategory, GoalStatus, Transaction, FinancialAccount } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
@@ -91,6 +92,8 @@ export default function MetasPage() {
   const [addAmount, setAddAmount] = useState('');
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
+  const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
   const [goalSavings, setGoalSavings] = useState<Record<string, Transaction[]>>({});
   const [goalMonthlyGrowth, setGoalMonthlyGrowth] = useState<Record<string, number>>({});
   const [goalStreakDays, setGoalStreakDays] = useState<Record<string, number>>({});
@@ -118,6 +121,13 @@ export default function MetasPage() {
     }
     loadPrefs();
     return () => { cancelled = true; };
+  }, [userId]);
+
+  // Suscribirse a cuentas
+  useEffect(() => {
+    if (!userId) return;
+    const unsub = subscribeToAccounts(userId, (accs) => setAccounts(accs));
+    return () => unsub();
   }, [userId]);
 
   // Cargar historial de ahorro para cada meta
@@ -220,6 +230,16 @@ export default function MetasPage() {
     if (!showAddFundsModal || !addAmount) return;
     const amount = Number(addAmount);
     if (amount <= 0) return;
+
+    // Validar fondos de la cuenta seleccionada
+    if (selectedAccountId) {
+      const selectedAcc = accounts.find((a) => a.id === selectedAccountId);
+      if (!selectedAcc || selectedAcc.balance < amount) {
+        alert(`Fondos insuficientes en "${selectedAcc?.name || 'la cuenta seleccionada'}".`);
+        return;
+      }
+    }
+
     const newCurrent = Math.min(showAddFundsModal.current + amount, showAddFundsModal.target);
     const newStatus: GoalStatus = newCurrent >= showAddFundsModal.target ? 'completed' : showAddFundsModal.status === 'pending' ? 'progress' : showAddFundsModal.status;
     await updateGoalFn(showAddFundsModal.id, { current: newCurrent, status: newStatus, updatedAt: Date.now() });
@@ -227,19 +247,26 @@ export default function MetasPage() {
     // Crear transacción de ahorro vinculada a la meta
     if (userId) {
       try {
-        await createTransaction({
+        const txData: any = {
           ownerId: userId,
-          amount: amount,
+          amount,
           type: 'saving',
           category: 'Ahorro',
           description: `Ahorro para: ${showAddFundsModal.title}`,
           date: Date.now(),
-        });
+        };
+        if (selectedAccountId) {
+          txData.accountId = selectedAccountId;
+          // Debitar de la cuenta
+          await updateAccountBalance(selectedAccountId, -amount);
+        }
+        await createTransaction(txData);
       } catch (e) { console.error('Error creando transacción:', e); }
     }
 
     setShowAddFundsModal(null);
     setAddAmount('');
+    setSelectedAccountId('');
   };
 
   const openEditModal = (goal: Goal) => {
@@ -363,23 +390,15 @@ export default function MetasPage() {
 
               {/* Quick Actions */}
               <div className="goal-card-actions">
-                {!isCompleted && (
-                  <button className="goal-action-btn goal-action-btn-add" onClick={() => setShowAddFundsModal(goal)} title="Añadir fondos">
-                    <IconWallet width={16} />
-                  </button>
-                )}
+                <button className="goal-action-btn goal-action-btn-add" onClick={() => setShowAddFundsModal(goal)} title="Añadir fondos">
+                  <IconWallet width={16} />
+                </button>
                 <button className="goal-action-btn" onClick={() => openEditModal(goal)} title="Editar">
                   <IconEdit width={16} />
                 </button>
-                {isCompleted ? (
-                  <button className="goal-action-btn" onClick={() => setShowDetailModal(goal)} title="Ver recibo">
-                    <IconReceipt width={16} />
-                  </button>
-                ) : (
-                  <button className="goal-action-btn goal-action-btn-danger" onClick={() => handleDeleteGoal(goal.id)} title="Eliminar">
-                    <IconTrash width={16} />
-                  </button>
-                )}
+                <button className="goal-action-btn goal-action-btn-danger" onClick={() => handleDeleteGoal(goal.id)} title="Eliminar">
+                  <IconTrash width={16} />
+                </button>
                 <button className="goal-action-btn goal-action-btn-arrow" onClick={() => setShowDetailModal(goal)} title="Detalles">
                   <IconArrowForward width={16} />
                 </button>
@@ -508,6 +527,13 @@ export default function MetasPage() {
             <div className="modal-body">
               <p style={{ color: 'var(--text-secondary)', marginBottom: 8 }}>{showAddFundsModal.title}</p>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>Actual: ${showAddFundsModal.current.toLocaleString()} / ${showAddFundsModal.target.toLocaleString()}</p>
+              <label className="form-label">Cuenta de origen</label>
+              <CustomSelect
+                value={selectedAccountId}
+                onChange={(val) => setSelectedAccountId(val)}
+                options={accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                placeholder="Sin cuenta (no descuenta)"
+              />
               <label className="form-label">Monto a agregar ($)</label>
               <input className="form-input" type="number" placeholder="100" value={addAmount} onChange={(e) => setAddAmount(e.target.value)} />
             </div>
