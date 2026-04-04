@@ -130,7 +130,7 @@ export default function FinanzasPage() {
   });
 
   const handleAddTransaction = async () => {
-    if (!newTx.amount || !newTx.description) return;
+    if (!newTx.amount) return;
     const txData: any = {
       ownerId: user?.uid || 'local',
       amount: Number(newTx.amount),
@@ -162,12 +162,24 @@ export default function FinanzasPage() {
 
   const handleDeleteTransaction = async (id: string) => {
     const tx = transactions.find((t) => t.id === id);
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    const isTransfer = tx?.category === 'Transferencia';
+
+    if (isTransfer) {
+      const confirmed = confirm(
+        '⚠️ ADVERTENCIA: Estás a punto de eliminar el registro de una transferencia.\n\n' +
+        'Esto solo eliminará el registro visual. Los balances de las cuentas NO se revertirán.\n\n' +
+        '¿Deseas continuar?'
+      );
+      if (!confirmed) return;
+    } else {
+      setTransactions((prev) => prev.filter((t) => t.id !== id));
+    }
+
     if (user?.uid) {
       try {
         await deleteTransaction(id);
-        // Revertir balance de la cuenta
-        if (tx?.accountId) {
+        // Solo revertir balance si NO es transferencia
+        if (!isTransfer && tx?.accountId) {
           const { updateAccountBalance } = await import('@/lib/firestore/accounts');
           const amount = tx.type === 'expense' ? tx.amount : -tx.amount;
           await updateAccountBalance(tx.accountId, amount);
@@ -434,7 +446,7 @@ export default function FinanzasPage() {
                   }}
                   customPlaceholder="Nombre de la categoría..."
                 />
-                <label className="form-label">Descripción</label>
+                <label className="form-label">Descripción (opcional)</label>
                 <input className="form-input" type="text" placeholder="Ej: Pago de nómina" value={newTx.description} onChange={(e) => setNewTx({ ...newTx, description: e.target.value })} />
               </div>
               <div className="modal-footer">
