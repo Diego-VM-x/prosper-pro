@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getXPByOwnerId, getAchievementsByOwnerId, updateXP, MAX_LEVEL } from '@/lib/firestore/gamification';
+import { getXPByOwnerId, getAchievementsByOwnerId, updateXP, MAX_LEVEL, subscribeToAchievements } from '@/lib/firestore/gamification';
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
 import { getAccountsByOwnerId } from '@/lib/firestore/accounts';
 import { getGoalsByOwnerId } from '@/lib/firestore/goals';
@@ -277,6 +277,8 @@ export default function LogrosPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<'tasks' | 'achievements'>('tasks');
+  const [unlockedToast, setUnlockedToast] = useState<string | null>(null);
+  const prevAchievementsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     async function loadData() {
@@ -296,6 +298,8 @@ export default function LogrosPage() {
         setAccounts(acc);
         setGoals(g);
         setTaskProgress(tp);
+        // Guardar logros actuales para detectar nuevos
+        prevAchievementsRef.current = new Set(ach.map(a => a.title));
       } catch (error) {
         console.error('Error loading gamification data:', error);
       } finally {
@@ -303,6 +307,26 @@ export default function LogrosPage() {
       }
     }
     loadData();
+  }, [user]);
+
+  // Suscribirse a logros en tiempo real para detectar nuevos desbloqueos
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToAchievements(user.uid, (ach) => {
+      const prevTitles = prevAchievementsRef.current;
+      const newTitles = new Set(ach.map(a => a.title));
+      // Detectar nuevos logros
+      for (const title of newTitles) {
+        if (!prevTitles.has(title)) {
+          setUnlockedToast(title);
+          setTimeout(() => setUnlockedToast(null), 4000);
+          break;
+        }
+      }
+      prevAchievementsRef.current = newTitles;
+      setFirebaseAchievements(ach);
+    });
+    return () => unsub();
   }, [user]);
 
   const userData: UserData = useMemo(() => ({
@@ -1096,6 +1120,67 @@ export default function LogrosPage() {
               font-weight: 700;
               color: var(--color-prosper-green);
             }
+            .achievement-unlock-toast {
+              position: fixed;
+              bottom: 24px;
+              right: 24px;
+              background: var(--bg-card);
+              border: 2px solid var(--color-prosper-green);
+              border-radius: 12px;
+              padding: 16px 20px;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              box-shadow: 0 8px 32px rgba(61, 204, 142, 0.3);
+              z-index: 9999;
+              animation: slideInRight 0.4s ease-out;
+            }
+            @keyframes slideInRight {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            .toast-content {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .toast-icon {
+              font-size: 2rem;
+              animation: bounce 0.6s ease-in-out;
+            }
+            @keyframes bounce {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.3); }
+            }
+            .toast-text {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .toast-title {
+              font-size: 0.75rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            }
+            .toast-name {
+              font-size: 0.875rem;
+              font-weight: 600;
+              color: var(--text-primary);
+            }
+            .toast-close {
+              background: none;
+              border: none;
+              color: var(--text-tertiary);
+              font-size: 1rem;
+              cursor: pointer;
+              padding: 4px;
+              line-height: 1;
+            }
+            .toast-close:hover {
+              color: var(--text-primary);
+            }
           `}</style>
 
           {loading ? (
@@ -1395,6 +1480,20 @@ export default function LogrosPage() {
                 </>
               )}
             </>
+          )}
+
+          {/* Toast de logro desbloqueado */}
+          {unlockedToast && (
+            <div className="achievement-unlock-toast">
+              <div className="toast-content">
+                <span className="toast-icon">🏆</span>
+                <div className="toast-text">
+                  <span className="toast-title">¡Logro Desbloqueado!</span>
+                  <span className="toast-name">{unlockedToast}</span>
+                </div>
+              </div>
+              <button className="toast-close" onClick={() => setUnlockedToast(null)}>✕</button>
+            </div>
           )}
         </div>
       </DashboardLayout>

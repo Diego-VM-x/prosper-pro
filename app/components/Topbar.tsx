@@ -30,6 +30,7 @@ import {
   IconTeam,
   IconBook,
   IconTrophy,
+  IconHelp,
 } from './icons';
 import type { Notification } from '@/types';
 import Link from 'next/link';
@@ -384,7 +385,48 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconSettings /> Configuración
               </Link>
+              <Link href="/ayuda" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconHelp /> Ayuda
+              </Link>
             </nav>
+            {/* Notificaciones en menú móvil */}
+            <div className="mobile-menu-notifications">
+              <div className="mobile-menu-notifications-header">
+                <span>🔔 Notificaciones</span>
+                {unreadCount > 0 && <span className="notifications-badge">{unreadCount}</span>}
+              </div>
+              {notifications.length > 0 ? notifications.slice(0, 3).map((notif) => (
+                <div
+                  key={notif.id}
+                  className={`notif-item ${notif.read ? 'read' : 'unread'}`}
+                  onClick={() => { handleMarkRead(notif.id); }}
+                >
+                  <p className="notif-title">{notif.title}</p>
+                  <p className="notif-message">{notif.message}</p>
+                </div>
+              )) : (
+                <div className="notif-empty">
+                  <p>Sin notificaciones</p>
+                </div>
+              )}
+            </div>
+
+            {/* Perfil en menú móvil */}
+            <div className="mobile-menu-profile">
+              <div className="mobile-menu-profile-card">
+                <div className="mobile-profile-avatar">
+                  {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+                </div>
+                <div className="mobile-profile-info">
+                  <p className="mobile-profile-name">{user?.displayName || 'Usuario'}</p>
+                  <p className="mobile-profile-email">{user?.email}</p>
+                </div>
+              </div>
+              <Link href="/configuracion" className="mobile-profile-btn" onClick={() => setShowMobileMenu(false)}>
+                ⚙️ Configuración
+              </Link>
+            </div>
+
             <div className="mobile-menu-footer">
               <button className="mobile-menu-theme" onClick={() => { toggleTheme(); setShowMobileMenu(false); }}>
                 {theme === 'light' ? <IconMoon /> : <IconSun />}
@@ -829,6 +871,75 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .user-dropdown { width: 220px; }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
+        }
+
+        /* Mobile notifications */
+        .mobile-menu-notifications {
+          padding: 12px;
+          border-top: 1px solid var(--border-default);
+          max-height: 200px;
+          overflow-y: auto;
+        }
+        .mobile-menu-notifications-header {
+          padding: 8px 4px;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        /* Mobile profile */
+        .mobile-menu-profile {
+          padding: 12px;
+          border-top: 1px solid var(--border-default);
+        }
+        .mobile-menu-profile-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: var(--bg-input);
+          border-radius: var(--radius-md);
+          margin-bottom: 8px;
+        }
+        .mobile-profile-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--color-prosper-green), var(--color-prosper-navy));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 1rem;
+          font-weight: 700;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .mobile-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .mobile-profile-info { flex: 1; min-width: 0; }
+        .mobile-profile-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+        .mobile-profile-email { font-size: 0.75rem; color: var(--text-secondary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mobile-profile-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px;
+          border-radius: var(--radius-md);
+          background: var(--bg-accent-soft);
+          color: var(--text-primary);
+          font-size: 0.8125rem;
+          font-weight: 600;
+          text-decoration: none;
+          border: 1px solid var(--border-default);
+          transition: all var(--transition-fast);
+        }
+        .mobile-profile-btn:hover {
+          border-color: var(--color-prosper-green);
+          background: var(--bg-card-hover);
         }
         @media (max-width: 480px) {
           .topbar-search { max-width: 120px; }

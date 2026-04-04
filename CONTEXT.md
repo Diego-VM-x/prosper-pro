@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Comunidad con Chat en Tiempo Real + Logros con Tareas + Nivel 30)
+## Estado Actual (04 de Abril, 2026 - Logros Funcionales + Notificaciones + Menú Móvil Mejorado)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -32,7 +32,7 @@
 - `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
 - `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
 - `app/configuracion/page.tsx` → Perfil, tema, cuenta
-- `app/logros/page.tsx` → Logros con datos reales de Firebase + tareas diarias/semanales repetitivas + nivel máximo 30
+- `app/logros/page.tsx` → Logros funcionales con desbloqueo automático, XP y notificaciones + tareas diarias/semanales + nivel máximo 30
 - `app/ayuda/page.tsx` → FAQ con 40+ preguntas, accesos rápidos, filtros por categoría
 - `app/comunidad/page.tsx` → Chat en tiempo real con rooms, menciones @, likes, sidebar desplegable
 - `lib/firebase.ts` → Configuración Firebase
@@ -109,7 +109,23 @@
 - **Tareas Repetitivas + Nivel 30**:
   - `lib/firestore/tasks.ts`: Nuevo módulo con 5 tareas diarias y 5 semanales. Cálculo de progreso desde transacciones reales. `createOrUpdateTaskProgress`.
   - `lib/firestore/gamification.ts`: `MAX_LEVEL = 30`. Al llegar a nivel 30 sigue ganando XP sin subir más.
-  - `types/index.ts`: Nuevos tipos `DailyTask`, `TaskProgress`, `TaskFrequency`, `TaskCategory`, `Community`, `CommunityMessage`, `CommunityRoomMember`.
+  - `types/index.ts`: Nuevos tipos `DailyTask`, `TaskProgress`, `TaskFrequency`, `TaskCategory`, `Community`, `CommunityMessage`, `CommunityRoomMember`. Campo `xpReward` añadido a `Achievement`.
+
+### 04/04/2026 - Logros Funcionales con Desbloqueo Automático
+- **Gamification Module**:
+ - `lib/firestore/gamification.ts`: Nueva función `checkAndUnlockAchievements(ownerId, data)` que verifica 17 logros y desbloquea automáticamente los que cumplan condiciones. Cada logro desbloqueado otorga XP vía `updateXP()` y crea notificación en Firestore vía `addNotification()`. Retorna lista de logros recién desbloqueados.
+- **Integración en Transacciones**:
+ - `app/finanzas/page.tsx`: `handleAddTransaction()` verifica logros después de crear transacción. `handleAddAccount()` verifica logros después de crear cuenta.
+- **Integración en Metas**:
+ - `app/metas/page.tsx`: `handleCreateOrUpdateGoal()` verifica logros después de crear/actualizar meta. `handleAddFunds()` verifica logros después de añadir fondos.
+- **Notificación Visual**:
+ - `app/logros/page.tsx`: Toast animado con animación `slideInRight` y `bounce` que aparece cuando se desbloquea un logro. Suscripción en tiempo real con `subscribeToAchievements()` para detectar nuevos desbloqueos.
+- **Types**:
+ - `types/index.ts`: Campo `xpReward: number` añadido a interfaz `Achievement`.
+
+### 04/04/2026 - Menú Móvil Mejorado (Notificaciones + Perfil + Ayuda)
+- **Topbar Mobile**:
+ - `app/components/Topbar.tsx`: Sección Ayuda añadida al menú móvil. Sección de notificaciones con últimas 3 notificaciones, badge de contador, items clickeables. Perfil del usuario con tarjeta (avatar, nombre, email) y botón a Configuración. Icono `IconHelp` importado.
 
 ### 02/04/2026 - Reset Total de Firebase
 - **Reset Firebase Completo**: Eliminado todo rastro de `userId` y reemplazado por `ownerId` en todos los módulos Firestore, tipos TypeScript, reglas de seguridad y componentes de la app.
@@ -313,8 +329,7 @@
 2. **Redeploy en Vercel**: Después de agregar las variables, hacer un redeploy para que los cambios surtan efecto.
 3. **Activar Firebase Storage** (opcional): Para fotos de perfil en Configuración.
 4. **Verificar build en Vercel**: Confirmar que el fix del submodule huérfano resolvió los fallos de build.
-5. **Páginas faltantes**: Crear `/logros`, `/ayuda`, `/comunidad` (actualmente dan 404).
-6. **Búsqueda avanzada**: Extender búsqueda a cursos, transacciones y comunidad.
+5. **Búsqueda avanzada**: Extender búsqueda a cursos, transacciones y comunidad.
 
 ## Instrucciones para errores conocidos
 ### Error: "No se ven las metas en producción (Vercel)"

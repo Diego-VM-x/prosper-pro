@@ -165,6 +165,19 @@ export default function FinanzasPage() {
           const amount = tx.type === 'expense' ? -tx.amount : tx.amount;
           await updateAccountBalance(newTx.accountId, amount);
         }
+        // Verificar logros desbloqueados
+        const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
+        const [allTx, allAccounts, { getGoalsByOwnerId }] = await Promise.all([
+          getTransactionsByOwnerId(user.uid),
+          Promise.resolve(accounts),
+          import('@/lib/firestore/goals'),
+        ]);
+        const allGoals = await getGoalsByOwnerId(user.uid);
+        await checkAndUnlockAchievements(user.uid, {
+          transactions: allTx,
+          accounts: allAccounts,
+          goals: allGoals,
+        });
       } catch (e) { console.error(e); }
     }
     setShowModal(false);
@@ -257,6 +270,19 @@ export default function FinanzasPage() {
       updatedAt: Date.now(),
     };
     await createAccount(acc);
+    // Verificar logros desbloqueados
+    const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
+    const [allTx, allAccounts, { getGoalsByOwnerId }] = await Promise.all([
+      getTransactionsByOwnerId(user.uid),
+      Promise.resolve([...accounts, { id: 'new', ...acc } as FinancialAccount]),
+      import('@/lib/firestore/goals'),
+    ]);
+    const allGoals = await getGoalsByOwnerId(user.uid);
+    await checkAndUnlockAchievements(user.uid, {
+      transactions: allTx,
+      accounts: allAccounts,
+      goals: allGoals,
+    });
     setShowAccountModal(false);
     setNewAccount({ name: '', type: 'checking', balance: 0 });
   };

@@ -73,6 +73,7 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
+  xpReward: number;
   unlockedAt: number;
 }
 
