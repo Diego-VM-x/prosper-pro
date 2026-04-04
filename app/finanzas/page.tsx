@@ -434,10 +434,15 @@ export default function FinanzasPage() {
                   placeholder="Seleccionar tipo..."
                 />
                 <label className="form-label">Cuenta</label>
-                <select className="form-input" value={newTx.accountId} onChange={(e) => setNewTx({ ...newTx, accountId: e.target.value })}>
-                  <option value="">Sin cuenta</option>
-                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name} (${a.balance.toLocaleString()})</option>)}
-                </select>
+                <CustomSelect
+                  value={newTx.accountId}
+                  onChange={(val) => setNewTx({ ...newTx, accountId: val })}
+                  options={[
+                    { value: '', label: 'Sin cuenta', icon: '—' },
+                    ...accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon })),
+                  ]}
+                  placeholder="Seleccionar cuenta..."
+                />
                 <label className="form-label">Monto ($)</label>
                 <input className="form-input" type="number" placeholder="0" value={newTx.amount} onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })} />
                 <label className="form-label">Categoría</label>
@@ -478,15 +483,19 @@ export default function FinanzasPage() {
               </div>
               <div className="modal-body">
                 <label className="form-label">De</label>
-                <select className="form-input" value={transfer.fromAccountId} onChange={(e) => setTransfer({ ...transfer, fromAccountId: e.target.value })}>
-                  <option value="">Seleccionar cuenta origen</option>
-                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name} (${a.balance.toLocaleString()})</option>)}
-                </select>
+                <CustomSelect
+                  value={transfer.fromAccountId}
+                  onChange={(val) => setTransfer({ ...transfer, fromAccountId: val })}
+                  options={accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                  placeholder="Seleccionar cuenta origen..."
+                />
                 <label className="form-label">A</label>
-                <select className="form-input" value={transfer.toAccountId} onChange={(e) => setTransfer({ ...transfer, toAccountId: e.target.value })}>
-                  <option value="">Seleccionar cuenta destino</option>
-                  {accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name} (${a.balance.toLocaleString()})</option>)}
-                </select>
+                <CustomSelect
+                  value={transfer.toAccountId}
+                  onChange={(val) => setTransfer({ ...transfer, toAccountId: val })}
+                  options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                  placeholder="Seleccionar cuenta destino..."
+                />
                 <label className="form-label">Monto ($)</label>
                 <input className="form-input" type="number" placeholder="0" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
               </div>
