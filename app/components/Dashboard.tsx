@@ -59,6 +59,7 @@ export function Dashboard() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartView, setChartView] = useState<'cuentas' | 'metas'>('cuentas');
+  const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month'>('week');
 
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
 
@@ -201,16 +202,24 @@ export function Dashboard() {
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
-  // Historial de cuentas: balance acumulado por día (últimos 7 días)
+  // Historial de cuentas: balance acumulado según período seleccionado
   const accountHistory = React.useMemo(() => {
     if (accounts.length === 0 || transactions.length === 0) return [];
     const now = new Date();
-    const days: { date: number; label: string }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      d.setHours(0, 0, 0, 0);
-      days.push({ date: d.getTime(), label: ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'][d.getDay()] });
+    now.setHours(0, 0, 0, 0);
+
+    // Configurar períodos
+    const periodConfig = {
+      day: { count: 24, label: 'h', getLabel: (i: number) => `${i}:00`, ms: 3600000 },
+      week: { count: 7, label: 'd', getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
+      month: { count: 4, label: 'sem', getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
+    };
+    const cfg = periodConfig[chartPeriod];
+
+    const periods: { date: number; label: string }[] = [];
+    for (let i = cfg.count - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * cfg.ms);
+      periods.push({ date: d.getTime(), label: cfg.getLabel(i) });
     }
 
     const typeColors: Record<string, string> = {
@@ -224,28 +233,28 @@ export function Dashboard() {
         .filter((t) => t.accountId === acc.id)
         .sort((a, b) => a.date - b.date);
 
-      const dailyBalances: number[] = [];
+      const balances: number[] = [];
       let runningBalance = acc.balance;
 
-      for (let i = 6; i >= 0; i--) {
-        const dayStart = days[6 - i].date;
-        const dayEnd = dayStart + 86400000;
-        const dayTxs = accTxs.filter((t) => {
+      for (let i = cfg.count - 1; i >= 0; i--) {
+        const periodStart = periods[cfg.count - 1 - i].date;
+        const periodEnd = periodStart + cfg.ms;
+        const periodTxs = accTxs.filter((t) => {
           const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
-          return txDate >= dayStart && txDate < dayEnd;
+          return txDate >= periodStart && txDate < periodEnd;
         });
-        const dayNet = dayTxs.reduce((sum, t) => {
+        const periodNet = periodTxs.reduce((sum, t) => {
           if (t.type === 'income') return sum + t.amount;
           if (t.type === 'expense') return sum - t.amount;
           return sum;
         }, 0);
-        runningBalance -= dayNet;
-        dailyBalances.unshift(runningBalance + dayNet);
+        runningBalance -= periodNet;
+        balances.unshift(runningBalance + periodNet);
       }
 
-      return { id: acc.id, name: acc.name, icon: acc.icon, color: typeColors[acc.type] || '#3DCC8E', balances: dailyBalances };
+      return { id: acc.id, name: acc.name, icon: acc.icon, color: typeColors[acc.type] || '#3DCC8E', balances };
     });
-  }, [accounts, transactions]);
+  }, [accounts, transactions, chartPeriod]);
 
   // 4 metas más recientemente actualizadas
   const recentGoals = React.useMemo(() => {
@@ -313,23 +322,34 @@ export function Dashboard() {
                 </h3>
                 <p className="dash-card-subtitle">
                   {chartView === 'cuentas'
-                    ? 'Movimiento de balances últimos 7 días'
+                    ? chartPeriod === 'day' ? 'Movimiento de hoy (cada hora)'
+                      : chartPeriod === 'week' ? 'Últimos 7 días'
+                      : 'Último mes (por semana)'
                     : '4 metas más recientemente actualizadas'}
                 </p>
               </div>
-              <div className="chart-view-toggle">
-                <button
-                  className={`toggle-btn ${chartView === 'cuentas' ? 'active' : ''}`}
-                  onClick={() => setChartView('cuentas')}
-                >
-                  🏦 Cuentas
-                </button>
-                <button
-                  className={`toggle-btn ${chartView === 'metas' ? 'active' : ''}`}
-                  onClick={() => setChartView('metas')}
-                >
-                  🎯 Metas
-                </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {chartView === 'cuentas' && (
+                  <div className="chart-period-toggle">
+                    <button className={`period-btn ${chartPeriod === 'day' ? 'active' : ''}`} onClick={() => setChartPeriod('day')} title="Hoy">Día</button>
+                    <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')} title="Semana">Semana</button>
+                    <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')} title="Mes">Mes</button>
+                  </div>
+                )}
+                <div className="chart-view-toggle">
+                  <button
+                    className={`toggle-btn ${chartView === 'cuentas' ? 'active' : ''}`}
+                    onClick={() => setChartView('cuentas')}
+                  >
+                    🏦 Cuentas
+                  </button>
+                  <button
+                    className={`toggle-btn ${chartView === 'metas' ? 'active' : ''}`}
+                    onClick={() => setChartView('metas')}
+                  >
+                    🎯 Metas
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -354,8 +374,9 @@ export function Dashboard() {
                       const maxVal = Math.max(...accountHistory.flatMap(a => a.balances), 1);
                       const minVal = Math.min(...accountHistory.flatMap(a => a.balances), 0);
                       const range = maxVal - minVal || 1;
+                      const numPoints = acc.balances.length;
                       const points = acc.balances.map((v, i) => {
-                        const x = (i / 6) * 100;
+                        const x = numPoints > 1 ? (i / (numPoints - 1)) * 100 : 50;
                         const y = 90 - ((v - minVal) / range) * 80;
                         return `${x},${y}`;
                       }).join(' ');
@@ -365,7 +386,7 @@ export function Dashboard() {
                           <polygon points={areaPts} fill={`url(#grad-${acc.id})`} />
                           <polyline points={points} fill="none" stroke={acc.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           {acc.balances.map((v, i) => {
-                            const x = (i / 6) * 100;
+                            const x = numPoints > 1 ? (i / (numPoints - 1)) * 100 : 50;
                             const y = 90 - ((v - minVal) / range) * 80;
                             return <circle key={i} cx={x} cy={y} r="1.5" fill={acc.color} />;
                           })}
@@ -374,9 +395,15 @@ export function Dashboard() {
                     })}
                   </svg>
                   <div className="chart-x-axis">
-                    {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map((d, i) => (
-                      <span key={i} className="chart-day-label">{d}</span>
-                    ))}
+                    {accountHistory.length > 0 && accountHistory[0].balances.map((_, i) => {
+                      const cfg = {
+                        day: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+                        week: ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'],
+                        month: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                      };
+                      const labels = cfg[chartPeriod];
+                      return <span key={i} className="chart-day-label">{labels[i] || ''}</span>;
+                    })}
                   </div>
                   <div className="chart-legend-inline">
                     {accountHistory.map((acc) => (
@@ -626,6 +653,12 @@ export function Dashboard() {
         .toggle-btn { padding: 6px 14px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
         .toggle-btn.active { background: var(--color-prosper-green); color: white; }
         .toggle-btn:hover:not(.active) { color: var(--text-primary); }
+
+        /* Chart Period Toggle */
+        .chart-period-toggle { display: flex; gap: 2px; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
+        .period-btn { padding: 5px 10px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); text-transform: uppercase; letter-spacing: 0.5px; }
+        .period-btn.active { background: var(--color-prosper-green); color: white; }
+        .period-btn:hover:not(.active) { color: var(--text-primary); }
 
         /* Line Chart (Cuentas historial) */
         .line-chart-container { position: relative; height: 260px; padding-top: 8px; }
