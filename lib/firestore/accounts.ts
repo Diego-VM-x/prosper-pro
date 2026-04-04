@@ -79,6 +79,32 @@ export async function clearAccountHistory(accountId: string) {
   await Promise.all(updatePromises);
 }
 
+// Eliminar transacciones de un tipo específico (income, expense, saving) de una cuenta
+export async function deleteTransactionsByType(accountId: string, type: 'income' | 'expense' | 'saving') {
+  const txsQuery = query(collection(db, 'transactions'), where('accountId', '==', accountId), where('type', '==', type));
+  const txsSnapshot = await getDocs(txsQuery);
+  const deletePromises = txsSnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+  await Promise.all(deletePromises);
+}
+
+// Resetear el balance de una cuenta a 0
+export async function resetAccountBalance(accountId: string) {
+  await updateDoc(doc(db, COLLECTION, accountId), {
+    balance: 0,
+    updatedAt: Date.now(),
+  });
+}
+
+// Eliminar TODO el historial de transacciones del usuario (todas las cuentas)
+export async function clearAllTransactionHistory(ownerId: string) {
+  const txsQuery = query(collection(db, 'transactions'), where('ownerId', '==', ownerId));
+  const txsSnapshot = await getDocs(txsQuery);
+  const updatePromises = txsSnapshot.docs.map((docSnap) =>
+    updateDoc(docSnap.ref, { archived: true, archivedAt: Date.now() })
+  );
+  await Promise.all(updatePromises);
+}
+
 // Actualizar balance de una cuenta
 export async function updateAccountBalance(accountId: string, amount: number) {
   await updateDoc(doc(db, COLLECTION, accountId), {

@@ -7,10 +7,10 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
-import { IconPlus, IconX, IconTrash, IconWallet, IconArchive } from '@/app/components/icons';
+import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { LineChart } from '@/app/components/LineChart';
 import type { Transaction, FinancialAccount, AccountType } from '@/types';
 
@@ -330,6 +330,55 @@ export default function FinanzasPage() {
     });
   };
 
+  const handleDeleteByType = async (id: string, type: 'income' | 'expense' | 'saving') => {
+    const acc = accounts.find((a) => a.id === id);
+    const typeLabel = TYPE_LABELS[type];
+    setConfirmState({
+      isOpen: true,
+      title: `Eliminar ${typeLabel}s`,
+      message: `¿Eliminar todos los ${typeLabel.toLowerCase()}s de "${acc?.name}"? El balance se ajustará automáticamente. Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: `Eliminar ${typeLabel}s`,
+      onConfirm: async () => {
+        await deleteTransactionsByType(id, type);
+        success(`${typeLabel}s eliminados`);
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const handleResetBalance = async (id: string) => {
+    const acc = accounts.find((a) => a.id === id);
+    setConfirmState({
+      isOpen: true,
+      title: 'Resetear Balance',
+      message: `¿Resetear el balance de "${acc?.name}" a $0? Se perderá el saldo actual de $${acc?.balance.toLocaleString()}. Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: 'Resetear balance',
+      onConfirm: async () => {
+        await resetAccountBalance(id);
+        success('Balance reseteado');
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const handleClearAllHistory = async () => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Borrar Todo el Historial',
+      message: '¿Borrar el historial de TODAS las transacciones? Los balances de las cuentas se mantendrán intactos. Esta acción no se puede deshacer.',
+      variant: 'danger',
+      confirmText: 'Borrar todo el historial',
+      onConfirm: async () => {
+        if (!user?.uid) return;
+        await clearAllTransactionHistory(user.uid);
+        success('Historial completo borrado');
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
   const getAccountName = (accountId?: string) => {
     if (!accountId) return 'Sin cuenta';
@@ -351,6 +400,9 @@ export default function FinanzasPage() {
             </button>
             <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
               <IconWallet width={14} /> Transferir
+            </button>
+            <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Borrar todo el historial">
+              <IconArchive width={14} /> Borrar Historial
             </button>
             <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -385,9 +437,19 @@ export default function FinanzasPage() {
                   <span className="account-name">{acc.name}</span>
                   <span className="account-type">{acc.type}</span>
                 </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Borrar historial"><IconArchive width={14} /></button>
-                  <button className="account-delete" onClick={() => handleDeleteAccount(acc.id)} title="Eliminar cuenta"><IconTrash width={14} /></button>
+                <div className="account-actions-group">
+                  <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
+                  <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
+                  <div className="account-dropdown-wrapper">
+                    <button className="account-action account-action-more" title="Más opciones">⋮</button>
+                    <div className="account-dropdown">
+                      <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'income')}>📥 Eliminar Ingresos</button>
+                      <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'expense')}>📤 Eliminar Gastos</button>
+                      <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'saving')}>💰 Eliminar Ahorros</button>
+                      <div className="account-dropdown-divider" />
+                      <button className="account-dropdown-item account-dropdown-danger" onClick={() => handleDeleteAccount(acc.id)}>🗑️ Eliminar Cuenta</button>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="account-balance" style={{ color: acc.color }}>
@@ -642,7 +704,9 @@ export default function FinanzasPage() {
           .period-btn { padding: 5px 10px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); text-transform: uppercase; letter-spacing: 0.5px; }
           .period-btn.active { background: var(--color-prosper-green); color: white; }
           .period-btn:hover:not(.active) { color: var(--text-primary); }
-          .page-header-actions { display: flex; gap: 10px; }
+          .page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+          .btn-danger-outline { color: var(--color-error) !important; border-color: var(--color-error) !important; }
+          .btn-danger-outline:hover { background: var(--color-error) !important; color: white !important; }
           .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
           .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
           .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
@@ -651,10 +715,18 @@ export default function FinanzasPage() {
           .account-info { flex: 1; }
           .account-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); display: block; }
           .account-type { font-size: 0.6875rem; color: var(--text-tertiary); text-transform: capitalize; }
-          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; }
+          .account-actions-group { display: flex; gap: 2px; align-items: center; }
+          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; transition: all var(--transition-fast); }
           .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
-          .account-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; }
-          .account-delete:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
+          .account-action-more { font-size: 16px; line-height: 1; }
+          .account-dropdown-wrapper { position: relative; }
+          .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; min-width: 180px; overflow: hidden; }
+          .account-dropdown-wrapper:hover .account-dropdown { display: block; }
+          .account-dropdown-item { display: block; width: 100%; padding: 10px 14px; border: none; background: none; text-align: left; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; transition: background var(--transition-fast); }
+          .account-dropdown-item:hover { background: var(--bg-input); }
+          .account-dropdown-divider { height: 1px; background: var(--border-default); margin: 4px 0; }
+          .account-dropdown-danger { color: var(--color-error) !important; }
+          .account-dropdown-danger:hover { background: rgba(239,68,68,0.1) !important; }
           .account-balance { font-size: 1.375rem; font-weight: 800; }
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
           .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }

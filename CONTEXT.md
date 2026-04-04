@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Eliminar Cuentas con Transacciones + Borrar Historial + Gráfica Recharts)
+## Estado Actual (04 de Abril, 2026 - Gestión Avanzada de Cuentas + Historial + Balance + Gráfica Recharts)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -40,7 +40,7 @@
 - `lib/firestore/` → 9 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
-- `lib/firestore/accounts.ts` → CRUD de cuentas financieras, suscripción en tiempo real, balance total, deleteAccount, clearAccountHistory
+- `lib/firestore/accounts.ts` → CRUD de cuentas, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
@@ -147,7 +147,15 @@
   - **Finanzas Page**:
     - `app/finanzas/page.tsx`: Botón de borrar historial (IconArchive) junto al de eliminar cuenta. Confirmación separada para cada acción. Mensaje corregido en eliminación de cuenta.
   - **Icons**:
-    - `app/components/icons.tsx`: Nuevo icono `IconArchive` (caja de archivo).
+    - `app/components/icons.tsx`: Nuevos iconos `IconArchive` (caja de archivo) e `IconReset` (reiniciar).
+  
+  ### 04/04/2026 - Gestión Avanzada de Cuentas y Historial
+  - **Firestore Accounts**:
+    - `lib/firestore/accounts.ts`: Nuevas funciones `deleteTransactionsByType(accountId, type)` elimina transacciones por tipo (income/expense/saving). `resetAccountBalance(accountId)` resetea balance a 0. `clearAllTransactionHistory(ownerId)` archiva todas las transacciones del usuario.
+  - **Finanzas Page**:
+    - `app/finanzas/page.tsx`: Botón "Borrar Historial" en header para archivar todas las transacciones. En cada card de cuenta: botón archivar historial, botón resetear balance, dropdown con opciones para eliminar ingresos/gastos/ahorros por separado y eliminar cuenta completa. Confirmaciones con advertencias detalladas sobre consecuencias.
+  - **Icons**:
+    - `app/components/icons.tsx`: Nuevo icono `IconReset` (flecha circular).
 
 ### 04/04/2026
 - **Overflow-X Fix**:
