@@ -131,7 +131,7 @@ export function Dashboard() {
   const totalGoals = goals.length;
   const progressPct = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
   const radius = 54;
-  const circumference = 2 * Math.PI * radius;
+  const circumference = 2 * Math.PI * radius; // 339.292
   const strokeDashoffset = circumference * (1 - progressPct / 100);
 
   const handleCreateGoal = async () => {
@@ -177,7 +177,7 @@ export function Dashboard() {
 
         {/* 4 Stat Cards Superiores */}
         <div className="stats-row">
-          <div className="stat-card">
+          <div className="stat-card stat-card-clickable" onClick={() => router.push('/metas')}>
             <div className="stat-card-icon">
               <span className="stat-icon-bg">🎯</span>
               <span className="stat-badge">+12%</span>
@@ -185,21 +185,21 @@ export function Dashboard() {
             <p className="stat-card-label">METAS ACTIVAS</p>
             <p className="stat-card-value">{activeGoals.length}</p>
           </div>
-          <div className="stat-card">
+          <div className="stat-card stat-card-clickable" onClick={() => router.push('/metas')}>
             <div className="stat-card-icon">
               <span className="stat-icon-bg">✓</span>
             </div>
             <p className="stat-card-label">COMPLETADAS</p>
             <p className="stat-card-value">{completedGoals.length}</p>
           </div>
-          <div className="stat-card featured">
+          <div className="stat-card featured stat-card-clickable" onClick={() => router.push('/finanzas')}>
             <div className="stat-card-icon">
               <span className="stat-icon-bg">💰</span>
             </div>
             <p className="stat-card-label">AHORRO MENSUAL</p>
             <p className="stat-card-value stat-value-green">${monthlySavings.toLocaleString()}</p>
           </div>
-          <div className="stat-card">
+          <div className="stat-card stat-card-clickable" onClick={() => router.push('/cursos')}>
             <div className="stat-card-icon">
               <span className="stat-icon-bg">📖</span>
             </div>
@@ -277,7 +277,7 @@ export function Dashboard() {
               })}
               {activeGoals.length === 0 && <p className="empty-msg">No hay metas activas</p>}
             </div>
-            <button className="btn-add-goal" onClick={() => setShowNewGoalModal(true)}>
+            <button className="btn-add-goal" onClick={() => router.push('/metas')}>
               + Añadir Nuevo Objetivo
             </button>
           </div>
@@ -312,8 +312,8 @@ export function Dashboard() {
           <div className="dash-card progress-card">
             <div className="progress-ring-container">
               <svg className="progress-ring" viewBox="0 0 120 120">
-                <circle className="progress-ring-track" cx="60" cy="60" r="50" />
-                <circle className="progress-ring-fill" cx="60" cy="60" r="50" style={{ strokeDashoffset }} />
+                <circle className="progress-ring-track" cx="60" cy="60" r="54" />
+                <circle className="progress-ring-fill" cx="60" cy="60" r="54" style={{ strokeDashoffset }} />
               </svg>
               <div className="progress-ring-center">
                 <span className="progress-pct">{progressPct}%</span>
@@ -340,7 +340,7 @@ export function Dashboard() {
                     const daysLeft = getDaysUntil(g.iso as string);
                     const urgency = daysLeft <= 0 ? 'var(--color-red-500)' : daysLeft <= 7 ? 'var(--color-gold-500)' : 'var(--text-secondary)';
                     return (
-                      <div className="milestone-item" key={g.id}>
+                      <div className="milestone-item milestone-item-clickable" key={g.id} onClick={() => router.push('/metas')}>
                         <div className="milestone-date">
                           <span className="milestone-month">OCT</span>
                           <span className="milestone-day">{daysLeft <= 0 ? '!' : daysLeft}</span>
@@ -418,6 +418,7 @@ export function Dashboard() {
         .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 20px; position: relative; transition: all var(--transition-fast); }
         .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .stat-card-clickable { cursor: pointer; transition: all var(--transition-fast); }
         .stat-card.featured { border-color: var(--color-prosper-green); background: linear-gradient(135deg, rgba(61,204,142,0.1), transparent); }
         .stat-card-icon { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .stat-icon-bg { width: 40px; height: 40px; border-radius: var(--radius-sm); background: rgba(61,204,142,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
@@ -485,6 +486,8 @@ export function Dashboard() {
         /* Milestones Card */
         .milestones-list { display: flex; flex-direction: column; gap: 12px; }
         .milestone-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: var(--radius-sm); }
+        .milestone-item-clickable { cursor: pointer; transition: all var(--transition-fast); }
+        .milestone-item-clickable:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
         .milestone-date { width: 40px; height: 48px; background: var(--bg-card); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
         .milestone-month { font-size: 0.625rem; font-weight: 700; color: var(--color-prosper-green); text-transform: uppercase; }
         .milestone-day { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
