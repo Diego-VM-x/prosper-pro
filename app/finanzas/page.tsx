@@ -51,6 +51,12 @@ export default function FinanzasPage() {
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
+  const [showAmounts, setShowAmounts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('finanzas-show-amounts') === 'true';
+    }
+    return false;
+  });
 
   // Suscribirse a cuentas en tiempo real
   useEffect(() => {
@@ -160,32 +166,10 @@ export default function FinanzasPage() {
     setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '' });
   };
 
-  const handleDeleteTransaction = async (id: string) => {
-    const tx = transactions.find((t) => t.id === id);
-    const isTransfer = tx?.category === 'Transferencia';
-
-    if (isTransfer) {
-      const confirmed = confirm(
-        '⚠️ ADVERTENCIA: Estás a punto de eliminar el registro de una transferencia.\n\n' +
-        'Esto solo eliminará el registro visual. Los balances de las cuentas NO se revertirán.\n\n' +
-        '¿Deseas continuar?'
-      );
-      if (!confirmed) return;
-    } else {
-      setTransactions((prev) => prev.filter((t) => t.id !== id));
-    }
-
-    if (user?.uid) {
-      try {
-        await deleteTransaction(id);
-        // Solo revertir balance si NO es transferencia
-        if (!isTransfer && tx?.accountId) {
-          const { updateAccountBalance } = await import('@/lib/firestore/accounts');
-          const amount = tx.type === 'expense' ? tx.amount : -tx.amount;
-          await updateAccountBalance(tx.accountId, amount);
-        }
-      } catch (e) { console.error(e); }
-    }
+  const toggleShowAmounts = () => {
+    const newVal = !showAmounts;
+    setShowAmounts(newVal);
+    localStorage.setItem('finanzas-show-amounts', String(newVal));
   };
 
   const handleTransfer = async () => {
@@ -299,6 +283,9 @@ export default function FinanzasPage() {
             <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
               <IconWallet width={14} /> Transferir
             </button>
+            <button className="btn btn-outline" onClick={toggleShowAmounts} title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}>
+              {showAmounts ? '🙈' : '👁️'}
+            </button>
             <button className="btn btn-primary" onClick={() => setShowModal(true)}>
               <IconPlus width={14} /> Nueva Transacción
             </button>
@@ -317,7 +304,9 @@ export default function FinanzasPage() {
                 </div>
                 <button className="account-delete" onClick={() => handleDeleteAccount(acc.id)}><IconTrash width={14} /></button>
               </div>
-              <div className="account-balance" style={{ color: acc.color }}>${acc.balance.toLocaleString()}</div>
+              <div className="account-balance" style={{ color: acc.color }}>
+                {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
+              </div>
             </div>
           ))}
           {accounts.length === 0 && (
@@ -331,19 +320,19 @@ export default function FinanzasPage() {
         <div className="summary-grid">
           <div className="summary-card summary-income">
             <span className="summary-label">Ingresos</span>
-            <span className="summary-value">${summary.income.toLocaleString()}</span>
+            <span className="summary-value">{showAmounts ? `$${summary.income.toLocaleString()}` : '••••••'}</span>
           </div>
           <div className="summary-card summary-expense">
             <span className="summary-label">Gastos</span>
-            <span className="summary-value">${summary.expenses.toLocaleString()}</span>
+            <span className="summary-value">{showAmounts ? `$${summary.expenses.toLocaleString()}` : '••••••'}</span>
           </div>
           <div className="summary-card summary-saving">
             <span className="summary-label">Ahorro</span>
-            <span className="summary-value">${summary.saving.toLocaleString()}</span>
+            <span className="summary-value">{showAmounts ? `$${summary.saving.toLocaleString()}` : '••••••'}</span>
           </div>
           <div className="summary-card summary-balance">
             <span className="summary-label">Balance Total</span>
-            <span className="summary-value">${totalBalance.toLocaleString()}</span>
+            <span className="summary-value">{showAmounts ? `$${totalBalance.toLocaleString()}` : '••••••'}</span>
           </div>
         </div>
 
@@ -375,24 +364,22 @@ export default function FinanzasPage() {
                 <th>Tipo</th>
                 <th>Fecha</th>
                 <th>Monto</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
               {filteredTx.length > 0 ? filteredTx.map((tx) => (
                 <tr key={tx.id}>
-                  <td>{tx.description}</td>
+                  <td>{tx.description || '—'}</td>
                   <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
                   <td>{tx.category}</td>
                   <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
                   <td>{formatDate(tx.date)}</td>
                   <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                    {tx.type === 'expense' ? '-' : '+'}${tx.amount.toLocaleString()}
+                    {showAmounts ? `${tx.type === 'expense' ? '-' : '+'}$${tx.amount.toLocaleString()}` : '••••••'}
                   </td>
-                  <td><button className="delete-btn" onClick={() => handleDeleteTransaction(tx.id)}>✕</button></td>
                 </tr>
               )) : (
-                <tr><td colSpan={7} className="empty-state">No hay transacciones</td></tr>
+                <tr><td colSpan={6} className="empty-state">No hay transacciones</td></tr>
               )}
             </tbody>
           </table>
