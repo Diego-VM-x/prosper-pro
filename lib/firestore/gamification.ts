@@ -50,12 +50,22 @@ export async function getAchievementsByOwnerId(ownerId: string): Promise<Achieve
   return achievements;
 }
 
+export const MAX_LEVEL = 30;
+
 export async function updateXP(ownerId: string, xpGain: number) {
   const q = query(collection(db, XP_COLLECTION), where('ownerId', '==', ownerId));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return;
   const docSnap = snapshot.docs[0];
   const data = docSnap.data() as XPState;
+  
+  // Si ya está en nivel máximo, solo acumula XP sin subir más
+  if (data.level >= MAX_LEVEL) {
+    const newXP = data.currentXP + xpGain;
+    await updateDoc(docSnap.ref, { currentXP: newXP, level: MAX_LEVEL, maxXP: data.maxXP });
+    return;
+  }
+  
   let newXP = data.currentXP + xpGain;
   let newLevel = data.level;
   let newMax = data.maxXP;
@@ -63,6 +73,11 @@ export async function updateXP(ownerId: string, xpGain: number) {
     newXP = newXP - data.maxXP;
     newLevel += 1;
     newMax = Math.round(data.maxXP * 1.2);
+    // Cap en nivel 30
+    if (newLevel > MAX_LEVEL) {
+      newLevel = MAX_LEVEL;
+      newMax = data.maxXP;
+    }
   }
   await updateDoc(docSnap.ref, { currentXP: newXP, level: newLevel, maxXP: newMax });
 }

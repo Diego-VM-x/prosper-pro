@@ -142,3 +142,29 @@ export interface FinancialAccount {
   createdAt: number;
   updatedAt: number;
 }
+
+export type TaskFrequency = 'daily' | 'weekly';
+export type TaskCategory = 'savings' | 'income' | 'expense' | 'goals' | 'accounts' | 'education';
+
+export interface DailyTask {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: TaskCategory;
+  frequency: TaskFrequency;
+  xpReward: number;
+  target: number; // cuántas veces hay que completar la tarea
+  action: string; // tipo de acción que cuenta para la tarea
+}
+
+export interface TaskProgress {
+  id: string;
+  ownerId: string;
+  taskId: string;
+  progress: number;
+  completed: boolean;
+  periodStart: number; // timestamp del inicio del período (día/semana)
+  periodEnd: number; // timestamp del fin del período
+  completedAt?: number;
+}

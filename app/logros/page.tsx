@@ -4,11 +4,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getXPByOwnerId, getAchievementsByOwnerId } from '@/lib/firestore/gamification';
+import { getXPByOwnerId, getAchievementsByOwnerId, updateXP, MAX_LEVEL } from '@/lib/firestore/gamification';
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
 import { getAccountsByOwnerId } from '@/lib/firestore/accounts';
 import { getGoalsByOwnerId } from '@/lib/firestore/goals';
-import type { XPState, Achievement, Transaction, FinancialAccount, Goal } from '@/types';
+import { getTaskProgress, DAILY_TASKS, WEEKLY_TASKS, getDayPeriod, getWeekPeriod, calculateTaskProgress, createOrUpdateTaskProgress } from '@/lib/firestore/tasks';
+import type { XPState, Achievement, Transaction, FinancialAccount, Goal, TaskProgress } from '@/types';
 
 // Definición de todos los logros posibles con sus condiciones
 interface AchievementDef {
@@ -272,25 +273,29 @@ export default function LogrosPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [taskProgress, setTaskProgress] = useState<TaskProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'achievements'>('tasks');
 
   useEffect(() => {
     async function loadData() {
       if (!user) return;
       try {
-        const [xp, ach, tx, acc, g] = await Promise.all([
+        const [xp, ach, tx, acc, g, tp] = await Promise.all([
           getXPByOwnerId(user.uid),
           getAchievementsByOwnerId(user.uid),
           getTransactionsByOwnerId(user.uid),
           getAccountsByOwnerId(user.uid),
           getGoalsByOwnerId(user.uid),
+          getTaskProgress(user.uid),
         ]);
         setXPState(xp);
         setFirebaseAchievements(ach);
         setTransactions(tx);
         setAccounts(acc);
         setGoals(g);
+        setTaskProgress(tp);
       } catch (error) {
         console.error('Error loading gamification data:', error);
       } finally {
@@ -339,6 +344,67 @@ export default function LogrosPage() {
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
   const totalTransactions = transactions.length;
   const totalGoals = goals.length;
+
+  // Calcular estadísticas de hoy y esta semana
+  const { todayStats, weekStats, dailyTasks, weeklyTasks } = useMemo(() => {
+    const now = new Date();
+    const { start: dayStart, end: dayEnd } = getDayPeriod(now);
+    const { start: weekStart, end: weekEnd } = getWeekPeriod(now);
+
+    // Filtrar transacciones de hoy
+    const todayTx = transactions.filter(t => t.date >= dayStart && t.date <= dayEnd);
+    const weekTx = transactions.filter(t => t.date >= weekStart && t.date <= weekEnd);
+
+    const todayStats = {
+      income: todayTx.filter(t => t.type === 'income').length,
+      expense: todayTx.filter(t => t.type === 'expense').length,
+      saving: todayTx.filter(t => t.type === 'saving').length,
+    };
+
+    const weekStats = {
+      income: weekTx.filter(t => t.type === 'income').length,
+      expense: weekTx.filter(t => t.type === 'expense').length,
+      saving: weekTx.filter(t => t.type === 'saving').length,
+    };
+
+    // Calcular progreso de tareas
+    const dailyTasks = calculateTaskProgress(DAILY_TASKS, taskProgress, {
+      income: todayStats.income,
+      expense: todayStats.expense,
+      saving: todayStats.saving,
+      view_accounts: accounts.length > 0 ? 1 : 0,
+      goal_fund: goals.length > 0 ? 1 : 0,
+    });
+
+    const weeklyTasks = calculateTaskProgress(WEEKLY_TASKS, taskProgress, {
+      income: weekStats.income,
+      expense: weekStats.expense,
+      saving: weekStats.saving,
+      goal_update: goals.filter(g => g.updatedAt >= weekStart).length,
+      balance_increase: 0, // Se calcularía comparando con balance anterior
+    });
+
+    return { todayStats, weekStats, dailyTasks, weeklyTasks };
+  }, [transactions, accounts, goals, taskProgress]);
+
+  // Handler para reclamar XP de tarea completada
+  const handleClaimTask = async (task: typeof dailyTasks[0]) => {
+    if (!user || task.completed) return;
+    const { start, end } = task.frequency === 'daily' ? getDayPeriod() : getWeekPeriod();
+    await createOrUpdateTaskProgress({
+      ownerId: user.uid,
+      taskId: task.id,
+      progress: task.target,
+      completed: true,
+      periodStart: start,
+      periodEnd: end,
+      completedAt: Date.now(),
+    });
+    await updateXP(user.uid, task.xpReward);
+    // Recargar progreso
+    const tp = await getTaskProgress(user.uid);
+    setTaskProgress(tp);
+  };
 
   return (
     <ProtectedRoute>
@@ -858,6 +924,178 @@ export default function LogrosPage() {
               font-size: 0.875rem;
               margin: 0;
             }
+            .tabs {
+              display: flex;
+              gap: 8px;
+              margin-bottom: 24px;
+              border-bottom: 1px solid var(--border-default);
+              padding-bottom: 0;
+            }
+            .tab-btn {
+              padding: 12px 24px;
+              background: none;
+              border: none;
+              border-bottom: 2px solid transparent;
+              color: var(--text-secondary);
+              font-size: 0.875rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+            .tab-btn:hover {
+              color: var(--text-primary);
+            }
+            .tab-btn.active {
+              color: var(--color-prosper-green);
+              border-bottom-color: var(--color-prosper-green);
+            }
+            .tab-badge {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              background: var(--color-prosper-green);
+              color: white;
+              font-size: 0.625rem;
+              font-weight: 700;
+              padding: 2px 6px;
+              border-radius: 9999px;
+              margin-left: 6px;
+            }
+            .tasks-section {
+              margin-bottom: 32px;
+            }
+            .tasks-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+            }
+            .tasks-title {
+              font-size: 1.125rem;
+              font-weight: 800;
+              color: var(--text-primary);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .tasks-grid {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 12px;
+            }
+            @media (min-width: 640px) {
+              .tasks-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            .task-card {
+              background: var(--bg-card);
+              border-radius: 12px;
+              padding: 16px;
+              border: 1px solid var(--border-default);
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+              transition: all 0.2s;
+            }
+            .task-card:hover {
+              border-color: var(--color-prosper-green);
+            }
+            .task-card.completed {
+              border-color: var(--color-prosper-green);
+              background: var(--bg-accent-soft);
+              opacity: 0.8;
+            }
+            .task-header {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .task-icon {
+              width: 40px;
+              height: 40px;
+              border-radius: 8px;
+              background: var(--bg-input);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.25rem;
+              flex-shrink: 0;
+            }
+            .task-card.completed .task-icon {
+              background: var(--bg-accent-soft);
+            }
+            .task-info {
+              flex: 1;
+              min-width: 0;
+            }
+            .task-name {
+              font-size: 0.875rem;
+              font-weight: 700;
+              color: var(--text-primary);
+              margin: 0 0 4px 0;
+            }
+            .task-desc {
+              font-size: 0.75rem;
+              color: var(--text-secondary);
+              margin: 0;
+              line-height: 1.3;
+            }
+            .task-progress-bar {
+              height: 6px;
+              background: var(--bg-input);
+              border-radius: 9999px;
+              overflow: hidden;
+            }
+            .task-progress-fill {
+              height: 100%;
+              background: var(--color-prosper-green);
+              border-radius: 9999px;
+              transition: width 0.5s ease;
+            }
+            .task-footer {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            }
+            .task-xp {
+              font-size: 0.75rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+            }
+            .task-progress-text {
+              font-size: 0.6875rem;
+              color: var(--text-secondary);
+            }
+            .task-claim-btn {
+              padding: 6px 16px;
+              background: var(--color-prosper-green);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-size: 0.75rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+            .task-claim-btn:hover {
+              opacity: 0.9;
+            }
+            .task-claim-btn:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+            .level-badge {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              padding: 4px 8px;
+              background: var(--bg-accent-soft);
+              border-radius: 9999px;
+              font-size: 0.625rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+            }
           `}</style>
 
           {loading ? (
@@ -898,6 +1136,99 @@ export default function LogrosPage() {
                 </div>
               </div>
 
+              {/* Tabs */}
+              <div className="tabs">
+                <button
+                  className={`tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('tasks')}
+                >
+                  📋 Tareas
+                  {dailyTasks.filter(t => t.completed).length + weeklyTasks.filter(t => t.completed).length > 0 && (
+                    <span className="tab-badge">
+                      {dailyTasks.filter(t => t.completed).length + weeklyTasks.filter(t => t.completed).length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className={`tab-btn ${activeTab === 'achievements' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('achievements')}
+                >
+                  🏆 Logros
+                </button>
+              </div>
+
+              {/* Tasks Tab Content */}
+              {activeTab === 'tasks' && (
+                <>
+                  {/* Daily Tasks */}
+                  <div className="tasks-section">
+                    <div className="tasks-header">
+                      <h3 className="tasks-title">📅 Tareas Diarias <span className="level-badge">Se reinician cada día</span></h3>
+                    </div>
+                    <div className="tasks-grid">
+                      {dailyTasks.map(task => (
+                        <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`}>
+                          <div className="task-header">
+                            <div className="task-icon">{task.icon}</div>
+                            <div className="task-info">
+                              <p className="task-name">{task.title}</p>
+                              <p className="task-desc">{task.description}</p>
+                            </div>
+                          </div>
+                          <div className="task-progress-bar">
+                            <div className="task-progress-fill" style={{ width: `${Math.min((task.progress / task.target) * 100, 100)}%` }}></div>
+                          </div>
+                          <div className="task-footer">
+                            <span className="task-xp">+{task.xpReward} XP</span>
+                            <span className="task-progress-text">{task.progress} / {task.target}</span>
+                            {task.completed ? (
+                              <span className="task-claim-btn" style={{ background: 'var(--text-tertiary)', cursor: 'default' }}>✓ Hecho</span>
+                            ) : (
+                              <button className="task-claim-btn" disabled={task.progress < task.target}>Completar</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Weekly Tasks */}
+                  <div className="tasks-section">
+                    <div className="tasks-header">
+                      <h3 className="tasks-title">📆 Tareas Semanales <span className="level-badge">Se reinician cada semana</span></h3>
+                    </div>
+                    <div className="tasks-grid">
+                      {weeklyTasks.map(task => (
+                        <div key={task.id} className={`task-card ${task.completed ? 'completed' : ''}`}>
+                          <div className="task-header">
+                            <div className="task-icon">{task.icon}</div>
+                            <div className="task-info">
+                              <p className="task-name">{task.title}</p>
+                              <p className="task-desc">{task.description}</p>
+                            </div>
+                          </div>
+                          <div className="task-progress-bar">
+                            <div className="task-progress-fill" style={{ width: `${Math.min((task.progress / task.target) * 100, 100)}%` }}></div>
+                          </div>
+                          <div className="task-footer">
+                            <span className="task-xp">+{task.xpReward} XP</span>
+                            <span className="task-progress-text">{task.progress} / {task.target}</span>
+                            {task.completed ? (
+                              <span className="task-claim-btn" style={{ background: 'var(--text-tertiary)', cursor: 'default' }}>✓ Hecho</span>
+                            ) : (
+                              <button className="task-claim-btn" disabled={task.progress < task.target}>Completar</button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Achievements Tab Content */}
+              {activeTab === 'achievements' && (
+                <>
               {/* Bento Grid */}
               <div className="bento-grid">
                 {/* Progress Card */}
@@ -1061,6 +1392,8 @@ export default function LogrosPage() {
                   </div>
                 </div>
               </div>
+                </>
+              )}
             </>
           )}
         </div>
