@@ -1458,6 +1458,29 @@ ul, ol {
    RESPONSIVE
    ============================================================ */
 
+/* ============================================================
+   DASHBOARD GRID LAYOUTS
+   ============================================================ */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.goals-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
 /* Tablets grandes y laptops pequeñas */
 @media (max-width: 1280px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1480,75 +1503,100 @@ ul, ol {
 /* Móviles grandes */
 @media (max-width: 768px) {
   :root { --sidebar-width: 100%; }
-  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .content-grid-full { grid-template-columns: 1fr; }
-  .page-content { padding: 16px; }
-  .topbar { padding: 0 12px; gap: 8px; }
+  .page-content { padding: 12px; }
+  .topbar { padding: 0 8px; gap: 4px; }
+  .topbar-left { gap: 6px; }
+  .topbar-logo-link { flex-shrink: 0; }
+  .topbar-collapse-btn { flex-shrink: 0; width: 28px; height: 28px; }
+  .mobile-menu-btn { flex-shrink: 0; }
+  .topbar-icon-btn { flex-shrink: 0; }
   .topbar-user-info { display: none; }
-  .topbar-search { max-width: 180px; }
+  .topbar-search { max-width: 140px; }
   .topbar-search-shortcut { display: none; }
-  .page-title { font-size: 1.375rem; }
-  .page-subtitle { font-size: 0.8125rem; }
-  .btn { padding: 8px 14px; font-size: 0.8125rem; }
-  .stat-value { font-size: 1.5rem; }
-  .stat-card { padding: 16px; }
-  .card { padding: 16px; }
-  .timer-display { font-size: 1.5rem; }
-  .progress-ring { width: 100px; height: 100px; }
-  .progress-ring svg { width: 100px; height: 100px; }
-  .progress-ring-pct { font-size: 1.25rem; }
+  .page-title { font-size: 1.25rem; }
+  .page-subtitle { font-size: 0.75rem; }
+  .btn { padding: 6px 10px; font-size: 0.75rem; }
+  .stat-value { font-size: 1.125rem; }
+  .stat-card { padding: 8px; aspect-ratio: auto; min-height: 80px; }
+  .stat-label { font-size: 0.5625rem; }
+  .stat-icon-bg { font-size: 1rem; }
+  .stat-badge { font-size: 0.5rem; }
+  .card { padding: 12px; }
+  .timer-display { font-size: 1.25rem; }
+  .progress-ring { width: 80px; height: 80px; }
+  .progress-ring svg { width: 80px; height: 80px; }
+  .progress-ring-pct { font-size: 1rem; }
   .sidebar-logo img { width: 28px; height: 28px; }
   .sidebar-logo-text { font-size: 1.25rem; }
   .sidebar-promo-card { padding: 12px; }
   .sidebar-promo-card .promo-title { font-size: 0.75rem; }
   .sidebar-promo-card .promo-sub { font-size: 0.625rem; }
+  /* Main grid en columna en mobile */
+  .main-grid { grid-template-columns: 1fr; }
+  .goals-panel { order: 2; }
+  /* Bottom grid en columna */
+  .bottom-grid { grid-template-columns: 1fr; }
 }
 
 /* Móviles pequeños */
 @media (max-width: 480px) {
-  .page-content { padding: 12px; }
-  .topbar { padding: 0 8px; }
-  .topbar-search { max-width: 120px; }
-  .topbar-search input { padding: 6px 10px 6px 30px; font-size: 0.8125rem; }
-  .topbar-icon-btn { width: 32px; height: 32px; }
-  .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
-  .page-title { font-size: 1.125rem; }
-  .page-header { margin-bottom: 16px; }
-  .stats-grid { gap: 8px; }
-  .stat-card { padding: 12px; }
-  .stat-label { font-size: 0.6875rem; }
-  .stat-value { font-size: 1.25rem; }
-  .stat-change { font-size: 0.6875rem; }
-  .btn { padding: 6px 12px; font-size: 0.75rem; gap: 4px; }
-  .btn svg { width: 14px; height: 14px; }
-  .card { padding: 12px; }
-  .card-title { font-size: 0.8125rem; }
-  .card-action { padding: 4px 8px; font-size: 0.6875rem; }
-  .chart-bars { height: 80px; }
-  .timer-display { font-size: 1.25rem; }
-  .timer-btn { width: 32px; height: 32px; }
-  .timer-btn svg { width: 14px; height: 14px; }
-  .progress-ring { width: 80px; height: 80px; }
-  .progress-ring svg { width: 80px; height: 80px; }
-  .progress-ring-pct { font-size: 1rem; }
-  .progress-ring-label { font-size: 0.5rem; }
-  .team-avatar { width: 28px; height: 28px; font-size: 0.625rem; }
-  .team-name { font-size: 0.75rem; }
-  .team-task { font-size: 0.625rem; }
-  .status-badge { padding: 2px 6px; font-size: 0.625rem; }
-  .project-color-dot { width: 24px; height: 24px; }
-  .project-name { font-size: 0.75rem; }
-  .project-due { font-size: 0.625rem; }
-  .modal-content { width: 95%; max-width: none; padding: 16px; }
-  .modal-title { font-size: 1.125rem; }
-  .form-input { padding: 8px 12px; font-size: 0.8125rem; }
-  .form-label { font-size: 0.75rem; }
-  .notifications-dropdown { width: 280px !important; right: -8px; }
-  .sidebar-logo { padding: 16px; }
-  .sidebar-nav { padding: 12px 8px; }
-  .nav-item { padding: 8px; font-size: 0.8125rem; }
-  .nav-item svg { width: 16px; height: 16px; }
-  .sidebar-footer { padding: 12px 8px; }
+  .page-content { padding: 8px; }
+  .topbar { padding: 0 6px; gap: 2px; }
+  .topbar-search { max-width: 100px; }
+  .topbar-search input { padding: 4px 8px 4px 28px; font-size: 0.75rem; }
+  .topbar-icon-btn { width: 28px; height: 28px; }
+  .topbar-avatar { width: 24px; height: 24px; font-size: 0.625rem; }
+  .page-title { font-size: 1rem; }
+  .page-header { margin-bottom: 12px; gap: 8px; }
+  .stats-grid { gap: 6px; }
+  .stat-card { padding: 6px; min-height: 70px; }
+  .stat-label { font-size: 0.5rem; }
+  .stat-value { font-size: 1rem; }
+  .stat-change { font-size: 0.5rem; }
+  .stat-icon-bg { font-size: 0.875rem; }
+  .stat-badge { font-size: 0.4375rem; padding: 1px 3px; }
+  .btn { padding: 5px 8px; font-size: 0.6875rem; gap: 3px; }
+  .btn svg { width: 12px; height: 12px; }
+  .card { padding: 10px; }
+  .card-title { font-size: 0.75rem; }
+  .card-action { padding: 3px 6px; font-size: 0.625rem; }
+  .chart-bars { height: 60px; }
+  .timer-display { font-size: 1rem; }
+  .timer-btn { width: 28px; height: 28px; }
+  .timer-btn svg { width: 12px; height: 12px; }
+  .progress-ring { width: 70px; height: 70px; }
+  .progress-ring svg { width: 70px; height: 70px; }
+  .progress-ring-pct { font-size: 0.875rem; }
+  .progress-ring-label { font-size: 0.4375rem; }
+  .team-avatar { width: 24px; height: 24px; font-size: 0.5625rem; }
+  .team-name { font-size: 0.6875rem; }
+  .team-task { font-size: 0.5625rem; }
+  .status-badge { padding: 2px 4px; font-size: 0.5625rem; }
+  .project-color-dot { width: 20px; height: 20px; }
+  .project-name { font-size: 0.6875rem; }
+  .project-due { font-size: 0.5625rem; }
+  .modal-content { width: 95%; max-width: none; padding: 12px; }
+  .modal-title { font-size: 1rem; }
+  .form-input { padding: 6px 10px; font-size: 0.75rem; }
+  .form-label { font-size: 0.6875rem; }
+  .notifications-dropdown { width: 260px !important; right: -4px; }
+  .sidebar-logo { padding: 12px; }
+  .sidebar-nav { padding: 8px 6px; }
+  .nav-item { padding: 6px; font-size: 0.75rem; }
+  .nav-item svg { width: 14px; height: 14px; }
+  .sidebar-footer { padding: 8px 6px; }
+  /* Dashboard cards en mobile */
+  .dash-card { padding: 12px; }
+  .dash-card-title { font-size: 0.8125rem; }
+  .dash-card-subtitle { font-size: 0.6875rem; }
+  .goal-card { padding: 8px; }
+  .goal-card-title { font-size: 0.75rem; }
+  .activity-text { font-size: 0.75rem; }
+  .activity-time { font-size: 0.625rem; }
+  .milestone-title { font-size: 0.75rem; }
+  .milestone-desc { font-size: 0.625rem; }
 }
 
 /* Móviles muy pequeños */
