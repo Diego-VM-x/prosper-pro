@@ -1,725 +1,754 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getCommunityUsers } from '@/lib/firestore/community';
-import type { CommunityUser } from '@/lib/firestore/community';
+import {
+  subscribeToCommunities,
+  subscribeToMessages,
+  subscribeToMembers,
+  sendMessage,
+  toggleLike,
+  joinCommunity,
+  createCommunity,
+} from '@/lib/firestore/communityMessages';
+import type { Community, CommunityMessage, CommunityRoomMember } from '@/types';
 
-const FORUMS = [
-  { id: '1', category: 'Inversión', title: 'Estrategias de Inversión 2026', desc: 'Análisis profundo sobre los mercados emergentes y la rotación de capital en el sector tecnológico.', messages: 142, active: 28, color: 'var(--color-prosper-green)' },
-  { id: '2', category: 'Retiro', title: 'Ahorro para Retiro', desc: 'Cómo maximizar los beneficios fiscales en planes de pensiones privadas antes de fin de año.', messages: 89, active: 12, color: 'var(--color-prosper-navy)' },
-  { id: '3', category: 'Legal', title: 'Fiscalidad Internacional', desc: 'Dudas sobre residencia fiscal digital y tributación de activos en diferentes jurisdicciones.', messages: 256, active: 45, color: '#F59E0B' },
-  { id: '4', category: 'Educación', title: 'Finanzas para Principiantes', desc: 'Guía completa para entender los conceptos básicos de finanzas personales.', messages: 312, active: 67, color: '#3B82F6' },
+const DEFAULT_COMMUNITIES: Community[] = [
+  { id: 'general', name: 'General', description: 'Conversación abierta sobre finanzas', icon: '💬', color: 'var(--color-prosper-green)', memberCount: 0, createdBy: 'system', createdAt: 0 },
+  { id: 'ahorro', name: 'Ahorro Inteligente', description: 'Tips y estrategias para ahorrar mejor', icon: '💰', color: 'var(--color-prosper-navy)', memberCount: 0, createdBy: 'system', createdAt: 1 },
+  { id: 'inversion', name: 'Inversión Joven', description: 'Inversiones para principiantes', icon: '📈', color: '#F59E0B', memberCount: 0, createdBy: 'system', createdAt: 2 },
+  { id: 'educacion', name: 'Educación Financiera', description: 'Aprende juntos sobre finanzas', icon: '📚', color: '#3B82F6', memberCount: 0, createdBy: 'system', createdAt: 3 },
 ];
 
-const RESOURCES = [
-  { id: '1', title: 'Calculadora de Interés Compuesto', type: 'Excel Template .XLSX', icon: '🧮', color: 'var(--color-prosper-green)' },
-  { id: '2', title: 'Plan de Emergencia 50/30/20', type: 'PDF Guide', icon: '📊', color: 'var(--color-prosper-navy)' },
-];
+// ==================== MessageItem (React.memo) ====================
+const MessageItem = ({ msg, isOwn, onLike, members }: {
+  msg: CommunityMessage;
+  isOwn: boolean;
+  onLike: () => void;
+  members: CommunityRoomMember[];
+}) => {
+  const liked = msg.likes.includes(msg.senderId);
+  const timeStr = useMemo(() => {
+    const d = new Date(msg.timestamp);
+    return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  }, [msg.timestamp]);
 
-const EVENTS = [
-  { id: '1', title: 'Webinar: IA en Finanzas Personales', speaker: 'David Cheng, CTO de Prosper', date: 'Mañana, 18:00', isPrimary: true },
-  { id: '2', title: 'Café Virtual: Salud Financiera', speaker: 'Sesión abierta de Q&A', date: 'Jueves, 10:00', isPrimary: false },
-];
+  return (
+    <div className={`msg-item ${isOwn ? 'msg-own' : ''}`}>
+      {!isOwn && (
+        <div className="msg-avatar">
+          {msg.senderPhoto ? (
+            <img src={msg.senderPhoto} alt={msg.senderName} />
+          ) : (
+            <div className="msg-avatar-placeholder">{msg.senderName.charAt(0).toUpperCase()}</div>
+          )}
+        </div>
+      )}
+      <div className="msg-bubble">
+        {!isOwn && <div className="msg-sender">{msg.senderName}</div>}
+        <div className="msg-text">{msg.text}</div>
+        <div className="msg-footer">
+          <span className="msg-time">{timeStr}</span>
+          <button className={`msg-like-btn ${liked ? 'liked' : ''}`} onClick={onLike}>
+            {liked ? '❤️' : '🤍'} {msg.likes.length > 0 && msg.likes.length}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+MessageItem.displayName = 'MessageItem';
+const MemoizedMessageItem = MessageItem;
 
+// ==================== MAIN PAGE ====================
 export default function ComunidadPage() {
   const { user } = useAuth();
-  const [communityUsers, setCommunityUsers] = useState<CommunityUser[]>([]);
+  const [communities, setCommunities] = useState<Community[]>(DEFAULT_COMMUNITIES);
+  const [activeCommunity, setActiveCommunity] = useState<string>('general');
+  const [messages, setMessages] = useState<CommunityMessage[]>([]);
+  const [members, setMembers] = useState<CommunityRoomMember[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState('');
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showNewCommunity, setShowNewCommunity] = useState(false);
+  const [newCommunityName, setNewCommunityName] = useState('');
+  const [newCommunityDesc, setNewCommunityDesc] = useState('');
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Subscribe to communities
   useEffect(() => {
-    async function loadData() {
-      try {
-        const users = await getCommunityUsers();
-        setCommunityUsers(users);
-      } catch (error) {
-        console.error('Error loading community data:', error);
-        setCommunityUsers([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
+    const unsub = subscribeToCommunities((comms) => {
+      if (comms.length > 0) setCommunities(comms);
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
 
-  const topUsers = communityUsers.slice(0, 3);
-  const filteredForums = searchQuery 
-    ? FORUMS.filter(f => f.title.toLowerCase().includes(searchQuery.toLowerCase()) || f.category.toLowerCase().includes(searchQuery.toLowerCase()))
-    : FORUMS;
+  // Subscribe to messages
+  useEffect(() => {
+    const unsub = subscribeToMessages(activeCommunity, (msgs) => {
+      setMessages(msgs);
+    });
+    return () => unsub();
+  }, [activeCommunity]);
+
+  // Subscribe to members
+  useEffect(() => {
+    const unsub = subscribeToMembers(activeCommunity, (m) => {
+      setMembers(m);
+    });
+    return () => unsub();
+  }, [activeCommunity]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Join community on select
+  const handleSelectCommunity = useCallback(async (commId: string) => {
+    setActiveCommunity(commId);
+    setShowSidebar(false);
+    if (user) {
+      await joinCommunity(commId, {
+        uid: user.uid,
+        displayName: user.displayName || 'Usuario',
+        photoURL: user.photoURL || '',
+        role: 'member',
+      });
+    }
+  }, [user]);
+
+  // Send message
+  const handleSend = useCallback(async () => {
+    if (!user || !inputText.trim()) return;
+    await sendMessage(activeCommunity, {
+      text: inputText.trim(),
+      senderId: user.uid,
+      senderName: user.displayName || 'Usuario',
+      senderPhoto: user.photoURL || '',
+    });
+    setInputText('');
+    setShowMentions(false);
+  }, [user, inputText, activeCommunity]);
+
+  // Handle like
+  const handleLike = useCallback(async (msgId: string) => {
+    if (!user) return;
+    await toggleLike(activeCommunity, msgId, user.uid);
+  }, [user, activeCommunity]);
+
+  // Handle mention detection
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputText(val);
+    
+    const lastAt = val.lastIndexOf('@');
+    if (lastAt !== -1 && (lastAt === val.length - 1 || !val.slice(lastAt + 1).includes(' '))) {
+      const filter = val.slice(lastAt + 1);
+      setMentionFilter(filter);
+      setShowMentions(true);
+    } else {
+      setShowMentions(false);
+    }
+  }, []);
+
+  // Insert mention
+  const insertMention = useCallback((name: string) => {
+    const lastAt = inputText.lastIndexOf('@');
+    const before = inputText.slice(0, lastAt);
+    setInputText(`${before}@${name} `);
+    setShowMentions(false);
+    inputRef.current?.focus();
+  }, [inputText]);
+
+  // Create community
+  const handleCreateCommunity = useCallback(async () => {
+    if (!user || !newCommunityName.trim()) return;
+    await createCommunity({
+      name: newCommunityName.trim(),
+      description: newCommunityDesc.trim() || 'Comunidad de Prosper',
+      icon: '🏘️',
+      color: 'var(--color-prosper-green)',
+      memberCount: 1,
+      createdBy: user.uid,
+    });
+    setNewCommunityName('');
+    setNewCommunityDesc('');
+    setShowNewCommunity(false);
+  }, [user, newCommunityName, newCommunityDesc]);
+
+  const activeComm = communities.find(c => c.id === activeCommunity);
+  const filteredMembers = members.filter(m =>
+    m.displayName.toLowerCase().includes(mentionFilter.toLowerCase())
+  ).slice(0, 5);
 
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="page-content-overflow-fix">
+        <div className="community-page">
           <style jsx>{`
-            .comunidad-container {
-              padding: 24px;
-              max-width: 1200px;
-              margin: 0 auto;
-            }
-            .hero-section {
-              background: linear-gradient(135deg, var(--bg-card), var(--bg-input));
-              border-radius: 16px;
-              padding: 48px;
-              margin-bottom: 32px;
-              position: relative;
+            .community-page {
+              display: flex;
+              height: calc(100vh - 120px);
+              max-height: calc(100vh - 120px);
               overflow: hidden;
-              border: 1px solid var(--border-default);
-            }
-            .hero-section::before {
-              content: '';
-              position: absolute;
-              inset: 0;
-              background: radial-gradient(circle at top right, var(--bg-accent-soft), transparent 60%);
-              opacity: 0.3;
-            }
-            .hero-content {
               position: relative;
-              z-index: 1;
             }
-            .hero-welcome {
-              font-size: 0.75rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.15em;
-              color: var(--color-prosper-green);
-              margin: 0 0 8px 0;
-            }
-            .hero-title {
-              font-size: 2rem;
-              font-weight: 900;
-              color: var(--text-primary);
-              letter-spacing: -0.02em;
-              margin: 0 0 8px 0;
-            }
-            .hero-title span {
-              background: linear-gradient(90deg, var(--color-prosper-green), var(--color-pine-400));
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-            }
-            .hero-subtitle {
-              font-size: 1rem;
-              color: var(--text-secondary);
-              margin: 0;
-            }
-            .search-bar {
-              position: relative;
-              max-width: 400px;
-              margin-bottom: 32px;
-            }
-            .search-icon {
-              position: absolute;
-              left: 16px;
-              top: 50%;
-              transform: translateY(-50%);
-              color: var(--text-tertiary);
-              font-size: 1.25rem;
-            }
-            .search-input {
-              width: 100%;
-              padding: 12px 16px 12px 48px;
+            /* Sidebar */
+            .sidebar {
+              width: 280px;
+              min-width: 280px;
               background: var(--bg-card);
-              border: 1px solid var(--border-default);
-              border-radius: 9999px;
-              color: var(--text-primary);
-              font-size: 0.875rem;
-              transition: all 0.2s;
-            }
-            .search-input:focus {
-              outline: none;
-              border-color: var(--color-prosper-green);
-              box-shadow: 0 0 0 3px var(--bg-accent-soft);
-            }
-            .search-input::placeholder {
-              color: var(--text-tertiary);
-            }
-            .main-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 24px;
-            }
-            @media (min-width: 1024px) {
-              .main-grid {
-                grid-template-columns: 2fr 1fr;
-              }
-            }
-            .main-content {
+              border-right: 1px solid var(--border-default);
               display: flex;
               flex-direction: column;
-              gap: 24px;
+              overflow: hidden;
             }
-            .section-header {
+            .sidebar-header {
+              padding: 16px;
+              border-bottom: 1px solid var(--border-default);
               display: flex;
               justify-content: space-between;
               align-items: center;
-              margin-bottom: 24px;
             }
-            .section-title {
-              font-size: 1.125rem;
+            .sidebar-title {
+              font-size: 1rem;
               font-weight: 800;
               color: var(--text-primary);
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            .section-title-icon {
-              color: var(--color-prosper-green);
-              font-size: 1.25rem;
-            }
-            .section-link {
-              font-size: 0.875rem;
-              font-weight: 600;
-              color: var(--color-prosper-green);
-              text-decoration: none;
-              cursor: pointer;
-            }
-            .section-link:hover {
-              text-decoration: underline;
-            }
-            .forums-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 16px;
-            }
-            @media (min-width: 640px) {
-              .forums-grid {
-                grid-template-columns: repeat(2, 1fr);
-              }
-            }
-            .forum-card {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 20px;
-              border: 1px solid var(--border-default);
-              transition: all 0.2s;
-              cursor: pointer;
-            }
-            .forum-card:hover {
-              border-color: var(--color-prosper-green);
-              box-shadow: var(--shadow-md);
-            }
-            .forum-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 12px;
-            }
-            .forum-category {
-              padding: 4px 12px;
-              border-radius: 9999px;
-              font-size: 0.625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
-              background: var(--bg-accent-soft);
-              color: var(--color-prosper-green);
-            }
-            .forum-avatars {
-              display: flex;
-              margin-left: -8px;
-            }
-            .forum-avatar {
-              width: 24px;
-              height: 24px;
-              border-radius: 50%;
-              border: 2px solid var(--bg-card);
-              background: var(--bg-input);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 0.5rem;
-              margin-left: -8px;
-            }
-            .forum-avatar:first-child {
-              margin-left: 0;
-            }
-            .forum-title {
-              font-size: 1rem;
-              font-weight: 700;
-              color: var(--text-primary);
-              margin: 0 0 8px 0;
-              transition: color 0.2s;
-            }
-            .forum-card:hover .forum-title {
-              color: var(--color-prosper-green);
-            }
-            .forum-desc {
-              font-size: 0.875rem;
-              color: var(--text-secondary);
-              margin: 0 0 16px 0;
-              display: -webkit-box;
-              -webkit-line-clamp: 2;
-              -webkit-box-orient: vertical;
-              overflow: hidden;
-            }
-            .forum-stats {
-              display: flex;
-              gap: 16px;
-              font-size: 0.75rem;
-              color: var(--text-secondary);
-            }
-            .forum-stat {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-            }
-            .forum-add {
-              border: 2px dashed var(--border-default);
-              border-radius: 12px;
-              padding: 20px;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              cursor: pointer;
-              transition: all 0.2s;
-              min-height: 180px;
-            }
-            .forum-add:hover {
-              border-color: var(--color-prosper-green);
-              background: var(--bg-accent-soft);
-            }
-            .forum-add-icon {
-              font-size: 2rem;
-              color: var(--text-tertiary);
-              margin-bottom: 8px;
-            }
-            .forum-add:hover .forum-add-icon {
-              color: var(--color-prosper-green);
-            }
-            .forum-add-title {
-              font-size: 0.875rem;
-              font-weight: 600;
-              color: var(--text-secondary);
-            }
-            .forum-add:hover .forum-add-title {
-              color: var(--text-primary);
-            }
-            .resources-section {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 24px;
-              border: 1px solid var(--border-default);
-            }
-            .resources-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 16px;
-            }
-            @media (min-width: 640px) {
-              .resources-grid {
-                grid-template-columns: repeat(2, 1fr);
-              }
-            }
-            .resource-card {
-              background: var(--bg-input);
-              border-radius: 8px;
-              padding: 16px;
-              display: flex;
-              align-items: center;
-              gap: 16px;
-              transition: all 0.2s;
-              cursor: pointer;
-            }
-            .resource-card:hover {
-              box-shadow: var(--shadow-md);
-            }
-            .resource-icon {
-              width: 48px;
-              height: 48px;
-              border-radius: 8px;
-              background: var(--bg-accent-soft);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.5rem;
-              flex-shrink: 0;
-            }
-            .resource-info h4 {
-              font-size: 0.875rem;
-              font-weight: 700;
-              color: var(--text-primary);
-              margin: 0 0 4px 0;
-            }
-            .resource-info p {
-              font-size: 0.625rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
-              color: var(--text-secondary);
               margin: 0;
             }
-            .sidebar {
-              display: flex;
-              flex-direction: column;
-              gap: 24px;
-            }
-            .leaderboard-card {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 24px;
+            .sidebar-btn {
+              width: 32px;
+              height: 32px;
+              border-radius: 8px;
               border: 1px solid var(--border-default);
-            }
-            .leader-item {
+              background: var(--bg-input);
+              color: var(--text-secondary);
+              cursor: pointer;
               display: flex;
               align-items: center;
-              gap: 12px;
-              padding: 12px;
-              background: var(--bg-input);
+              justify-content: center;
+              font-size: 1rem;
+            }
+            .sidebar-btn:hover {
+              border-color: var(--color-prosper-green);
+              color: var(--color-prosper-green);
+            }
+            .comm-list {
+              flex: 1;
+              overflow-y: auto;
+              padding: 8px;
+            }
+            .comm-item {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 10px 12px;
               border-radius: 8px;
-              margin-bottom: 12px;
-              transition: all 0.2s;
+              cursor: pointer;
+              transition: all 0.15s;
+              border: none;
+              background: none;
+              width: 100%;
+              text-align: left;
             }
-            .leader-item:first-child {
-              background: var(--bg-accent-soft);
-              border-left: 4px solid var(--color-prosper-green);
-            }
-            .leader-item:hover {
+            .comm-item:hover {
               background: var(--bg-card-hover);
             }
-            .leader-avatar {
-              position: relative;
+            .comm-item.active {
+              background: var(--bg-accent-soft);
+            }
+            .comm-icon {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.875rem;
               flex-shrink: 0;
             }
-            .leader-avatar-img {
-              width: 40px;
-              height: 40px;
-              border-radius: 50%;
-              background: var(--bg-card);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.25rem;
-            }
-            .leader-rank {
-              position: absolute;
-              top: -4px;
-              right: -4px;
-              width: 16px;
-              height: 16px;
-              border-radius: 50%;
-              background: var(--color-prosper-green);
-              color: white;
-              font-size: 0.5rem;
-              font-weight: 700;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .leader-rank:not(:first-child) {
-              background: var(--bg-card);
-              color: var(--text-primary);
-              border: 1px solid var(--border-default);
-            }
-            .leader-info {
+            .comm-info {
               flex: 1;
               min-width: 0;
             }
-            .leader-name {
-              font-size: 0.875rem;
-              font-weight: 700;
+            .comm-name {
+              font-size: 0.8125rem;
+              font-weight: 600;
               color: var(--text-primary);
+              margin: 0;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
             }
-            .leader-stats {
-              font-size: 0.625rem;
-              color: var(--text-secondary);
+            .comm-members {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
               margin: 0;
             }
-            .leader-points {
-              text-align: right;
-              flex-shrink: 0;
+            /* Chat Window */
+            .chat-window {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+              background: var(--bg-primary);
             }
-            .leader-points-value {
-              font-size: 0.75rem;
-              font-weight: 900;
-              color: var(--color-prosper-green);
-              margin: 0;
-            }
-            .leader-points:first-child .leader-points-value {
-              color: var(--text-primary);
-            }
-            .leader-points-label {
-              font-size: 0.5rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              color: var(--text-secondary);
-              margin: 0;
-            }
-            .leaderboard-btn {
-              width: 100%;
-              padding: 8px;
-              border: 1px solid var(--border-default);
-              background: transparent;
-              color: var(--text-secondary);
-              font-size: 0.625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
-              border-radius: 8px;
-              cursor: pointer;
-              transition: all 0.2s;
-              margin-top: 8px;
-            }
-            .leaderboard-btn:hover {
-              background: var(--bg-card-hover);
-              color: var(--text-primary);
-            }
-            .events-card {
+            .chat-header {
+              padding: 12px 16px;
+              border-bottom: 1px solid var(--border-default);
               background: var(--bg-card);
-              border-radius: 12px;
-              padding: 24px;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .chat-menu-btn {
+              display: none;
+              width: 32px;
+              height: 32px;
+              border-radius: 8px;
               border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              cursor: pointer;
+              align-items: center;
+              justify-content: center;
+              font-size: 1rem;
             }
-            .event-item {
-              position: relative;
-              padding-left: 24px;
-              padding-bottom: 24px;
-              border-left: 2px solid var(--border-default);
+            .chat-header-info {
+              flex: 1;
+              min-width: 0;
             }
-            .event-item:last-child {
-              padding-bottom: 0;
-              border-left-color: transparent;
-            }
-            .event-item:first-child {
-              border-left-color: var(--color-prosper-green);
-            }
-            .event-dot {
-              position: absolute;
-              left: -9px;
-              top: 4px;
-              width: 16px;
-              height: 16px;
-              border-radius: 50%;
-              background: var(--color-prosper-green);
-              border: 4px solid var(--bg-card);
-            }
-            .event-item:not(:first-child) .event-dot {
-              background: var(--text-tertiary);
-            }
-            .event-date {
-              font-size: 0.625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              color: var(--color-prosper-green);
-              margin: 0 0 4px 0;
-            }
-            .event-item:not(:first-child) .event-date {
-              color: var(--text-secondary);
-            }
-            .event-title {
+            .chat-header-name {
               font-size: 0.875rem;
               font-weight: 700;
               color: var(--text-primary);
-              margin: 0 0 4px 0;
+              margin: 0;
             }
-            .event-speaker {
-              font-size: 0.75rem;
-              color: var(--text-secondary);
-              margin: 0 0 8px 0;
+            .chat-header-desc {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+              margin: 0;
             }
-            .event-link {
+            /* Messages */
+            .messages-container {
+              flex: 1;
+              overflow-y: auto;
+              padding: 12px;
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            }
+            .msg-item {
+              display: flex;
+              gap: 8px;
+              align-items: flex-end;
+              max-width: 85%;
+            }
+            .msg-item.msg-own {
+              align-self: flex-end;
+              flex-direction: row-reverse;
+            }
+            .msg-avatar {
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              overflow: hidden;
+              flex-shrink: 0;
+            }
+            .msg-avatar img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            .msg-avatar-placeholder {
+              width: 100%;
+              height: 100%;
+              background: var(--bg-accent-soft);
+              color: var(--color-prosper-green);
+              display: flex;
+              align-items: center;
+              justify-content: center;
               font-size: 0.75rem;
               font-weight: 700;
+            }
+            .msg-bubble {
+              background: var(--bg-card);
+              border: 1px solid var(--border-default);
+              border-radius: 12px;
+              padding: 8px 12px;
+              max-width: 100%;
+            }
+            .msg-item.msg-own .msg-bubble {
+              background: var(--bg-accent-soft);
+              border-color: var(--color-prosper-green);
+            }
+            .msg-sender {
+              font-size: 0.6875rem;
+              font-weight: 700;
               color: var(--color-prosper-green);
-              text-decoration: none;
-              display: inline-flex;
+              margin-bottom: 2px;
+            }
+            .msg-text {
+              font-size: 0.8125rem;
+              color: var(--text-primary);
+              line-height: 1.4;
+              word-break: break-word;
+            }
+            .msg-footer {
+              display: flex;
               align-items: center;
-              gap: 4px;
+              gap: 8px;
+              margin-top: 4px;
+            }
+            .msg-time {
+              font-size: 0.625rem;
+              color: var(--text-tertiary);
+            }
+            .msg-like-btn {
+              background: none;
+              border: none;
+              font-size: 0.6875rem;
+              cursor: pointer;
+              padding: 2px 4px;
+              border-radius: 4px;
+              transition: background 0.15s;
+            }
+            .msg-like-btn:hover {
+              background: var(--bg-card-hover);
+            }
+            .msg-like-btn.liked {
+              opacity: 0.8;
+            }
+            /* Input */
+            .chat-input-area {
+              padding: 12px;
+              border-top: 1px solid var(--border-default);
+              background: var(--bg-card);
+              position: relative;
+            }
+            .chat-input-row {
+              display: flex;
+              gap: 8px;
+              align-items: center;
+            }
+            .chat-input {
+              flex: 1;
+              padding: 10px 14px;
+              border-radius: 20px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.8125rem;
+              outline: none;
+            }
+            .chat-input:focus {
+              border-color: var(--color-prosper-green);
+            }
+            .chat-send-btn {
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              border: none;
+              background: var(--color-prosper-green);
+              color: white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1rem;
+              flex-shrink: 0;
+            }
+            .chat-send-btn:hover {
+              opacity: 0.9;
+            }
+            /* Mentions */
+            .mentions-dropdown {
+              position: absolute;
+              bottom: 100%;
+              left: 12px;
+              right: 12px;
+              background: var(--bg-card);
+              border: 1px solid var(--border-default);
+              border-radius: 8px;
+              padding: 4px;
+              max-height: 160px;
+              overflow-y: auto;
+              box-shadow: var(--shadow-md);
+              z-index: 10;
+            }
+            .mention-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 8px 10px;
+              border-radius: 6px;
+              border: none;
+              background: none;
+              width: 100%;
+              cursor: pointer;
+              font-size: 0.8125rem;
+              color: var(--text-primary);
+            }
+            .mention-item:hover {
+              background: var(--bg-card-hover);
+            }
+            .mention-avatar {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              background: var(--bg-accent-soft);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.625rem;
+              color: var(--color-prosper-green);
+              font-weight: 700;
+              flex-shrink: 0;
+            }
+            /* New Community Modal */
+            .new-comm-modal {
+              position: fixed;
+              inset: 0;
+              background: rgba(0,0,0,0.5);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 100;
+            }
+            .new-comm-card {
+              background: var(--bg-card);
+              border-radius: 16px;
+              padding: 24px;
+              width: 90%;
+              max-width: 360px;
+              border: 1px solid var(--border-default);
+            }
+            .new-comm-title {
+              font-size: 1rem;
+              font-weight: 800;
+              color: var(--text-primary);
+              margin: 0 0 16px 0;
+            }
+            .new-comm-input {
+              width: 100%;
+              padding: 10px 14px;
+              border-radius: 8px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.8125rem;
+              margin-bottom: 12px;
+              outline: none;
+            }
+            .new-comm-actions {
+              display: flex;
+              gap: 8px;
+              margin-top: 8px;
+            }
+            .new-comm-btn {
+              flex: 1;
+              padding: 10px;
+              border-radius: 8px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-secondary);
+              font-size: 0.8125rem;
+              font-weight: 600;
               cursor: pointer;
             }
-            .event-link:hover {
-              text-decoration: underline;
+            .new-comm-btn.primary {
+              background: var(--color-prosper-green);
+              color: white;
+              border-color: var(--color-prosper-green);
             }
-            .loading-container {
+            /* Empty state */
+            .empty-messages {
+              flex: 1;
               display: flex;
               flex-direction: column;
               align-items: center;
               justify-content: center;
-              min-height: 400px;
-              gap: 16px;
+              color: var(--text-tertiary);
+              text-align: center;
+              padding: 24px;
             }
-            .loading-spinner {
-              width: 48px;
-              height: 48px;
-              border: 4px solid var(--border-default);
-              border-top-color: var(--color-prosper-green);
-              border-radius: 50%;
-              animation: spin 1s linear infinite;
+            .empty-messages-icon {
+              font-size: 2.5rem;
+              margin-bottom: 12px;
             }
-            @keyframes spin {
-              to { transform: rotate(360deg); }
-            }
-            .loading-text {
+            .empty-messages-title {
               font-size: 0.875rem;
+              font-weight: 600;
               color: var(--text-secondary);
+              margin: 0 0 4px 0;
+            }
+            .empty-messages-desc {
+              font-size: 0.75rem;
+              margin: 0;
+            }
+            /* Mobile */
+            @media (max-width: 768px) {
+              .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 50;
+                transform: translateX(-100%);
+                transition: transform 0.2s;
+              }
+              .sidebar.open {
+                transform: translateX(0);
+              }
+              .sidebar-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 49;
+              }
+              .chat-menu-btn {
+                display: flex;
+              }
+              .msg-item {
+                max-width: 92%;
+              }
+            }
+            @media (max-width: 480px) {
+              .community-page {
+                height: calc(100vh - 100px);
+              }
+              .msg-text {
+                font-size: 0.75rem;
+              }
             }
           `}</style>
 
           {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p className="loading-text">Cargando comunidad...</p>
+            <div className="empty-messages">
+              <div className="loading-spinner" style={{ width: 32, height: 32, border: '3px solid var(--border-default)', borderTopColor: 'var(--color-prosper-green)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <p>Cargando comunidades...</p>
             </div>
           ) : (
             <>
-              {/* Hero Section */}
-              <div className="hero-section">
-                <div className="hero-content">
-                  <p className="hero-welcome">Bienvenido de nuevo</p>
-                  <h1 className="hero-title">Comunidad Prosper: <span>El Capital del Conocimiento</span></h1>
-                  <p className="hero-subtitle">Conéctate, aprende y crece junto a la élite de los arquitectos digitales.</p>
+              {/* Sidebar Overlay (Mobile) */}
+              {showSidebar && (
+                <div className="sidebar-overlay" onClick={() => setShowSidebar(false)} />
+              )}
+
+              {/* Sidebar */}
+              <aside className={`sidebar ${showSidebar ? 'open' : ''}`}>
+                <div className="sidebar-header">
+                  <h2 className="sidebar-title">Comunidades</h2>
+                  <button className="sidebar-btn" onClick={() => setShowNewCommunity(true)} title="Nueva comunidad">+</button>
                 </div>
-              </div>
-
-              {/* Search Bar */}
-              <div className="search-bar">
-                <span className="search-icon">🔍</span>
-                <input 
-                  type="text" 
-                  className="search-input" 
-                  placeholder="Buscar en la comunidad..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {/* Main Grid */}
-              <div className="main-grid">
-                {/* Main Content */}
-                <div className="main-content">
-                  {/* Forums Section */}
-                  <div>
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <span className="section-title-icon">💬</span>
-                        Foros de Discusión
-                      </h2>
-                      <a className="section-link">Ver todos</a>
-                    </div>
-                    <div className="forums-grid">
-                      {filteredForums.map(forum => (
-                        <div key={forum.id} className="forum-card">
-                          <div className="forum-header">
-                            <span className="forum-category" style={{ background: `${forum.color}20`, color: forum.color }}>{forum.category}</span>
-                            <div className="forum-avatars">
-                              <div className="forum-avatar">👤</div>
-                              <div className="forum-avatar">👤</div>
-                              <div className="forum-avatar">+{forum.active}</div>
-                            </div>
-                          </div>
-                          <h3 className="forum-title">{forum.title}</h3>
-                          <p className="forum-desc">{forum.desc}</p>
-                          <div className="forum-stats">
-                            <span className="forum-stat">💬 {forum.messages} mensajes</span>
-                            <span className="forum-stat">👥 {forum.active} activos</span>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="forum-add">
-                        <div className="forum-add-icon">➕</div>
-                        <h3 className="forum-add-title">Proponer nuevo tema</h3>
+                <div className="comm-list">
+                  {communities.map(comm => (
+                    <button
+                      key={comm.id}
+                      className={`comm-item ${activeCommunity === comm.id ? 'active' : ''}`}
+                      onClick={() => handleSelectCommunity(comm.id)}
+                    >
+                      <div className="comm-icon" style={{ background: `${comm.color}20` }}>
+                        {comm.icon}
                       </div>
-                    </div>
-                  </div>
+                      <div className="comm-info">
+                        <p className="comm-name">{comm.name}</p>
+                        <p className="comm-members">{comm.memberCount || 0} miembros</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </aside>
 
-                  {/* Resources Section */}
-                  <div className="resources-section">
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <span className="section-title-icon">📥</span>
-                        Recursos de la Comunidad
-                      </h2>
-                    </div>
-                    <div className="resources-grid">
-                      {RESOURCES.map(resource => (
-                        <div key={resource.id} className="resource-card">
-                          <div className="resource-icon">{resource.icon}</div>
-                          <div className="resource-info">
-                            <h4>{resource.title}</h4>
-                            <p>{resource.type}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              {/* Chat Window */}
+              <main className="chat-window">
+                <div className="chat-header">
+                  <button className="chat-menu-btn" onClick={() => setShowSidebar(true)}>☰</button>
+                  <div className="chat-header-info">
+                    <p className="chat-header-name">{activeComm?.icon} {activeComm?.name}</p>
+                    <p className="chat-header-desc">{activeComm?.description}</p>
                   </div>
                 </div>
 
-                {/* Sidebar */}
-                <div className="sidebar">
-                  {/* Leaderboard */}
-                  <div className="leaderboard-card">
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <span className="section-title-icon">🏆</span>
-                        Tablero de Líderes
-                      </h2>
+                {/* Messages */}
+                <div className="messages-container">
+                  {messages.length === 0 ? (
+                    <div className="empty-messages">
+                      <div className="empty-messages-icon">💬</div>
+                      <h3 className="empty-messages-title">Sé el primero en hablar</h3>
+                      <p className="empty-messages-desc">Inicia la conversación en {activeComm?.name}</p>
                     </div>
-                    <div className="space-y-3">
-                      {topUsers.length > 0 ? topUsers.map((user, index) => (
-                        <div key={user.uid} className="leader-item">
-                          <div className="leader-avatar">
-                            <div className="leader-avatar-img">{user.photoURL ? '👤' : '👤'}</div>
-                            <div className="leader-rank">{index + 1}</div>
-                          </div>
-                          <div className="leader-info">
-                            <p className="leader-name">{user.displayName || 'Usuario'}</p>
-                            <p className="leader-stats">{user.goalsCount} Metas Cumplidas</p>
-                          </div>
-                          <div className="leader-points">
-                            <p className="leader-points-value">{user.currentXP.toLocaleString()}</p>
-                            <p className="leader-points-label">Puntos</p>
-                          </div>
-                        </div>
-                      )) : (
-                        <div className="leader-item">
-                          <div className="leader-avatar">
-                            <div className="leader-avatar-img">👤</div>
-                            <div className="leader-rank">1</div>
-                          </div>
-                          <div className="leader-info">
-                            <p className="leader-name">¡Sé el primero!</p>
-                            <p className="leader-stats">Completa metas para aparecer aquí</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <button className="leaderboard-btn">Ver Ranking Completo</button>
-                  </div>
+                  ) : (
+                    messages.map(msg => (
+                      <MemoizedMessageItem
+                        key={msg.id}
+                        msg={msg}
+                        isOwn={msg.senderId === user?.uid}
+                        onLike={() => handleLike(msg.id)}
+                        members={members}
+                      />
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
 
-                  {/* Events */}
-                  <div className="events-card">
-                    <div className="section-header">
-                      <h2 className="section-title">
-                        <span className="section-title-icon">📅</span>
-                        Próximos Eventos
-                      </h2>
-                    </div>
-                    <div className="space-y-0">
-                      {EVENTS.map(event => (
-                        <div key={event.id} className="event-item">
-                          <div className="event-dot"></div>
-                          <p className="event-date">{event.date}</p>
-                          <h4 className="event-title">{event.title}</h4>
-                          <p className="event-speaker">Por: {event.speaker}</p>
-                          {event.isPrimary && (
-                            <a className="event-link">
-                              Reservar lugar →
-                            </a>
-                          )}
-                        </div>
+                {/* Input */}
+                <div className="chat-input-area">
+                  {showMentions && filteredMembers.length > 0 && (
+                    <div className="mentions-dropdown">
+                      {filteredMembers.map(m => (
+                        <button key={m.uid} className="mention-item" onClick={() => insertMention(m.displayName)}>
+                          <div className="mention-avatar">{m.displayName.charAt(0).toUpperCase()}</div>
+                          <span>{m.displayName}</span>
+                        </button>
                       ))}
+                    </div>
+                  )}
+                  <div className="chat-input-row">
+                    <input
+                      ref={inputRef}
+                      className="chat-input"
+                      placeholder="Escribe un mensaje... usa @ para mencionar"
+                      value={inputText}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    />
+                    <button className="chat-send-btn" onClick={handleSend}>➤</button>
+                  </div>
+                </div>
+              </main>
+
+              {/* New Community Modal */}
+              {showNewCommunity && (
+                <div className="new-comm-modal" onClick={() => setShowNewCommunity(false)}>
+                  <div className="new-comm-card" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="new-comm-title">Nueva Comunidad</h3>
+                    <input
+                      className="new-comm-input"
+                      placeholder="Nombre de la comunidad"
+                      value={newCommunityName}
+                      onChange={(e) => setNewCommunityName(e.target.value)}
+                    />
+                    <input
+                      className="new-comm-input"
+                      placeholder="Descripción (opcional)"
+                      value={newCommunityDesc}
+                      onChange={(e) => setNewCommunityDesc(e.target.value)}
+                    />
+                    <div className="new-comm-actions">
+                      <button className="new-comm-btn" onClick={() => setShowNewCommunity(false)}>Cancelar</button>
+                      <button className="new-comm-btn primary" onClick={handleCreateCommunity}>Crear</button>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>

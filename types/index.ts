@@ -168,3 +168,34 @@ export interface TaskProgress {
   periodEnd: number; // timestamp del fin del período
   completedAt?: number;
 }
+
+// Community & Messaging
+export interface Community {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  memberCount: number;
+  createdBy: string;
+  createdAt: number;
+}
+
+export interface CommunityMessage {
+  id: string;
+  text: string;
+  senderId: string;
+  senderName: string;
+  senderPhoto: string;
+  timestamp: number;
+  likes: string[]; // UIDs
+  replyTo?: string; // message id
+}
+
+export interface CommunityRoomMember {
+  uid: string;
+  displayName: string;
+  photoURL: string;
+  joinedAt: number;
+  role: 'member' | 'admin';
+}
