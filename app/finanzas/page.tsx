@@ -5,14 +5,23 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { subscribeToAccounts, createAccount, deleteAccount, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
-import type { Transaction } from '@/types';
+import { IconPlus, IconX, IconTrash, IconWallet } from '@/app/components/icons';
+import type { Transaction, FinancialAccount, AccountType } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
   income: ['💰 Salario', '💼 Freelance', '📊 Inversiones', '🏢 Negocio', '📌 Otro'],
   expense: ['🍔 Comida', '🚗 Transporte', '🏠 Vivienda', '🎬 Entretenimiento', '💊 Salud', '🎓 Educación', '📌 Otro'],
   saving: ['💵 Ahorro', '📈 Inversión', '🛡️ Fondo Emergencia', '📌 Otro'],
+};
+
+const ACCOUNT_TYPE_COLORS: Record<string, string> = {
+  checking: '#3B82F6',
+  savings: '#3DCC8E',
+  cash: '#F59E0B',
+  custom: '#8B5CF6',
 };
 
 const TYPE_ICONS: Record<string, string> = { income: '📥', expense: '📤', saving: '💰' };
@@ -28,15 +37,43 @@ const TYPE_COLORS: Record<string, string> = { income: 'var(--color-prosper-green
 
 export default function FinanzasPage() {
   const { user } = useAuth();
+  const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState({ income: 0, expenses: 0, saving: 0, balance: 0 });
   const [filterType, setFilterType] = useState<string>('Todos');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
   const [showModal, setShowModal] = useState(false);
-  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '' });
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '' });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0 });
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
 
+  // Suscribirse a cuentas en tiempo real
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+
+    const unsub = subscribeToAccounts(uid, (accs) => {
+      setAccounts(accs);
+      if (accs.length === 0) {
+        createDefaultAccounts(uid);
+      }
+    });
+
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Calcular balance total
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    getTotalBalance(uid).then(setTotalBalance);
+  }, [accounts, user?.uid]);
+
+  // Cargar preferencias
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
@@ -58,6 +95,7 @@ export default function FinanzasPage() {
     return () => { cancelled = true; };
   }, [user?.uid]);
 
+  // Cargar transacciones
   useEffect(() => {
     const uid = user?.uid as string;
     if (!uid) return;
@@ -78,8 +116,13 @@ export default function FinanzasPage() {
     return () => { cancelled = true; };
   }, [user?.uid]);
 
+  // Filtrar transacciones por cuenta seleccionada
+  const filteredByAccount = selectedAccount === 'all'
+    ? transactions
+    : transactions.filter((t) => t.accountId === selectedAccount);
+
   const categories = filterType === 'Todos' ? Object.values(allCategories).flat() : (allCategories[filterType as keyof typeof allCategories] || []);
-  const filteredTx = transactions.filter((t) => {
+  const filteredTx = filteredByAccount.filter((t) => {
     if (filterType !== 'Todos' && t.type !== filterType) return false;
     if (filterCategory !== 'Todas' && t.category !== filterCategory) return false;
     return true;
@@ -90,6 +133,7 @@ export default function FinanzasPage() {
     const tx: Transaction = {
       id: 't' + Date.now(),
       ownerId: user?.uid || 'local',
+      accountId: newTx.accountId || undefined,
       amount: Number(newTx.amount),
       type: newTx.type,
       category: newTx.category,
@@ -98,20 +142,65 @@ export default function FinanzasPage() {
     };
     setTransactions((prev) => [tx, ...prev]);
     if (user?.uid) {
-      try { await createTransaction(tx); } catch (e) { console.error(e); }
+      try {
+        await createTransaction(tx);
+        // Actualizar balance de la cuenta si hay una seleccionada
+        if (tx.accountId) {
+          const { updateAccountBalance } = await import('@/lib/firestore/accounts');
+          const amount = tx.type === 'expense' ? -tx.amount : tx.amount;
+          await updateAccountBalance(tx.accountId, amount);
+        }
+      } catch (e) { console.error(e); }
     }
     setShowModal(false);
-    setNewTx({ amount: '', type: 'income', category: 'Salario', description: '' });
+    setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '' });
   };
 
   const handleDeleteTransaction = async (id: string) => {
+    const tx = transactions.find((t) => t.id === id);
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     if (user?.uid) {
-      try { await deleteTransaction(id); } catch (e) { console.error(e); }
+      try {
+        await deleteTransaction(id);
+        // Revertir balance de la cuenta
+        if (tx?.accountId) {
+          const { updateAccountBalance } = await import('@/lib/firestore/accounts');
+          const amount = tx.type === 'expense' ? tx.amount : -tx.amount;
+          await updateAccountBalance(tx.accountId, amount);
+        }
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  const handleAddAccount = async () => {
+    if (!newAccount.name || !user?.uid) return;
+    const acc: Omit<FinancialAccount, 'id'> = {
+      ownerId: user.uid,
+      name: newAccount.name,
+      type: newAccount.type,
+      balance: newAccount.balance,
+      icon: newAccount.type === 'checking' ? '🏦' : newAccount.type === 'savings' ? '💰' : newAccount.type === 'cash' ? '💵' : '💳',
+      color: ACCOUNT_TYPE_COLORS[newAccount.type],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    await createAccount(acc);
+    setShowAccountModal(false);
+    setNewAccount({ name: '', type: 'checking', balance: 0 });
+  };
+
+  const handleDeleteAccount = async (id: string) => {
+    if (confirm('¿Eliminar esta cuenta? Las transacciones no se eliminarán.')) {
+      await deleteAccount(id);
     }
   };
 
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
+  const getAccountName = (accountId?: string) => {
+    if (!accountId) return 'Sin cuenta';
+    const acc = accounts.find((a) => a.id === accountId);
+    return acc ? `${acc.icon} ${acc.name}` : 'Sin cuenta';
+  };
 
   return (
     <ProtectedRoute>
@@ -121,7 +210,36 @@ export default function FinanzasPage() {
             <h1 className="page-title">Finanzas</h1>
             <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>+ Nueva Transacción</button>
+          <div className="page-header-actions">
+            <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
+              <IconPlus width={14} /> Nueva Cuenta
+            </button>
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+              <IconPlus width={14} /> Nueva Transacción
+            </button>
+          </div>
+        </div>
+
+        {/* Cuentas */}
+        <div className="accounts-grid">
+          {accounts.map((acc) => (
+            <div key={acc.id} className="account-card" style={{ borderLeftColor: acc.color }}>
+              <div className="account-card-header">
+                <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
+                <div className="account-info">
+                  <span className="account-name">{acc.name}</span>
+                  <span className="account-type">{acc.type}</span>
+                </div>
+                <button className="account-delete" onClick={() => handleDeleteAccount(acc.id)}><IconTrash width={14} /></button>
+              </div>
+              <div className="account-balance" style={{ color: acc.color }}>${acc.balance.toLocaleString()}</div>
+            </div>
+          ))}
+          {accounts.length === 0 && (
+            <div className="empty-accounts">
+              <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
+            </div>
+          )}
         </div>
 
         {/* Resumen mensual */}
@@ -139,13 +257,17 @@ export default function FinanzasPage() {
             <span className="summary-value">${summary.saving.toLocaleString()}</span>
           </div>
           <div className="summary-card summary-balance">
-            <span className="summary-label">Balance</span>
-            <span className="summary-value">${summary.balance.toLocaleString()}</span>
+            <span className="summary-label">Balance Total</span>
+            <span className="summary-value">${totalBalance.toLocaleString()}</span>
           </div>
         </div>
 
         {/* Filtros */}
         <div className="filter-bar">
+          <select className="filter-select" value={selectedAccount} onChange={(e) => setSelectedAccount(e.target.value)}>
+            <option value="all">Todas las cuentas</option>
+            {accounts.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name}</option>)}
+          </select>
           {['Todos', 'income', 'expense', 'saving'].map((t) => (
             <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
               {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
@@ -163,6 +285,7 @@ export default function FinanzasPage() {
             <thead>
               <tr>
                 <th>Descripción</th>
+                <th>Cuenta</th>
                 <th>Categoría</th>
                 <th>Tipo</th>
                 <th>Fecha</th>
@@ -174,6 +297,7 @@ export default function FinanzasPage() {
               {filteredTx.length > 0 ? filteredTx.map((tx) => (
                 <tr key={tx.id}>
                   <td>{tx.description}</td>
+                  <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
                   <td>{tx.category}</td>
                   <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
                   <td>{formatDate(tx.date)}</td>
@@ -183,13 +307,13 @@ export default function FinanzasPage() {
                   <td><button className="delete-btn" onClick={() => handleDeleteTransaction(tx.id)}>✕</button></td>
                 </tr>
               )) : (
-                <tr><td colSpan={6} className="empty-state">No hay transacciones</td></tr>
+                <tr><td colSpan={7} className="empty-state">No hay transacciones</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Modal */}
+        {/* Modal Transacción */}
         {showModal && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -213,6 +337,11 @@ export default function FinanzasPage() {
                   ]}
                   placeholder="Seleccionar tipo..."
                 />
+                <label className="form-label">Cuenta</label>
+                <select className="form-input" value={newTx.accountId} onChange={(e) => setNewTx({ ...newTx, accountId: e.target.value })}>
+                  <option value="">Sin cuenta</option>
+                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name} (${a.balance.toLocaleString()})</option>)}
+                </select>
                 <label className="form-label">Monto ($)</label>
                 <input className="form-input" type="number" placeholder="0" value={newTx.amount} onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })} />
                 <label className="form-label">Categoría</label>
@@ -227,10 +356,7 @@ export default function FinanzasPage() {
                     if (uid) {
                       await addCustomTransactionCategory(uid, value);
                       setCustomTxCategories(prev => [...prev, value]);
-                      setAllCategories(prev => ({
-                        ...prev,
-                        expense: [...(prev.expense || []), value],
-                      }));
+                      setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
                     }
                   }}
                   customPlaceholder="Nombre de la categoría..."
@@ -246,7 +372,54 @@ export default function FinanzasPage() {
           </div>
         )}
 
+        {/* Modal Cuenta */}
+        {showAccountModal && (
+          <div className="modal-overlay" onClick={() => setShowAccountModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+              <div className="modal-header">
+                <h2 className="modal-title">Nueva Cuenta</h2>
+                <button className="modal-close" onClick={() => setShowAccountModal(false)}>✕</button>
+              </div>
+              <div className="modal-body">
+                <label className="form-label">Nombre</label>
+                <input className="form-input" type="text" placeholder="Ej: Cuenta Corriente" value={newAccount.name} onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
+                <label className="form-label">Tipo</label>
+                <CustomSelect
+                  value={newAccount.type}
+                  onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
+                  options={[
+                    { value: 'checking', label: 'Corriente', icon: '🏦' },
+                    { value: 'savings', label: 'Ahorro', icon: '💰' },
+                    { value: 'cash', label: 'Efectivo', icon: '💵' },
+                    { value: 'custom', label: 'Personalizada', icon: '💳' },
+                  ]}
+                  placeholder="Seleccionar tipo..."
+                />
+                <label className="form-label">Balance Inicial ($)</label>
+                <input className="form-input" type="number" placeholder="0" value={newAccount.balance} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-outline" onClick={() => setShowAccountModal(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={handleAddAccount}>Crear Cuenta</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <style>{`
+          .page-header-actions { display: flex; gap: 10px; }
+          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+          .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
+          .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+          .account-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+          .account-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+          .account-info { flex: 1; }
+          .account-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); display: block; }
+          .account-type { font-size: 0.6875rem; color: var(--text-tertiary); text-transform: capitalize; }
+          .account-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; }
+          .account-delete:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
+          .account-balance { font-size: 1.375rem; font-weight: 800; }
+          .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
           .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
           .summary-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
           .summary-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
@@ -264,6 +437,7 @@ export default function FinanzasPage() {
           .transactions-table tr:last-child td { border-bottom: none; }
           .transactions-table tr:hover { background: var(--bg-input); }
           .type-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.6875rem; font-weight: 600; }
+          .account-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.6875rem; font-weight: 600; background: var(--bg-input); color: var(--text-secondary); }
           .amount-cell { font-weight: 700; }
           .amount-income { color: var(--color-prosper-green); }
           .amount-expense { color: var(--color-error); }
@@ -281,7 +455,7 @@ export default function FinanzasPage() {
           .form-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: -6px; }
           .form-input { width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-primary); font-size: 0.875rem; outline: none; box-sizing: border-box; }
           .form-input:focus { border-color: var(--color-prosper-green); }
-          .btn { padding: 10px 20px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; }
+          .btn { padding: 10px 20px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
           .btn-primary { background: var(--color-prosper-green); color: white; }
           .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
           .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
@@ -293,13 +467,14 @@ export default function FinanzasPage() {
             .filter-bar { flex-direction: column; align-items: stretch; }
             .filter-select { width: 100%; }
             .transactions-table-wrapper { overflow-x: auto; }
-            .transactions-table { min-width: 600px; }
+            .transactions-table { min-width: 700px; }
+            .page-header { flex-direction: column; }
+            .page-header-actions { width: 100%; }
+            .page-header-actions .btn { flex: 1; justify-content: center; }
           }
           @media (max-width: 480px) {
             .summary-grid { grid-template-columns: 1fr; }
-            .page-header { flex-direction: column; }
-            .page-header-actions { width: 100%; }
-            .page-header-actions .btn { width: 100%; justify-content: center; }
+            .accounts-grid { grid-template-columns: 1fr; }
           }
         `}</style>
       </DashboardLayout>

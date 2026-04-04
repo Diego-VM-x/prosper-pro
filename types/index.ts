@@ -30,6 +30,7 @@ export interface Goal {
 export interface Transaction {
   id: string;
   ownerId: string;
+  accountId?: string;
   amount: number;
   type: 'income' | 'expense' | 'saving';
   category: string;
@@ -124,4 +125,18 @@ export interface UserCourseProgress {
   completedModules: string[];
   startedAt: number;
   completedAt?: number;
+}
+
+export type AccountType = 'checking' | 'savings' | 'cash' | 'custom';
+
+export interface FinancialAccount {
+  id: string;
+  ownerId: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  icon: string;
+  color: string;
+  createdAt: number;
+  updatedAt: number;
 }

@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Selects Estéticos + Custom Categories + Sparklines Reales + Finanzas Integradas)
+## Estado Actual (04 de Abril, 2026 - Cuentas Financieras + Transacciones Vinculadas + Finanzas Full Firebase)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -29,19 +29,21 @@
 - `app/cursos/page.tsx` → Listado de cursos con progreso
 - `app/cursos/[id]/page.tsx` → Detalle de curso con módulos
 - `app/calendario/page.tsx` → Calendario con recordatorios, tipos custom
-- `app/finanzas/page.tsx` → Transacciones con filtros, categorías custom, balance billetera
+- `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
 - `app/configuracion/page.tsx` → Perfil, tema, cuenta
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
 - `lib/contexts/GoalsContext.tsx` → Contexto reactivo de metas y recordatorios (onSnapshot)
 - `lib/seed.ts` → Vacío (sin datos de ejemplo)
 - `lib/csvParser.ts` → Parser e importador de CSV a Firestore
-- `lib/firestore/` → 8 módulos Firestore (goals, users, transactions, gamification, reminders, notifications, community, courses)
+- `lib/firestore/` → 9 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
+- `lib/firestore/accounts.ts` → CRUD de cuentas financieras, suscripción en tiempo real, balance total
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Cuentas Financieras + Transacciones Vinculadas (04/04/2026)**: Nueva colección `accounts` en Firestore. Tipo `FinancialAccount` con `checking`, `savings`, `cash`, `custom`. Cards de cuentas con iconos, colores y balances. Modal para crear cuentas personalizadas. Transacciones vinculadas a cuentas con `accountId`. Al crear transacción se actualiza balance automáticamente. Filtro por cuenta en tabla. Balance total calculado desde todas las cuentas. Cuentas por defecto creadas automáticamente.
 - ✅ **Selects Estéticos + Custom Categories + Sparklines Reales (04/04/2026)**: Nuevo componente `CustomSelect` con dropdown animado, iconos, check de selección y botón "Añadir personalizado". Categorías personalizadas en Metas, tipos en Calendario, categorías de transacción en Finanzas. Sparklines ahora usan transacciones reales de Firestore. Al agregar fondos a meta se crea transacción automática. Textos de monthlyGrowth y streakDays calculados desde datos reales.
 - ✅ **Overflow-X Global Fix (04/04/2026)**: Agregado `overflow-x: hidden` y `max-width: 100vw` a html/body en globals.css. Clase `.page-content-overflow-fix` en DashboardLayout. Elimina scroll horizontal en móvil para Finanzas y Metas.
 - ✅ **Dashboard Funcional (04/04/2026)**: Stat cards clickeables (navegan a /metas, /finanzas, /cursos). Círculo de progreso corregido (r=54, circumference=339.292). Botón "+ Añadir Nuevo Objetivo" navega a /metas. Milestone items clickeables.
@@ -102,6 +104,14 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 04/04/2026 - Cuentas Financieras + Transacciones Vinculadas
+- **Types**:
+  - `types/index.ts`: Nuevo tipo `FinancialAccount` con `id`, `ownerId`, `name`, `type`, `balance`, `icon`, `color`, `createdAt`, `updatedAt`. `AccountType` = 'checking' | 'savings' | 'cash' | 'custom'. `Transaction` ahora tiene `accountId?`.
+- **Firestore Accounts**:
+  - `lib/firestore/accounts.ts`: Nuevo módulo con `subscribeToAccounts`, `getAccountsByOwnerId`, `createAccount`, `updateAccount`, `deleteAccount`, `updateAccountBalance`, `getTotalBalance`, `createDefaultAccounts`.
+- **Finanzas Page**:
+  - `app/finanzas/page.tsx`: Reescritura completa. Grid de cuentas con cards estéticas. Selector de cuenta en filtros. Modal para crear cuentas (nombre, tipo, balance inicial). Transacciones vinculadas a cuentas con badge. Al crear/eliminar transacción se actualiza balance. Columna "Cuenta" en tabla. Filtro por cuenta. Balance total desde `getTotalBalance`.
+
 ### 04/04/2026 - Selects Estéticos + Custom Categories + Sparklines Reales
 - **CustomSelect Component**:
   - `app/components/CustomSelect.tsx`: Nuevo componente dropdown con animaciones, iconos, check de selección, input inline para añadir opciones personalizadas.
