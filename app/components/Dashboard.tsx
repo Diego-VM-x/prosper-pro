@@ -357,40 +357,48 @@ export function Dashboard() {
               accountHistory.length > 0 ? (
                 <div className="line-chart-container">
                   <svg className="line-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <defs>
-                      {accountHistory.map((acc) => (
-                        <linearGradient key={`grad-${acc.id}`} id={`grad-${acc.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor={acc.color} stopOpacity="0.2" />
-                          <stop offset="100%" stopColor={acc.color} stopOpacity="0" />
-                        </linearGradient>
-                      ))}
-                    </defs>
-                    {/* Grid */}
-                    {[20, 40, 60, 80].map((y) => (
-                      <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="var(--border-default)" strokeWidth="0.3" strokeDasharray="2,2" />
+                    {/* Vertical grid bands (alternating) */}
+                    {accountHistory.length > 0 && accountHistory[0].balances.map((_, i) => {
+                      const numPoints = accountHistory[0].balances.length;
+                      const xStart = numPoints > 1 ? (i / (numPoints - 1)) * 100 : 0;
+                      const xEnd = numPoints > 1 ? ((i + 0.5) / (numPoints - 1)) * 100 : 100;
+                      if (i % 2 === 0) {
+                        return <rect key={`band-${i}`} x={xStart} y="5" width={xEnd - xStart} height="80" fill="var(--bg-input)" opacity="0.5" />;
+                      }
+                      return null;
+                    })}
+                    {/* Horizontal grid lines */}
+                    {[10, 30, 50, 70, 90].map((y) => (
+                      <line key={y} x1="8" y1={y} x2="100" y2={y} stroke="var(--border-default)" strokeWidth="0.3" />
                     ))}
-                    {/* Lines per account */}
+                    {/* Y-axis labels */}
+                    {(() => {
+                      const maxVal = Math.max(...accountHistory.flatMap(a => a.balances), 1);
+                      const minVal = Math.min(...accountHistory.flatMap(a => a.balances), 0);
+                      const range = maxVal - minVal || 1;
+                      return [0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
+                        const val = minVal + range * (1 - pct);
+                        const y = 10 + pct * 80;
+                        return (
+                          <text key={`yl-${i}`} x="7" y={y + 1.5} textAnchor="end" fill="var(--text-tertiary)" fontSize="4" fontWeight="600">
+                            {val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val.toFixed(0)}
+                          </text>
+                        );
+                      });
+                    })()}
+                    {/* Lines per account (no area fill, thicker lines) */}
                     {accountHistory.map((acc) => {
                       const maxVal = Math.max(...accountHistory.flatMap(a => a.balances), 1);
                       const minVal = Math.min(...accountHistory.flatMap(a => a.balances), 0);
                       const range = maxVal - minVal || 1;
                       const numPoints = acc.balances.length;
                       const points = acc.balances.map((v, i) => {
-                        const x = numPoints > 1 ? (i / (numPoints - 1)) * 100 : 50;
+                        const x = 10 + (numPoints > 1 ? (i / (numPoints - 1)) * 88 : 54);
                         const y = 90 - ((v - minVal) / range) * 80;
                         return `${x},${y}`;
                       }).join(' ');
-                      const areaPts = `0,90 ${points} 100,90`;
                       return (
-                        <g key={acc.id}>
-                          <polygon points={areaPts} fill={`url(#grad-${acc.id})`} />
-                          <polyline points={points} fill="none" stroke={acc.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          {acc.balances.map((v, i) => {
-                            const x = numPoints > 1 ? (i / (numPoints - 1)) * 100 : 50;
-                            const y = 90 - ((v - minVal) / range) * 80;
-                            return <circle key={i} cx={x} cy={y} r="1.5" fill={acc.color} />;
-                          })}
-                        </g>
+                        <polyline key={acc.id} points={points} fill="none" stroke={acc.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       );
                     })}
                   </svg>
@@ -661,9 +669,9 @@ export function Dashboard() {
         .period-btn:hover:not(.active) { color: var(--text-primary); }
 
         /* Line Chart (Cuentas historial) */
-        .line-chart-container { position: relative; height: 260px; padding-top: 8px; }
-        .line-chart-svg { width: 100%; height: 200px; }
-        .chart-x-axis { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 0; }
+        .line-chart-container { position: relative; height: 280px; padding-top: 8px; }
+        .line-chart-svg { width: 100%; height: 220px; }
+        .chart-x-axis { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 10px; }
         .chart-day-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
         .chart-legend-inline { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
