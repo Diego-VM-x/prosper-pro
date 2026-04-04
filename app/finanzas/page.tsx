@@ -130,25 +130,28 @@ export default function FinanzasPage() {
 
   const handleAddTransaction = async () => {
     if (!newTx.amount || !newTx.description) return;
-    const tx: Transaction = {
-      id: 't' + Date.now(),
+    const txData: any = {
       ownerId: user?.uid || 'local',
-      accountId: newTx.accountId || undefined,
       amount: Number(newTx.amount),
       type: newTx.type,
       category: newTx.category,
       description: newTx.description,
       date: Date.now(),
     };
+    // Solo incluir accountId si hay una cuenta seleccionada (evita undefined)
+    if (newTx.accountId) {
+      txData.accountId = newTx.accountId;
+    }
+    const tx: Transaction = { id: 't' + Date.now(), ...txData };
     setTransactions((prev) => [tx, ...prev]);
     if (user?.uid) {
       try {
-        await createTransaction(tx);
+        await createTransaction(txData);
         // Actualizar balance de la cuenta si hay una seleccionada
-        if (tx.accountId) {
+        if (newTx.accountId) {
           const { updateAccountBalance } = await import('@/lib/firestore/accounts');
           const amount = tx.type === 'expense' ? -tx.amount : tx.amount;
-          await updateAccountBalance(tx.accountId, amount);
+          await updateAccountBalance(newTx.accountId, amount);
         }
       } catch (e) { console.error(e); }
     }
