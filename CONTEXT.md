@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Responsive Mobile Completo + Dashboard Grid + Topbar Mobile)
+## Estado Actual (04 de Abril, 2026 - Compatibilidad Redmi 9A + Viewport Fix + Tipografía Clamp)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -180,6 +180,15 @@
     - Mobile 768px: `.stats-grid` en 2 columnas, `.main-grid` y `.bottom-grid` en 1 columna, stat-cards con `aspect-ratio: auto`, padding reducido, fuentes más pequeñas.
     - Mobile 480px: Stat-cards más compactas (min-height 70px, padding 6px), fuentes reducidas, topbar con gap mínimo, elementos con `flex-shrink: 0`.
     - Topbar mobile: Logo, collapse-btn, menu-btn con `flex-shrink: 0` para no aplastarse.
+  
+  ### 04/04/2026 - Compatibilidad Redmi 9A / Gama Baja
+  - **Viewport**: `maximumScale: 1` en layout.tsx para evitar zoom accidental.
+  - **Box-sizing**: `border-box` global ya aplicado.
+  - **Gap Fallback**: Margin negativo en grids + margin positivo en hijos como fallback para navegadores antiguos sin soporte de `gap`.
+  - **Tipografía Clamp**: Todas las clases `.text-*` usan `clamp()` para escalado automático según viewport.
+  - **100dvh Fix**: `height: 100dvh` + `height: -webkit-fill-available` para barras de navegación dinámicas en móviles.
+  - **Flex-shrink**: Iconos de topbar, logo y botones con `flex-shrink: 0` para evitar aplastamiento.
+  - **Min-width**: `.topbar-title-dynamic` con `min-width: 60px`, grids con `min-width: 0` para evitar desbordamiento.
 
 ### 04/04/2026
 - **Overflow-X Fix**:
