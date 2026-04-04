@@ -60,7 +60,7 @@ export function Dashboard() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [chartView, setChartView] = useState<'cuentas' | 'metas'>('cuentas');
-  const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month'>('week');
+  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
 
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
 
@@ -306,14 +306,13 @@ export function Dashboard() {
                 </h3>
                 <p className="dash-card-subtitle">
                   {chartView === 'cuentas'
-                    ? 'Ingresos vs. Gastos ' + (chartPeriod === 'day' ? 'Hoy (cada hora)' : chartPeriod === 'week' ? 'Últimos 7 días' : 'Último mes')
+                    ? 'Ingresos vs. Gastos ' + (chartPeriod === 'week' ? 'Últimos 7 días' : 'Último mes')
                     : '4 metas más recientemente actualizadas'}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {chartView === 'cuentas' && (
                   <div className="chart-period-toggle">
-                    <button className={`period-btn ${chartPeriod === 'day' ? 'active' : ''}`} onClick={() => setChartPeriod('day')} title="Hoy">Día</button>
                     <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')} title="Semana">Semana</button>
                     <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')} title="Mes">Mes</button>
                   </div>

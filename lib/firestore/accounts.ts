@@ -57,8 +57,14 @@ export async function updateAccount(accountId: string, updates: Partial<Financia
   await updateDoc(doc(db, COLLECTION, accountId), updates);
 }
 
-// Eliminar cuenta
+// Eliminar cuenta y todas sus transacciones
 export async function deleteAccount(accountId: string) {
+  // Eliminar todas las transacciones de esta cuenta
+  const txsQuery = query(collection(db, 'transactions'), where('accountId', '==', accountId));
+  const txsSnapshot = await getDocs(txsQuery);
+  const deletePromises = txsSnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+  await Promise.all(deletePromises);
+  // Eliminar la cuenta
   await deleteDoc(doc(db, COLLECTION, accountId));
 }
 

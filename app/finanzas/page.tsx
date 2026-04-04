@@ -62,13 +62,12 @@ export default function FinanzasPage() {
     }
     return false;
   });
-  const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month'>('week');
+  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
 
   // Datos para gráfico ingresos vs gastos
   const incomeVsExpenseData = React.useMemo(() => {
     const now = new Date();
     const periodConfig = {
-      day: { count: 24, getLabel: (i: number) => `${i}:00`, ms: 3600000 },
       week: { count: 7, getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
       month: { count: 4, getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
     };
@@ -412,7 +411,6 @@ export default function FinanzasPage() {
               <p className="chart-card-subtitle">Ingresos vs. Gastos {chartPeriod === 'week' ? 'Diarios' : 'Semanales'}</p>
             </div>
             <div className="chart-period-toggle">
-              <button className={`period-btn ${chartPeriod === 'day' ? 'active' : ''}`} onClick={() => setChartPeriod('day')}>Día</button>
               <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')}>Semana</button>
               <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')}>Mes</button>
             </div>
