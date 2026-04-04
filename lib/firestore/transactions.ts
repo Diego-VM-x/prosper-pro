@@ -21,7 +21,8 @@ export function subscribeToTransactions(ownerId: string, callback: (transactions
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const transactions: Transaction[] = [];
     snapshot.forEach((docSnap) => {
-      transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+      const tx = { id: docSnap.id, ...docSnap.data() } as Transaction;
+      if (!tx.archived) transactions.push(tx);
     });
     transactions.sort((a, b) => b.date - a.date);
     callback(transactions);
@@ -101,7 +102,8 @@ export async function getTransactionsByOwnerId(ownerId: string): Promise<Transac
   const snapshot = await getDocs(q);
   const transactions: Transaction[] = [];
   snapshot.forEach((docSnap) => {
-    transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+    const tx = { id: docSnap.id, ...docSnap.data() } as Transaction;
+    if (!tx.archived) transactions.push(tx);
   });
   transactions.sort((a, b) => b.date - a.date);
   return transactions;

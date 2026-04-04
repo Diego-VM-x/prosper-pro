@@ -68,6 +68,17 @@ export async function deleteAccount(accountId: string) {
   await deleteDoc(doc(db, COLLECTION, accountId));
 }
 
+// Borrar historial de transacciones de una cuenta pero mantener el balance
+// Las transacciones se marcan como 'archived' en lugar de eliminarse
+export async function clearAccountHistory(accountId: string) {
+  const txsQuery = query(collection(db, 'transactions'), where('accountId', '==', accountId));
+  const txsSnapshot = await getDocs(txsQuery);
+  const updatePromises = txsSnapshot.docs.map((docSnap) =>
+    updateDoc(docSnap.ref, { archived: true, archivedAt: Date.now() })
+  );
+  await Promise.all(updatePromises);
+}
+
 // Actualizar balance de una cuenta
 export async function updateAccountBalance(accountId: string, amount: number) {
   await updateDoc(doc(db, COLLECTION, accountId), {

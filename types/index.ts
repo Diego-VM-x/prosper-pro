@@ -36,6 +36,8 @@ export interface Transaction {
   category: string;
   description: string;
   date: number;
+  archived?: boolean;
+  archivedAt?: number;
 }
 
 export interface WeeklyData {

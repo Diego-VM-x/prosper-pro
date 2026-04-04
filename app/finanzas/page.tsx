@@ -7,10 +7,10 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
-import { subscribeToAccounts, createAccount, deleteAccount, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
-import { IconPlus, IconX, IconTrash, IconWallet } from '@/app/components/icons';
+import { IconPlus, IconX, IconTrash, IconWallet, IconArchive } from '@/app/components/icons';
 import { LineChart } from '@/app/components/LineChart';
 import type { Transaction, FinancialAccount, AccountType } from '@/types';
 
@@ -303,12 +303,28 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: 'Eliminar Cuenta',
-      message: `¿Eliminar "${acc?.name}"? Las transacciones asociadas no se eliminarán.`,
+      message: `¿Eliminar "${acc?.name}" y todas sus transacciones? Esta acción no se puede deshacer.`,
       variant: 'danger',
       confirmText: 'Eliminar',
       onConfirm: async () => {
         await deleteAccount(id);
         success('Cuenta eliminada');
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const handleClearHistory = async (id: string) => {
+    const acc = accounts.find((a) => a.id === id);
+    setConfirmState({
+      isOpen: true,
+      title: 'Borrar Historial',
+      message: `¿Borrar el historial de transacciones de "${acc?.name}"? El balance se mantendrá intacto.`,
+      variant: 'warning',
+      confirmText: 'Borrar historial',
+      onConfirm: async () => {
+        await clearAccountHistory(id);
+        success('Historial borrado');
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
     });
@@ -369,7 +385,10 @@ export default function FinanzasPage() {
                   <span className="account-name">{acc.name}</span>
                   <span className="account-type">{acc.type}</span>
                 </div>
-                <button className="account-delete" onClick={() => handleDeleteAccount(acc.id)}><IconTrash width={14} /></button>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Borrar historial"><IconArchive width={14} /></button>
+                  <button className="account-delete" onClick={() => handleDeleteAccount(acc.id)} title="Eliminar cuenta"><IconTrash width={14} /></button>
+                </div>
               </div>
               <div className="account-balance" style={{ color: acc.color }}>
                 {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
@@ -632,6 +651,8 @@ export default function FinanzasPage() {
           .account-info { flex: 1; }
           .account-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); display: block; }
           .account-type { font-size: 0.6875rem; color: var(--text-tertiary); text-transform: capitalize; }
+          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; }
+          .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
           .account-delete { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; }
           .account-delete:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
           .account-balance { font-size: 1.375rem; font-weight: 800; }

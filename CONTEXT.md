@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Gráfica Financiera Recharts + Cuentas + Transacciones + Finanzas Full Firebase)
+## Estado Actual (04 de Abril, 2026 - Eliminar Cuentas con Transacciones + Borrar Historial + Gráfica Recharts)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -40,8 +40,8 @@
 - `lib/firestore/` → 9 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
-- `lib/firestore/accounts.ts` → CRUD de cuentas financieras, suscripción en tiempo real, balance total, deleteAccountWithTransactions
-- `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
+- `lib/firestore/accounts.ts` → CRUD de cuentas financieras, suscripción en tiempo real, balance total, deleteAccount, clearAccountHistory
+- `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
 - ✅ **Cuentas Financieras + Transacciones Vinculadas (04/04/2026)**: Nueva colección `accounts` en Firestore. Tipo `FinancialAccount` con `checking`, `savings`, `cash`, `custom`. Cards de cuentas con iconos, colores y balances. Modal para crear cuentas personalizadas. Transacciones vinculadas a cuentas con `accountId`. Al crear transacción se actualiza balance automáticamente. Filtro por cuenta en tabla. Balance total calculado desde todas las cuentas. Cuentas por defecto creadas automáticamente.
@@ -136,6 +136,18 @@
     - `app/components/FinancialStatusChart.tsx`: Nuevo componente con AreaChart de Recharts. Curvas monotone, degradado opacity 0.2→0.0. onSnapshot de Firestore para datos en tiempo real. Selectores de rango (1D, 1S, 1M, 3M, 6M, YTD). CustomTooltip con formato moneda EUR. Skeleton loading. ResponsiveContainer. Limpieza de listener con unsubscribe().
   - **Dashboard Integration**:
     - `app/components/Dashboard.tsx`: Reemplazado LineChart por FinancialStatusChart. Eliminadas variables no usadas (chartView, chartPeriod, weeklyData, incomeVsExpenseData). Limpieza de imports.
+  
+  ### 04/04/2026 - Eliminar Cuentas + Borrar Historial de Transacciones
+  - **Types**:
+    - `types/index.ts`: Agregados campos `archived?: boolean` y `archivedAt?: number` a `Transaction`.
+  - **Firestore Transactions**:
+    - `lib/firestore/transactions.ts`: `subscribeToTransactions` y `getTransactionsByOwnerId` ahora filtran transacciones con `archived: true`.
+  - **Firestore Accounts**:
+    - `lib/firestore/accounts.ts`: Nueva función `clearAccountHistory(accountId)` que marca transacciones como archivadas en lugar de eliminarlas. `deleteAccount` elimina cuenta + transacciones.
+  - **Finanzas Page**:
+    - `app/finanzas/page.tsx`: Botón de borrar historial (IconArchive) junto al de eliminar cuenta. Confirmación separada para cada acción. Mensaje corregido en eliminación de cuenta.
+  - **Icons**:
+    - `app/components/icons.tsx`: Nuevo icono `IconArchive` (caja de archivo).
 
 ### 04/04/2026
 - **Overflow-X Fix**:
