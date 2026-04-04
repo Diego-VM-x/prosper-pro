@@ -268,7 +268,6 @@ export function Dashboard() {
                   <div className="goal-card" key={goal.id}>
                     <div className="goal-card-header">
                       <span className="goal-card-title">{goal.title}</span>
-                      <span className="goal-card-pct" style={{ color: goalColor }}>{Math.round(pct)}%</span>
                     </div>
                     <div className="goal-progress-bar">
                       <div className="goal-progress-fill" style={{ width: `${pct}%`, background: goalColor }} />
