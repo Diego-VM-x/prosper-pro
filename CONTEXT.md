@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Ayuda Expandida: 40+ FAQs + Accesos Rápidos + Filtros)
+## Estado Actual (04 de Abril, 2026 - Comunidad con Chat en Tiempo Real + Logros con Tareas + Nivel 30)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -32,15 +32,15 @@
 - `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
 - `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
 - `app/configuracion/page.tsx` → Perfil, tema, cuenta
-- `app/logros/page.tsx` → Próximamente (logros y medallas)
-- `app/ayuda/page.tsx` → Próximamente (FAQ, guías, soporte)
-- `app/comunidad/page.tsx` → Próximamente (ranking, miembros, actividad)
+- `app/logros/page.tsx` → Logros con datos reales de Firebase + tareas diarias/semanales repetitivas + nivel máximo 30
+- `app/ayuda/page.tsx` → FAQ con 40+ preguntas, accesos rápidos, filtros por categoría
+- `app/comunidad/page.tsx` → Chat en tiempo real con rooms, menciones @, likes, sidebar desplegable
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
 - `lib/contexts/GoalsContext.tsx` → Contexto reactivo de metas y recordatorios (onSnapshot)
 - `lib/seed.ts` → Vacío (sin datos de ejemplo)
 - `lib/csvParser.ts` → Parser e importador de CSV a Firestore
-- `lib/firestore/` → 9 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses)
+- `lib/firestore/` → 11 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses, tasks, communityMessages)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
 - `lib/firestore/accounts.ts` → CRUD de cuentas, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory
@@ -100,6 +100,16 @@
   - Dashboard: Eliminado botón "Importar Datos" y modal CSV. Flechas (↗) de tarjetas ahora son funcionales con `useRouter` → `/metas`, `/finanzas`, `/cursos`.
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
+
+### 04/04/2026 - Diseños de Logros, Comunidad y Ayuda
+- **Logros Page Rediseñada**:
+  - `app/logros/page.tsx`: Reescritura completa. Sin datos de ejemplo, inicia vacío. 19 logros basados en acciones reales (transacciones, cuentas, metas). Conexión con `getTransactionsByOwnerId`, `getAccountsByOwnerId`, `getGoalsByOwnerId`. Progreso calculado desde datos reales de Firestore.
+- **Comunidad Page Rediseñada**:
+  - `app/comunidad/page.tsx`: Sistema de chat en tiempo real con arquitectura de rooms. Sidebar desplegable con lista de comunidades. Ventana de chat con mensajes, likes, menciones @. Optimizado para Redmi 9A (text-sm, avatares w-8, bordes finos).
+- **Tareas Repetitivas + Nivel 30**:
+  - `lib/firestore/tasks.ts`: Nuevo módulo con 5 tareas diarias y 5 semanales. Cálculo de progreso desde transacciones reales. `createOrUpdateTaskProgress`.
+  - `lib/firestore/gamification.ts`: `MAX_LEVEL = 30`. Al llegar a nivel 30 sigue ganando XP sin subir más.
+  - `types/index.ts`: Nuevos tipos `DailyTask`, `TaskProgress`, `TaskFrequency`, `TaskCategory`, `Community`, `CommunityMessage`, `CommunityRoomMember`.
 
 ### 02/04/2026 - Reset Total de Firebase
 - **Reset Firebase Completo**: Eliminado todo rastro de `userId` y reemplazado por `ownerId` en todos los módulos Firestore, tipos TypeScript, reglas de seguridad y componentes de la app.
