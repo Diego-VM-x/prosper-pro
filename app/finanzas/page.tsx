@@ -21,7 +21,6 @@ const ACCOUNT_TYPE_COLORS: Record<string, string> = {
   checking: '#3B82F6',
   savings: '#3DCC8E',
   cash: '#F59E0B',
-  custom: '#8B5CF6',
 };
 
 const TYPE_ICONS: Record<string, string> = { income: '📥', expense: '📤', saving: '💰' };
@@ -48,6 +47,8 @@ export default function FinanzasPage() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '' });
   const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0 });
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
 
@@ -175,6 +176,44 @@ export default function FinanzasPage() {
     }
   };
 
+  const handleTransfer = async () => {
+    if (!transfer.amount || !transfer.fromAccountId || !transfer.toAccountId) return;
+    if (transfer.fromAccountId === transfer.toAccountId) return;
+    const amount = Number(transfer.amount);
+    if (amount <= 0) return;
+
+    const fromAcc = accounts.find((a) => a.id === transfer.fromAccountId);
+    if (!fromAcc || fromAcc.balance < amount) {
+      alert('Fondos insuficientes en la cuenta de origen.');
+      return;
+    }
+
+    try {
+      const { updateAccountBalance } = await import('@/lib/firestore/accounts');
+      // Debitar de origen
+      await updateAccountBalance(transfer.fromAccountId, -amount);
+      // Acreditar en destino
+      await updateAccountBalance(transfer.toAccountId, amount);
+
+      // Crear transacciones de registro
+      const txData: any = {
+        ownerId: user?.uid || 'local',
+        amount,
+        type: 'saving',
+        category: 'Transferencia',
+        description: `Transferencia: ${fromAcc.name} → ${accounts.find((a) => a.id === transfer.toAccountId)?.name}`,
+        date: Date.now(),
+        accountId: transfer.fromAccountId,
+        toAccountId: transfer.toAccountId,
+      };
+      await createTransaction(txData);
+      setTransactions((prev) => [{ id: 't' + Date.now(), ...txData }, ...prev]);
+
+      setShowTransferModal(false);
+      setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
+    } catch (e) { console.error(e); }
+  };
+
   const handleAddAccount = async () => {
     if (!newAccount.name || !user?.uid) return;
     const acc: Omit<FinancialAccount, 'id'> = {
@@ -182,7 +221,7 @@ export default function FinanzasPage() {
       name: newAccount.name,
       type: newAccount.type,
       balance: newAccount.balance,
-      icon: newAccount.type === 'checking' ? '🏦' : newAccount.type === 'savings' ? '💰' : newAccount.type === 'cash' ? '💵' : '💳',
+      icon: newAccount.type === 'checking' ? '🏦' : newAccount.type === 'savings' ? '💰' : '💵',
       color: ACCOUNT_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -216,6 +255,9 @@ export default function FinanzasPage() {
           <div className="page-header-actions">
             <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
               <IconPlus width={14} /> Nueva Cuenta
+            </button>
+            <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
+              <IconWallet width={14} /> Transferir
             </button>
             <button className="btn btn-primary" onClick={() => setShowModal(true)}>
               <IconPlus width={14} /> Nueva Transacción
@@ -375,6 +417,36 @@ export default function FinanzasPage() {
           </div>
         )}
 
+        {/* Modal Transferencia */}
+        {showTransferModal && (
+          <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+              <div className="modal-header">
+                <h2 className="modal-title">Transferir entre Cuentas</h2>
+                <button className="modal-close" onClick={() => setShowTransferModal(false)}>✕</button>
+              </div>
+              <div className="modal-body">
+                <label className="form-label">De</label>
+                <select className="form-input" value={transfer.fromAccountId} onChange={(e) => setTransfer({ ...transfer, fromAccountId: e.target.value })}>
+                  <option value="">Seleccionar cuenta origen</option>
+                  {accounts.map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name} (${a.balance.toLocaleString()})</option>)}
+                </select>
+                <label className="form-label">A</label>
+                <select className="form-input" value={transfer.toAccountId} onChange={(e) => setTransfer({ ...transfer, toAccountId: e.target.value })}>
+                  <option value="">Seleccionar cuenta destino</option>
+                  {accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => <option key={a.id} value={a.id}>{a.icon} {a.name} (${a.balance.toLocaleString()})</option>)}
+                </select>
+                <label className="form-label">Monto ($)</label>
+                <input className="form-input" type="number" placeholder="0" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-outline" onClick={() => setShowTransferModal(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={handleTransfer}>Transferir</button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal Cuenta */}
         {showAccountModal && (
           <div className="modal-overlay" onClick={() => setShowAccountModal(false)}>
@@ -394,7 +466,6 @@ export default function FinanzasPage() {
                     { value: 'checking', label: 'Corriente', icon: '🏦' },
                     { value: 'savings', label: 'Ahorro', icon: '💰' },
                     { value: 'cash', label: 'Efectivo', icon: '💵' },
-                    { value: 'custom', label: 'Personalizada', icon: '💳' },
                   ]}
                   placeholder="Seleccionar tipo..."
                 />

@@ -127,7 +127,7 @@ export interface UserCourseProgress {
   completedAt?: number;
 }
 
-export type AccountType = 'checking' | 'savings' | 'cash' | 'custom';
+export type AccountType = 'checking' | 'savings' | 'cash';
 
 export interface FinancialAccount {
   id: string;
