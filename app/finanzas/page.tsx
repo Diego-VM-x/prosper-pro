@@ -62,43 +62,34 @@ export default function FinanzasPage() {
     }
     return false;
   });
-  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
+  const [chartPeriod, setChartPeriod] = useState<'day' | 'week' | 'month'>('week');
 
   // Datos para gráfico ingresos vs gastos
   const incomeVsExpenseData = React.useMemo(() => {
     const now = new Date();
-    const days = chartPeriod === 'week' ? 7 : 30;
-    const labels = chartPeriod === 'week'
-      ? ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
-      : Array.from({ length: 4 }, (_, i) => `Sem ${i + 1}`);
+    const periodConfig = {
+      day: { count: 24, getLabel: (i: number) => `${i}:00`, ms: 3600000 },
+      week: { count: 7, getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
+      month: { count: 4, getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
+    };
+    const cfg = periodConfig[chartPeriod];
+    const labels = Array.from({ length: cfg.count }, (_, i) => cfg.getLabel(i));
 
     const incomeData: number[] = [];
     const expenseData: number[] = [];
 
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
+    for (let i = cfg.count - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * cfg.ms);
       d.setHours(0, 0, 0, 0);
-      const dayEnd = d.getTime() + 86400000;
+      const periodEnd = d.getTime() + cfg.ms;
 
-      const dayTxs = transactions.filter((t) => {
+      const periodTxs = transactions.filter((t) => {
         const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
-        return txDate >= d.getTime() && txDate < dayEnd;
+        return txDate >= d.getTime() && txDate < periodEnd;
       });
 
-      const dayIncome = dayTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-      const dayExpense = dayTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-
-      if (chartPeriod === 'week') {
-        incomeData.push(dayIncome);
-        expenseData.push(dayExpense);
-      } else {
-        const weekIdx = Math.floor(i / 7);
-        if (!incomeData[3 - weekIdx]) incomeData[3 - weekIdx] = 0;
-        if (!expenseData[3 - weekIdx]) expenseData[3 - weekIdx] = 0;
-        incomeData[3 - weekIdx] += dayIncome;
-        expenseData[3 - weekIdx] += dayExpense;
-      }
+      incomeData.push(periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
+      expenseData.push(periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
     }
 
     return {
@@ -421,6 +412,7 @@ export default function FinanzasPage() {
               <p className="chart-card-subtitle">Ingresos vs. Gastos {chartPeriod === 'week' ? 'Diarios' : 'Semanales'}</p>
             </div>
             <div className="chart-period-toggle">
+              <button className={`period-btn ${chartPeriod === 'day' ? 'active' : ''}`} onClick={() => setChartPeriod('day')}>Día</button>
               <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')}>Semana</button>
               <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')}>Mes</button>
             </div>

@@ -203,59 +203,42 @@ export function Dashboard() {
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
-  // Historial de cuentas: balance acumulado según período seleccionado
-  const accountHistory = React.useMemo(() => {
-    if (accounts.length === 0 || transactions.length === 0) return [];
+  // Datos para gráfico ingresos vs gastos (igual que finanzas)
+  const incomeVsExpenseData = React.useMemo(() => {
     const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    // Configurar períodos
     const periodConfig = {
-      day: { count: 24, label: 'h', getLabel: (i: number) => `${i}:00`, ms: 3600000 },
-      week: { count: 7, label: 'd', getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
-      month: { count: 4, label: 'sem', getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
+      day: { count: 24, getLabel: (i: number) => `${i}:00`, ms: 3600000 },
+      week: { count: 7, getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
+      month: { count: 4, getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
     };
     const cfg = periodConfig[chartPeriod];
+    const labels = Array.from({ length: cfg.count }, (_, i) => cfg.getLabel(i));
 
-    const periods: { date: number; label: string }[] = [];
+    const incomeData: number[] = [];
+    const expenseData: number[] = [];
+
     for (let i = cfg.count - 1; i >= 0; i--) {
       const d = new Date(now.getTime() - i * cfg.ms);
-      periods.push({ date: d.getTime(), label: cfg.getLabel(i) });
+      d.setHours(0, 0, 0, 0);
+      const periodEnd = d.getTime() + cfg.ms;
+
+      const periodTxs = transactions.filter((t) => {
+        const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
+        return txDate >= d.getTime() && txDate < periodEnd;
+      });
+
+      incomeData.push(periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
+      expenseData.push(periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
     }
 
-    const typeColors: Record<string, string> = {
-      checking: '#3B82F6',
-      savings: '#3DCC8E',
-      cash: '#F59E0B',
+    return {
+      datasets: [
+        { label: 'Ingresos', color: '#4edea3', data: incomeData },
+        { label: 'Gastos', color: '#ffb3af', data: expenseData },
+      ],
+      labels,
     };
-
-    return accounts.map((acc) => {
-      const accTxs = transactions
-        .filter((t) => t.accountId === acc.id)
-        .sort((a, b) => a.date - b.date);
-
-      const balances: number[] = [];
-      let runningBalance = acc.balance;
-
-      for (let i = cfg.count - 1; i >= 0; i--) {
-        const periodStart = periods[cfg.count - 1 - i].date;
-        const periodEnd = periodStart + cfg.ms;
-        const periodTxs = accTxs.filter((t) => {
-          const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
-          return txDate >= periodStart && txDate < periodEnd;
-        });
-        const periodNet = periodTxs.reduce((sum, t) => {
-          if (t.type === 'income') return sum + t.amount;
-          if (t.type === 'expense') return sum - t.amount;
-          return sum;
-        }, 0);
-        runningBalance -= periodNet;
-        balances.unshift(runningBalance + periodNet);
-      }
-
-      return { id: acc.id, name: acc.name, icon: acc.icon, color: typeColors[acc.type] || '#3DCC8E', balances };
-    });
-  }, [accounts, transactions, chartPeriod]);
+  }, [transactions, chartPeriod]);
 
   // 4 metas más recientemente actualizadas
   const recentGoals = React.useMemo(() => {
@@ -319,13 +302,11 @@ export function Dashboard() {
             <div className="dash-card-header">
               <div>
                 <h3 className="dash-card-title">
-                  {chartView === 'cuentas' ? 'Historial de Cuentas' : 'Progreso de Metas'}
+                  {chartView === 'cuentas' ? 'Flujo Financiero' : 'Progreso de Metas'}
                 </h3>
                 <p className="dash-card-subtitle">
                   {chartView === 'cuentas'
-                    ? chartPeriod === 'day' ? 'Movimiento de hoy (cada hora)'
-                      : chartPeriod === 'week' ? 'Últimos 7 días'
-                      : 'Último mes (por semana)'
+                    ? 'Ingresos vs. Gastos ' + (chartPeriod === 'day' ? 'Hoy (cada hora)' : chartPeriod === 'week' ? 'Últimos 7 días' : 'Último mes')
                     : '4 metas más recientemente actualizadas'}
                 </p>
               </div>
@@ -355,32 +336,13 @@ export function Dashboard() {
             </div>
 
             {chartView === 'cuentas' ? (
-              accountHistory.length > 0 ? (
-                <LineChart
-                  datasets={accountHistory.map(acc => ({
-                    label: `${acc.icon} ${acc.name}`,
-                    color: acc.color,
-                    data: acc.balances,
-                  }))}
-                  labels={(() => {
-                    const cfg = {
-                      day: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-                      week: ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'],
-                      month: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
-                    };
-                    return cfg[chartPeriod];
-                  })()}
-                  height={280}
-                  showArea={true}
-                  strokeWidth={3}
-                />
-              ) : (
-                <div className="chart-empty">
-                  <span style={{ fontSize: '2rem' }}>🏦</span>
-                  <p>No hay datos de movimiento</p>
-                  <button className="chart-empty-btn" onClick={() => router.push('/finanzas')}>Ir a Finanzas</button>
-                </div>
-              )
+              <LineChart
+                datasets={incomeVsExpenseData.datasets}
+                labels={incomeVsExpenseData.labels}
+                height={280}
+                showArea={true}
+                strokeWidth={3}
+              />
             ) : (
               recentGoals.length > 0 ? (
                 <div className="hbar-chart">
