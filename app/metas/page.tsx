@@ -152,7 +152,6 @@ export default function MetasPage() {
   return (
     <ProtectedRoute>
     <DashboardLayout>
-      <div className="metas-wrapper">
       <div className="page-header animate-fadeInDown">
         <div className="page-header-left">
           <h1 className="page-title">Mis Metas</h1>
@@ -407,10 +406,8 @@ export default function MetasPage() {
           </div>
         </div>
       )}
-      </div>
 
       <style>{`
-        .metas-wrapper { max-width: 100%; overflow-x: hidden; }
         /* === STATS BAR === */
         .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; }

@@ -85,7 +85,6 @@ export default function FinanzasPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="finanzas-wrapper">
         <div className="page-header">
           <div className="page-header-left">
             <h1 className="page-title">Finanzas</h1>
@@ -192,7 +191,6 @@ export default function FinanzasPage() {
         )}
 
         <style>{`
-          .finanzas-wrapper { max-width: 100%; overflow-x: hidden; }
           .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
           .summary-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
           .summary-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
@@ -248,7 +246,6 @@ export default function FinanzasPage() {
             .page-header-actions .btn { width: 100%; justify-content: center; }
           }
         `}</style>
-        </div>
       </DashboardLayout>
     </ProtectedRoute>
   );

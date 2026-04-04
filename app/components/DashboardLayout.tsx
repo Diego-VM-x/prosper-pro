@@ -30,7 +30,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="main-wrapper">
           <Topbar onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} isCollapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)} />
           <main className="main-content">
-            <div className="page-content">
+            <div className="page-content page-content-overflow-fix">
               {children}
             </div>
           </main>
