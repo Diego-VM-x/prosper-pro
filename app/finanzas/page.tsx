@@ -5,11 +5,19 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { CustomSelect } from '@/app/components/CustomSelect';
+import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import type { Transaction } from '@/types';
 
-// Sin datos por defecto
+const DEFAULT_CATEGORIES: Record<string, string[]> = {
+  income: ['💰 Salario', '💼 Freelance', '📊 Inversiones', '🏢 Negocio', '📌 Otro'],
+  expense: ['🍔 Comida', '🚗 Transporte', '🏠 Vivienda', '🎬 Entretenimiento', '💊 Salud', '🎓 Educación', '📌 Otro'],
+  saving: ['💵 Ahorro', '📈 Inversión', '🛡️ Fondo Emergencia', '📌 Otro'],
+};
 
-const CATEGORIES = {
+const TYPE_ICONS: Record<string, string> = { income: '📥', expense: '📤', saving: '💰' };
+
+const CATEGORIES: Record<string, string[]> = {
   income: ['Salario', 'Freelance', 'Inversiones', 'Negocio', 'Otro'],
   expense: ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Educación', 'Otro'],
   saving: ['Ahorro', 'Inversión', 'Fondo Emergencia', 'Otro'],
@@ -26,6 +34,29 @@ export default function FinanzasPage() {
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
   const [showModal, setShowModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '' });
+  const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
+
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadPrefs() {
+      try {
+        const prefs = await getUserPreferences(uid as string);
+        if (!cancelled && prefs.customTransactionCategories) {
+          setCustomTxCategories(prefs.customTransactionCategories);
+          const updated = { ...DEFAULT_CATEGORIES };
+          prefs.customTransactionCategories.forEach((cat) => {
+            updated.expense = [...updated.expense, cat];
+          });
+          setAllCategories(updated);
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadPrefs();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   useEffect(() => {
     const uid = user?.uid as string;
@@ -47,7 +78,7 @@ export default function FinanzasPage() {
     return () => { cancelled = true; };
   }, [user?.uid]);
 
-  const categories = filterType === 'Todos' ? Object.values(CATEGORIES).flat() : (CATEGORIES[filterType as keyof typeof CATEGORIES] || []);
+  const categories = filterType === 'Todos' ? Object.values(allCategories).flat() : (allCategories[filterType as keyof typeof allCategories] || []);
   const filteredTx = transactions.filter((t) => {
     if (filterType !== 'Todos' && t.type !== filterType) return false;
     if (filterCategory !== 'Todas' && t.category !== filterCategory) return false;
@@ -117,7 +148,7 @@ export default function FinanzasPage() {
         <div className="filter-bar">
           {['Todos', 'income', 'expense', 'saving'].map((t) => (
             <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
-              {t === 'Todos' ? 'Todos' : TYPE_LABELS[t]}
+              {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
             </button>
           ))}
           <select className="filter-select" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
@@ -168,17 +199,42 @@ export default function FinanzasPage() {
               </div>
               <div className="modal-body">
                 <label className="form-label">Tipo</label>
-                <select className="form-input" value={newTx.type} onChange={(e) => setNewTx({ ...newTx, type: e.target.value as Transaction['type'], category: CATEGORIES[e.target.value as Transaction['type']][0] })}>
-                  <option value="income">Ingreso</option>
-                  <option value="expense">Gasto</option>
-                  <option value="saving">Ahorro</option>
-                </select>
+                <CustomSelect
+                  value={newTx.type}
+                  onChange={(val) => {
+                    const type = val as Transaction['type'];
+                    const cats = allCategories[type] || CATEGORIES[type];
+                    setNewTx({ ...newTx, type, category: cats[0] });
+                  }}
+                  options={[
+                    { value: 'income', label: 'Ingreso', icon: '📥' },
+                    { value: 'expense', label: 'Gasto', icon: '📤' },
+                    { value: 'saving', label: 'Ahorro', icon: '💰' },
+                  ]}
+                  placeholder="Seleccionar tipo..."
+                />
                 <label className="form-label">Monto ($)</label>
                 <input className="form-input" type="number" placeholder="0" value={newTx.amount} onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })} />
                 <label className="form-label">Categoría</label>
-                <select className="form-input" value={newTx.category} onChange={(e) => setNewTx({ ...newTx, category: e.target.value })}>
-                  {CATEGORIES[newTx.type].map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <CustomSelect
+                  value={newTx.category}
+                  onChange={(val) => setNewTx({ ...newTx, category: val })}
+                  options={(allCategories[newTx.type] || CATEGORIES[newTx.type]).map((c) => ({ value: c, label: c }))}
+                  placeholder="Seleccionar categoría..."
+                  allowCustom
+                  onAddCustom={async (value, label) => {
+                    const uid = user?.uid;
+                    if (uid) {
+                      await addCustomTransactionCategory(uid, value);
+                      setCustomTxCategories(prev => [...prev, value]);
+                      setAllCategories(prev => ({
+                        ...prev,
+                        expense: [...(prev.expense || []), value],
+                      }));
+                    }
+                  }}
+                  customPlaceholder="Nombre de la categoría..."
+                />
                 <label className="form-label">Descripción</label>
                 <input className="form-input" type="text" placeholder="Ej: Pago de nómina" value={newTx.description} onChange={(e) => setNewTx({ ...newTx, description: e.target.value })} />
               </div>

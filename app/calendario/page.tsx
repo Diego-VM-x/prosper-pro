@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import { CustomSelect } from '@/app/components/CustomSelect';
+import { addCustomReminderType, getUserPreferences } from '@/lib/firestore/users';
 import type { Reminder, Goal } from '@/types';
 
+const DEFAULT_TYPES: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
 const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌', goal: '🎯' };
 const TYPE_LABELS: Record<string, string> = { mentor: 'Mentor', course: 'Curso', meeting: 'Reunión', other: 'Otro', goal: 'Meta' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
@@ -52,11 +56,36 @@ function getDaysUntil(dateStr: string): number {
 
 export default function CalendarioPage() {
   const { goals, reminders, userId, addReminder, deleteReminderFn } = useGoals();
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState<'month' | 'agenda'>('month');
   const [newReminder, setNewReminder] = useState({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' as Reminder['type'] });
+  const [allTypes, setAllTypes] = useState<Record<string, string>>({ ...DEFAULT_TYPES });
+  const [customTypes, setCustomTypes] = useState<string[]>([]);
+
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadPrefs() {
+      try {
+        const prefs = await getUserPreferences(uid as string);
+        if (!cancelled && prefs.customReminderTypes) {
+          setCustomTypes(prefs.customReminderTypes);
+          const typeIcons = ['📋', '🏃', '💼', '🎉', '📞', '🔔', '⚡', '🎯'];
+          const newTypes: Record<string, string> = {};
+          prefs.customReminderTypes.forEach((t, i) => {
+            newTypes[t] = typeIcons[i % typeIcons.length];
+          });
+          setAllTypes(prev => ({ ...prev, ...newTypes }));
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadPrefs();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   const goalEvents = useMemo(() => goals.map(goalToCalendarEvent).filter((e): e is CalendarGoalEvent => e !== null), [goals]);
 
@@ -483,12 +512,26 @@ export default function CalendarioPage() {
                   </div>
                 </div>
                 <label className="cal-form-label">Tipo</label>
-                <select className="cal-form-input" value={newReminder.type} onChange={(e) => setNewReminder({ ...newReminder, type: e.target.value as Reminder['type'] })}>
-                  <option value="mentor">👨‍🏫 Mentor</option>
-                  <option value="course">📚 Curso</option>
-                  <option value="meeting">🤝 Reunión</option>
-                  <option value="other">📌 Otro</option>
-                </select>
+                <CustomSelect
+                  value={newReminder.type}
+                  onChange={(val) => setNewReminder({ ...newReminder, type: val as Reminder['type'] })}
+                  options={Object.entries(allTypes).map(([key, icon]) => ({ value: key, label: TYPE_LABELS[key] || key, icon }))}
+                  placeholder="Seleccionar tipo..."
+                  allowCustom
+                  onAddCustom={async (value, label) => {
+                    const uid = user?.uid;
+                    if (uid) {
+                      await addCustomReminderType(uid, value);
+                      setCustomTypes(prev => [...prev, value]);
+                      const typeIcons = ['📋', '🏃', '💼', '🎉', '📞', '🔔', '⚡', '🎯'];
+                      const newIcon = typeIcons[customTypes.length % typeIcons.length];
+                      setAllTypes(prev => ({ ...prev, [value]: newIcon }));
+                      TYPE_ICONS[value] = newIcon;
+                      TYPE_LABELS[value] = label;
+                    }
+                  }}
+                  customPlaceholder="Nombre del tipo..."
+                />
               </div>
               <div className="cal-modal-footer">
                 <button className="cal-btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>

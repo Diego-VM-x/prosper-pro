@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -18,20 +18,43 @@ import {
   IconArrowForward,
   IconReceipt,
 } from '../components/icons';
-import type { Goal, GoalCategory, GoalStatus } from '@/types';
+import { CustomSelect } from '../components/CustomSelect';
+import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
+import { getTransactionsByOwnerId, createTransaction, getMonthlyGrowthForGoal, getStreakDaysForGoal } from '@/lib/firestore/transactions';
+import type { Goal, GoalCategory, GoalStatus, Transaction } from '@/types';
 
+const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
 
-function generateSparklineData(progress: number): string {
+// Generar sparkline real desde transacciones de ahorro de la meta
+function generateRealSparklineData(savings: Transaction[], target: number): string {
+  if (savings.length === 0) return '';
+
+  // Agrupar por fecha (últimos 8 períodos)
+  const sorted = [...savings].sort((a, b) => a.date - b.date);
   const points = 8;
-  const data: number[] = [];
-  let current = 10 + Math.random() * 20;
-  for (let i = 0; i < points; i++) {
-    const target = (progress / 100) * 35 + 5;
-    current += (target - current) * 0.3 + (Math.random() - 0.5) * 10;
-    current = Math.max(5, Math.min(38, current));
-    data.push(current);
+  const chunkSize = Math.max(1, Math.ceil(sorted.length / points));
+  const chunks: Transaction[][] = [];
+
+  for (let i = 0; i < sorted.length; i += chunkSize) {
+    chunks.push(sorted.slice(i, i + chunkSize));
   }
+
+  // Calcular acumulado por chunk
+  const data: number[] = [];
+  let cumulative = 0;
+  chunks.forEach((chunk) => {
+    const chunkTotal = chunk.reduce((sum, t) => sum + t.amount, 0);
+    cumulative += chunkTotal;
+    const pct = target > 0 ? (cumulative / target) * 35 + 5 : 10;
+    data.push(Math.max(5, Math.min(38, pct)));
+  });
+
+  // Rellenar si hay menos de 8 puntos
+  while (data.length < points) {
+    data.unshift(5);
+  }
+
   const normalized = data.map((v, i) => `${(i / (points - 1)) * 100},${v}`);
   return normalized.join(' ');
 }
@@ -66,10 +89,73 @@ export default function MetasPage() {
   const [showDetailModal, setShowDetailModal] = useState<Goal | null>(null);
   const [showAddFundsModal, setShowAddFundsModal] = useState<Goal | null>(null);
   const [addAmount, setAddAmount] = useState('');
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
+  const [goalSavings, setGoalSavings] = useState<Record<string, Transaction[]>>({});
+  const [goalMonthlyGrowth, setGoalMonthlyGrowth] = useState<Record<string, number>>({});
+  const [goalStreakDays, setGoalStreakDays] = useState<Record<string, number>>({});
 
   const [formData, setFormData] = useState({
     title: '', category: 'Ahorro' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯',
   });
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    async function loadPrefs() {
+      try {
+        const prefs = await getUserPreferences(userId);
+        if (!cancelled && prefs.customCategories) {
+          setCustomCategories(prefs.customCategories);
+          const customColors = ['#10B981', '#6366F1', '#EC4899', '#F97316', '#14B8A6', '#A855F7', '#06B6D4', '#84CC16'];
+          const newColors: Record<string, string> = {};
+          prefs.customCategories.forEach((cat, i) => {
+            newColors[cat] = customColors[i % customColors.length];
+          });
+          setAllCategories(prev => ({ ...prev, ...newColors }));
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadPrefs();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Cargar historial de ahorro para cada meta
+  useEffect(() => {
+    if (!userId || goals.length === 0) return;
+    let cancelled = false;
+    async function loadSavings() {
+      try {
+        const allTx = await getTransactionsByOwnerId(userId);
+        if (cancelled) return;
+
+        const savings: Record<string, Transaction[]> = {};
+        const growth: Record<string, number> = {};
+        const streaks: Record<string, number> = {};
+
+        for (const goal of goals) {
+          const goalSavingsTx = allTx.filter(
+            (t) => t.type === 'saving' && t.description.toLowerCase().includes(goal.title.toLowerCase())
+          );
+          savings[goal.id] = goalSavingsTx;
+
+          const monthlyGrowth = await getMonthlyGrowthForGoal(userId, goal.title);
+          growth[goal.id] = monthlyGrowth;
+
+          const streak = await getStreakDaysForGoal(userId, goal.title);
+          streaks[goal.id] = streak;
+        }
+
+        if (!cancelled) {
+          setGoalSavings(savings);
+          setGoalMonthlyGrowth(growth);
+          setGoalStreakDays(streaks);
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadSavings();
+    return () => { cancelled = true; };
+  }, [userId, goals]);
 
   const filteredGoals = useMemo(() => {
     return (filter === 'Todas'
@@ -137,6 +223,21 @@ export default function MetasPage() {
     const newCurrent = Math.min(showAddFundsModal.current + amount, showAddFundsModal.target);
     const newStatus: GoalStatus = newCurrent >= showAddFundsModal.target ? 'completed' : showAddFundsModal.status === 'pending' ? 'progress' : showAddFundsModal.status;
     await updateGoalFn(showAddFundsModal.id, { current: newCurrent, status: newStatus, updatedAt: Date.now() });
+
+    // Crear transacción de ahorro vinculada a la meta
+    if (userId) {
+      try {
+        await createTransaction({
+          ownerId: userId,
+          amount: amount,
+          type: 'saving',
+          category: 'Ahorro',
+          description: `Ahorro para: ${showAddFundsModal.title}`,
+          date: Date.now(),
+        });
+      } catch (e) { console.error('Error creando transacción:', e); }
+    }
+
     setShowAddFundsModal(null);
     setAddAmount('');
   };
@@ -186,7 +287,7 @@ export default function MetasPage() {
 
       {/* Filter Bar */}
       <div className="filters-bar animate-fadeInUp">
-        {['Todas', 'Ahorro', 'Inversión', 'Educación', 'Completadas'].map((item) => (
+        {['Todas', 'Ahorro', 'Inversión', 'Educación', ...customCategories, 'Completadas'].map((item) => (
           <button key={item} className={`filter-chip ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item}</button>
         ))}
       </div>
@@ -196,7 +297,7 @@ export default function MetasPage() {
         {filteredGoals.length > 0 ? filteredGoals.map((goal, i) => {
           const pct = Math.min(100, (goal.current / goal.target) * 100);
           const remaining = goal.target - goal.current;
-          const sparklineData = generateSparklineData(pct);
+          const sparklineData = generateRealSparklineData(goalSavings[goal.id] || [], goal.target);
           const isCompleted = goal.status === 'completed';
           const color = CATEGORY_COLORS[goal.category] || goal.color;
 
@@ -317,12 +418,23 @@ export default function MetasPage() {
               <label className="form-label">Título</label>
               <input className="form-input" type="text" placeholder="Ej: Fondo de Emergencia" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
               <label className="form-label">Categoría</label>
-              <select className="form-input" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value as GoalCategory })}>
-                <option value="Ahorro">Ahorro</option>
-                <option value="Inversión">Inversión</option>
-                <option value="Educación">Educación</option>
-                <option value="Otro">Otro</option>
-              </select>
+              <CustomSelect
+                value={formData.category}
+                onChange={(val) => setFormData({ ...formData, category: val as GoalCategory })}
+                options={Object.entries(allCategories).map(([key, icon]) => ({ value: key, label: key, icon }))}
+                placeholder="Seleccionar categoría..."
+                allowCustom
+                onAddCustom={async (value, label) => {
+                  if (userId) {
+                    await addCustomCategory(userId, value);
+                    setCustomCategories(prev => [...prev, value]);
+                    const customColors = ['#10B981', '#6366F1', '#EC4899', '#F97316', '#14B8A6', '#A855F7', '#06B6D4', '#84CC16'];
+                    const newColor = customColors[customCategories.length % customColors.length];
+                    setAllCategories(prev => ({ ...prev, [value]: newColor }));
+                  }
+                }}
+                customPlaceholder="Nombre de la categoría..."
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div><label className="form-label">Monto Actual ($)</label><input className="form-input" type="number" placeholder="0" value={formData.current || ''} onChange={(e) => setFormData({ ...formData, current: Number(e.target.value) })} /></div>
                 <div><label className="form-label">Meta ($)</label><input className="form-input" type="number" placeholder="10000" value={formData.target || ''} onChange={(e) => setFormData({ ...formData, target: Number(e.target.value) })} /></div>
@@ -373,8 +485,8 @@ export default function MetasPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 24, marginTop: 16 }}>
-                <div className="stat"><IconTrendUp width={14} /><span>{showDetailModal.monthlyGrowth ? `+${showDetailModal.monthlyGrowth}% este mes` : 'Sin datos'}</span></div>
-                <div className="stat"><IconZap width={14} /><span>{showDetailModal.streakDays ? `Racha de ${showDetailModal.streakDays} días` : 'Sin racha'}</span></div>
+                <div className="stat"><IconTrendUp width={14} /><span>{goalMonthlyGrowth[showDetailModal.id] ? `+${goalMonthlyGrowth[showDetailModal.id]}% este mes` : 'Sin datos'}</span></div>
+                <div className="stat"><IconZap width={14} /><span>{goalStreakDays[showDetailModal.id] ? `Racha de ${goalStreakDays[showDetailModal.id]} días` : 'Sin racha'}</span></div>
               </div>
             </div>
             <div className="modal-footer">

@@ -5,11 +5,48 @@ import {
   getDoc,
   updateDoc,
   onSnapshot,
+  arrayUnion,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { UserProfile } from '@/types';
 
 const COLLECTION = 'users';
+
+// Categorías personalizadas del usuario
+export async function addCustomCategory(userId: string, category: string) {
+  await updateDoc(doc(db, COLLECTION, userId), {
+    customCategories: arrayUnion(category),
+  });
+}
+
+export async function addCustomReminderType(userId: string, type: string) {
+  await updateDoc(doc(db, COLLECTION, userId), {
+    customReminderTypes: arrayUnion(type),
+  });
+}
+
+export async function addCustomTransactionCategory(userId: string, category: string) {
+  await updateDoc(doc(db, COLLECTION, userId), {
+    customTransactionCategories: arrayUnion(category),
+  });
+}
+
+export interface UserPreferences {
+  customCategories?: string[];
+  customReminderTypes?: string[];
+  customTransactionCategories?: string[];
+}
+
+export async function getUserPreferences(userId: string): Promise<UserPreferences> {
+  const docSnap = await getDoc(doc(db, COLLECTION, userId));
+  if (!docSnap.exists()) return {};
+  const data = docSnap.data();
+  return {
+    customCategories: data.customCategories || [],
+    customReminderTypes: data.customReminderTypes || [],
+    customTransactionCategories: data.customTransactionCategories || [],
+  };
+}
 
 export async function createUserProfile(profile: UserProfile) {
   await setDoc(doc(db, COLLECTION, profile.uid), profile);

@@ -107,6 +107,74 @@ export async function getTransactionsByOwnerId(ownerId: string): Promise<Transac
   return transactions;
 }
 
+// Obtener transacciones de ahorro vinculadas a una meta (por descripción que contiene el título de la meta)
+export async function getGoalSavingsHistory(ownerId: string, goalTitle: string): Promise<Transaction[]> {
+  const allTx = await getTransactionsByOwnerId(ownerId);
+  return allTx.filter(
+    (t) => t.type === 'saving' && t.description.toLowerCase().includes(goalTitle.toLowerCase())
+  );
+}
+
+// Calcular crecimiento mensual para una meta
+export async function getMonthlyGrowthForGoal(ownerId: string, goalTitle: string): Promise<number> {
+  const savings = await getGoalSavingsHistory(ownerId, goalTitle);
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+  const thisYear = now.getFullYear();
+  const lastYear = thisMonth === 0 ? thisYear - 1 : thisYear;
+
+  let thisMonthTotal = 0;
+  let lastMonthTotal = 0;
+
+  savings.forEach((t) => {
+    const tDate = new Date(t.date);
+    if (tDate.getMonth() === thisMonth && tDate.getFullYear() === thisYear) {
+      thisMonthTotal += t.amount;
+    }
+    if (tDate.getMonth() === lastMonth && tDate.getFullYear() === lastYear) {
+      lastMonthTotal += t.amount;
+    }
+  });
+
+  if (lastMonthTotal === 0) return thisMonthTotal > 0 ? 100 : 0;
+  return Math.round(((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100);
+}
+
+// Calcular racha de días consecutivos con aportes a una meta
+export async function getStreakDaysForGoal(ownerId: string, goalTitle: string): Promise<number> {
+  const savings = await getGoalSavingsHistory(ownerId, goalTitle);
+  if (savings.length === 0) return 0;
+
+  // Obtener días únicos con aportes
+  const uniqueDays = new Set(
+    savings.map((t) => {
+      const d = new Date(t.date);
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })
+  );
+
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < 365; i++) {
+    const checkDate = new Date(today);
+    checkDate.setDate(checkDate.getDate() - i);
+    const key = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`;
+
+    if (uniqueDays.has(key)) {
+      streak++;
+    } else {
+      // Si es hoy y no hay aporte, no rompe la racha aún
+      if (i === 0) continue;
+      break;
+    }
+  }
+
+  return streak;
+}
+
 export async function getMonthlySummary(ownerId: string) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();

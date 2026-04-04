@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   IconPlus,
   IconArrowUpRight,
@@ -12,8 +13,11 @@ import {
   IconZap,
   IconX,
 } from './icons';
+import { CustomSelect } from './CustomSelect';
+import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import type { Goal, WeeklyData, XPState, CommunityMember, Achievement, GoalCategory } from '@/types';
 
+const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
 
 function parseDeadlineToISO(deadline: string): string | null {
@@ -41,12 +45,15 @@ export function Dashboard() {
   const router = useRouter();
   const { query } = useSearch();
   const { goals, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
+  const { user } = useAuth();
 
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [xp, setXP] = useState<XPState | null>(null);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [monthlySavings, setMonthlySavings] = useState(0);
+  const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
+  const [customCats, setCustomCats] = useState<string[]>([]);
 
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
 
@@ -59,6 +66,28 @@ export function Dashboard() {
     color: '#3DCC8E',
     icon: '🎯',
   });
+
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    let cancelled = false;
+    async function loadPrefs() {
+      try {
+        const prefs = await getUserPreferences(uid as string);
+        if (!cancelled && prefs.customCategories) {
+          setCustomCats(prefs.customCategories);
+          const customColors = ['#10B981', '#6366F1', '#EC4899', '#F97316', '#14B8A6', '#A855F7', '#06B6D4', '#84CC16'];
+          const newColors: Record<string, string> = {};
+          prefs.customCategories.forEach((cat, i) => {
+            newColors[cat] = customColors[i % customColors.length];
+          });
+          setAllCategories(prev => ({ ...prev, ...newColors }));
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadPrefs();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   useEffect(() => {
     const uid = userId as string;
@@ -374,12 +403,24 @@ export function Dashboard() {
               <label className="form-label">Título</label>
               <input className="form-input" type="text" placeholder="Ej: Fondo de Emergencia" value={newGoal.title} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
               <label className="form-label">Categoría</label>
-              <select className="form-input" value={newGoal.category} onChange={(e) => setNewGoal({ ...newGoal, category: e.target.value as GoalCategory })}>
-                <option value="Ahorro">Ahorro</option>
-                <option value="Inversión">Inversión</option>
-                <option value="Educación">Educación</option>
-                <option value="Otro">Otro</option>
-              </select>
+              <CustomSelect
+                value={newGoal.category}
+                onChange={(val) => setNewGoal({ ...newGoal, category: val as GoalCategory })}
+                options={Object.entries(allCategories).map(([key, icon]) => ({ value: key, label: key, icon }))}
+                placeholder="Seleccionar categoría..."
+                allowCustom
+                onAddCustom={async (value, label) => {
+                  const uid = user?.uid;
+                  if (uid) {
+                    await addCustomCategory(uid, value);
+                    setCustomCats(prev => [...prev, value]);
+                    const customColors = ['#10B981', '#6366F1', '#EC4899', '#F97316', '#14B8A6', '#A855F7', '#06B6D4', '#84CC16'];
+                    const newColor = customColors[customCats.length % customColors.length];
+                    setAllCategories(prev => ({ ...prev, [value]: newColor }));
+                  }
+                }}
+                customPlaceholder="Nombre de la categoría..."
+              />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div><label className="form-label">Monto Actual ($)</label><input className="form-input" type="number" placeholder="0" value={newGoal.current || ''} onChange={(e) => setNewGoal({ ...newGoal, current: Number(e.target.value) })} /></div>
                 <div><label className="form-label">Meta ($)</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>

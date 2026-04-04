@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Rediseño Stitch + Dashboard Funcional + Overflow-X Fix)
+## Estado Actual (04 de Abril, 2026 - Selects Estéticos + Custom Categories + Sparklines Reales + Finanzas Integradas)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -22,13 +22,14 @@
 - `app/components/Topbar.tsx` → Barra superior con logo, búsqueda funcional, login/logout
 - `app/components/ProtectedRoute.tsx` → Protección de rutas autenticadas
 - `app/components/icons.tsx` → 25 iconos SVG inline (incluye IconCheck, IconFlight, IconSchool, IconArrowForward, IconReceipt)
+- `app/components/CustomSelect.tsx` → Componente dropdown estético con soporte para opciones personalizadas
 - `app/login/page.tsx` → Login (Google + Email)
 - `app/register/page.tsx` → Registro (Google + Email)
-- `app/metas/page.tsx` → CRUD de metas con filtros (reactivo via GoalsContext)
+- `app/metas/page.tsx` → CRUD de metas con filtros, sparklines reales, categorías custom
 - `app/cursos/page.tsx` → Listado de cursos con progreso
 - `app/cursos/[id]/page.tsx` → Detalle de curso con módulos
-- `app/calendario/page.tsx` → Calendario con recordatorios y metas sincronizadas
-- `app/finanzas/page.tsx` → Transacciones con filtros
+- `app/calendario/page.tsx` → Calendario con recordatorios, tipos custom
+- `app/finanzas/page.tsx` → Transacciones con filtros, categorías custom, balance billetera
 - `app/configuracion/page.tsx` → Perfil, tema, cuenta
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
@@ -36,9 +37,12 @@
 - `lib/seed.ts` → Vacío (sin datos de ejemplo)
 - `lib/csvParser.ts` → Parser e importador de CSV a Firestore
 - `lib/firestore/` → 8 módulos Firestore (goals, users, transactions, gamification, reminders, notifications, community, courses)
+- `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
+- `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Selects Estéticos + Custom Categories + Sparklines Reales (04/04/2026)**: Nuevo componente `CustomSelect` con dropdown animado, iconos, check de selección y botón "Añadir personalizado". Categorías personalizadas en Metas, tipos en Calendario, categorías de transacción en Finanzas. Sparklines ahora usan transacciones reales de Firestore. Al agregar fondos a meta se crea transacción automática. Textos de monthlyGrowth y streakDays calculados desde datos reales.
 - ✅ **Overflow-X Global Fix (04/04/2026)**: Agregado `overflow-x: hidden` y `max-width: 100vw` a html/body en globals.css. Clase `.page-content-overflow-fix` en DashboardLayout. Elimina scroll horizontal en móvil para Finanzas y Metas.
 - ✅ **Dashboard Funcional (04/04/2026)**: Stat cards clickeables (navegan a /metas, /finanzas, /cursos). Círculo de progreso corregido (r=54, circumference=339.292). Botón "+ Añadir Nuevo Objetivo" navega a /metas. Milestone items clickeables.
 - ✅ **Rediseño Stitch Metas + Calendario + Dashboard Fix (04/04/2026)**: Metas con stats bar, cards horizontales enriquecidas con sparkline SVG, acciones rápidas, card de insight. Calendario con grid aspect-square, indicadores de puntos, panel lateral mejorado, resumen del mes con iconos SVG. Dashboard con números corregidos (stat-cards, progress ring). Menú móvil ahora desliza desde la izquierda. Responsive completo en 3 breakpoints.
@@ -98,6 +102,22 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 04/04/2026 - Selects Estéticos + Custom Categories + Sparklines Reales
+- **CustomSelect Component**:
+  - `app/components/CustomSelect.tsx`: Nuevo componente dropdown con animaciones, iconos, check de selección, input inline para añadir opciones personalizadas.
+- **Metas Page**:
+  - `app/metas/page.tsx`: Select de categoría usa `CustomSelect`. Categorías custom se guardan en Firestore (`customCategories`). Filter bar incluye categorías custom. Sparklines usan transacciones reales via `generateRealSparklineData()`. `handleAddFunds` crea transacción automática con descripción "Ahorro para: {meta}". Modal de detalle muestra `monthlyGrowth` y `streakDays` reales.
+- **Dashboard**:
+  - `app/components/Dashboard.tsx`: Select de categoría en modal "Nueva Meta" usa `CustomSelect`. Carga preferencias del usuario al montar.
+- **Calendario**:
+  - `app/calendario/page.tsx`: Select de tipo de recordatorio usa `CustomSelect`. Tipos personalizados se guardan en Firestore (`customReminderTypes`).
+- **Finanzas**:
+  - `app/finanzas/page.tsx`: Selects de tipo y categoría usan `CustomSelect`. Categorías de transacción personalizables (`customTransactionCategories`). Filtros con iconos.
+- **Firestore Users**:
+  - `lib/firestore/users.ts`: Nuevas funciones `addCustomCategory`, `addCustomReminderType`, `addCustomTransactionCategory`, `getUserPreferences`. Usa `arrayUnion` para evitar duplicados.
+- **Firestore Transactions**:
+  - `lib/firestore/transactions.ts`: Nuevas funciones `getGoalSavingsHistory`, `getMonthlyGrowthForGoal`, `getStreakDaysForGoal`. Calculan estadísticas reales desde transacciones.
+
 ### 04/04/2026
 - **Overflow-X Fix**:
   - `app/globals.css`: Agregado `overflow-x: hidden; max-width: 100vw` a html y body. Clase `.page-content-overflow-fix` con `max-width: 100vw; overflow-x: hidden`.
