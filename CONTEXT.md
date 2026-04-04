@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Gráfica Barras con Toggle Montos + Gestión Avanzada de Cuentas)
+## Estado Actual (04 de Abril, 2026 - Colores Gráfica + Páginas Próximamente + Gestión Avanzada)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -32,6 +32,9 @@
 - `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
 - `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
 - `app/configuracion/page.tsx` → Perfil, tema, cuenta
+- `app/logros/page.tsx` → Próximamente (logros y medallas)
+- `app/ayuda/page.tsx` → Próximamente (FAQ, guías, soporte)
+- `app/comunidad/page.tsx` → Próximamente (ranking, miembros, actividad)
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
 - `lib/contexts/GoalsContext.tsx` → Contexto reactivo de metas y recordatorios (onSnapshot)
@@ -165,7 +168,10 @@
   
   ### 04/04/2026 - Gráfica de Barras Simplificada
   - **FinancialStatusChart**:
-    - `app/components/FinancialStatusChart.tsx`: Reescrito como BarChart con 3 barras (Ingresos 📥, Gastos 📤, Ahorro 💰). Selectores: Día (24h), Semana (7 días), Mes (4 semanas), Año (12 meses). Resumen con totales de ingresos, gastos, ahorro y balance. Tooltip personalizado con formato moneda. Actualización en tiempo real via onSnapshot. Botón toggle 👁️/🙈 para ocultar/mostrar montos en widgets y barras del gráfico.
+    - `app/components/FinancialStatusChart.tsx`: Reescrito como BarChart con 3 barras (Ingresos 📥, Gastos 📤, Ahorro 💰). Selectores: Día (24h), Semana (7 días), Mes (4 semanas), Año (12 meses). Resumen con totales de ingresos, gastos, ahorro y balance. Tooltip personalizado con formato moneda. Actualización en tiempo real via onSnapshot. Botón toggle 👁️/ para ocultar/mostrar montos en widgets y barras del gráfico. Colores: verde (#3DCC8E) ingresos, rojo (#EF4444) gastos, naranja (#F59E0B) ahorro.
+  
+  ### 04/04/2026 - Páginas Próximamente
+  - **Nuevas páginas**: `app/logros/page.tsx`, `app/ayuda/page.tsx`, `app/comunidad/page.tsx`. Todas con mensaje "Próximamente" y diseño centrado con icono emoji.
 
 ### 04/04/2026
 - **Overflow-X Fix**:

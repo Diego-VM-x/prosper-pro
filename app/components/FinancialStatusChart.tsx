@@ -333,9 +333,9 @@ export function FinancialStatusChart() {
             />
             {showAmounts && (
               <>
-                <Bar dataKey="income" fill="var(--color-prosper-green)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="saving" fill="var(--color-pine-500)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="saving" fill="#F59E0B" radius={[4, 4, 0, 0]} />
               </>
             )}
           </BarChart>
