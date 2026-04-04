@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/app/components/Toast';
+import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import { subscribeToAccounts, createAccount, deleteAccount, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
@@ -36,6 +38,7 @@ const TYPE_COLORS: Record<string, string> = { income: 'var(--color-prosper-green
 
 export default function FinanzasPage() {
   const { user } = useAuth();
+  const { success, error, warning, info } = useToast();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
@@ -51,6 +54,7 @@ export default function FinanzasPage() {
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
+  const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
   const [showAmounts, setShowAmounts] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('finanzas-show-amounts') === 'true';
@@ -176,16 +180,16 @@ export default function FinanzasPage() {
     console.log('[Transfer] Iniciando...', transfer);
     if (!transfer.amount || !transfer.fromAccountId || !transfer.toAccountId) {
       console.warn('[Transfer] Campos incompletos');
-      alert('Completa todos los campos.');
+      warning('Completa todos los campos.');
       return;
     }
     if (transfer.fromAccountId === transfer.toAccountId) {
-      alert('Las cuentas de origen y destino deben ser diferentes.');
+      warning('Las cuentas de origen y destino deben ser diferentes.');
       return;
     }
     const amount = Number(transfer.amount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Monto inválido.');
+      warning('Monto inválido.');
       return;
     }
 
@@ -194,15 +198,15 @@ export default function FinanzasPage() {
     console.log('[Transfer] From:', fromAcc, 'To:', toAcc, 'Amount:', amount);
 
     if (!fromAcc) {
-      alert('Cuenta de origen no encontrada.');
+      error('Cuenta de origen no encontrada.');
       return;
     }
     if (!toAcc) {
-      alert('Cuenta de destino no encontrada.');
+      error('Cuenta de destino no encontrada.');
       return;
     }
     if (fromAcc.balance < amount) {
-      alert(`Fondos insuficientes en "${fromAcc.name}". Balance: $${fromAcc.balance.toLocaleString()}`);
+      error(`Fondos insuficientes en "${fromAcc.name}". Balance: $${fromAcc.balance.toLocaleString()}`);
       return;
     }
 
@@ -230,11 +234,12 @@ export default function FinanzasPage() {
       setTransactions((prev) => [{ id: 't' + Date.now(), ...txData }, ...prev]);
 
       console.log('[Transfer] Completada exitosamente');
+      success(`Transferencia exitosa: ${fromAcc.name} → ${toAcc.name}`);
       setShowTransferModal(false);
       setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
     } catch (e: any) {
       console.error('[Transfer] Error:', e);
-      alert(`Error al transferir: ${e?.message || 'Error desconocido'}`);
+      error(`Error al transferir: ${e?.message || 'Error desconocido'}`);
     }
   };
 
@@ -256,9 +261,19 @@ export default function FinanzasPage() {
   };
 
   const handleDeleteAccount = async (id: string) => {
-    if (confirm('¿Eliminar esta cuenta? Las transacciones no se eliminarán.')) {
-      await deleteAccount(id);
-    }
+    const acc = accounts.find((a) => a.id === id);
+    setConfirmState({
+      isOpen: true,
+      title: 'Eliminar Cuenta',
+      message: `¿Eliminar "${acc?.name}"? Las transacciones asociadas no se eliminarán.`,
+      variant: 'danger',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        await deleteAccount(id);
+        success('Cuenta eliminada');
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -611,6 +626,15 @@ export default function FinanzasPage() {
             .accounts-grid { grid-template-columns: 1fr; }
           }
         `}</style>
+        <ConfirmDialog
+          isOpen={confirmState.isOpen}
+          title={confirmState.title}
+          message={confirmState.message}
+          variant={confirmState.variant}
+          confirmText={confirmState.confirmText || 'Confirmar'}
+          onConfirm={confirmState.onConfirm}
+          onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        />
       </DashboardLayout>
     </ProtectedRoute>
   );

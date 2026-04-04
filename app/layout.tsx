@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/contexts/AuthContext';
 import { SearchProvider } from '@/lib/contexts/SearchContext';
 import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 import { ThemeProvider } from './components/ThemeProvider';
+import { ToastProvider } from './components/Toast';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -94,7 +95,9 @@ export default function RootLayout({
           <AuthProvider>
             <GoalsProvider>
               <SearchProvider>
-                {children}
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
               </SearchProvider>
             </GoalsProvider>
           </AuthProvider>

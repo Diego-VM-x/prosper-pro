@@ -6,6 +6,8 @@ import ProtectedRoute from '../components/ProtectedRoute';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/app/components/Toast';
+import { ConfirmDialog } from '@/app/components/Toast';
 import {
   IconPlus,
   IconTrendUp,
@@ -83,6 +85,7 @@ export default function MetasPage() {
   const { query } = useSearch();
   const { goals, addGoal, updateGoalFn, deleteGoalFn } = useGoals();
   const { user } = useAuth();
+  const { success, error, warning } = useToast();
   const userId = user?.uid || '';
   const [filter, setFilter] = useState('Todas');
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
@@ -92,6 +95,7 @@ export default function MetasPage() {
   const [addAmount, setAddAmount] = useState('');
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
+  const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [goalSavings, setGoalSavings] = useState<Record<string, Transaction[]>>({});
@@ -221,9 +225,19 @@ export default function MetasPage() {
   };
 
   const handleDeleteGoal = async (goalId: string) => {
-    if (confirm('¿Estás seguro de eliminar esta meta?')) {
-      await deleteGoalFn(goalId);
-    }
+    const goal = goals.find((g) => g.id === goalId);
+    setConfirmState({
+      isOpen: true,
+      title: 'Eliminar Meta',
+      message: `¿Estás seguro de eliminar "${goal?.title}"? Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        await deleteGoalFn(goalId);
+        success('Meta eliminada');
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const handleAddFunds = async () => {
@@ -235,7 +249,7 @@ export default function MetasPage() {
     if (selectedAccountId) {
       const selectedAcc = accounts.find((a) => a.id === selectedAccountId);
       if (!selectedAcc || selectedAcc.balance < amount) {
-        alert(`Fondos insuficientes en "${selectedAcc?.name || 'la cuenta seleccionada'}".`);
+        error(`Fondos insuficientes en "${selectedAcc?.name || 'la cuenta seleccionada'}".`);
         return;
       }
     }
@@ -267,6 +281,7 @@ export default function MetasPage() {
     setShowAddFundsModal(null);
     setAddAmount('');
     setSelectedAccountId('');
+    success(`$${amount.toLocaleString()} agregados a "${showAddFundsModal.title}"`);
   };
 
   const openEditModal = (goal: Goal) => {
@@ -672,6 +687,15 @@ export default function MetasPage() {
           .filters-bar { gap: 6px; }
         }
       `}</style>
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        message={confirmState.message}
+        variant={confirmState.variant}
+        confirmText={confirmState.confirmText || 'Confirmar'}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+      />
     </DashboardLayout>
     </ProtectedRoute>
   );
