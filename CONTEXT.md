@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Gestión Avanzada de Cuentas + Historial + Balance + Gráfica Recharts)
+## Estado Actual (04 de Abril, 2026 - Gráfica Recharts en Dashboard + Finanzas + Gestión Avanzada de Cuentas)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -156,6 +156,12 @@
     - `app/finanzas/page.tsx`: Botón "Borrar Historial" en header para archivar todas las transacciones. En cada card de cuenta: botón archivar historial, botón resetear balance, dropdown con opciones para eliminar ingresos/gastos/ahorros por separado y eliminar cuenta completa. Confirmaciones con advertencias detalladas sobre consecuencias.
   - **Icons**:
     - `app/components/icons.tsx`: Nuevo icono `IconReset` (flecha circular).
+  
+  ### 04/04/2026 - Gráfica Recharts en Dashboard y Finanzas
+  - **Dashboard**:
+    - `app/components/Dashboard.tsx`: `FinancialStatusChart` integrado con `onSnapshot` para actualización en tiempo real ante cualquier cambio en transacciones.
+  - **Finanzas**:
+    - `app/finanzas/page.tsx`: Reemplazado `LineChart` por `FinancialStatusChart`. Eliminadas variables no usadas (`chartPeriod`, `incomeVsExpenseData`). La gráfica se actualiza automáticamente al agregar/eliminar transacciones o modificar balances.
 
 ### 04/04/2026
 - **Overflow-X Fix**:

@@ -11,7 +11,7 @@ import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory,
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
-import { LineChart } from '@/app/components/LineChart';
+import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
 import type { Transaction, FinancialAccount, AccountType } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
@@ -62,43 +62,6 @@ export default function FinanzasPage() {
     }
     return false;
   });
-  const [chartPeriod, setChartPeriod] = useState<'week' | 'month'>('week');
-
-  // Datos para gráfico ingresos vs gastos
-  const incomeVsExpenseData = React.useMemo(() => {
-    const now = new Date();
-    const periodConfig = {
-      week: { count: 7, getLabel: (i: number) => ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'][i], ms: 86400000 },
-      month: { count: 4, getLabel: (i: number) => `Sem ${i + 1}`, ms: 86400000 * 7 },
-    };
-    const cfg = periodConfig[chartPeriod];
-    const labels = Array.from({ length: cfg.count }, (_, i) => cfg.getLabel(i));
-
-    const incomeData: number[] = [];
-    const expenseData: number[] = [];
-
-    for (let i = cfg.count - 1; i >= 0; i--) {
-      const d = new Date(now.getTime() - i * cfg.ms);
-      d.setHours(0, 0, 0, 0);
-      const periodEnd = d.getTime() + cfg.ms;
-
-      const periodTxs = transactions.filter((t) => {
-        const txDate = typeof t.date === 'number' ? t.date : new Date(t.date).getTime();
-        return txDate >= d.getTime() && txDate < periodEnd;
-      });
-
-      incomeData.push(periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
-      expenseData.push(periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
-    }
-
-    return {
-      datasets: [
-        { label: 'Ingresos', color: '#4edea3', data: incomeData },
-        { label: 'Gastos', color: '#ffb3af', data: expenseData },
-      ],
-      labels,
-    };
-  }, [transactions, chartPeriod]);
 
   // Suscribirse a cuentas en tiempo real
   useEffect(() => {
@@ -484,26 +447,8 @@ export default function FinanzasPage() {
           </div>
         </div>
 
-        {/* Gráfico Ingresos vs Gastos */}
-        <div className="chart-card">
-          <div className="chart-card-header">
-            <div>
-              <h3 className="chart-card-title">Flujo Financiero</h3>
-              <p className="chart-card-subtitle">Ingresos vs. Gastos {chartPeriod === 'week' ? 'Diarios' : 'Semanales'}</p>
-            </div>
-            <div className="chart-period-toggle">
-              <button className={`period-btn ${chartPeriod === 'week' ? 'active' : ''}`} onClick={() => setChartPeriod('week')}>Semana</button>
-              <button className={`period-btn ${chartPeriod === 'month' ? 'active' : ''}`} onClick={() => setChartPeriod('month')}>Mes</button>
-            </div>
-          </div>
-          <LineChart
-            datasets={incomeVsExpenseData.datasets}
-            labels={incomeVsExpenseData.labels}
-            height={280}
-            showArea={true}
-            strokeWidth={3}
-          />
-        </div>
+        {/* Gráfico Progreso Financiero en Tiempo Real */}
+        <FinancialStatusChart />
 
         {/* Filtros */}
         <div className="filter-bar">
