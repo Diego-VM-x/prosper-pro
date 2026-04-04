@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#2f3632",
+                    "on-surface-variant": "#bbcabf",
+                    "inverse-on-surface": "#2b322d",
+                    "error-container": "#93000a",
+                    "surface-container-highest": "#2f3632",
+                    "outline": "#86948a",
+                    "error": "#ffb4ab",
+                    "surface": "#0e1511",
+                    "on-primary-container": "#00422b",
+                    "surface-dim": "#0e1511",
+                    "primary-fixed": "#6ffbbe",
+                    "primary-fixed-dim": "#4edea3",
+                    "secondary-fixed-dim": "#9ed2b5",
+                    "on-primary": "#003824",
+                    "secondary-fixed": "#baeed1",
+                    "on-tertiary-fixed": "#410005",
+                    "on-primary-fixed": "#002113",
+                    "on-secondary-fixed": "#002113",
+                    "on-secondary-container": "#91c4a8",
+                    "on-background": "#dde4dd",
+                    "on-secondary-fixed-variant": "#1e4f3a",
+                    "tertiary": "#ffb3af",
+                    "primary": "#4edea3",
+                    "on-tertiary-fixed-variant": "#842225",
+                    "inverse-primary": "#006c49",
+                    "surface-container-lowest": "#09100c",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-container": "#fc7c78",
+                    "tertiary-fixed-dim": "#ffb3af",
+                    "inverse-surface": "#dde4dd",
+                    "background": "#0e1511",
+                    "surface-container": "#1a211d",
+                    "secondary-container": "#21523c",
+                    "tertiary-fixed": "#ffdad7",
+                    "surface-tint": "#4edea3",
+                    "secondary": "#9ed2b5",
+                    "on-tertiary": "#650911",
+                    "on-surface": "#dde4dd",
+                    "surface-container-low": "#161d19",
+                    "on-error": "#690005",
+                    "primary-container": "#10b981",
+                    "outline-variant": "#3c4a42",
+                    "surface-container-high": "#242c27",
+                    "surface-bright": "#343b36",
+                    "on-primary-fixed-variant": "#005236",
+                    "on-tertiary-container": "#711419",
+                    "on-secondary": "#013824"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0e1511; color: #dde4dd; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-effect { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+    </style>
+</head>
+<body class="flex min-h-screen overflow-x-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="hidden md:flex h-screen w-64 flex-col py-8 px-4 space-y-6 bg-[#161d19] border-r border-[#3c4a42]/15 fixed left-0 top-0 z-40">
+<div class="flex items-center gap-3 px-2">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary" data-icon="military_tech" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+</div>
+<div>
+<h1 class="text-lg font-black text-[#4edea3] tracking-tighter">Veridian Ledger</h1>
+<p class="font-['Inter'] text-[10px] uppercase tracking-widest text-[#91c4a8]/70">The Digital Architect</p>
+</div>
+</div>
+<nav class="flex-1 mt-8 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#91c4a8]/70 hover:text-[#4edea3] hover:bg-[#1a211d] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#91c4a8]/70 hover:text-[#4edea3] hover:bg-[#1a211d] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="target">target</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-medium">Goals</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#91c4a8]/70 hover:text-[#4edea3] hover:bg-[#1a211d] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-medium">Community</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#91c4a8]/70 hover:text-[#4edea3] hover:bg-[#1a211d] transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-medium">Courses</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-[#4edea3] border-r-2 border-[#4edea3] bg-gradient-to-r from-[#4edea3]/10 to-transparent transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="military_tech">military_tech</span>
+<span class="font-['Inter'] text-[11px] uppercase tracking-widest font-semibold">Achievements</span>
+</a>
+</nav>
+<div class="p-4 bg-surface-container rounded-xl">
+<p class="text-[10px] uppercase tracking-widest text-[#91c4a8]/50 mb-2">Cuenta Pro</p>
+<button class="w-full py-2 bg-primary text-on-primary text-[11px] font-bold uppercase tracking-widest rounded-lg hover:scale-105 duration-300 ease-out">Upgrade to Pro</button>
+</div>
+</aside>
+<!-- TopNavBar (Shared Component - Mobile) -->
+<header class="md:hidden fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#0e1511]/80 backdrop-blur-xl shadow-[0px_0px_32px_rgba(0,82,54,0.06)]">
+<h1 class="text-xl font-bold tracking-tighter text-[#4edea3]">Veridian Ledger</h1>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-[#4edea3]" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-[#4edea3]" data-icon="settings">settings</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 p-6 pt-24 md:pt-12 min-h-screen bg-surface">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Hero / Header Section -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div class="space-y-2">
+<h2 class="text-4xl md:text-5xl font-black tracking-tighter text-on-surface">Logros y Recompensas</h2>
+<p class="text-on-surface-variant font-medium">Tu arquitectura financiera en crecimiento constante.</p>
+</div>
+<div class="bg-surface-container-high px-6 py-4 rounded-xl flex items-center gap-4 shadow-xl border border-outline-variant/10">
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-[#91c4a8]">Total de Puntos</p>
+<p class="text-2xl font-black text-primary">12,450</p>
+</div>
+<div class="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary text-2xl" data-icon="token" style="font-variation-settings: 'FILL' 1;">token</span>
+</div>
+</div>
+</div>
+<!-- Bento Grid Dashboard -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Smart Progress Widget -->
+<div class="md:col-span-8 bg-surface-container-low rounded-xl p-8 relative overflow-hidden flex flex-col justify-between min-h-[320px] shadow-sm border border-outline-variant/5">
+<div class="relative z-10">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 mb-6">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-primary">Análisis de Progreso Inteligente</span>
+</div>
+<h3 class="text-3xl font-bold tracking-tight text-on-surface max-w-md">Estás a solo 3 transacciones de tu Racha de 30 Días.</h3>
+<p class="mt-4 text-on-surface-variant max-w-sm">Basado en tu historial de gastos y cumplimiento de objetivos, tu salud financiera ha mejorado un 12% este mes.</p>
+</div>
+<div class="mt-8 flex flex-col sm:flex-row gap-6 relative z-10">
+<div class="flex-1 space-y-2">
+<div class="flex justify-between text-[11px] uppercase tracking-widest font-bold">
+<span class="text-on-surface-variant">Racha Actual</span>
+<span class="text-primary">27 / 30 Días</span>
+</div>
+<div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[90%] rounded-full"></div>
+</div>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex justify-between text-[11px] uppercase tracking-widest font-bold">
+<span class="text-on-surface-variant">Diversidad de Portfolio</span>
+<span class="text-tertiary">Pendiente</span>
+</div>
+<div class="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-surface-container-high w-[45%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Decorative background graphic -->
+<div class="absolute -right-16 -bottom-16 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+</div>
+<!-- Next Milestone Card -->
+<div class="md:col-span-4 bg-surface-container rounded-xl p-8 flex flex-col border border-outline-variant/10">
+<p class="text-[10px] uppercase tracking-widest text-[#91c4a8]/50 font-bold mb-6">Próximo Hito</p>
+<div class="mb-6">
+<img alt="Grafico de progreso" class="w-full h-32 object-cover rounded-lg mb-4 opacity-80" data-alt="close-up of a holographic investment data visualization with glowing emerald lines and abstract financial charts on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRhcttCA4OqIjNeejZUqtt4mOrehImWnwb_ZU7C6dZVC0sgU8RoR1I--FZnMb9xC0qcVY7aWai3X-B4XMjRGZdIY_nxaAlpj1jqTtRZeTzFbjdRBWq2kAVzmz7n2uw_wjSet1ifrfzsPAN9IJWbPX5AinoDT9k37Q3KXsQgeJU6Ivcy-_Bx-8ejXcoTxbQmXD5q5TAtu4fdKJn7OTDuHczHPQJYCrZ5uopHL7Rvm7RbHrfQ7Kb8tBEieLzGMwgJJIQDWpX52h35Q"/>
+<h4 class="text-xl font-bold text-on-surface">Arquitecto de Ahorro</h4>
+<p class="text-sm text-on-surface-variant mt-2">Alcanza un ahorro del 20% de tus ingresos durante 3 meses consecutivos.</p>
+</div>
+<div class="mt-auto">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-primary">RECOMPENSA</span>
+<span class="text-[10px] font-bold text-on-surface">2,500 Pts</span>
+</div>
+<button class="w-full py-3 border border-primary/30 text-primary hover:bg-primary/5 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors">Ver Detalles</button>
+</div>
+</div>
+</div>
+<!-- Achievement Categories -->
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold tracking-tight text-on-surface px-2 border-l-4 border-primary">Tus Logros Categorizados</h3>
+<div class="flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="filter_list">filter_list</span></button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined" data-icon="grid_view">grid_view</span></button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Savings Card -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden shadow-lg hover:bg-surface-container transition-colors group">
+<div class="p-6 space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="savings">savings</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-[#91c4a8]">Ahorros</span>
+</div>
+<h4 class="text-xl font-bold text-on-surface">Fondo de Emergencia</h4>
+<p class="text-sm text-on-surface-variant">Has completado tu primer hito de reserva para 3 meses de gastos.</p>
+<div class="pt-4 flex items-center justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-primary">🏆</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-primary">⭐</div>
+</div>
+<span class="text-xs font-bold text-primary">Completado</span>
+</div>
+</div>
+<div class="h-1.5 w-full bg-primary"></div>
+</div>
+<!-- Investments Card -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden shadow-lg hover:bg-surface-container transition-colors group">
+<div class="p-6 space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-[#91c4a8]">Inversiones</span>
+</div>
+<h4 class="text-xl font-bold text-on-surface">Explorador Global</h4>
+<p class="text-sm text-on-surface-variant">Invierte en 5 mercados internacionales diferentes este trimestre.</p>
+<div class="space-y-2 pt-4">
+<div class="flex justify-between text-[10px] font-bold uppercase">
+<span class="text-on-surface-variant">Progreso</span>
+<span class="text-primary">3 / 5</span>
+</div>
+<div class="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[60%]"></div>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest"></div>
+</div>
+<!-- Discipline Card -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden shadow-lg hover:bg-surface-container transition-colors group">
+<div class="p-6 space-y-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="task_alt">task_alt</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-[#91c4a8]">Disciplina</span>
+</div>
+<h4 class="text-xl font-bold text-on-surface">Presupuesto Maestro</h4>
+<p class="text-sm text-on-surface-variant">Mantén tus gastos variables bajo control por 4 semanas.</p>
+<div class="space-y-2 pt-4">
+<div class="flex justify-between text-[10px] font-bold uppercase">
+<span class="text-on-surface-variant">Progreso</span>
+<span class="text-primary">75%</span>
+</div>
+<div class="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest"></div>
+</div>
+</div>
+</div>
+<!-- Detailed Stats / Recent Activity Bento -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
+<div class="bg-surface-container-high rounded-xl p-6 border border-outline-variant/10">
+<h4 class="text-sm font-bold uppercase tracking-widest text-[#91c4a8] mb-6">Actividad Reciente</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-highest/50 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="history_edu">history_edu</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Hito: Primeras Acciones</p>
+<p class="text-[10px] text-on-surface-variant">Hace 2 días</p>
+</div>
+</div>
+<span class="text-primary font-bold text-sm">+500 pts</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-highest/50 transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="bolt">bolt</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Racha: 10 Días Sin Gastos Extra</p>
+<p class="text-[10px] text-on-surface-variant">Hace 5 días</p>
+</div>
+</div>
+<span class="text-primary font-bold text-sm">+200 pts</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high rounded-xl p-6 border border-outline-variant/10 flex flex-col justify-between">
+<div>
+<h4 class="text-sm font-bold uppercase tracking-widest text-[#91c4a8] mb-4">Tu Nivel de Arquitecto</h4>
+<div class="flex items-baseline gap-2">
+<p class="text-5xl font-black text-on-surface">NV. 14</p>
+<p class="text-primary font-bold">Plata Superior</p>
+</div>
+</div>
+<div class="mt-8">
+<div class="flex justify-between text-[11px] font-bold uppercase mb-2">
+<span class="text-on-surface-variant">Próximo Nivel: Nv. 15</span>
+<span class="text-on-surface">1,250 XP para subir</span>
+</div>
+<div class="h-3 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container w-[72%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Shared Component - Mobile) -->
+<nav class="md:hidden fixed bottom-0 w-full h-16 bg-[#161d19] flex justify-around items-center z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.4)]">
+<button class="flex flex-col items-center gap-1 text-[#91c4a8]/70">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[9px] uppercase font-bold">Tablero</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#91c4a8]/70">
+<span class="material-symbols-outlined" data-icon="target">target</span>
+<span class="text-[9px] uppercase font-bold">Metas</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#4edea3]">
+<span class="material-symbols-outlined" data-icon="military_tech" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="text-[9px] uppercase font-bold">Logros</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#91c4a8]/70">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[9px] uppercase font-bold">Comunidad</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-[#91c4a8]/70">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[9px] uppercase font-bold">Perfil</span>
+</button>
+</nav>
+</body></html>
