@@ -684,11 +684,11 @@ export default function CalendarioPage() {
           .cal-agenda-goal-amount { font-size: 0.6875rem; color: var(--text-secondary); }
 
           /* === MODAL === */
-          .cal-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); animation: calFadeIn 0.2s ease; }
-          .cal-modal { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 440px; padding: 24px; animation: calSlideUp 0.3s ease; }
+          .cal-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); animation: calFadeIn 0.2s ease; -webkit-tap-highlight-color: transparent; }
+          .cal-modal { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 440px; padding: 24px; animation: calSlideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
           .cal-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
           .cal-modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-          .cal-modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; border-radius: var(--radius-sm); }
+          .cal-modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; min-width: 44px; min-height: 44px; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
           .cal-modal-close:hover { color: var(--text-primary); background: var(--bg-input); }
           .cal-modal-date { font-size: 0.8125rem; color: var(--text-secondary); margin: 0 0 16px; text-transform: capitalize; }
           .cal-modal-body { display: flex; flex-direction: column; gap: 14px; }
@@ -749,6 +749,8 @@ export default function CalendarioPage() {
             .cal-upcoming-icon { width: 36px; height: 36px; font-size: 1rem; }
             .cal-upcoming-amount { text-align: left; }
             .cal-modal { width: 95%; padding: 16px; max-width: none; }
+            .cal-modal-footer { flex-direction: column-reverse; }
+            .cal-btn-cancel, .cal-btn-create { width: 100%; text-align: center; padding: 14px; }
             .cal-form-row { grid-template-columns: 1fr; }
           }
         `}</style>

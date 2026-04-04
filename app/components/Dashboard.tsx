@@ -540,11 +540,11 @@ export function Dashboard() {
         .empty-msg { padding: 16px 0; color: var(--text-secondary); font-size: 0.875rem; text-align: center; margin: 0; }
 
         /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 440px; max-height: 85vh; overflow-y: auto; padding: 24px; animation: fadeInUp 0.3s ease; }
         .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; min-width: 44px; min-height: 44px; padding: 8px; display: flex; align-items: center; justify-content: center; }
         .modal-body { display: flex; flex-direction: column; gap: 12px; }
         .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
         .form-label { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
@@ -586,6 +586,9 @@ export function Dashboard() {
           .stat-card-label { font-size: 0.5625rem; margin-bottom: 4px; }
           .stat-icon-bg { width: 28px; height: 28px; font-size: 0.875rem; }
           .stat-badge { font-size: 0.625rem; padding: 1px 6px; }
+          .modal-content { width: 95%; padding: 16px; }
+          .modal-footer { flex-direction: column-reverse; }
+          .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
           .dashboard-title { font-size: 1.25rem; }
           .dashboard-subtitle { font-size: 0.75rem; }
           .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }

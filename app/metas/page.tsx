@@ -631,11 +631,11 @@ export default function MetasPage() {
         .insight-card-decoration { position: absolute; right: 0; top: 0; height: 100%; width: 30%; opacity: 0.15; background: linear-gradient(135deg, var(--color-prosper-green), transparent); pointer-events: none; }
 
         /* === MODAL === */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; -webkit-tap-highlight-color: transparent; }
         .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 480px; max-height: 85vh; overflow-y: auto; padding: 24px; animation: fadeInUp 0.3s ease; }
         .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
         .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
-        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; min-width: 44px; min-height: 44px; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); }
         .modal-close:hover { color: var(--text-primary); background: var(--bg-input); }
         .modal-body { display: flex; flex-direction: column; gap: 14px; }
         .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
@@ -666,6 +666,8 @@ export default function MetasPage() {
           .insight-card { flex-direction: column; text-align: center; padding: 24px; }
           .insight-card-decoration { display: none; }
           .modal-content { width: 95%; padding: 16px; }
+          .modal-footer { flex-direction: column-reverse; }
+          .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
         }
         @media (max-width: 480px) {
           .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; }

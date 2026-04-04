@@ -201,6 +201,9 @@ export function CustomSelect({
           overflow-y: auto;
           animation: dropdownFadeIn 0.15s ease;
         }
+        @media (max-width: 768px) {
+          .custom-select-dropdown { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 60vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+        }
 
         .custom-select-option {
           width: 100%;

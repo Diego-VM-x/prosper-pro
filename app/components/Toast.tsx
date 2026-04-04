@@ -88,7 +88,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           flex-direction: column;
           gap: 8px;
           max-width: 400px;
+          pointer-events: none;
         }
+        .toast-item { pointer-events: auto; }
         .toast-item {
           display: flex;
           align-items: center;
@@ -128,6 +130,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         @media (max-width: 480px) {
           .toast-container { top: 10px; right: 10px; left: 10px; max-width: none; }
           .toast-item { padding: 10px 12px; }
+        }
+        @media (max-width: 768px) {
+          .confirm-dialog { width: 95%; max-width: none; margin: 0 10px; padding: 20px; }
+          .confirm-footer { flex-direction: column-reverse; }
+          .confirm-btn { width: 100%; text-align: center; padding: 14px; }
         }
       `}</style>
     </ToastContext.Provider>
@@ -189,17 +196,21 @@ export function ConfirmDialog({
           display: flex; align-items: center; justify-content: center;
           z-index: 10001; backdrop-filter: blur(4px);
           animation: fadeIn 0.2s ease;
+          -webkit-tap-highlight-color: transparent;
         }
         .confirm-dialog {
           background: var(--bg-card); border: 1px solid var(--border-default);
           border-radius: var(--radius-xl); width: 90%; max-width: 400px;
           padding: 24px; animation: fadeInUp 0.3s ease;
+          max-height: 90vh; overflow-y: auto;
         }
         .confirm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .confirm-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .confirm-close {
           background: none; border: none; color: var(--text-secondary); cursor: pointer;
-          font-size: 1.25rem; padding: 4px; border-radius: var(--radius-sm);
+          font-size: 1.25rem; padding: 8px; min-width: 44px; min-height: 44px;
+          display: flex; align-items: center; justify-content: center;
+          border-radius: var(--radius-sm);
         }
         .confirm-close:hover { color: var(--text-primary); background: var(--bg-input); }
         .confirm-body { margin-bottom: 24px; }

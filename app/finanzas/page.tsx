@@ -594,11 +594,11 @@ export default function FinanzasPage() {
           .delete-btn { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 50%; }
           .delete-btn:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
-          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 420px; padding: 24px; }
+          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
+          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 420px; padding: 24px; max-height: 90vh; overflow-y: auto; }
           .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
           .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-          .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; }
+          .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 8px; }
           .modal-body { display: flex; flex-direction: column; gap: 14px; }
           .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
           .form-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: -6px; }
@@ -620,6 +620,9 @@ export default function FinanzasPage() {
             .page-header { flex-direction: column; }
             .page-header-actions { width: 100%; }
             .page-header-actions .btn { flex: 1; justify-content: center; }
+            .modal-content { width: 95%; padding: 16px; }
+            .modal-footer { flex-direction: column-reverse; }
+            .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
           }
           @media (max-width: 480px) {
             .summary-grid { grid-template-columns: 1fr; }
