@@ -5,30 +5,30 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { subscribeToTransactions } from '@/lib/firestore/transactions';
 import type { Transaction } from '@/types';
 import {
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from 'recharts';
 
-type TimeRange = '1D' | '1S' | '1M' | '3M' | '6M' | 'YTD';
+type TimeRange = 'day' | 'week' | 'month' | 'year';
 
 interface ChartDataPoint {
-  date: string;
   label: string;
-  balance: number;
+  income: number;
+  expense: number;
+  saving: number;
 }
 
-const TIME_RANGES: { key: TimeRange; label: string; days: number }[] = [
-  { key: '1D', label: '1D', days: 1 },
-  { key: '1S', label: '1S', days: 7 },
-  { key: '1M', label: '1M', days: 30 },
-  { key: '3M', label: '3M', days: 90 },
-  { key: '6M', label: '6M', days: 180 },
-  { key: 'YTD', label: 'YTD', days: 365 },
+const TIME_RANGES: { key: TimeRange; label: string }[] = [
+  { key: 'day', label: 'Día' },
+  { key: 'week', label: 'Semana' },
+  { key: 'month', label: 'Mes' },
+  { key: 'year', label: 'Año' },
 ];
 
 function formatCurrency(value: number): string {
@@ -40,25 +40,7 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function formatDateLabel(timestamp: number, range: TimeRange): string {
-  const date = new Date(timestamp);
-  switch (range) {
-    case '1D':
-      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    case '1S':
-    case '1M':
-      return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-    case '3M':
-    case '6M':
-      return date.toLocaleDateString('es-ES', { month: 'short' });
-    case 'YTD':
-      return date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
-    default:
-      return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-  }
-}
-
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string }) {
   if (active && payload && payload.length) {
     return (
       <div style={{
@@ -68,10 +50,12 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
         padding: '8px 12px',
         boxShadow: 'var(--shadow-md)',
       }}>
-        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>{label}</p>
-        <p style={{ margin: '4px 0 0', fontSize: '14px', fontWeight: 600, color: 'var(--color-prosper-green)' }}>
-          {formatCurrency(payload[0].value)}
-        </p>
+        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</p>
+        {payload.map((p) => (
+          <p key={p.dataKey} style={{ margin: '2px 0', fontSize: '12px', color: p.color }}>
+            {p.dataKey === 'income' ? '📥 Ingresos' : p.dataKey === 'expense' ? '📤 Gastos' : '💰 Ahorro'}: {formatCurrency(p.value)}
+          </p>
+        ))}
       </div>
     );
   }
@@ -94,54 +78,96 @@ export function FinancialStatusChart() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRange, setSelectedRange] = useState<TimeRange>('1M');
+  const [selectedRange, setSelectedRange] = useState<TimeRange>('week');
 
   useEffect(() => {
     if (!user?.uid) return;
-
     setLoading(true);
     const unsubscribe = subscribeToTransactions(user.uid, (txs) => {
       setTransactions(txs);
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, [user?.uid]);
 
   const chartData = useMemo((): ChartDataPoint[] => {
     if (transactions.length === 0) return [];
 
-    const now = Date.now();
-    const rangeConfig = TIME_RANGES.find(r => r.key === selectedRange);
-    const cutoffDate = now - (rangeConfig?.days ?? 30) * 86400000;
+    const now = new Date();
+    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
-    const filtered = transactions
-      .filter(t => t.date >= cutoffDate)
-      .sort((a, b) => a.date - b.date);
+    let periods: { key: string; label: string; start: Date; end: Date }[] = [];
 
-    if (filtered.length === 0) return [];
+    switch (selectedRange) {
+      case 'day': {
+        // Últimas 24 horas por hora
+        for (let i = 23; i >= 0; i--) {
+          const d = new Date(now);
+          d.setHours(d.getHours() - i, 0, 0, 0);
+          const end = new Date(d);
+          end.setHours(end.getHours() + 1);
+          periods.push({ key: `${d.getHours()}:00`, label: `${d.getHours()}:00`, start: d, end });
+        }
+        break;
+      }
+      case 'week': {
+        // Últimos 7 días
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          d.setHours(0, 0, 0, 0);
+          const end = new Date(d);
+          end.setDate(end.getDate() + 1);
+          periods.push({ key: d.toISOString().split('T')[0], label: dayNames[d.getDay()], start: d, end });
+        }
+        break;
+      }
+      case 'month': {
+        // Últimas 4 semanas
+        for (let i = 3; i >= 0; i--) {
+          const end = new Date(now);
+          end.setDate(end.getDate() - i * 7);
+          end.setHours(23, 59, 59, 999);
+          const start = new Date(end);
+          start.setDate(start.getDate() - 6);
+          start.setHours(0, 0, 0, 0);
+          periods.push({ key: `w${i}`, label: `Sem ${4 - i}`, start, end });
+        }
+        break;
+      }
+      case 'year': {
+        // Últimos 12 meses
+        for (let i = 11; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+          periods.push({ key: d.toISOString().slice(0, 7), label: monthNames[d.getMonth()], start: d, end });
+        }
+        break;
+      }
+    }
 
-    let runningBalance = 0;
-    const dataMap = new Map<string, number>();
+    return periods.map((period) => {
+      const periodTxs = transactions.filter((t) => {
+        const txDate = new Date(t.date);
+        return txDate >= period.start && txDate <= period.end;
+      });
 
-    filtered.forEach(tx => {
-      const dateKey = new Date(tx.date).toISOString().split('T')[0];
-      const amount = tx.type === 'income' ? tx.amount : tx.type === 'expense' ? -tx.amount : tx.amount;
-      runningBalance += amount;
-      dataMap.set(dateKey, runningBalance);
+      return {
+        label: period.label,
+        income: periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
+        expense: periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
+        saving: periodTxs.filter(t => t.type === 'saving').reduce((s, t) => s + t.amount, 0),
+      };
     });
-
-    return Array.from(dataMap.entries()).map(([dateStr, balance]) => ({
-      date: dateStr,
-      label: formatDateLabel(new Date(dateStr).getTime(), selectedRange),
-      balance,
-    }));
   }, [transactions, selectedRange]);
 
-  const currentBalance = chartData.length > 0 ? chartData[chartData.length - 1].balance : 0;
-  const previousBalance = chartData.length > 1 ? chartData[chartData.length - 2].balance : 0;
-  const change = currentBalance - previousBalance;
-  const changePercent = previousBalance !== 0 ? ((change / previousBalance) * 100).toFixed(2) : '0.00';
+  const totals = useMemo(() => {
+    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+    const saving = transactions.filter(t => t.type === 'saving').reduce((s, t) => s + t.amount, 0);
+    return { income, expense, saving, balance: income - expense };
+  }, [transactions]);
 
   return (
     <div style={{
@@ -161,10 +187,10 @@ export function FinancialStatusChart() {
       }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Progreso Financiero
+            Flujo Financiero
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Saldo Neto Total
+            Ingresos vs Gastos vs Ahorro
           </p>
         </div>
 
@@ -198,7 +224,7 @@ export function FinancialStatusChart() {
         </div>
       </div>
 
-      {/* Balance Summary */}
+      {/* Summary */}
       <div style={{
         display: 'flex',
         gap: '24px',
@@ -207,23 +233,39 @@ export function FinancialStatusChart() {
       }}>
         <div>
           <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Balance Actual
+            Ingresos
           </span>
-          <p style={{ margin: '4px 0 0', fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {formatCurrency(currentBalance)}
+          <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-prosper-green)' }}>
+            {formatCurrency(totals.income)}
           </p>
         </div>
         <div>
           <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Cambio
+            Gastos
+          </span>
+          <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-error)' }}>
+            {formatCurrency(totals.expense)}
+          </p>
+        </div>
+        <div>
+          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Ahorro
+          </span>
+          <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-pine-500)' }}>
+            {formatCurrency(totals.saving)}
+          </p>
+        </div>
+        <div>
+          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Balance
           </span>
           <p style={{
             margin: '4px 0 0',
-            fontSize: '16px',
-            fontWeight: 600,
-            color: change >= 0 ? 'var(--color-prosper-green)' : 'var(--color-red-500)',
+            fontSize: '18px',
+            fontWeight: 700,
+            color: totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)',
           }}>
-            {change >= 0 ? '+' : ''}{formatCurrency(change)} ({changePercent}%)
+            {formatCurrency(totals.balance)}
           </p>
         </div>
       </div>
@@ -244,38 +286,30 @@ export function FinancialStatusChart() {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-prosper-green)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="var(--color-prosper-green)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
             <XAxis
               dataKey="label"
               tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }}
               axisLine={{ stroke: 'var(--border-default)' }}
               tickLine={false}
-              interval="preserveStartEnd"
             />
             <YAxis
               tick={{ fontSize: 11, fill: 'var(--text-tertiary)' }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`}
               width={40}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="balance"
-              stroke="var(--color-prosper-green)"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorBalance)"
+            <Legend
+              wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
+              formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}
             />
-          </AreaChart>
+            <Bar dataKey="income" fill="var(--color-prosper-green)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="expense" fill="var(--color-error)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saving" fill="var(--color-pine-500)" radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       )}
     </div>

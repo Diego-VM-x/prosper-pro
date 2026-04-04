@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Gráfica Recharts en Dashboard + Finanzas + Gestión Avanzada de Cuentas)
+## Estado Actual (04 de Abril, 2026 - Gráfica Barras Ingresos/Gastos/Ahorro + Gestión Avanzada de Cuentas)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -162,6 +162,10 @@
     - `app/components/Dashboard.tsx`: `FinancialStatusChart` integrado con `onSnapshot` para actualización en tiempo real ante cualquier cambio en transacciones.
   - **Finanzas**:
     - `app/finanzas/page.tsx`: Reemplazado `LineChart` por `FinancialStatusChart`. Eliminadas variables no usadas (`chartPeriod`, `incomeVsExpenseData`). La gráfica se actualiza automáticamente al agregar/eliminar transacciones o modificar balances.
+  
+  ### 04/04/2026 - Gráfica de Barras Simplificada
+  - **FinancialStatusChart**:
+    - `app/components/FinancialStatusChart.tsx`: Reescrito como BarChart con 3 barras (Ingresos 📥, Gastos 📤, Ahorro 💰). Selectores: Día (24h), Semana (7 días), Mes (4 semanas), Año (12 meses). Resumen con totales de ingresos, gastos, ahorro y balance. Tooltip personalizado con formato moneda. Actualización en tiempo real via onSnapshot.
 
 ### 04/04/2026
 - **Overflow-X Fix**:
