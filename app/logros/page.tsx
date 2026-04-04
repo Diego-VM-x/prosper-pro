@@ -425,6 +425,20 @@ export default function LogrosPage() {
       completedAt: Date.now(),
     });
     await updateXP(user.uid, task.xpReward);
+    // Verificar logros desbloqueados
+    try {
+      const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
+      const [allTx, allAccounts, allGoals] = await Promise.all([
+        getTransactionsByOwnerId(user.uid),
+        getAccountsByOwnerId(user.uid),
+        getGoalsByOwnerId(user.uid),
+      ]);
+      await checkAndUnlockAchievements(user.uid, {
+        transactions: allTx,
+        accounts: allAccounts,
+        goals: allGoals,
+      });
+    } catch (e) { console.error('Error verificando logros:', e); }
     // Recargar progreso
     const tp = await getTaskProgress(user.uid);
     setTaskProgress(tp);
