@@ -199,7 +199,6 @@ export function Dashboard() {
           <div className="stat-card stat-card-clickable" onClick={() => router.push('/metas')}>
             <div className="stat-card-icon">
               <span className="stat-icon-bg">🎯</span>
-              <span className="stat-badge">+12%</span>
             </div>
             <p className="stat-card-label">METAS ACTIVAS</p>
             <p className="stat-card-value">{activeGoals.length}</p>

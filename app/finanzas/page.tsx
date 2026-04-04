@@ -663,7 +663,7 @@ export default function FinanzasPage() {
           .account-actions-group { display: flex; gap: 2px; align-items: center; }
           .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; transition: all var(--transition-fast); }
           .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
-          .account-action-more { font-size: 16px; line-height: 1; }
+          .account-action-more { font-size: 22px; line-height: 1; padding: 6px; }
           .account-dropdown-wrapper { position: relative; }
           .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; min-width: 180px; overflow: hidden; }
           .account-dropdown-wrapper:hover .account-dropdown { display: block; }
