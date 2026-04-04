@@ -347,15 +347,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
           <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-header">
-              <div className="mobile-menu-user">
-                <div className="mobile-menu-avatar">
-                  {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
-                </div>
-                <div>
-                  <p className="mobile-menu-name">{user?.displayName || 'Usuario'}</p>
-                  <p className="mobile-menu-email">{user?.email}</p>
-                </div>
-              </div>
               <button className="mobile-menu-close" onClick={() => setShowMobileMenu(false)}>
                 <IconX width={20} />
               </button>
