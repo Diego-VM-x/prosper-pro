@@ -1,536 +1,983 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/DashboardLayout';
-import ProtectedRoute from '../components/ProtectedRoute';
+import { useState, useEffect } from 'react';
+import { DashboardLayout } from '@/app/components/DashboardLayout';
+import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getUserProfile, updateUserProfile } from '@/lib/firestore/users';
-import { useTheme } from '../components/ThemeProvider';
-import { IconX, IconEdit, IconCheck, IconSun, IconMoon, IconLogout } from '../components/icons';
+import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
+import { useTheme } from '@/app/components/ThemeProvider';
 import type { UserProfile } from '@/types';
-
-// Icono de advertencia inline (evita dependencia externa)
-const AlertTriangleIcon = ({ width = 24, className = '' }: { width?: number; className?: string }) => (
-  <svg width={width} height={width} viewBox="0 0 24 24" fill="none"
-       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-       className={className}>
-    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-    <line x1="12" y1="9" x2="12" y2="13"/>
-    <line x1="12" y1="17" x2="12.01" y2="17"/>
-  </svg>
-);
 
 export default function ConfiguracionPage() {
   const { user, logout, deleteAccount } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [editingName, setEditingName] = useState(false);
-  const [newName, setNewName] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [language, setLanguage] = useState('es');
+  const [currency, setCurrency] = useState('USD');
+  const [darkModeSync, setDarkModeSync] = useState(true);
+  const [priceAlerts, setPriceAlerts] = useState(true);
+  const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const [communityMsgs, setCommunityMsgs] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const { theme, toggleTheme } = useTheme();
 
+  // Cargar perfil
   useEffect(() => {
     const uid = user?.uid as string;
     if (!uid) return;
-    let cancelled = false;
+
     async function loadProfile() {
       try {
         const p = await getUserProfile(uid);
-        if (!cancelled) {
+        if (p) {
           setProfile(p);
-          if (p?.displayName) setNewName(p.displayName);
+          setDisplayName(p.displayName || '');
+          setBio((p as any).bio || '');
         }
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error('Error loading profile:', e);
+      }
     }
     loadProfile();
-    return () => { cancelled = true; };
+
+    // Suscribirse a cambios en tiempo real
+    const unsub = subscribeToUserProfile(uid, (p) => {
+      if (p) {
+        setProfile(p);
+        setDisplayName(p.displayName || '');
+        setBio((p as any).bio || '');
+      }
+    });
+
+    return () => unsub();
   }, [user?.uid]);
 
-  const handleSaveName = async () => {
-    if (!user?.uid || !newName.trim()) return;
+  // Guardar perfil
+  const handleSaveProfile = async () => {
+    if (!user?.uid) return;
     setSaving(true);
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
-      await updateUserProfile(user.uid, { displayName: newName.trim() });
-      setEditingName(false);
-      setSuccessMsg('Nombre actualizado correctamente');
+      await updateUserProfile(user.uid, {
+        displayName: displayName.trim() || user.email?.split('@')[0] || 'Usuario',
+        bio: bio.trim(),
+        language,
+        currency,
+        darkModeSync,
+        notifications: {
+          priceAlerts,
+          budgetAlerts,
+          communityMsgs,
+        },
+      } as any);
+      setSuccessMsg('Perfil actualizado correctamente');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (e) {
       console.error(e);
+      setErrorMsg('Error al guardar los cambios');
     } finally {
       setSaving(false);
     }
   };
 
-  const userInitial = profile?.displayName ? profile.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : '?');
+  // Eliminar cuenta
+  const handleDeleteAccount = async () => {
+    setErrorMsg('');
+    setDeleting(true);
+    try {
+      const result = await deleteAccount();
+      if (result.needsReauth) {
+        setErrorMsg('Por seguridad, cierra sesión y vuelve a entrar antes de eliminar tu cuenta.');
+      } else if (result.error) {
+        setErrorMsg(result.error);
+      }
+    } catch {
+      setErrorMsg('Error al eliminar la cuenta. Intenta de nuevo.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const userInitial = displayName ? displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const userEmail = user?.email || 'sin-email@ejemplo.com';
 
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="page-header">
-          <div className="page-header-left">
-            <h1 className="page-title">Configuración</h1>
-            <p className="page-subtitle">Gestiona tu perfil y preferencias.</p>
-          </div>
-        </div>
+        <div className="configuracion-page">
+          <style jsx>{`
+            .configuracion-page {
+              padding: 24px;
+              max-width: 1100px;
+              margin: 0 auto;
+            }
 
-        {successMsg && (
-          <div className="success-toast">
-            <IconCheck width={16} />
-            <span>{successMsg}</span>
-          </div>
-        )}
+            /* Toast messages */
+            .toast {
+              padding: 12px 16px;
+              border-radius: 8px;
+              margin-bottom: 20px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              animation: fadeInUp 0.3s ease;
+              font-size: 0.875rem;
+              font-weight: 600;
+            }
+            .toast-success {
+              background: rgba(61,204,142,0.1);
+              border: 1px solid rgba(61,204,142,0.2);
+              color: var(--color-prosper-green);
+            }
+            .toast-error {
+              background: rgba(239,68,68,0.1);
+              border: 1px solid rgba(239,68,68,0.2);
+              color: var(--color-error, #EF4444);
+            }
 
-        {errorMsg && (
-          <div className="error-toast">
-            <AlertTriangleIcon width={16} />
-            <span>{errorMsg}</span>
-            <button onClick={() => setErrorMsg('')} className="error-toast-close">✕</button>
-          </div>
-        )}
+            /* Hero */
+            .hero {
+              margin-bottom: 32px;
+            }
+            .hero-title {
+              font-size: 2rem;
+              font-weight: 900;
+              color: var(--text-primary);
+              letter-spacing: -0.02em;
+              margin: 0 0 4px 0;
+            }
+            .hero-desc {
+              font-size: 0.875rem;
+              color: var(--text-secondary);
+              margin: 0;
+            }
 
-        <div className="settings-layout">
-          {/* Panel de perfil */}
-          <div className="settings-card profile-card">
-            <div className="profile-header">
-              <div className="profile-avatar-wrapper">
-                <div className="profile-avatar">
-                  {userInitial}
-                </div>
-              </div>
-              <div className="profile-info">
-                {editingName ? (
-                  <div className="edit-name-form">
-                    <input
-                      className="form-input"
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      placeholder="Tu nombre"
-                      autoFocus
-                    />
-                    <button className="btn btn-sm btn-primary" onClick={handleSaveName} disabled={saving}>
-                      {saving ? '...' : <IconCheck width={14} />}
-                    </button>
-                    <button className="btn btn-sm btn-outline" onClick={() => { setEditingName(false); setNewName(profile?.displayName || ''); }}>
-                      <IconX width={14} />
+            /* Grid */
+            .grid-layout {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 24px;
+            }
+            @media (min-width: 1024px) {
+              .grid-layout {
+                grid-template-columns: 2fr 1fr;
+              }
+            }
+
+            /* Cards */
+            .card {
+              background: var(--bg-card);
+              border-radius: 12px;
+              border: 1px solid var(--border-default);
+              overflow: hidden;
+            }
+
+            /* Profile Section */
+            .profile-section {
+              padding: 32px;
+            }
+            .profile-layout {
+              display: flex;
+              gap: 32px;
+            }
+            @media (max-width: 768px) {
+              .profile-layout {
+                flex-direction: column;
+                align-items: center;
+              }
+            }
+            .profile-avatar-wrap {
+              position: relative;
+              width: 120px;
+              height: 120px;
+              flex-shrink: 0;
+              cursor: pointer;
+              border-radius: 50%;
+              overflow: hidden;
+              border: 3px solid rgba(61,204,142,0.2);
+            }
+            .profile-avatar {
+              width: 100%;
+              height: 100%;
+              background: var(--bg-input);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 2.5rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+            }
+            .profile-avatar-overlay {
+              position: absolute;
+              inset: 0;
+              background: rgba(61,204,142,0.2);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              opacity: 0;
+              transition: opacity 0.2s;
+              color: white;
+              font-size: 1.25rem;
+            }
+            .profile-avatar-wrap:hover .profile-avatar-overlay {
+              opacity: 1;
+            }
+            .profile-form {
+              flex: 1;
+              min-width: 0;
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+            }
+            .form-row {
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 16px;
+            }
+            @media (min-width: 640px) {
+              .form-row {
+                grid-template-columns: 1fr 1fr;
+              }
+            }
+            .form-group {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+            .form-label {
+              font-size: 0.5625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.15em;
+              color: var(--text-tertiary);
+              padding-left: 4px;
+            }
+            .form-input, .form-textarea, .form-select {
+              padding: 10px 14px;
+              border-radius: 8px;
+              border: none;
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.8125rem;
+              outline: none;
+              transition: all 0.2s;
+              font-family: inherit;
+            }
+            .form-input:focus, .form-textarea:focus, .form-select:focus {
+              box-shadow: 0 0 0 2px var(--color-prosper-green);
+            }
+            .form-textarea {
+              resize: none;
+              line-height: 1.5;
+            }
+            .form-select {
+              cursor: pointer;
+              appearance: none;
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386948a' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+              background-repeat: no-repeat;
+              background-position: right 12px center;
+              padding-right: 32px;
+            }
+            .save-btn {
+              align-self: flex-end;
+              padding: 10px 24px;
+              background: var(--color-prosper-green);
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-size: 0.6875rem;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+              box-shadow: 0 4px 12px rgba(61,204,142,0.2);
+            }
+            .save-btn:hover:not(:disabled) {
+              opacity: 0.9;
+              transform: translateY(-1px);
+            }
+            .save-btn:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+
+            /* Subscription Card */
+            .sub-card {
+              padding: 24px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+              background: linear-gradient(135deg, var(--bg-card-high), var(--bg-input));
+            }
+            .sub-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 16px;
+            }
+            .sub-title {
+              font-size: 1.125rem;
+              font-weight: 800;
+              color: var(--color-prosper-green);
+              margin: 0;
+            }
+            .sub-desc {
+              font-size: 0.75rem;
+              color: var(--text-secondary);
+              margin: 0;
+            }
+            .sub-badge {
+              font-size: 0.5625rem;
+              font-weight: 900;
+              text-transform: uppercase;
+              padding: 2px 10px;
+              border-radius: 9999px;
+              background: rgba(61,204,142,0.1);
+              color: var(--color-prosper-green);
+              letter-spacing: 0.05em;
+            }
+            .sub-details {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
+            .sub-detail-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-bottom: 1px solid var(--border-default);
+              font-size: 0.75rem;
+            }
+            .sub-detail-label {
+              color: var(--text-secondary);
+            }
+            .sub-detail-value {
+              font-weight: 700;
+              color: var(--text-primary);
+            }
+            .sub-btn {
+              width: 100%;
+              padding: 12px;
+              margin-top: 16px;
+              background: var(--bg-accent-soft);
+              color: var(--text-primary);
+              border: 1px solid rgba(61,204,142,0.2);
+              border-radius: 8px;
+              font-size: 0.6875rem;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 6px;
+            }
+            .sub-btn:hover {
+              background: var(--bg-card-hover);
+            }
+
+            /* Preferences & Notifications */
+            .prefs-section {
+              padding: 24px;
+            }
+            .prefs-title {
+              font-size: 1rem;
+              font-weight: 800;
+              color: var(--text-primary);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin: 0 0 20px 0;
+            }
+            .prefs-list {
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+            }
+            .pref-row {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+
+            /* Toggle Switch */
+            .toggle-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 12px;
+              background: var(--bg-input);
+              border-radius: 8px;
+              transition: background 0.2s;
+            }
+            .toggle-row:hover {
+              background: var(--bg-card-high);
+            }
+            .toggle-info {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .toggle-icon {
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              background: rgba(61,204,142,0.08);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: var(--color-prosper-green);
+              font-size: 1rem;
+            }
+            .toggle-text {
+              display: flex;
+              flex-direction: column;
+            }
+            .toggle-label {
+              font-size: 0.75rem;
+              font-weight: 700;
+              color: var(--text-primary);
+            }
+            .toggle-desc {
+              font-size: 0.625rem;
+              color: var(--text-secondary);
+            }
+            .toggle-switch {
+              width: 44px;
+              height: 22px;
+              border-radius: 9999px;
+              background: var(--bg-card-high);
+              border: none;
+              cursor: pointer;
+              position: relative;
+              transition: background 0.2s;
+              flex-shrink: 0;
+            }
+            .toggle-switch.active {
+              background: var(--color-prosper-green);
+            }
+            .toggle-switch::after {
+              content: '';
+              position: absolute;
+              width: 16px;
+              height: 16px;
+              border-radius: 50%;
+              background: white;
+              top: 3px;
+              transition: all 0.2s;
+            }
+            .toggle-switch.active::after {
+              right: 3px;
+            }
+            .toggle-switch:not(.active)::after {
+              left: 3px;
+            }
+
+            /* Security Section */
+            .security-section {
+              padding: 24px;
+              border-top: 2px solid rgba(61,204,142,0.2);
+            }
+            .security-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 20px;
+              flex-wrap: wrap;
+              gap: 12px;
+            }
+            .security-header-left {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+            .security-title {
+              font-size: 1rem;
+              font-weight: 800;
+              color: var(--text-primary);
+              margin: 0;
+            }
+            .security-desc {
+              font-size: 0.625rem;
+              color: var(--text-secondary);
+              margin: 0;
+            }
+            .security-actions {
+              display: flex;
+              gap: 8px;
+              align-items: center;
+            }
+            .change-pass-btn {
+              font-size: 0.625rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+              border: 1px solid rgba(61,204,142,0.3);
+              background: none;
+              padding: 6px 12px;
+              border-radius: 6px;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+            .change-pass-btn:hover {
+              background: rgba(61,204,142,0.05);
+            }
+            .tfa-badge {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              padding: 6px 12px;
+              background: rgba(61,204,142,0.1);
+              border: 1px solid rgba(61,204,142,0.2);
+              border-radius: 6px;
+            }
+            .tfa-text {
+              font-size: 0.5625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: var(--color-prosper-green);
+            }
+
+            /* Sessions Table */
+            .sessions-table {
+              width: 100%;
+              overflow-x: auto;
+            }
+            .sessions-table table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 0.75rem;
+            }
+            .sessions-table th {
+              text-align: left;
+              padding: 12px 16px;
+              font-size: 0.5625rem;
+              font-weight: 900;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+              color: var(--text-tertiary);
+              border-bottom: 1px solid var(--border-default);
+            }
+            .sessions-table td {
+              padding: 14px 16px;
+              border-bottom: 1px solid var(--border-default);
+              color: var(--text-secondary);
+            }
+            .sessions-table tr:hover td {
+              background: var(--bg-card-high);
+            }
+            .session-device {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+            .session-device-icon {
+              font-size: 1.125rem;
+            }
+            .session-device-name {
+              font-weight: 700;
+              color: var(--text-primary);
+            }
+            .session-device-browser {
+              font-size: 0.5625rem;
+            }
+            .status-badge {
+              font-size: 0.5625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              padding: 3px 8px;
+              border-radius: 4px;
+              background: rgba(61,204,142,0.1);
+              color: var(--color-prosper-green);
+            }
+            .revoke-btn {
+              font-size: 0.5625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: var(--color-error, #EF4444);
+              background: none;
+              border: none;
+              cursor: pointer;
+              padding: 6px 12px;
+              border-radius: 4px;
+              transition: all 0.2s;
+            }
+            .revoke-btn:hover {
+              background: rgba(239,68,68,0.1);
+            }
+
+            /* Danger Zone */
+            .danger-zone {
+              margin-top: 24px;
+              background: rgba(239,68,68,0.05);
+              border: 1px solid rgba(239,68,68,0.2);
+              border-radius: 12px;
+              padding: 24px;
+              display: flex;
+              gap: 16px;
+              align-items: flex-start;
+            }
+            [data-theme="dark"] .danger-zone {
+              background: rgba(127,29,29,0.15);
+              border-color: rgba(239,68,68,0.3);
+            }
+            .danger-icon {
+              width: 44px;
+              height: 44px;
+              border-radius: 8px;
+              background: rgba(239,68,68,0.1);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: var(--color-error, #EF4444);
+              flex-shrink: 0;
+            }
+            .danger-content {
+              flex: 1;
+            }
+            .danger-title {
+              font-size: 0.875rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              color: var(--color-red-900, #7F1D1D);
+              margin: 0 0 6px 0;
+            }
+            [data-theme="dark"] .danger-title {
+              color: var(--color-red-300, #FCA5A5);
+            }
+            .danger-desc {
+              font-size: 0.75rem;
+              color: var(--color-red-900, #7F1D1D);
+              margin: 0 0 12px 0;
+              line-height: 1.5;
+            }
+            [data-theme="dark"] .danger-desc {
+              color: var(--color-red-200, #FECACA);
+            }
+            .danger-btn {
+              width: 100%;
+              padding: 10px 16px;
+              background: var(--color-error, #EF4444);
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-size: 0.75rem;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+            .danger-btn:hover:not(:disabled) {
+              background: #dc2626;
+            }
+            .danger-btn:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+
+            /* Footer */
+            .footer {
+              margin-top: 32px;
+              padding: 16px 0;
+              text-align: center;
+              font-size: 0.5625rem;
+              text-transform: uppercase;
+              letter-spacing: 0.15em;
+              color: var(--text-tertiary);
+              border-top: 1px solid var(--border-default);
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+              .configuracion-page {
+                padding: 16px;
+              }
+              .hero-title {
+                font-size: 1.5rem;
+              }
+              .profile-section {
+                padding: 20px;
+              }
+              .sessions-table {
+                font-size: 0.6875rem;
+              }
+              .danger-zone {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+              }
+            }
+          `}</style>
+
+          {/* Toast Messages */}
+          {successMsg && (
+            <div className="toast toast-success">✓ {successMsg}</div>
+          )}
+          {errorMsg && (
+            <div className="toast toast-error">⚠ {errorMsg}</div>
+          )}
+
+          {/* Hero */}
+          <div className="hero">
+            <h1 className="hero-title">Configuración</h1>
+            <p className="hero-desc">Gestiona tu perfil, preferencias y seguridad de tu cuenta.</p>
+          </div>
+
+          {/* Grid Layout */}
+          <div className="grid-layout">
+            {/* Main Column */}
+            <div>
+              {/* Profile Section */}
+              <div className="card profile-section">
+                <div className="profile-layout">
+                  {/* Avatar */}
+                  <div className="profile-avatar-wrap">
+                    <div className="profile-avatar">{userInitial}</div>
+                    <div className="profile-avatar-overlay">📷</div>
+                  </div>
+
+                  {/* Form */}
+                  <div className="profile-form">
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Nombre Completo</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          placeholder="Tu nombre"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Email</label>
+                        <input
+                          className="form-input"
+                          type="email"
+                          value={userEmail}
+                          disabled
+                          style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Bio Profesional</label>
+                      <textarea
+                        className="form-textarea"
+                        rows={3}
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        placeholder="Describe tu perfil financiero..."
+                      />
+                    </div>
+                    <button
+                      className="save-btn"
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                    >
+                      {saving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>
                   </div>
-                ) : (
-                  <>
-                    <h2 className="profile-name">{profile?.displayName || 'Sin nombre'}</h2>
-                    <button className="edit-name-btn" onClick={() => setEditingName(true)}>
-                      <IconEdit width={12} /> Editar
-                    </button>
-                  </>
-                )}
-                <p className="profile-email">{user?.email}</p>
+                </div>
+              </div>
+
+              {/* Security Section */}
+              <div className="card security-section" style={{ marginTop: 24 }}>
+                <div className="security-header">
+                  <div className="security-header-left">
+                    <span style={{ fontSize: '1.25rem' }}>🔒</span>
+                    <div>
+                      <h3 className="security-title">Protocolos de Seguridad</h3>
+                      <p className="security-desc">Gestión de sesiones activas y estado de encriptación</p>
+                    </div>
+                  </div>
+                  <div className="security-actions">
+                    <button className="change-pass-btn">Cambiar Contraseña</button>
+                    <div className="tfa-badge">
+                      <span className="tfa-text">2FA Activo</span>
+                      <button className="toggle-switch active" style={{ width: 32, height: 16 }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sessions Table */}
+                <div className="sessions-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Dispositivo / Sesión</th>
+                        <th>Ubicación</th>
+                        <th>Última Actividad</th>
+                        <th style={{ textAlign: 'right' }}>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <div className="session-device">
+                            <span className="session-device-icon">💻</span>
+                            <div>
+                              <div className="session-device-name">Este Dispositivo</div>
+                              <div className="session-device-browser">Chrome</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>Actual</td>
+                        <td>Activo ahora</td>
+                        <td style={{ textAlign: 'right' }}>
+                          <span className="status-badge">Actual</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="danger-zone" style={{ marginTop: 24 }}>
+                <div className="danger-icon">⚠️</div>
+                <div className="danger-content">
+                  <h3 className="danger-title">Zona de Peligro</h3>
+                  <p className="danger-desc">
+                    Al eliminar tu cuenta, se borrarán permanentemente tus metas, historial de ahorro, mensajes y tu acceso a la plataforma. Esta acción es irreversible.
+                  </p>
+                  <button
+                    className="danger-btn"
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Eliminando...' : 'Eliminar mi cuenta permanentemente'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Preferencias */}
-          <div className="settings-card">
-            <h3 className="settings-section-title">Preferencias</h3>
-            <div className="settings-list">
-              <div className="setting-item">
-                <div className="setting-item-icon">
-                  {theme === 'dark' ? <IconMoon width={18} /> : <IconSun width={18} />}
+            {/* Sidebar */}
+            <div>
+              {/* Subscription Card */}
+              <div className="card sub-card">
+                <div>
+                  <div className="sub-header">
+                    <div>
+                      <h3 className="sub-title">Plan Gratuito</h3>
+                      <p className="sub-desc">Acceso completo a Prosper</p>
+                    </div>
+                    <span className="sub-badge">Free</span>
+                  </div>
+                  <div className="sub-details">
+                    <div className="sub-detail-row">
+                      <span className="sub-detail-label">Metas activas</span>
+                      <span className="sub-detail-value">Ilimitadas</span>
+                    </div>
+                    <div className="sub-detail-row">
+                      <span className="sub-detail-label">Comunidad</span>
+                      <span className="sub-detail-value">Incluida</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="setting-item-content">
-                  <p className="setting-item-title">Tema</p>
-                  <p className="setting-item-desc">Actual: {theme === 'dark' ? 'Oscuro' : 'Claro'}</p>
-                </div>
-                <button className="btn btn-sm btn-outline" onClick={toggleTheme}>
-                  {theme === 'dark' ? 'Claro' : 'Oscuro'}
+                <button className="sub-btn">
+                  Ver Planes Premium →
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Cuenta */}
-          <div className="settings-card">
-            <h3 className="settings-section-title">Cuenta</h3>
-            <div className="settings-list">
-              <div className="setting-item">
-                <div className="setting-item-icon">
-                  <IconLogout width={18} />
+              {/* Account Preferences */}
+              <div className="card prefs-section" style={{ marginTop: 24 }}>
+                <h3 className="prefs-title">⚙️ Preferencias de Cuenta</h3>
+                <div className="prefs-list">
+                  <div className="pref-row">
+                    <label className="form-label">Idioma de Interfaz</label>
+                    <select
+                      className="form-select"
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                    >
+                      <option value="es">Español</option>
+                      <option value="en">English (US)</option>
+                    </select>
+                  </div>
+                  <div className="pref-row">
+                    <label className="form-label">Moneda</label>
+                    <select
+                      className="form-select"
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                    </select>
+                  </div>
+                  <div className="toggle-row">
+                    <div className="toggle-info">
+                      <div className="toggle-icon">{theme === 'dark' ? '🌙' : '☀️'}</div>
+                      <div className="toggle-text">
+                        <span className="toggle-label">Modo Oscuro</span>
+                        <span className="toggle-desc">Actual: {theme === 'dark' ? 'Oscuro' : 'Claro'}</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`toggle-switch ${theme === 'dark' ? 'active' : ''}`}
+                      onClick={toggleTheme}
+                    />
+                  </div>
                 </div>
-                <div className="setting-item-content">
-                  <p className="setting-item-title">Cerrar Sesión</p>
-                  <p className="setting-item-desc">Salir de tu cuenta actual</p>
+              </div>
+
+              {/* Notifications */}
+              <div className="card prefs-section" style={{ marginTop: 24 }}>
+                <h3 className="prefs-title">🔔 Notificaciones</h3>
+                <div className="prefs-list">
+                  <div className="toggle-row">
+                    <div className="toggle-info">
+                      <div className="toggle-icon">📈</div>
+                      <div className="toggle-text">
+                        <span className="toggle-label">Alertas de Precio</span>
+                        <span className="toggle-desc">Cambios en tiempo real</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`toggle-switch ${priceAlerts ? 'active' : ''}`}
+                      onClick={() => setPriceAlerts(!priceAlerts)}
+                    />
+                  </div>
+                  <div className="toggle-row">
+                    <div className="toggle-info">
+                      <div className="toggle-icon">💰</div>
+                      <div className="toggle-text">
+                        <span className="toggle-label">Alertas de Presupuesto</span>
+                        <span className="toggle-desc">Violaciones de límite</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`toggle-switch ${budgetAlerts ? 'active' : ''}`}
+                      onClick={() => setBudgetAlerts(!budgetAlerts)}
+                    />
+                  </div>
+                  <div className="toggle-row">
+                    <div className="toggle-info">
+                      <div className="toggle-icon">💬</div>
+                      <div className="toggle-text">
+                        <span className="toggle-label">Mensajes de Comunidad</span>
+                        <span className="toggle-desc">Notificaciones directas</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`toggle-switch ${communityMsgs ? 'active' : ''}`}
+                      onClick={() => setCommunityMsgs(!communityMsgs)}
+                    />
+                  </div>
                 </div>
-                <button className="btn btn-sm btn-outline" onClick={logout}>
-                  Salir
-                </button>
               </div>
             </div>
           </div>
 
-          {/* ZONA DE PELIGRO - Tarjeta única con botón directo */}
-          <div className="danger-zone-card">
-            <div className="danger-zone-icon">
-              <AlertTriangleIcon width={24} />
-            </div>
-            <div className="danger-zone-content">
-              <h3 className="danger-zone-title">ADVERTENCIA</h3>
-              <p className="danger-zone-text">
-                Al hacer clic en el botón de abajo, se borrarán permanentemente tus metas, historial de ahorro, mensajes y tu acceso a la plataforma. Esta acción es irreversible.
-              </p>
-              <button
-                className="danger-zone-btn"
-                onClick={async () => {
-                  setErrorMsg('');
-                  setDeleting(true);
-                  try {
-                    const result = await deleteAccount();
-                    if (result.needsReauth) {
-                      setErrorMsg('Por seguridad, cierra sesión y vuelve a entrar antes de eliminar tu cuenta.');
-                    } else if (result.error) {
-                      setErrorMsg(result.error);
-                    }
-                  } catch {
-                    setErrorMsg('Error al eliminar la cuenta. Intenta de nuevo.');
-                  } finally {
-                    setDeleting(false);
-                  }
-                }}
-                disabled={deleting}
-              >
-                {deleting ? 'Eliminando...' : 'Confirmar y Eliminar mi cuenta para siempre'}
-              </button>
-            </div>
+          {/* Footer */}
+          <div className="footer">
+            Prosper Pro © 2026 — Inteligencia Financiera Encriptada
           </div>
         </div>
-
-
-        <style>{`
-          .success-toast {
-            padding: 12px 16px;
-            background: rgba(61,204,142,0.1);
-            border: 1px solid rgba(61,204,142,0.2);
-            border-radius: var(--radius-md);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: fadeInUp 0.3s ease;
-          }
-          .success-toast span {
-            font-size: 0.875rem;
-            color: var(--color-prosper-green);
-            font-weight: 600;
-          }
-
-          .error-toast {
-            padding: 12px 16px;
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: var(--radius-md);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: fadeInUp 0.3s ease;
-          }
-          .error-toast span {
-            font-size: 0.875rem;
-            color: var(--color-error, #EF4444);
-            font-weight: 600;
-            flex: 1;
-          }
-          .error-toast-close {
-            background: none;
-            border: none;
-            color: var(--color-error, #EF4444);
-            cursor: pointer;
-            font-size: 1rem;
-            padding: 0;
-          }
-
-          .settings-layout {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-width: 640px;
-          }
-
-          .settings-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            transition: box-shadow var(--transition-fast);
-          }
-          .settings-card:hover {
-            box-shadow: var(--shadow-md);
-          }
-
-          /* Profile card */
-          .profile-card {
-            background: linear-gradient(135deg, var(--color-prosper-navy), var(--color-prosper-green));
-            border: none;
-          }
-          .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 24px;
-          }
-          .profile-avatar-wrapper {
-            position: relative;
-            flex-shrink: 0;
-          }
-          .profile-avatar {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: white;
-            border: 3px solid rgba(255,255,255,0.3);
-            overflow: hidden;
-          }
-          .profile-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
-          .profile-avatar-edit {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: white;
-            color: var(--color-prosper-navy);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid var(--color-prosper-green);
-            cursor: pointer;
-            transition: transform var(--transition-fast);
-          }
-          .profile-avatar-edit:hover {
-            transform: scale(1.1);
-          }
-          .profile-info {
-            flex: 1;
-            min-width: 0;
-          }
-          .profile-name {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: white;
-            margin: 0 0 4px 0;
-          }
-          .profile-email {
-            font-size: 0.8125rem;
-            color: rgba(255,255,255,0.75);
-            margin: 0;
-          }
-          .edit-name-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.7);
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: var(--radius-sm);
-            padding: 4px 8px;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: all var(--transition-fast);
-          }
-          .edit-name-btn:hover {
-            background: rgba(255,255,255,0.25);
-            color: white;
-          }
-          .edit-name-form {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-          }
-          .edit-name-form .form-input {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 12px;
-            font-size: 0.875rem;
-          }
-          .edit-name-form .form-input::placeholder {
-            color: rgba(255,255,255,0.5);
-          }
-          .edit-name-form .form-input:focus {
-            border-color: white;
-          }
-
-          /* Settings list */
-          .settings-section-title {
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-tertiary);
-            padding: 16px 20px 8px;
-            margin: 0;
-          }
-          .settings-list {
-            padding: 0 8px 8px;
-          }
-          .setting-item {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 14px 12px;
-            border-radius: var(--radius-md);
-            transition: background var(--transition-fast);
-          }
-          .setting-item:hover {
-            background: var(--bg-input);
-          }
-          .setting-item-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-md);
-            background: var(--bg-accent-soft);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--color-prosper-green);
-            flex-shrink: 0;
-          }
-          .setting-item-content {
-            flex: 1;
-            min-width: 0;
-          }
-          .setting-item-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 0;
-          }
-          .setting-item-desc {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin: 2px 0 0 0;
-          }
-
-          /* Danger zone card - fondo rojo claro/oscuro */
-          .danger-zone-card {
-            background: var(--bg-red-50, #FEF2F2);
-            border: 1px solid rgba(239,68,68,0.3);
-            border-radius: var(--radius-xl);
-            padding: 24px;
-            display: flex;
-            gap: 16px;
-            align-items: flex-start;
-          }
-          [data-theme="dark"] .danger-zone-card {
-            background: rgba(127,29,29,0.2);
-            border-color: rgba(239,68,68,0.4);
-          }
-          .danger-zone-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: var(--radius-md);
-            background: rgba(239,68,68,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--color-error, #EF4444);
-            flex-shrink: 0;
-          }
-          .danger-zone-content {
-            flex: 1;
-          }
-          .danger-zone-title {
-            font-size: 0.875rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--color-red-900, #7F1D1D);
-            margin: 0 0 8px 0;
-          }
-          [data-theme="dark"] .danger-zone-title {
-            color: var(--color-red-300, #FCA5A5);
-          }
-          .danger-zone-text {
-            font-size: 0.8125rem;
-            color: var(--color-red-900, #7F1D1D);
-            margin: 0 0 16px 0;
-            line-height: 1.6;
-          }
-          [data-theme="dark"] .danger-zone-text {
-            color: var(--color-red-200, #FECACA);
-          }
-          .danger-zone-btn {
-            width: 100%;
-            padding: 12px 20px;
-            background: var(--color-error, #EF4444);
-            color: white;
-            border: none;
-            border-radius: var(--radius-md);
-            font-size: 0.875rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-          }
-          .danger-zone-btn:hover:not(:disabled) {
-            background: #dc2626;
-            transform: translateY(-1px);
-          }
-          .danger-zone-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-          }
-
-          /* Buttons */
-          .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.8125rem;
-          }
-          .btn-danger {
-            background: var(--color-error, #EF4444);
-            color: white !important;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-          }
-          .btn-danger:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
-          }
-          .btn-outline {
-            color: var(--text-primary) !important;
-          }
-
-
-          @media (max-width: 768px) {
-            .settings-layout { max-width: 100%; }
-            .profile-header { flex-direction: column; text-align: center; padding: 20px; }
-            .edit-name-form { flex-direction: column; }
-            .edit-name-form .form-input { width: 100%; }
-            .setting-item { padding: 12px 8px; }
-            .setting-item-icon { width: 36px; height: 36px; }
-            .danger-zone-card { flex-direction: column; align-items: center; text-align: center; }
-          }
-          @media (max-width: 480px) {
-            .profile-avatar { width: 64px; height: 64px; font-size: 1.5rem; }
-            .profile-name { font-size: 1.125rem; }
-          }
-        `}</style>
       </DashboardLayout>
     </ProtectedRoute>
   );

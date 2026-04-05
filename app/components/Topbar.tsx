@@ -375,10 +375,14 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                   <div
                     key={notif.id}
                     className={`notif-item ${notif.read ? 'read' : 'unread'}`}
-                    onClick={() => { handleMarkRead(notif.id); }}
                   >
-                    <p className="notif-title">{notif.title}</p>
-                    <p className="notif-message">{notif.message}</p>
+                    <div className="notif-content" onClick={() => handleMarkRead(notif.id)}>
+                      <p className="notif-title">{notif.title}</p>
+                      <p className="notif-message">{notif.message}</p>
+                    </div>
+                    <button className="notif-delete-btn" onClick={() => deleteNotification(notif.id)} title="Eliminar">
+                      ✕
+                    </button>
                   </div>
                 )) : (
                   <div className="notif-empty">
@@ -468,27 +472,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 <IconHelp /> Ayuda
               </Link>
             </nav>
-            {/* Notificaciones en menú móvil */}
-            <div className="mobile-menu-notifications">
-              <div className="mobile-menu-notifications-header">
-                <span>🔔 Notificaciones</span>
-                {unreadCount > 0 && <span className="notifications-badge">{unreadCount}</span>}
-              </div>
-              {notifications.length > 0 ? notifications.slice(0, 3).map((notif) => (
-                <div
-                  key={notif.id}
-                  className={`notif-item ${notif.read ? 'read' : 'unread'}`}
-                  onClick={() => { handleMarkRead(notif.id); }}
-                >
-                  <p className="notif-title">{notif.title}</p>
-                  <p className="notif-message">{notif.message}</p>
-                </div>
-              )) : (
-                <div className="notif-empty">
-                  <p>Sin notificaciones</p>
-                </div>
-              )}
-            </div>
 
             <div className="mobile-menu-footer">
               <button className="mobile-menu-theme" onClick={() => { toggleTheme(); setShowMobileMenu(false); }}>

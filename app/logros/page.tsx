@@ -4,11 +4,11 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { getXPByOwnerId, getAchievementsByOwnerId, updateXP, MAX_LEVEL, subscribeToAchievements } from '@/lib/firestore/gamification';
+import { getXPByOwnerId, getAchievementsByOwnerId, updateXP, MAX_LEVEL, subscribeToAchievements, subscribeToXP, checkAndUnlockAchievements } from '@/lib/firestore/gamification';
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
 import { getAccountsByOwnerId } from '@/lib/firestore/accounts';
 import { getGoalsByOwnerId } from '@/lib/firestore/goals';
-import { getTaskProgress, DAILY_TASKS, WEEKLY_TASKS, getDayPeriod, getWeekPeriod, calculateTaskProgress, createOrUpdateTaskProgress } from '@/lib/firestore/tasks';
+import { getTaskProgress, DAILY_TASKS, WEEKLY_TASKS, getDayPeriod, getWeekPeriod, calculateTaskProgress, createOrUpdateTaskProgress, subscribeToTaskProgress } from '@/lib/firestore/tasks';
 import type { XPState, Achievement, Transaction, FinancialAccount, Goal, TaskProgress } from '@/types';
 
 // Definición de todos los logros posibles con sus condiciones
@@ -281,32 +281,52 @@ export default function LogrosPage() {
   const prevAchievementsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    if (!user) return;
+    const uid = user.uid;
+    let cancelled = false;
+
     async function loadData() {
-      if (!user) return;
       try {
         const [xp, ach, tx, acc, g, tp] = await Promise.all([
-          getXPByOwnerId(user.uid),
-          getAchievementsByOwnerId(user.uid),
-          getTransactionsByOwnerId(user.uid),
-          getAccountsByOwnerId(user.uid),
-          getGoalsByOwnerId(user.uid),
-          getTaskProgress(user.uid),
+          getXPByOwnerId(uid),
+          getAchievementsByOwnerId(uid),
+          getTransactionsByOwnerId(uid),
+          getAccountsByOwnerId(uid),
+          getGoalsByOwnerId(uid),
+          getTaskProgress(uid),
         ]);
-        setXPState(xp);
-        setFirebaseAchievements(ach);
-        setTransactions(tx);
-        setAccounts(acc);
-        setGoals(g);
-        setTaskProgress(tp);
-        // Guardar logros actuales para detectar nuevos
-        prevAchievementsRef.current = new Set(ach.map(a => a.title));
+        if (!cancelled) {
+          setXPState(xp);
+          setFirebaseAchievements(ach);
+          setTransactions(tx);
+          setAccounts(acc);
+          setGoals(g);
+          setTaskProgress(tp);
+          prevAchievementsRef.current = new Set(ach.map(a => a.title));
+        }
       } catch (error) {
         console.error('Error loading gamification data:', error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     loadData();
+
+    // Suscribirse a XP en tiempo real
+    const unsubXP = subscribeToXP(uid, (xp) => {
+      if (xp && !cancelled) setXPState(xp);
+    });
+
+    // Suscribirse a taskProgress en tiempo real
+    const unsubTasks = subscribeToTaskProgress(uid, (tp) => {
+      if (!cancelled) setTaskProgress(tp);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubXP();
+      unsubTasks();
+    };
   }, [user]);
 
   // Suscribirse a logros en tiempo real para detectar nuevos desbloqueos
@@ -413,21 +433,20 @@ export default function LogrosPage() {
 
   // Handler para reclamar XP de tarea completada
   const handleClaimTask = async (task: typeof dailyTasks[0]) => {
-    if (!user || task.completed) return;
+    if (!user || task.completed || task.progress < task.target) return;
     const { start, end } = task.frequency === 'daily' ? getDayPeriod() : getWeekPeriod();
-    await createOrUpdateTaskProgress({
-      ownerId: user.uid,
-      taskId: task.id,
-      progress: task.target,
-      completed: true,
-      periodStart: start,
-      periodEnd: end,
-      completedAt: Date.now(),
-    });
-    await updateXP(user.uid, task.xpReward);
-    // Verificar logros desbloqueados
     try {
-      const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
+      await createOrUpdateTaskProgress({
+        ownerId: user.uid,
+        taskId: task.id,
+        progress: task.target,
+        completed: true,
+        periodStart: start,
+        periodEnd: end,
+        completedAt: Date.now(),
+      });
+      await updateXP(user.uid, task.xpReward);
+      // Verificar logros desbloqueados
       const [allTx, allAccounts, allGoals] = await Promise.all([
         getTransactionsByOwnerId(user.uid),
         getAccountsByOwnerId(user.uid),
@@ -438,10 +457,10 @@ export default function LogrosPage() {
         accounts: allAccounts,
         goals: allGoals,
       });
-    } catch (e) { console.error('Error verificando logros:', e); }
-    // Recargar progreso
-    const tp = await getTaskProgress(user.uid);
-    setTaskProgress(tp);
+    } catch (e) {
+      console.error('Error completando tarea:', e);
+    }
+    // El taskProgress se actualiza automáticamente por la suscripción
   };
 
   return (
