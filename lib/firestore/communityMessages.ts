@@ -185,6 +185,18 @@ export async function sendMessage(communityId: string, message: {
   }
 }
 
+// Invitar usuario a un grupo
+export async function inviteToGroup(communityId: string, inviterId: string, inviterName: string, targetUserId: string, targetUserName: string, groupName: string) {
+  const { addNotification } = await import('./notifications');
+  await addNotification({
+    ownerId: targetUserId,
+    title: `👥 Invitación a grupo`,
+    message: `${inviterName} te invita a unirte a "${groupName}"`,
+    type: 'community',
+    read: false,
+  });
+}
+
 export async function toggleLike(communityId: string, messageId: string, userId: string) {
   const msgRef = doc(db, COMMUNITIES_COLLECTION, communityId, MESSAGES_SUBCOLLECTION, messageId);
   const msgSnap = await getDoc(msgRef);

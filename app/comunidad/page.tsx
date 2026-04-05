@@ -11,6 +11,7 @@ import {
   toggleLike,
   joinCommunity,
   createCommunity,
+  inviteToGroup,
 } from '@/lib/firestore/communityMessages';
 import {
   searchUsers,
@@ -55,6 +56,11 @@ export default function ComunidadPage() {
   const [showNewCommunity, setShowNewCommunity] = useState(false);
   const [newCommunityName, setNewCommunityName] = useState('');
   const [newCommunityDesc, setNewCommunityDesc] = useState('');
+  
+  // Invite modal
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteSearchTerm, setInviteSearchTerm] = useState('');
+  const [inviteSearchResults, setInviteSearchResults] = useState<UserProfile[]>([]);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -120,6 +126,29 @@ export default function ComunidadPage() {
     const timer = setTimeout(handleSearch, 300);
     return () => clearTimeout(timer);
   }, [handleSearch]);
+
+  // Search users for invite
+  const handleInviteSearch = useCallback(async () => {
+    if (!inviteSearchTerm.trim() || !user?.uid) { setInviteSearchResults([]); return; }
+    const results = await searchUsers(inviteSearchTerm, user.uid);
+    setInviteSearchResults(results);
+  }, [inviteSearchTerm, user?.uid]);
+
+  useEffect(() => {
+    const timer = setTimeout(handleInviteSearch, 300);
+    return () => clearTimeout(timer);
+  }, [handleInviteSearch]);
+
+  // Invite user to group
+  const handleInviteUser = useCallback(async (targetUser: UserProfile) => {
+    if (!user || !activeCommunity) return;
+    const comm = communities.find(c => c.id === activeCommunity);
+    if (!comm) return;
+    await inviteToGroup(activeCommunity, user.uid, user.displayName || 'Usuario', targetUser.uid, targetUser.displayName || 'Usuario', comm.name);
+    setInviteSearchTerm('');
+    setInviteSearchResults([]);
+    setShowInviteModal(false);
+  }, [user, activeCommunity, communities]);
 
   // Start private chat
   const startPrivateChat = useCallback(async (otherUser: UserProfile) => {
@@ -690,6 +719,21 @@ export default function ComunidadPage() {
                       <p className="chat-header-status-text">{activeComm?.description}</p>
                     </div>
                   </div>
+                  <button
+                    onClick={() => setShowInviteModal(true)}
+                    style={{
+                      background: 'var(--color-prosper-green)',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '6px 12px',
+                      color: 'white',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    👥 Invitar
+                  </button>
                 </div>
 
                 <div className="messages-area">
@@ -749,6 +793,76 @@ export default function ComunidadPage() {
                 <div className="modal-actions">
                   <button className="modal-btn" onClick={() => setShowNewCommunity(false)}>Cancelar</button>
                   <button className="modal-btn primary" onClick={handleCreateCommunity}>Crear</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Invite Modal */}
+          {showInviteModal && (
+            <div className="modal-overlay" onClick={() => { setShowInviteModal(false); setInviteSearchTerm(''); setInviteSearchResults([]); }}>
+              <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 380 }}>
+                <h3 className="modal-title">👥 Invitar a {activeComm?.name}</h3>
+                <div style={{ position: 'relative', marginBottom: 12 }}>
+                  <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }}>🔍</span>
+                  <input
+                    className="modal-input"
+                    placeholder="Buscar usuario por nombre o email..."
+                    value={inviteSearchTerm}
+                    onChange={(e) => setInviteSearchTerm(e.target.value)}
+                    style={{ paddingLeft: 32 }}
+                  />
+                </div>
+                <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                  {inviteSearchResults.length > 0 ? (
+                    inviteSearchResults.map(u => (
+                      <div
+                        key={u.uid}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          padding: '8px 12px',
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-input)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => handleInviteUser(u)}
+                      >
+                        <div style={{
+                          width: 32, height: 32, borderRadius: '50%',
+                          background: 'var(--bg-accent-soft)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-prosper-green)',
+                          flexShrink: 0,
+                        }}>
+                          {u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {u.displayName || 'Usuario'}
+                          </p>
+                          <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', margin: 0 }}>
+                            {u.email}
+                          </p>
+                        </div>
+                        <span style={{ color: 'var(--color-prosper-green)', fontSize: '1rem' }}>+</span>
+                      </div>
+                    ))
+                  ) : inviteSearchTerm ? (
+                    <p style={{ textAlign: 'center', padding: 16, color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                      No se encontraron usuarios
+                    </p>
+                  ) : (
+                    <p style={{ textAlign: 'center', padding: 16, color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                      Busca un usuario para invitar
+                    </p>
+                  )}
+                </div>
+                <div className="modal-actions" style={{ marginTop: 12 }}>
+                  <button className="modal-btn" onClick={() => { setShowInviteModal(false); setInviteSearchTerm(''); setInviteSearchResults([]); }}>Cerrar</button>
                 </div>
               </div>
             </div>
