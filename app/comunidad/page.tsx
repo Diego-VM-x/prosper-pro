@@ -32,28 +32,28 @@ const DEFAULT_COMMUNITIES: Community[] = [
   { id: 'educacion', name: 'Educación', description: 'Aprende finanzas', icon: '📚', color: '#3B82F6', memberCount: 0, createdBy: 'system', createdAt: 3 },
 ];
 
-type TabType = 'public' | 'private';
+type ViewType = 'channels' | 'messages' | 'contacts';
+type ChatType = 'public' | 'private';
 
 export default function ComunidadPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('public');
+  const [activeView, setActiveView] = useState<ViewType>('messages');
+  const [chatType, setChatType] = useState<ChatType>('private');
 
   // Public channels
   const [communities, setCommunities] = useState<Community[]>(DEFAULT_COMMUNITIES);
   const [activeCommunity, setActiveCommunity] = useState<string>('general');
   const [publicMessages, setPublicMessages] = useState<CommunityMessage[]>([]);
-  const [members, setMembers] = useState<CommunityRoomMember[]>([]);
   const [publicInput, setPublicInput] = useState('');
 
   // Private chats
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [conversations, setConversations] = useState<(PrivateConversation & { otherUser?: UserProfile })[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
   const [privateInput, setPrivateInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
-  const [showSearch, setShowSearch] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // UI
@@ -62,8 +62,7 @@ export default function ComunidadPage() {
   const [newCommunityName, setNewCommunityName] = useState('');
   const [newCommunityDesc, setNewCommunityDesc] = useState('');
 
-  const publicEndRef = useRef<HTMLDivElement>(null);
-  const privateEndRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Subscribe to communities
   useEffect(() => {
@@ -76,19 +75,12 @@ export default function ComunidadPage() {
 
   // Subscribe to public messages
   useEffect(() => {
+    if (chatType !== 'public') return;
     const unsub = subscribeToMessages(activeCommunity, (msgs) => {
       setPublicMessages(msgs);
     });
     return () => unsub();
-  }, [activeCommunity]);
-
-  // Subscribe to members
-  useEffect(() => {
-    const unsub = subscribeToMembers(activeCommunity, (m) => {
-      setMembers(m);
-    });
-    return () => unsub();
-  }, [activeCommunity]);
+  }, [activeCommunity, chatType]);
 
   // Subscribe to all users
   useEffect(() => {
@@ -110,16 +102,15 @@ export default function ComunidadPage() {
 
   // Subscribe to private messages
   useEffect(() => {
-    if (!activeConversation) return;
+    if (!activeConversation || chatType !== 'private') return;
     const unsub = subscribeToPrivateMessages(activeConversation, (msgs) => {
       setPrivateMessages(msgs);
-      // Mark as read
       if (user?.uid) {
         markMessagesAsRead(activeConversation, user.uid);
       }
     });
     return () => unsub();
-  }, [activeConversation, user?.uid]);
+  }, [activeConversation, chatType, user?.uid]);
 
   // Subscribe to total unread count
   useEffect(() => {
@@ -132,20 +123,15 @@ export default function ComunidadPage() {
 
   // Auto-scroll
   useEffect(() => {
-    publicEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [publicMessages]);
-
-  useEffect(() => {
-    privateEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [privateMessages]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [publicMessages, privateMessages]);
 
   // Search users
   const handleSearch = useCallback(async () => {
-    if (!searchTerm.trim()) {
+    if (!searchTerm.trim() || !user?.uid) {
       setSearchResults([]);
       return;
     }
-    if (!user?.uid) return;
     const results = await searchUsers(searchTerm, user.uid);
     setSearchResults(results);
   }, [searchTerm, user?.uid]);
@@ -160,7 +146,7 @@ export default function ComunidadPage() {
     if (!user?.uid) return;
     const convId = await getOrCreateConversation(user.uid, otherUser.uid);
     setActiveConversation(convId);
-    setShowSearch(false);
+    setChatType('private');
     setSearchTerm('');
     setSearchResults([]);
   }, [user?.uid]);
@@ -198,6 +184,7 @@ export default function ComunidadPage() {
   // Join community
   const handleSelectCommunity = useCallback(async (commId: string) => {
     setActiveCommunity(commId);
+    setChatType('public');
     if (user) {
       await joinCommunity(commId, {
         uid: user.uid,
@@ -226,390 +213,412 @@ export default function ComunidadPage() {
 
   const activeComm = communities.find(c => c.id === activeCommunity);
   const activeConv = conversations.find(c => c.id === activeConversation);
+  const activeChatUser = activeConv?.otherUser;
+
+  const formatTime = (timestamp: number) => {
+    const d = new Date(timestamp);
+    return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const filteredConversations = searchTerm
+    ? conversations.filter(c =>
+        c.otherUser?.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.otherUser?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : conversations;
+
+  const displayUsers = searchTerm
+    ? searchResults
+    : allUsers;
 
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-page">
+        <div className="chats-page">
           <style jsx>{`
-            .comunidad-page {
+            .chats-page {
               display: flex;
-              flex-direction: column;
               height: calc(100vh - 140px);
               max-height: calc(100vh - 140px);
               overflow: hidden;
-            }
-
-            /* Tabs */
-            .tabs {
-              display: flex;
-              gap: 0;
-              padding: 0 16px;
-              border-bottom: 1px solid var(--border-default);
-              flex-shrink: 0;
-            }
-            .tab-btn {
-              padding: 12px 24px;
-              background: none;
-              border: none;
-              border-bottom: 2px solid transparent;
-              color: var(--text-secondary);
-              font-size: 0.875rem;
-              font-weight: 600;
-              cursor: pointer;
-              transition: all 0.2s;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            .tab-btn:hover {
-              color: var(--text-primary);
-            }
-            .tab-btn.active {
-              color: var(--color-prosper-green);
-              border-bottom-color: var(--color-prosper-green);
-            }
-            .tab-badge {
-              background: var(--color-prosper-green);
-              color: white;
-              font-size: 0.625rem;
-              font-weight: 700;
-              padding: 1px 6px;
-              border-radius: 9999px;
-            }
-
-            /* Main layout */
-            .main-layout {
-              display: flex;
-              flex: 1;
-              overflow: hidden;
-            }
-
-            /* Sidebar */
-            .sidebar {
-              width: 260px;
-              min-width: 260px;
               background: var(--bg-card);
-              border-right: 1px solid var(--border-default);
+            }
+
+            /* Conversation List (Secondary Sidebar) */
+            .conv-list {
+              width: 320px;
+              min-width: 320px;
+              background: var(--bg-input);
               display: flex;
               flex-direction: column;
-              overflow: hidden;
+              border-right: 1px solid var(--border-default);
             }
-            .sidebar-header {
-              padding: 12px 16px;
-              border-bottom: 1px solid var(--border-default);
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
+            .conv-list-header {
+              padding: 24px;
             }
-            .sidebar-title {
-              font-size: 0.8125rem;
+            .conv-list-title {
+              font-size: 1.25rem;
               font-weight: 800;
               color: var(--text-primary);
-              margin: 0;
+              margin: 0 0 16px 0;
             }
-            .sidebar-btn {
-              width: 28px;
-              height: 28px;
-              border-radius: 6px;
-              border: 1px solid var(--border-default);
-              background: var(--bg-input);
-              color: var(--text-secondary);
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 0.875rem;
+            .conv-search {
+              position: relative;
             }
-            .sidebar-btn:hover {
-              border-color: var(--color-prosper-green);
-              color: var(--color-prosper-green);
-            }
-            .comm-list {
-              flex: 1;
-              overflow-y: auto;
-              padding: 8px;
-            }
-            .comm-item {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              padding: 8px 10px;
-              border-radius: 8px;
-              cursor: pointer;
-              transition: all 0.15s;
-              border: none;
-              background: none;
-              width: 100%;
-              text-align: left;
-            }
-            .comm-item:hover {
-              background: var(--bg-card-hover);
-            }
-            .comm-item.active {
-              background: var(--bg-accent-soft);
-            }
-            .comm-icon {
-              width: 28px;
-              height: 28px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 0.75rem;
-              flex-shrink: 0;
-            }
-            .comm-info {
-              flex: 1;
-              min-width: 0;
-            }
-            .comm-name {
-              font-size: 0.75rem;
-              font-weight: 600;
-              color: var(--text-primary);
-              margin: 0;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-            }
-            .comm-desc {
-              font-size: 0.625rem;
+            .conv-search-icon {
+              position: absolute;
+              left: 12px;
+              top: 50%;
+              transform: translateY(-50%);
               color: var(--text-tertiary);
-              margin: 0;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
+              font-size: 1rem;
             }
-            .comm-unread {
-              font-size: 0.625rem;
-              font-weight: 700;
-              color: var(--color-prosper-green);
-              background: rgba(61,204,142,0.1);
-              padding: 1px 6px;
-              border-radius: 9999px;
-            }
-
-            /* Search */
-            .search-box {
-              padding: 8px;
-              border-bottom: 1px solid var(--border-default);
-            }
-            .search-input {
+            .conv-search-input {
               width: 100%;
-              padding: 8px 12px;
+              padding: 10px 12px 10px 36px;
               border-radius: 8px;
-              border: 1px solid var(--border-default);
-              background: var(--bg-input);
+              border: none;
+              background: var(--bg-card);
               color: var(--text-primary);
-              font-size: 0.75rem;
+              font-size: 0.8125rem;
               outline: none;
             }
-            .search-input:focus {
-              border-color: var(--color-prosper-green);
+            .conv-search-input:focus {
+              box-shadow: 0 0 0 1px var(--color-prosper-green);
             }
-            .search-results {
-              max-height: 200px;
+            .conv-list-body {
+              flex: 1;
               overflow-y: auto;
-              padding: 4px;
+              padding: 8px;
             }
-            .search-result-item {
+            .conv-item {
+              padding: 12px;
+              border-radius: 12px;
+              cursor: pointer;
+              transition: all 0.15s;
+              margin-bottom: 4px;
+            }
+            .conv-item:hover {
+              background: var(--bg-card);
+            }
+            .conv-item.active {
+              background: var(--bg-card-high);
+            }
+            .conv-item-row {
               display: flex;
               align-items: center;
-              gap: 8px;
-              padding: 8px;
-              border-radius: 6px;
-              cursor: pointer;
-              transition: background 0.15s;
-              border: none;
-              background: none;
-              width: 100%;
-              text-align: left;
+              gap: 12px;
             }
-            .search-result-item:hover {
-              background: var(--bg-card-hover);
+            .conv-avatar {
+              position: relative;
+              flex-shrink: 0;
             }
-            .search-avatar {
-              width: 28px;
-              height: 28px;
+            .conv-avatar-img {
+              width: 48px;
+              height: 48px;
               border-radius: 50%;
               background: var(--bg-accent-soft);
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 0.625rem;
+              font-size: 1rem;
               font-weight: 700;
               color: var(--color-prosper-green);
-              flex-shrink: 0;
-            }
-            .search-name {
-              font-size: 0.75rem;
-              font-weight: 600;
-              color: var(--text-primary);
-              margin: 0;
-            }
-            .search-email {
-              font-size: 0.625rem;
-              color: var(--text-tertiary);
-              margin: 0;
-            }
-
-            /* Chat window */
-            .chat-window {
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              min-width: 0;
-              background: var(--bg-card);
               overflow: hidden;
             }
-            .chat-header {
-              padding: 12px 16px;
-              border-bottom: 1px solid var(--border-default);
-              display: flex;
-              align-items: center;
-              gap: 10px;
-              flex-shrink: 0;
-            }
-            .chat-header-icon {
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 0.875rem;
-            }
-            .chat-header-info {
-              flex: 1;
-              min-width: 0;
-            }
-            .chat-header-name {
-              font-size: 0.8125rem;
-              font-weight: 700;
-              color: var(--text-primary);
-              margin: 0;
-            }
-            .chat-header-desc {
-              font-size: 0.625rem;
-              color: var(--text-tertiary);
-              margin: 0;
-            }
-
-            /* Messages */
-            .messages-container {
-              flex: 1;
-              overflow-y: auto;
-              padding: 12px;
-              display: flex;
-              flex-direction: column;
-              gap: 6px;
-            }
-            .msg-item {
-              display: flex;
-              gap: 6px;
-              align-items: flex-end;
-              max-width: 80%;
-            }
-            .msg-item.msg-own {
-              align-self: flex-end;
-              flex-direction: row-reverse;
-            }
-            .msg-avatar {
-              width: 24px;
-              height: 24px;
-              border-radius: 50%;
-              overflow: hidden;
-              flex-shrink: 0;
-            }
-            .msg-avatar img {
+            .conv-avatar-img img {
               width: 100%;
               height: 100%;
               object-fit: cover;
             }
-            .msg-avatar-placeholder {
+            .conv-status-dot {
+              position: absolute;
+              bottom: 0;
+              right: 0;
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+              border: 2px solid var(--bg-input);
+            }
+            .conv-status-dot.online {
+              background: var(--color-prosper-green);
+            }
+            .conv-status-dot.offline {
+              background: var(--text-tertiary);
+            }
+            .conv-info {
+              flex: 1;
+              min-width: 0;
+            }
+            .conv-info-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+            }
+            .conv-name {
+              font-size: 0.8125rem;
+              font-weight: 700;
+              color: var(--text-primary);
+              margin: 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .conv-time {
+              font-size: 0.625rem;
+              color: var(--text-tertiary);
+              flex-shrink: 0;
+            }
+            .conv-last-msg {
+              font-size: 0.6875rem;
+              color: var(--text-secondary);
+              margin: 2px 0 0 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .conv-item.active .conv-last-msg {
+              color: var(--color-prosper-green);
+              font-weight: 600;
+            }
+
+            /* Main Chat Window */
+            .chat-main {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+              background: var(--bg-card);
+            }
+            .chat-header {
+              height: 64px;
+              padding: 0 24px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              border-bottom: 1px solid var(--border-default);
+              background: var(--bg-card);
+              backdrop-filter: blur(12px);
+            }
+            .chat-header-left {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .chat-header-avatar {
+              position: relative;
+            }
+            .chat-header-avatar-img {
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              background: var(--bg-accent-soft);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.875rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+              overflow: hidden;
+            }
+            .chat-header-avatar-img img {
               width: 100%;
               height: 100%;
+              object-fit: cover;
+            }
+            .chat-header-status {
+              position: absolute;
+              bottom: 0;
+              right: 0;
+              width: 10px;
+              height: 10px;
+              border-radius: 50%;
+              border: 2px solid var(--bg-card);
+            }
+            .chat-header-status.online {
+              background: var(--color-prosper-green);
+            }
+            .chat-header-name {
+              font-size: 0.9375rem;
+              font-weight: 700;
+              color: var(--text-primary);
+              margin: 0;
+            }
+            .chat-header-encryption {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              margin-top: 2px;
+            }
+            .chat-header-encryption span {
+              font-size: 0.5625rem;
+              color: var(--text-tertiary);
+            }
+            .chat-header-actions {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .chat-header-btn {
+              width: 36px;
+              height: 36px;
+              border-radius: 8px;
+              border: none;
+              background: none;
+              color: var(--text-tertiary);
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.15s;
+            }
+            .chat-header-btn:hover {
+              background: var(--bg-input);
+              color: var(--text-primary);
+            }
+
+            /* Messages Area */
+            .messages-area {
+              flex: 1;
+              overflow-y: auto;
+              padding: 24px;
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+              background: radial-gradient(circle at center, rgba(61,204,142,0.03) 0%, transparent 70%);
+            }
+            .msg-timestamp {
+              display: flex;
+              justify-content: center;
+            }
+            .msg-timestamp span {
+              padding: 4px 12px;
+              background: var(--bg-input);
+              color: var(--text-tertiary);
+              font-size: 0.5625rem;
+              font-weight: 700;
+              border-radius: 9999px;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+            }
+            .msg-row {
+              display: flex;
+              gap: 12px;
+              max-width: 70%;
+            }
+            .msg-row.received {
+              align-items: flex-end;
+            }
+            .msg-row.sent {
+              align-self: flex-end;
+              flex-direction: column;
+              align-items: flex-end;
+            }
+            .msg-avatar-small {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
               background: var(--bg-accent-soft);
-              color: var(--color-prosper-green);
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 0.625rem;
               font-weight: 700;
+              color: var(--color-prosper-green);
+              flex-shrink: 0;
+              overflow: hidden;
+            }
+            .msg-avatar-small img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
             }
             .msg-bubble {
+              padding: 12px 16px;
+              border-radius: 16px;
+              font-size: 0.8125rem;
+              line-height: 1.5;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            }
+            .msg-bubble.received {
               background: var(--bg-input);
-              border: 1px solid var(--border-default);
-              border-radius: 10px;
-              padding: 6px 10px;
-              max-width: 100%;
-            }
-            .msg-item.msg-own .msg-bubble {
-              background: var(--bg-accent-soft);
-              border-color: var(--color-prosper-green);
-            }
-            .msg-sender {
-              font-size: 0.625rem;
-              font-weight: 700;
-              color: var(--color-prosper-green);
-              margin-bottom: 2px;
-            }
-            .msg-text {
-              font-size: 0.75rem;
               color: var(--text-primary);
-              line-height: 1.4;
-              word-break: break-word;
+              border-bottom-left-radius: 4px;
             }
-            .msg-footer {
+            .msg-bubble.sent {
+              background: var(--color-prosper-green);
+              color: white;
+              border-bottom-right-radius: 4px;
+              box-shadow: 0 4px 16px rgba(61,204,142,0.15);
+            }
+            .msg-meta {
               display: flex;
               align-items: center;
               gap: 6px;
-              margin-top: 2px;
+              margin-top: 4px;
+            }
+            .msg-meta.sent {
+              justify-content: flex-end;
             }
             .msg-time {
               font-size: 0.5625rem;
               color: var(--text-tertiary);
             }
-            .msg-like-btn {
-              background: none;
-              border: none;
-              font-size: 0.625rem;
-              cursor: pointer;
-              padding: 1px 3px;
-              border-radius: 3px;
-            }
-            .msg-like-btn:hover {
-              background: var(--bg-card-hover);
+            .msg-check {
+              font-size: 0.75rem;
+              color: var(--color-prosper-green);
             }
 
-            /* Input */
-            .chat-input-area {
-              padding: 10px 12px;
-              border-top: 1px solid var(--border-default);
+            /* Message Input */
+            .msg-input-area {
+              padding: 16px 24px;
+              background: var(--bg-card);
+            }
+            .msg-input-wrapper {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: var(--bg-input);
+              border-radius: 16px;
+              padding: 4px 4px 4px 8px;
+              transition: all 0.15s;
+            }
+            .msg-input-wrapper:focus-within {
+              box-shadow: 0 0 0 1px var(--color-prosper-green);
+            }
+            .msg-input-btn {
+              width: 36px;
+              height: 36px;
+              border-radius: 8px;
+              border: none;
+              background: none;
+              color: var(--text-tertiary);
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.15s;
               flex-shrink: 0;
             }
-            .chat-input-row {
-              display: flex;
-              gap: 6px;
-              align-items: center;
+            .msg-input-btn:hover {
+              color: var(--color-prosper-green);
             }
-            .chat-input {
+            .msg-input {
               flex: 1;
-              padding: 8px 12px;
-              border-radius: 16px;
-              border: 1px solid var(--border-default);
-              background: var(--bg-input);
+              background: none;
+              border: none;
               color: var(--text-primary);
-              font-size: 0.75rem;
+              font-size: 0.8125rem;
+              padding: 8px;
               outline: none;
             }
-            .chat-input:focus {
-              border-color: var(--color-prosper-green);
+            .msg-input::placeholder {
+              color: var(--text-tertiary);
             }
-            .chat-send-btn {
-              width: 32px;
-              height: 32px;
-              border-radius: 50%;
+            .msg-send-btn {
+              width: 40px;
+              height: 40px;
+              border-radius: 12px;
               border: none;
               background: var(--color-prosper-green);
               color: white;
@@ -617,15 +626,27 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 0.875rem;
+              transition: all 0.15s;
               flex-shrink: 0;
+              box-shadow: 0 4px 12px rgba(61,204,142,0.2);
             }
-            .chat-send-btn:hover {
-              opacity: 0.9;
+            .msg-send-btn:hover {
+              filter: brightness(1.1);
+            }
+            .msg-send-btn:active {
+              transform: scale(0.95);
+            }
+            .msg-disclaimer {
+              text-align: center;
+              font-size: 0.5625rem;
+              color: var(--text-tertiary);
+              margin-top: 12px;
+              font-weight: 600;
+              letter-spacing: 0.02em;
             }
 
-            /* Empty state */
-            .empty-state {
+            /* Empty State */
+            .empty-chat {
               flex: 1;
               display: flex;
               flex-direction: column;
@@ -633,20 +654,21 @@ export default function ComunidadPage() {
               justify-content: center;
               color: var(--text-tertiary);
               text-align: center;
-              padding: 20px;
+              padding: 24px;
             }
-            .empty-state-icon {
-              font-size: 2rem;
-              margin-bottom: 8px;
+            .empty-chat-icon {
+              font-size: 3rem;
+              margin-bottom: 16px;
+              opacity: 0.5;
             }
-            .empty-state-title {
-              font-size: 0.8125rem;
-              font-weight: 600;
+            .empty-chat-title {
+              font-size: 1.125rem;
+              font-weight: 700;
               color: var(--text-secondary);
-              margin: 0 0 2px 0;
+              margin: 0 0 4px 0;
             }
-            .empty-state-desc {
-              font-size: 0.6875rem;
+            .empty-chat-desc {
+              font-size: 0.75rem;
               margin: 0;
             }
 
@@ -663,37 +685,39 @@ export default function ComunidadPage() {
             .modal-card {
               background: var(--bg-card);
               border-radius: 12px;
-              padding: 20px;
+              padding: 24px;
               width: 90%;
-              max-width: 320px;
+              max-width: 360px;
               border: 1px solid var(--border-default);
             }
             .modal-title {
-              font-size: 0.875rem;
+              font-size: 1rem;
               font-weight: 800;
               color: var(--text-primary);
-              margin: 0 0 12px 0;
+              margin: 0 0 16px 0;
             }
             .modal-input {
               width: 100%;
-              padding: 8px 12px;
-              border-radius: 6px;
+              padding: 10px 14px;
+              border-radius: 8px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-primary);
-              font-size: 0.75rem;
-              margin-bottom: 10px;
+              font-size: 0.8125rem;
+              margin-bottom: 12px;
               outline: none;
+            }
+            .modal-input:focus {
+              border-color: var(--color-prosper-green);
             }
             .modal-actions {
               display: flex;
-              gap: 6px;
-              margin-top: 6px;
+              gap: 8px;
             }
             .modal-btn {
               flex: 1;
-              padding: 8px;
-              border-radius: 6px;
+              padding: 10px;
+              border-radius: 8px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-secondary);
@@ -709,317 +733,364 @@ export default function ComunidadPage() {
 
             /* Mobile */
             @media (max-width: 768px) {
-              .comunidad-page {
+              .chats-page {
+                flex-direction: column;
                 height: auto;
                 max-height: none;
               }
-              .main-layout {
-                flex-direction: column;
-              }
-              .sidebar {
+              .conv-list {
                 width: 100%;
                 min-width: 100%;
-                max-height: 180px;
+                max-height: 200px;
                 border-right: none;
                 border-bottom: 1px solid var(--border-default);
               }
-              .comm-list {
-                display: flex;
-                gap: 6px;
-                overflow-x: auto;
-                padding: 8px;
+              .conv-list-header {
+                padding: 16px;
               }
-              .comm-item {
-                min-width: 120px;
-                flex-direction: column;
-                text-align: center;
-                padding: 8px;
-              }
-              .comm-icon {
-                width: 36px;
-                height: 36px;
+              .conv-list-title {
                 font-size: 1rem;
               }
-              .chat-window {
-                height: calc(100vh - 340px);
-                min-height: 300px;
+              .conv-item {
+                padding: 8px;
               }
-              .msg-item {
-                max-width: 90%;
+              .conv-avatar-img {
+                width: 36px;
+                height: 36px;
+                font-size: 0.75rem;
+              }
+              .chat-main {
+                height: calc(100vh - 340px);
+                min-height: 400px;
+              }
+              .messages-area {
+                padding: 16px;
+              }
+              .msg-row {
+                max-width: 85%;
+              }
+              .msg-input-area {
+                padding: 12px 16px;
               }
             }
             @media (max-width: 480px) {
-              .msg-text {
-                font-size: 0.6875rem;
+              .msg-bubble {
+                font-size: 0.75rem;
+                padding: 10px 12px;
+              }
+              .conv-name {
+                font-size: 0.75rem;
+              }
+              .conv-last-msg {
+                font-size: 0.625rem;
               }
             }
           `}</style>
 
           {loading ? (
-            <div className="empty-state">
-              <div className="loading-spinner" style={{ width: 28, height: 28, border: '3px solid var(--border-default)', borderTopColor: 'var(--color-prosper-green)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cargando...</p>
+            <div className="empty-chat">
+              <div className="loading-spinner" style={{ width: 32, height: 32, border: '3px solid var(--border-default)', borderTopColor: 'var(--color-prosper-green)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 12 }}>Cargando...</p>
             </div>
           ) : (
             <>
-              {/* Tabs */}
-              <div className="tabs">
-                <button
-                  className={`tab-btn ${activeTab === 'public' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('public')}
-                >
-                  💬 Canales Públicos
-                </button>
-                <button
-                  className={`tab-btn ${activeTab === 'private' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('private')}
-                >
-                  🔒 Chats Privados
-                  {unreadCount > 0 && <span className="tab-badge">{unreadCount}</span>}
-                </button>
-              </div>
-
-              {/* Main Layout */}
-              <div className="main-layout">
-                {/* Sidebar */}
-                <aside className="sidebar">
-                  <div className="sidebar-header">
-                    <h2 className="sidebar-title">
-                      {activeTab === 'public' ? 'Canales' : 'Conversaciones'}
-                    </h2>
-                    {activeTab === 'public' ? (
-                      <button className="sidebar-btn" onClick={() => setShowNewCommunity(true)} title="Nuevo canal">+</button>
-                    ) : (
-                      <button className="sidebar-btn" onClick={() => setShowSearch(!showSearch)} title="Buscar usuario">🔍</button>
-                    )}
+              {/* Conversation List */}
+              <aside className="conv-list">
+                <div className="conv-list-header">
+                  <h2 className="conv-list-title">
+                    {chatType === 'private' ? 'Mensajes' : 'Canales'}
+                  </h2>
+                  <div className="conv-search">
+                    <span className="conv-search-icon">🔍</span>
+                    <input
+                      className="conv-search-input"
+                      placeholder={chatType === 'private' ? 'Buscar conversaciones...' : 'Buscar canales...'}
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
+                </div>
 
-                  {/* Search users */}
-                  {activeTab === 'private' && (
-                    <div className="search-box">
-                      <input
-                        className="search-input"
-                        placeholder="Buscar por nombre o email..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                      />
-                    </div>
-                  )}
-
-                  {/* Comm/Conv list */}
-                  <div className="comm-list">
-                    {activeTab === 'public' ? (
-                      communities.map(comm => (
-                        <button
-                          key={comm.id}
-                          className={`comm-item ${activeCommunity === comm.id ? 'active' : ''}`}
-                          onClick={() => handleSelectCommunity(comm.id)}
-                        >
-                          <div className="comm-icon" style={{ background: `${comm.color}20` }}>
-                            {comm.icon}
-                          </div>
-                          <div className="comm-info">
-                            <p className="comm-name">{comm.name}</p>
-                            <p className="comm-desc">{comm.description}</p>
-                          </div>
-                        </button>
-                      ))
-                    ) : (
-                      <>
-                        {/* Search results */}
-                        {searchTerm && searchResults.length > 0 ? (
-                          searchResults.map(u => (
-                            <button key={u.uid} className="comm-item" onClick={() => startPrivateChat(u)}>
-                              <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
-                                {u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}
-                              </div>
-                              <div className="comm-info">
-                                <p className="comm-name">{u.displayName || 'Usuario'}</p>
-                                <p className="comm-desc">{u.email}</p>
-                              </div>
-                            </button>
-                          ))
-                        ) : (
-                          <>
-                            {/* All users */}
-                            {allUsers.map(u => (
-                              <button key={u.uid} className="comm-item" onClick={() => startPrivateChat(u)}>
-                                <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
-                                  {u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}
-                                </div>
-                                <div className="comm-info">
-                                  <p className="comm-name">{u.displayName || 'Usuario'}</p>
-                                  <p className="comm-desc">{u.email}</p>
-                                </div>
-                              </button>
-                            ))}
-                            {/* Existing conversations */}
-                            {conversations.map(conv => (
-                              <button
-                                key={conv.id}
-                                className={`comm-item ${activeConversation === conv.id ? 'active' : ''}`}
-                                onClick={() => setActiveConversation(conv.id)}
-                              >
-                                <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
-                                  {conv.otherUser?.displayName?.charAt(0) || conv.otherUser?.email?.charAt(0) || '💬'}
-                                </div>
-                                <div className="comm-info">
-                                  <p className="comm-name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
-                                  <p className="comm-desc">{conv.lastMessage || 'Sin mensajes'}</p>
-                                </div>
-                              </button>
-                            ))}
-                          </>
-                        )}
-                      </>
-                    )}
-                    {activeTab === 'private' && conversations.length === 0 && (
-                      <div className="empty-state" style={{ padding: '20px' }}>
-                        <p className="empty-state-icon">💬</p>
-                        <p className="empty-state-title">Sin conversaciones</p>
-                        <p className="empty-state-desc">Busca un usuario para chatear</p>
-                      </div>
-                    )}
-                  </div>
-                </aside>
-
-                {/* Chat Window */}
-                <main className="chat-window">
-                  {activeTab === 'public' ? (
+                <div className="conv-list-body">
+                  {chatType === 'private' ? (
                     <>
-                      {/* Header */}
-                      <div className="chat-header">
-                        <div className="chat-header-icon" style={{ background: `${activeComm?.color}20` }}>
-                          {activeComm?.icon}
-                        </div>
-                        <div className="chat-header-info">
-                          <p className="chat-header-name">{activeComm?.name}</p>
-                          <p className="chat-header-desc">{activeComm?.description}</p>
-                        </div>
-                      </div>
-
-                      {/* Messages */}
-                      <div className="messages-container">
-                        {publicMessages.length === 0 ? (
-                          <div className="empty-state">
-                            <div className="empty-state-icon">💬</div>
-                            <h3 className="empty-state-title">Sé el primero en hablar</h3>
-                            <p className="empty-state-desc">Inicia la conversación en {activeComm?.name}</p>
-                          </div>
-                        ) : (
-                          publicMessages.map(msg => (
-                            <div key={msg.id} className={`msg-item ${msg.senderId === user?.uid ? 'msg-own' : ''}`}>
-                              {msg.senderId !== user?.uid && (
-                                <div className="msg-avatar">
-                                  {msg.senderPhoto ? (
-                                    <img src={msg.senderPhoto} alt={msg.senderName} />
-                                  ) : (
-                                    <div className="msg-avatar-placeholder">{msg.senderName.charAt(0).toUpperCase()}</div>
-                                  )}
+                      {/* Search results or all users */}
+                      {searchTerm && searchResults.length > 0 ? (
+                        searchResults.map(u => (
+                          <div
+                            key={u.uid}
+                            className={`conv-item ${activeConversation && conversations.find(c => c.id === activeConversation)?.otherUser?.uid === u.uid ? 'active' : ''}`}
+                            onClick={() => startPrivateChat(u)}
+                          >
+                            <div className="conv-item-row">
+                              <div className="conv-avatar">
+                                <div className="conv-avatar-img">{u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}</div>
+                              </div>
+                              <div className="conv-info">
+                                <div className="conv-info-header">
+                                  <p className="conv-name">{u.displayName || 'Usuario'}</p>
                                 </div>
-                              )}
-                              <div className="msg-bubble">
-                                {msg.senderId !== user?.uid && <div className="msg-sender">{msg.senderName}</div>}
-                                <div className="msg-text">{msg.text}</div>
-                                <div className="msg-footer">
-                                  <span className="msg-time">{new Date(msg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
-                                  <button className={`msg-like-btn ${msg.likes.includes(user?.uid || '') ? 'liked' : ''}`} onClick={() => handlePublicLike(msg.id)}>
-                                    {msg.likes.includes(user?.uid || '') ? '❤️' : '🤍'} {msg.likes.length > 0 && msg.likes.length}
-                                  </button>
+                                <p className="conv-last-msg">{u.email}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          {/* Existing conversations */}
+                          {filteredConversations.map(conv => (
+                            <div
+                              key={conv.id}
+                              className={`conv-item ${activeConversation === conv.id ? 'active' : ''}`}
+                              onClick={() => { setActiveConversation(conv.id); setChatType('private'); }}
+                            >
+                              <div className="conv-item-row">
+                                <div className="conv-avatar">
+                                  <div className="conv-avatar-img">
+                                    {conv.otherUser?.photoURL ? (
+                                      <img src={conv.otherUser.photoURL} alt={conv.otherUser.displayName || ''} />
+                                    ) : (
+                                      conv.otherUser?.displayName?.charAt(0) || conv.otherUser?.email?.charAt(0) || '?'
+                                    )}
+                                  </div>
+                                  <span className={`conv-status-dot ${conv.otherUser ? 'online' : 'offline'}`} />
+                                </div>
+                                <div className="conv-info">
+                                  <div className="conv-info-header">
+                                    <p className="conv-name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
+                                    <span className="conv-time">{conv.lastMessageAt ? formatTime(conv.lastMessageAt) : ''}</span>
+                                  </div>
+                                  <p className="conv-last-msg">{conv.lastMessage || 'Sin mensajes'}</p>
                                 </div>
                               </div>
                             </div>
-                          ))
-                        )}
-                        <div ref={publicEndRef} />
-                      </div>
+                          ))}
 
-                      {/* Input */}
-                      <div className="chat-input-area">
-                        <div className="chat-input-row">
-                          <input
-                            className="chat-input"
-                            placeholder="Escribe un mensaje..."
-                            value={publicInput}
-                            onChange={(e) => setPublicInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handlePublicSend()}
-                          />
-                          <button className="chat-send-btn" onClick={handlePublicSend}>➤</button>
-                        </div>
-                      </div>
+                          {/* All users */}
+                          {displayUsers.map(u => (
+                            <div
+                              key={u.uid}
+                              className="conv-item"
+                              onClick={() => startPrivateChat(u)}
+                            >
+                              <div className="conv-item-row">
+                                <div className="conv-avatar">
+                                  <div className="conv-avatar-img">{u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}</div>
+                                  <span className="conv-status-dot online" />
+                                </div>
+                                <div className="conv-info">
+                                  <div className="conv-info-header">
+                                    <p className="conv-name">{u.displayName || 'Usuario'}</p>
+                                  </div>
+                                  <p className="conv-last-msg">{u.email}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </>
                   ) : (
                     <>
-                      {activeConversation ? (
-                        <>
-                          {/* Header */}
-                          <div className="chat-header">
-                            <div className="chat-header-icon" style={{ background: 'var(--bg-accent-soft)' }}>
-                              {activeConv?.otherUser?.displayName?.charAt(0) || '👤'}
-                            </div>
-                            <div className="chat-header-info">
-                              <p className="chat-header-name">{activeConv?.otherUser?.displayName || 'Usuario'}</p>
-                              <p className="chat-header-desc">Chat privado</p>
-                            </div>
-                          </div>
-
-                          {/* Messages */}
-                          <div className="messages-container">
-                            {privateMessages.length === 0 ? (
-                              <div className="empty-state">
-                                <div className="empty-state-icon">🔒</div>
-                                <h3 className="empty-state-title">Inicio de conversación</h3>
-                                <p className="empty-state-desc">Envía el primer mensaje</p>
+                      {communities.map(comm => (
+                        <div
+                          key={comm.id}
+                          className={`conv-item ${activeCommunity === comm.id ? 'active' : ''}`}
+                          onClick={() => handleSelectCommunity(comm.id)}
+                        >
+                          <div className="conv-item-row">
+                            <div className="conv-avatar">
+                              <div className="conv-avatar-img" style={{ background: `${comm.color}20` }}>
+                                {comm.icon}
                               </div>
-                            ) : (
-                              privateMessages.map(msg => (
-                                <div key={msg.id} className={`msg-item ${msg.senderId === user?.uid ? 'msg-own' : ''}`}>
-                                  {msg.senderId !== user?.uid && activeConv?.otherUser && (
-                                    <div className="msg-avatar">
-                                      {activeConv.otherUser.photoURL ? (
-                                        <img src={activeConv.otherUser.photoURL} alt={activeConv.otherUser.displayName || ''} />
-                                      ) : (
-                                        <div className="msg-avatar-placeholder">{activeConv.otherUser.displayName?.charAt(0) || '?'}</div>
-                                      )}
-                                    </div>
-                                  )}
-                                  <div className="msg-bubble">
-                                    <div className="msg-text">{msg.text}</div>
-                                    <div className="msg-footer">
-                                      <span className="msg-time">{new Date(msg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                            <div ref={privateEndRef} />
-                          </div>
-
-                          {/* Input */}
-                          <div className="chat-input-area">
-                            <div className="chat-input-row">
-                              <input
-                                className="chat-input"
-                                placeholder="Escribe un mensaje privado..."
-                                value={privateInput}
-                                onChange={(e) => setPrivateInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handlePrivateSend()}
-                              />
-                              <button className="chat-send-btn" onClick={handlePrivateSend}>➤</button>
+                            </div>
+                            <div className="conv-info">
+                              <div className="conv-info-header">
+                                <p className="conv-name">{comm.name}</p>
+                              </div>
+                              <p className="conv-last-msg">{comm.description}</p>
                             </div>
                           </div>
-                        </>
-                      ) : (
-                        <div className="empty-state">
-                          <div className="empty-state-icon">🔒</div>
-                          <h3 className="empty-state-title">Chats Privados</h3>
-                          <p className="empty-state-desc">Selecciona una conversación o busca un usuario</p>
                         </div>
-                      )}
+                      ))}
+                      <div
+                        className="conv-item"
+                        onClick={() => setShowNewCommunity(true)}
+                        style={{ textAlign: 'center', color: 'var(--color-prosper-green)', fontWeight: 600 }}
+                      >
+                        + Nuevo Canal
+                      </div>
                     </>
                   )}
-                </main>
-              </div>
+                </div>
+              </aside>
+
+              {/* Main Chat Window */}
+              <main className="chat-main">
+                {chatType === 'private' && activeConversation ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="chat-header">
+                      <div className="chat-header-left">
+                        <div className="chat-header-avatar">
+                          <div className="chat-header-avatar-img">
+                            {activeChatUser?.photoURL ? (
+                              <img src={activeChatUser.photoURL} alt={activeChatUser.displayName || ''} />
+                            ) : (
+                              activeChatUser?.displayName?.charAt(0) || '?'
+                            )}
+                          </div>
+                          <span className="chat-header-status online" />
+                        </div>
+                        <div>
+                          <p className="chat-header-name">{activeChatUser?.displayName || activeChatUser?.email || 'Usuario'}</p>
+                          <div className="chat-header-encryption">
+                            <span>🔒</span>
+                            <span>Cifrado de extremo a extremo</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="chat-header-actions">
+                        <button className="chat-header-btn" title="Llamar">📞</button>
+                        <button className="chat-header-btn" title="Videollamada">📹</button>
+                        <button className="chat-header-btn" title="Más">⋮</button>
+                      </div>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="messages-area">
+                      <div className="msg-timestamp">
+                        <span>Hoy</span>
+                      </div>
+                      {privateMessages.map(msg => {
+                        const isOwn = msg.senderId === user?.uid;
+                        return (
+                          <div key={msg.id} className={`msg-row ${isOwn ? 'sent' : 'received'}`}>
+                            {!isOwn && activeChatUser && (
+                              <div className="msg-avatar-small">
+                                {activeChatUser.photoURL ? (
+                                  <img src={activeChatUser.photoURL} alt="" />
+                                ) : (
+                                  activeChatUser.displayName?.charAt(0) || '?'
+                                )}
+                              </div>
+                            )}
+                            <div>
+                              <div className={`msg-bubble ${isOwn ? 'sent' : 'received'}`}>
+                                {msg.text}
+                              </div>
+                              <div className={`msg-meta ${isOwn ? 'sent' : ''}`}>
+                                <span className="msg-time">{formatTime(msg.timestamp)}</span>
+                                {isOwn && <span className="msg-check">✓✓</span>}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Message Input */}
+                    <div className="msg-input-area">
+                      <div className="msg-input-wrapper">
+                        <button className="msg-input-btn" title="Adjuntar">📎</button>
+                        <input
+                          className="msg-input"
+                          placeholder="Escribe un mensaje..."
+                          value={privateInput}
+                          onChange={(e) => setPrivateInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handlePrivateSend()}
+                        />
+                        <button className="msg-input-btn" title="Emoji">😊</button>
+                        <button className="msg-send-btn" onClick={handlePrivateSend}>
+                          <span style={{ fontSize: '1.125rem' }}>➤</span>
+                        </button>
+                      </div>
+                      <p className="msg-disclaimer">
+                        Al enviar un mensaje, aceptas las normas de la comunidad de Prosper Pro.
+                      </p>
+                    </div>
+                  </>
+                ) : chatType === 'public' ? (
+                  <>
+                    {/* Chat Header */}
+                    <div className="chat-header">
+                      <div className="chat-header-left">
+                        <div className="chat-header-avatar">
+                          <div className="chat-header-avatar-img" style={{ background: `${activeComm?.color}20` }}>
+                            {activeComm?.icon}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="chat-header-name">{activeComm?.name}</p>
+                          <div className="chat-header-encryption">
+                            <span>💬</span>
+                            <span>{activeComm?.description}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="messages-area">
+                      <div className="msg-timestamp">
+                        <span>Hoy</span>
+                      </div>
+                      {publicMessages.map(msg => {
+                        const isOwn = msg.senderId === user?.uid;
+                        return (
+                          <div key={msg.id} className={`msg-row ${isOwn ? 'sent' : 'received'}`}>
+                            {!isOwn && (
+                              <div className="msg-avatar-small">
+                                {msg.senderPhoto ? (
+                                  <img src={msg.senderPhoto} alt="" />
+                                ) : (
+                                  msg.senderName.charAt(0)
+                                )}
+                              </div>
+                            )}
+                            <div>
+                              <div className={`msg-bubble ${isOwn ? 'sent' : 'received'}`}>
+                                {!isOwn && <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--color-prosper-green)', marginBottom: 4 }}>{msg.senderName}</div>}
+                                {msg.text}
+                              </div>
+                              <div className={`msg-meta ${isOwn ? 'sent' : ''}`}>
+                                <span className="msg-time">{formatTime(msg.timestamp)}</span>
+                                {isOwn && <span className="msg-check">✓✓</span>}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    {/* Message Input */}
+                    <div className="msg-input-area">
+                      <div className="msg-input-wrapper">
+                        <button className="msg-input-btn" title="Adjuntar">📎</button>
+                        <input
+                          className="msg-input"
+                          placeholder="Escribe un mensaje en el canal..."
+                          value={publicInput}
+                          onChange={(e) => setPublicInput(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handlePublicSend()}
+                        />
+                        <button className="msg-input-btn" title="Emoji">😊</button>
+                        <button className="msg-send-btn" onClick={handlePublicSend}>
+                          <span style={{ fontSize: '1.125rem' }}>➤</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="empty-chat">
+                    <div className="empty-chat-icon">💬</div>
+                    <h3 className="empty-chat-title">Selecciona una conversación</h3>
+                    <p className="empty-chat-desc">Elige un usuario o canal para comenzar a chatear</p>
+                  </div>
+                )}
+              </main>
 
               {/* New Community Modal */}
               {showNewCommunity && (
