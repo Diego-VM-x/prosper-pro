@@ -106,8 +106,7 @@ export function subscribeToConversations(
 ) {
   const q = query(
     collection(db, CONVERSATIONS_COLLECTION),
-    where('participants', 'array-contains', userId),
-    orderBy('lastMessageAt', 'desc')
+    where('participants', 'array-contains', userId)
   );
   
   return onSnapshot(q, async (snapshot) => {
@@ -128,6 +127,8 @@ export function subscribeToConversations(
       conversations.push({ ...data, id: d.id, otherUser });
     }
     
+    // Ordenar en el cliente por lastMessageAt
+    conversations.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
     callback(conversations);
   }, (error) => {
     console.error('subscribeToConversations error:', error);
@@ -143,8 +144,7 @@ export function subscribeToPrivateMessages(
 ) {
   const q = query(
     collection(db, MESSAGES_COLLECTION),
-    where('conversationId', '==', conversationId),
-    orderBy('timestamp', 'asc')
+    where('conversationId', '==', conversationId)
   );
   
   return onSnapshot(q, (snapshot) => {
@@ -156,10 +156,12 @@ export function subscribeToPrivateMessages(
         conversationId: data.conversationId,
         senderId: data.senderId,
         text: data.text,
-        timestamp: data.timestamp?.toDate?.()?.getTime() || data.timestamp || Date.now(),
+        timestamp: data.timestamp || Date.now(),
         read: data.read || false,
       });
     });
+    // Ordenar en el cliente por timestamp
+    messages.sort((a, b) => a.timestamp - b.timestamp);
     callback(messages);
   }, (error) => {
     console.error('subscribeToPrivateMessages error:', error);
@@ -201,16 +203,16 @@ export async function markMessagesAsRead(conversationId: string, userId: string)
     [`unreadCount.${userId}`]: 0,
   });
   
-  // Marcar mensajes como leídos
+  // Marcar mensajes como leídos - obtener todos y filtrar en cliente
   const q = query(
     collection(db, MESSAGES_COLLECTION),
-    where('conversationId', '==', conversationId),
-    where('senderId', '!=', userId),
-    where('read', '==', false)
+    where('conversationId', '==', conversationId)
   );
   
   const snapshot = await getDocs(q);
-  const batch = snapshot.docs.map((d) => updateDoc(d.ref, { read: true }));
+  const batch = snapshot.docs
+    .filter((d) => d.data().senderId !== userId && !d.data().read)
+    .map((d) => updateDoc(d.ref, { read: true }));
   await Promise.all(batch);
 }
 
