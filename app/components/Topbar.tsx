@@ -342,46 +342,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         </div>
       </div>
 
-      {/* Acciones móviles: Notificaciones + Avatar */}
+      {/* Avatar móvil con dropdown (solo Configuración) */}
       {user && (
         <div className="mobile-user-actions">
-          {/* Notificaciones móvil */}
-          <div className="mobile-notif-wrapper">
-            <button
-              className="topbar-icon-btn mobile-notif-btn"
-              aria-label="Notificaciones"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              <IconBell />
-              {unreadCount > 0 && <span className="topbar-notif-dot" />}
-            </button>
-            {showNotifications && (
-              <div className="notifications-dropdown mobile-notif-dropdown">
-                <div className="notifications-dropdown-header">
-                  <span>Notificaciones</span>
-                  {unreadCount > 0 && (
-                    <span className="notifications-badge">{unreadCount} nueva{unreadCount > 1 ? 's' : ''}</span>
-                  )}
-                </div>
-                {notifications.length > 0 ? notifications.slice(0, 5).map((notif) => (
-                  <div
-                    key={notif.id}
-                    className={`notif-item ${notif.read ? 'read' : 'unread'}`}
-                    onClick={() => { handleMarkRead(notif.id); }}
-                  >
-                    <p className="notif-title">{notif.title}</p>
-                    <p className="notif-message">{notif.message}</p>
-                  </div>
-                )) : (
-                  <div className="notif-empty">
-                    <p>Sin notificaciones</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Avatar con dropdown */}
           <div
             className="topbar-avatar"
             onClick={() => setShowUserMenu(!showUserMenu)}
@@ -390,24 +353,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           </div>
           {showUserMenu && (
             <div className="user-dropdown mobile-user-dropdown">
-              <div className="user-dropdown-header">
-                <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                <p className="user-dropdown-email">{user?.email}</p>
-              </div>
               <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
                 <IconSettings /> Configuración
               </Link>
-              <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); toggleTheme(); }}>
-                {theme === 'light' ? <IconMoon /> : <IconSun />}
-                {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
-              </button>
-              <div className="user-dropdown-divider" />
-              <button
-                className="user-dropdown-item user-dropdown-logout"
-                onClick={() => { setShowUserMenu(false); logout(); }}
-              >
-                <IconLogout /> Cerrar Sesión
-              </button>
             </div>
           )}
         </div>
@@ -917,25 +865,17 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         .topbar-login-btn svg { width: 16px; height: 16px; }
 
-        /* Mobile user actions (notif + avatar) */
+        /* Mobile user actions */
         .mobile-user-actions {
           display: none;
-          align-items: center;
-          gap: 4px;
+          position: relative;
           margin-left: auto;
           padding-right: 8px;
         }
         .mobile-user-dropdown {
           right: 0 !important;
           left: auto !important;
-        }
-        .mobile-notif-wrapper {
-          position: relative;
-        }
-        .mobile-notif-dropdown {
-          right: 0 !important;
-          left: auto !important;
-          width: 280px;
+          width: 200px;
         }
         /* Responsive */
         @media (max-width: 768px) {
