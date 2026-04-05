@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (05 de Abril, 2026 - Logros Funcionales + Comunidad UI + Configuración Rediseñada)
+## Estado Actual (05 de Abril, 2026 - Error Boundaries + Responsive Completo + Logros XP Auto)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -130,15 +130,23 @@
 - **Topbar Móvil Mejorado**:
   - `app/components/Topbar.tsx`: Avatar del usuario en topbar móvil con dropdown (solo Configuración). Menú hamburguesa mantiene info de perfil en header + navegación completa + notificaciones + footer con toggle tema y logout.
 - **Tareas Vinculadas a Logros**:
-   - `app/logros/page.tsx`: `handleClaimTask()` ejecuta `checkAndUnlockAchievements()` al completar tarea.
+   - `app/logros/page.tsx`: `handleClaimTask()` ejecuta `checkAndUnlockAchievements()` al completar tarea. Auto-check de logros al cargar la página: useEffect verifica condiciones y desbloquea logros automáticamente otorgando XP.
 
 ### 05/04/2026 - Logros Funcionales + Comunidad UI + Configuración Rediseñada
 - **Logros Page - XP y Tareas en Tiempo Real**:
   - `app/logros/page.tsx`: Agregada suscripción `subscribeToXP` para XP en tiempo real. Agregada suscripción `subscribeToTaskProgress` para tareas en tiempo real. `handleClaimTask` mejorado con validación de progreso suficiente y auto-check de logros. Cleanup con flag `cancelled` para evitar memory leaks.
 - **Comunidad Page - UI Estática**:
-  - `app/comunidad/page.tsx`: Rediseñada según `design/comunidad/code.html`. Hero con gradiente, foros de discusión en grid, recursos descargables, leaderboard top 3, próximos eventos. Sin funcionalidad Firebase (solo UI).
+  - `app/comunidad/page.tsx`: Rediseñada según `design/comunidad/code.html`. Hero con gradiente, foros de discusión en grid, recursos descargables, leaderboard top 3 a la derecha, próximos eventos. Sidebar derecha con ranking y eventos. Responsive completo 3 breakpoints.
 - **Configuración Page - Rediseño Completo**:
-  - `app/configuracion/page.tsx`: Rediseñada según `design/configuracion/code.html`. Perfil editable (nombre, bio) con guardado en Firestore. Preferencias de idioma/moneda. Toggles de notificaciones funcionales. Tabla de sesiones activas. Zona de peligro con eliminación de cuenta. Suscripción `subscribeToUserProfile` para cambios en tiempo real. Toast de éxito/error.
+  - `app/configuracion/page.tsx`: Rediseñada según `design/configuracion/code.html`. Perfil editable (nombre, bio) con guardado en Firestore. Preferencias de idioma/moneda. Toggles de notificaciones funcionales. Tabla de sesiones activas. Zona de peligro con eliminación de cuenta. Suscripción `subscribeToUserProfile` para cambios en tiempo real. Toast de éxito/error. Responsive completo 3 breakpoints (1024px, 768px, 480px).
+
+### 05/04/2026 - Error Boundaries + Firebase Validation + Suspense
+- **ErrorBoundary**:
+  - `app/components/ErrorBoundary.tsx`: Nuevo componente React con `componentDidCatch`. Muestra UI amigable con botones "Recargar página" e "Ir al inicio". En desarrollo muestra detalles del error.
+- **Layout Robustez**:
+  - `app/layout.tsx`: Envuelto con `ErrorBoundary` y `Suspense` con skeleton de carga.
+- **Firebase Validation**:
+  - `lib/firebase.ts`: Validación de 6 variables `NEXT_PUBLIC_FIREBASE_*` con `console.error` claro. Fallback: app funciona sin Firebase configurado (sin crashes). Doble try-catch para producción.
 
 ### 02/04/2026 - Reset Total de Firebase
 - **Reset Firebase Completo**: Eliminado todo rastro de `userId` y reemplazado por `ownerId` en todos los módulos Firestore, tipos TypeScript, reglas de seguridad y componentes de la app.
