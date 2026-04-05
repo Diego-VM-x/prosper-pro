@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (05 de Abril, 2026 - Avatar Móvil en Topbar + Tareas Vinculadas a Logros)
+## Estado Actual (05 de Abril, 2026 - Notificaciones Eliminables + Topbar Móvil Mejorado)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -123,11 +123,14 @@
 - **Types**:
  - `types/index.ts`: Campo `xpReward: number` añadido a interfaz `Achievement`.
 
-### 05/04/2026 - Avatar Móvil en Topbar + Tareas Vinculadas a Logros
-- **Topbar Mobile Rediseñado**:
-  - `app/components/Topbar.tsx`: Avatar del usuario movido al topbar en móvil (al lado de la barra de búsqueda). Dropdown con Configuración, toggle tema claro/oscuro y Cerrar Sesión. Eliminada sección de perfil duplicada del menú móvil. Estilos CSS `.mobile-user-avatar` y `.mobile-user-dropdown` para posicionamiento correcto.
+### 05/04/2026 - Notificaciones Eliminables + Topbar Móvil Mejorado
+- **Notificaciones Eliminables**:
+  - `lib/firestore/notifications.ts`: Nueva función `deleteAllNotifications(ownerId)` para eliminar todas las notificaciones de un usuario. `deleteNotification(id)` ya existía para eliminar individual.
+  - `app/components/Topbar.tsx`: Dropdown de notificaciones con botón "Limpiar todo" en header. Cada notificación tiene botón ✕ para eliminar individualmente. Click en contenido marca como leída.
+- **Topbar Móvil Mejorado**:
+  - `app/components/Topbar.tsx`: Avatar del usuario en topbar móvil con dropdown (solo Configuración). Menú hamburguesa mantiene info de perfil en header + navegación completa + notificaciones + footer con toggle tema y logout.
 - **Tareas Vinculadas a Logros**:
-  - `app/logros/page.tsx`: `handleClaimTask()` ahora ejecuta `checkAndUnlockAchievements()` al completar una tarea, verificando todos los logros posibles.
+  - `app/logros/page.tsx`: `handleClaimTask()` ejecuta `checkAndUnlockAchievements()` al completar tarea.
 
 ### 02/04/2026 - Reset Total de Firebase
 - **Reset Firebase Completo**: Eliminado todo rastro de `userId` y reemplazado por `ownerId` en todos los módulos Firestore, tipos TypeScript, reglas de seguridad y componentes de la app.
