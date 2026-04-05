@@ -5,6 +5,9 @@ export interface UserProfile {
   photoURL: string | null;
   createdAt: number;
   isSeeded: boolean;
+  level?: number;
+  title?: string;
+  currentXP?: number;
 }
 
 export type GoalCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Otro';
@@ -200,3 +203,22 @@ export interface CommunityRoomMember {
   joinedAt: number;
   role: 'member' | 'admin';
 }
+
+// Private Messages (1:1 chats)
+export interface PrivateConversation {
+  id: string;
+  participants: string[]; // [uid1, uid2]
+  lastMessage?: string;
+  lastMessageAt: number;
+  unreadCount: Record<string, number>; // uid -> count
+}
+
+export interface PrivateMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  text: string;
+  timestamp: number;
+  read: boolean;
+}
+

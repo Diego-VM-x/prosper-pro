@@ -1,806 +1,1021 @@
 'use client';
 
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
+import { useAuth } from '@/lib/contexts/AuthContext';
+import {
+  subscribeToCommunities,
+  subscribeToMessages,
+  subscribeToMembers,
+  sendMessage,
+  toggleLike,
+  joinCommunity,
+  createCommunity,
+} from '@/lib/firestore/communityMessages';
+import {
+  searchUsers,
+  getOrCreateConversation,
+  subscribeToConversations,
+  subscribeToPrivateMessages,
+  sendPrivateMessage,
+  markMessagesAsRead,
+  subscribeToTotalUnreadCount,
+} from '@/lib/firestore/privateMessages';
+import type { Community, CommunityMessage, CommunityRoomMember, UserProfile, PrivateConversation, PrivateMessage } from '@/types';
 
-const FORUMS = [
-  {
-    id: 'inversion',
-    title: 'Estrategias de Inversión 2026',
-    description: 'Análisis profundo sobre los mercados emergentes y la rotación de capital en el sector tecnológico.',
-    tag: 'Inversión',
-    tagColor: 'var(--color-prosper-green)',
-    members: 14,
-    messages: 142,
-    avatars: 3,
-  },
-  {
-    id: 'retiro',
-    title: 'Ahorro para Retiro',
-    description: 'Cómo maximizar los beneficios fiscales en planes de pensiones privadas antes de fin de año.',
-    tag: 'Retiro',
-    tagColor: 'var(--color-prosper-navy)',
-    members: 7,
-    messages: 89,
-    avatars: 2,
-  },
-  {
-    id: 'fiscalidad',
-    title: 'Fiscalidad Internacional',
-    description: 'Dudas sobre residencia fiscal digital y tributación de activos en diferentes jurisdicciones.',
-    tag: 'Legal',
-    tagColor: 'var(--color-prosper-green)',
-    members: 22,
-    messages: 256,
-    avatars: 1,
-  },
+const DEFAULT_COMMUNITIES: Community[] = [
+  { id: 'general', name: 'General', description: 'Conversación abierta', icon: '💬', color: 'var(--color-prosper-green)', memberCount: 0, createdBy: 'system', createdAt: 0 },
+  { id: 'ahorro', name: 'Ahorro', description: 'Tips para ahorrar mejor', icon: '💰', color: 'var(--color-prosper-navy)', memberCount: 0, createdBy: 'system', createdAt: 1 },
+  { id: 'inversion', name: 'Inversión', description: 'Inversiones para todos', icon: '📈', color: '#F59E0B', memberCount: 0, createdBy: 'system', createdAt: 2 },
+  { id: 'educacion', name: 'Educación', description: 'Aprende finanzas', icon: '📚', color: '#3B82F6', memberCount: 0, createdBy: 'system', createdAt: 3 },
 ];
 
-const RESOURCES = [
-  {
-    id: 'calc',
-    title: 'Calculadora de Interés Compuesto',
-    type: 'Excel Template .XLSX',
-    icon: '📊',
-    color: 'var(--color-prosper-green)',
-  },
-  {
-    id: 'plan',
-    title: 'Plan de Emergencia 50/30/20',
-    type: 'PDF Guide',
-    icon: '📈',
-    color: 'var(--color-prosper-navy)',
-  },
-];
-
-const LEADERS = [
-  { name: 'Marc Soler', goals: 42, points: 8450, rank: 1 },
-  { name: 'Elena Vargas', goals: 38, points: 7920, rank: 2 },
-  { name: 'Julian Arcas', goals: 35, points: 7100, rank: 3 },
-];
-
-const EVENTS = [
-  {
-    id: 1,
-    title: 'Webinar: IA en Finanzas Personales',
-    date: 'Mañana, 18:00',
-    speaker: 'Por: David Cheng, CTO de Prosper',
-    active: true,
-  },
-  {
-    id: 2,
-    title: 'Café Virtual: Salud Financiera',
-    date: 'Jueves, 10:00',
-    speaker: 'Sesión abierta de Q&A',
-    active: false,
-  },
-];
+type TabType = 'public' | 'private';
 
 export default function ComunidadPage() {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabType>('public');
+
+  // Public channels
+  const [communities, setCommunities] = useState<Community[]>(DEFAULT_COMMUNITIES);
+  const [activeCommunity, setActiveCommunity] = useState<string>('general');
+  const [publicMessages, setPublicMessages] = useState<CommunityMessage[]>([]);
+  const [members, setMembers] = useState<CommunityRoomMember[]>([]);
+  const [publicInput, setPublicInput] = useState('');
+
+  // Private chats
+  const [conversations, setConversations] = useState<(PrivateConversation & { otherUser?: UserProfile })[]>([]);
+  const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
+  const [privateInput, setPrivateInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // UI
+  const [loading, setLoading] = useState(true);
+  const [showNewCommunity, setShowNewCommunity] = useState(false);
+  const [newCommunityName, setNewCommunityName] = useState('');
+  const [newCommunityDesc, setNewCommunityDesc] = useState('');
+
+  const publicEndRef = useRef<HTMLDivElement>(null);
+  const privateEndRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to communities
+  useEffect(() => {
+    const unsub = subscribeToCommunities((comms) => {
+      if (comms.length > 0) setCommunities(comms);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  // Subscribe to public messages
+  useEffect(() => {
+    const unsub = subscribeToMessages(activeCommunity, (msgs) => {
+      setPublicMessages(msgs);
+    });
+    return () => unsub();
+  }, [activeCommunity]);
+
+  // Subscribe to members
+  useEffect(() => {
+    const unsub = subscribeToMembers(activeCommunity, (m) => {
+      setMembers(m);
+    });
+    return () => unsub();
+  }, [activeCommunity]);
+
+  // Subscribe to conversations
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = subscribeToConversations(user.uid, (convs) => {
+      setConversations(convs);
+    });
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Subscribe to private messages
+  useEffect(() => {
+    if (!activeConversation) return;
+    const unsub = subscribeToPrivateMessages(activeConversation, (msgs) => {
+      setPrivateMessages(msgs);
+      // Mark as read
+      if (user?.uid) {
+        markMessagesAsRead(activeConversation, user.uid);
+      }
+    });
+    return () => unsub();
+  }, [activeConversation, user?.uid]);
+
+  // Subscribe to total unread count
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = subscribeToTotalUnreadCount(user.uid, (count) => {
+      setUnreadCount(count);
+    });
+    return () => unsub();
+  }, [user?.uid]);
+
+  // Auto-scroll
+  useEffect(() => {
+    publicEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [publicMessages]);
+
+  useEffect(() => {
+    privateEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [privateMessages]);
+
+  // Search users
+  const handleSearch = useCallback(async () => {
+    if (!user?.uid || !searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const results = await searchUsers(searchTerm, user.uid);
+    setSearchResults(results);
+  }, [searchTerm, user?.uid]);
+
+  useEffect(() => {
+    const timer = setTimeout(handleSearch, 300);
+    return () => clearTimeout(timer);
+  }, [handleSearch]);
+
+  // Start private chat
+  const startPrivateChat = useCallback(async (otherUser: UserProfile) => {
+    if (!user?.uid) return;
+    const convId = await getOrCreateConversation(user.uid, otherUser.uid);
+    setActiveConversation(convId);
+    setShowSearch(false);
+    setSearchTerm('');
+    setSearchResults([]);
+  }, [user?.uid]);
+
+  // Send public message
+  const handlePublicSend = useCallback(async () => {
+    if (!user || !publicInput.trim()) return;
+    await sendMessage(activeCommunity, {
+      text: publicInput.trim(),
+      senderId: user.uid,
+      senderName: user.displayName || 'Usuario',
+      senderPhoto: user.photoURL || '',
+    });
+    setPublicInput('');
+  }, [user, publicInput, activeCommunity]);
+
+  // Send private message
+  const handlePrivateSend = useCallback(async () => {
+    if (!user || !privateInput.trim() || !activeConversation) return;
+    const conv = conversations.find(c => c.id === activeConversation);
+    if (!conv) return;
+    const receiverId = conv.participants.find(p => p !== user.uid);
+    if (!receiverId) return;
+
+    await sendPrivateMessage(activeConversation, user.uid, receiverId, privateInput.trim());
+    setPrivateInput('');
+  }, [user, privateInput, activeConversation, conversations]);
+
+  // Handle public like
+  const handlePublicLike = useCallback(async (msgId: string) => {
+    if (!user) return;
+    await toggleLike(activeCommunity, msgId, user.uid);
+  }, [user, activeCommunity]);
+
+  // Join community
+  const handleSelectCommunity = useCallback(async (commId: string) => {
+    setActiveCommunity(commId);
+    if (user) {
+      await joinCommunity(commId, {
+        uid: user.uid,
+        displayName: user.displayName || 'Usuario',
+        photoURL: user.photoURL || '',
+        role: 'member',
+      });
+    }
+  }, [user]);
+
+  // Create community
+  const handleCreateCommunity = useCallback(async () => {
+    if (!user || !newCommunityName.trim()) return;
+    await createCommunity({
+      name: newCommunityName.trim(),
+      description: newCommunityDesc.trim() || 'Grupo de Prosper',
+      icon: '🏘️',
+      color: 'var(--color-prosper-green)',
+      memberCount: 1,
+      createdBy: user.uid,
+    });
+    setNewCommunityName('');
+    setNewCommunityDesc('');
+    setShowNewCommunity(false);
+  }, [user, newCommunityName, newCommunityDesc]);
+
+  const activeComm = communities.find(c => c.id === activeCommunity);
+  const activeConv = conversations.find(c => c.id === activeConversation);
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
         <div className="comunidad-page">
           <style jsx>{`
             .comunidad-page {
-              padding: 24px;
-              max-width: 1200px;
-              margin: 0 auto;
-            }
-
-            /* Hero Section */
-            .hero {
-              position: relative;
-              margin-bottom: 32px;
-              border-radius: 16px;
-              overflow: hidden;
-              height: 200px;
-              display: flex;
-              align-items: center;
-              padding: 0 48px;
-              background: linear-gradient(135deg, var(--bg-card), var(--bg-input));
-            }
-            .hero::before {
-              content: '';
-              position: absolute;
-              inset: 0;
-              background: radial-gradient(circle at 80% 50%, var(--color-prosper-green) 0%, transparent 60%);
-              opacity: 0.1;
-            }
-            .hero-content {
-              position: relative;
-              z-index: 1;
-              max-width: 600px;
-            }
-            .hero-welcome {
-              font-size: 0.625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.15em;
-              color: var(--color-prosper-green);
-              margin: 0 0 8px 0;
-            }
-            .hero-title {
-              font-size: 2rem;
-              font-weight: 900;
-              color: var(--text-primary);
-              letter-spacing: -0.02em;
-              margin: 0 0 8px 0;
-              line-height: 1.1;
-            }
-            .hero-title span {
-              background: linear-gradient(90deg, var(--color-prosper-green), var(--color-pine-400));
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-            }
-            .hero-desc {
-              font-size: 0.875rem;
-              color: var(--text-secondary);
-              margin: 0;
-            }
-
-            /* Grid Layout */
-            .grid-layout {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 24px;
-            }
-            @media (min-width: 1024px) {
-              .grid-layout {
-                grid-template-columns: 2fr 1fr;
-              }
-            }
-
-            /* Main Column */
-            .main-column {
               display: flex;
               flex-direction: column;
-              gap: 24px;
-            }
-
-            /* Foros Section */
-            .foros-card {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 24px;
-              border: 1px solid var(--border-default);
-            }
-            .foros-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 20px;
-            }
-            .foros-title {
-              font-size: 1.125rem;
-              font-weight: 800;
-              color: var(--text-primary);
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin: 0;
-            }
-            .foros-title-icon {
-              color: var(--color-prosper-green);
-            }
-            .foros-link {
-              font-size: 0.75rem;
-              font-weight: 600;
-              color: var(--color-prosper-green);
-              text-decoration: none;
-              cursor: pointer;
-            }
-            .foros-link:hover {
-              text-decoration: underline;
-            }
-            .foros-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 12px;
-            }
-            @media (min-width: 640px) {
-              .foros-grid {
-                grid-template-columns: repeat(2, 1fr);
-              }
-            }
-            .foro-card {
-              background: var(--bg-input);
-              border-radius: 8px;
-              padding: 16px;
-              transition: all 0.2s;
-              cursor: pointer;
-            }
-            .foro-card:hover {
-              background: var(--bg-card-high);
-            }
-            .foro-top {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 12px;
-            }
-            .foro-tag {
-              font-size: 0.5625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
-              padding: 2px 8px;
-              border-radius: 9999px;
-              background: rgba(61, 204, 142, 0.1);
-              color: var(--color-prosper-green);
-            }
-            .foro-avatars {
-              display: flex;
-              align-items: center;
-            }
-            .foro-avatar {
-              width: 20px;
-              height: 20px;
-              border-radius: 50%;
-              background: var(--bg-accent-soft);
-              border: 2px solid var(--bg-input);
-              margin-left: -6px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 0.4375rem;
-              font-weight: 700;
-              color: var(--text-secondary);
-            }
-            .foro-avatar:first-child {
-              margin-left: 0;
-            }
-            .foro-name {
-              font-size: 0.875rem;
-              font-weight: 700;
-              color: var(--text-primary);
-              margin: 0 0 4px 0;
-              transition: color 0.2s;
-            }
-            .foro-card:hover .foro-name {
-              color: var(--color-prosper-green);
-            }
-            .foro-desc {
-              font-size: 0.75rem;
-              color: var(--text-secondary);
-              margin: 0 0 12px 0;
-              line-height: 1.4;
-              display: -webkit-box;
-              -webkit-line-clamp: 2;
-              -webkit-box-orient: vertical;
+              height: calc(100vh - 140px);
+              max-height: calc(100vh - 140px);
               overflow: hidden;
             }
-            .foro-stats {
-              display: flex;
-              gap: 12px;
-              font-size: 0.625rem;
-              color: var(--text-tertiary);
-            }
-            .foro-stat {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-            }
-            .foro-add {
-              border: 2px dashed var(--border-default);
-              border-radius: 8px;
-              padding: 16px;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              cursor: pointer;
-              transition: all 0.2s;
-              min-height: 140px;
-            }
-            .foro-add:hover {
-              border-color: var(--color-prosper-green);
-            }
-            .foro-add-icon {
-              font-size: 1.5rem;
-              color: var(--text-tertiary);
-              margin-bottom: 8px;
-            }
-            .foro-add:hover .foro-add-icon {
-              color: var(--color-prosper-green);
-            }
-            .foro-add-text {
-              font-size: 0.6875rem;
-              font-weight: 700;
-              color: var(--text-secondary);
-            }
 
-            /* Recursos Section */
-            .recursos-card {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 24px;
-              border: 1px solid var(--border-default);
-            }
-            .recursos-title {
-              font-size: 1.125rem;
-              font-weight: 800;
-              color: var(--text-primary);
+            /* Tabs */
+            .tabs {
               display: flex;
-              align-items: center;
-              gap: 8px;
-              margin: 0 0 20px 0;
-            }
-            .recursos-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 12px;
-            }
-            @media (min-width: 640px) {
-              .recursos-grid {
-                grid-template-columns: repeat(2, 1fr);
-              }
-            }
-            .recurso-item {
-              background: var(--bg-input);
-              border-radius: 8px;
-              padding: 12px;
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              transition: all 0.2s;
-              cursor: pointer;
-            }
-            .recurso-item:hover {
-              box-shadow: var(--shadow-md);
-            }
-            .recurso-icon {
-              width: 40px;
-              height: 40px;
-              border-radius: 8px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1rem;
+              gap: 0;
+              padding: 0 16px;
+              border-bottom: 1px solid var(--border-default);
               flex-shrink: 0;
             }
-            .recurso-info {
-              flex: 1;
-              min-width: 0;
-            }
-            .recurso-name {
-              font-size: 0.75rem;
-              font-weight: 700;
-              color: var(--text-primary);
-              margin: 0;
-            }
-            .recurso-type {
-              font-size: 0.5rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
-              color: var(--text-secondary);
-              margin: 0;
-            }
-            .recurso-download {
+            .tab-btn {
+              padding: 12px 24px;
               background: none;
               border: none;
-              color: var(--text-tertiary);
+              border-bottom: 2px solid transparent;
+              color: var(--text-secondary);
+              font-size: 0.875rem;
+              font-weight: 600;
               cursor: pointer;
-              font-size: 1rem;
-              padding: 4px;
-              transition: color 0.2s;
+              transition: all 0.2s;
+              display: flex;
+              align-items: center;
+              gap: 8px;
             }
-            .recurso-download:hover {
+            .tab-btn:hover {
+              color: var(--text-primary);
+            }
+            .tab-btn.active {
               color: var(--color-prosper-green);
+              border-bottom-color: var(--color-prosper-green);
+            }
+            .tab-badge {
+              background: var(--color-prosper-green);
+              color: white;
+              font-size: 0.625rem;
+              font-weight: 700;
+              padding: 1px 6px;
+              border-radius: 9999px;
+            }
+
+            /* Main layout */
+            .main-layout {
+              display: flex;
+              flex: 1;
+              overflow: hidden;
             }
 
             /* Sidebar */
             .sidebar {
+              width: 260px;
+              min-width: 260px;
+              background: var(--bg-card);
+              border-right: 1px solid var(--border-default);
               display: flex;
               flex-direction: column;
-              gap: 24px;
+              overflow: hidden;
             }
-
-            /* Leaderboard */
-            .leaderboard-card {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 20px;
-              border: 1px solid var(--border-default);
+            .sidebar-header {
+              padding: 12px 16px;
+              border-bottom: 1px solid var(--border-default);
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
             }
-            .leaderboard-title {
-              font-size: 0.875rem;
+            .sidebar-title {
+              font-size: 0.8125rem;
               font-weight: 800;
               color: var(--text-primary);
+              margin: 0;
+            }
+            .sidebar-btn {
+              width: 28px;
+              height: 28px;
+              border-radius: 6px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-secondary);
+              cursor: pointer;
               display: flex;
               align-items: center;
-              gap: 8px;
-              margin: 0 0 16px 0;
+              justify-content: center;
+              font-size: 0.875rem;
             }
-            .leader-item {
+            .sidebar-btn:hover {
+              border-color: var(--color-prosper-green);
+              color: var(--color-prosper-green);
+            }
+            .comm-list {
+              flex: 1;
+              overflow-y: auto;
+              padding: 8px;
+            }
+            .comm-item {
               display: flex;
               align-items: center;
               gap: 10px;
-              padding: 10px;
+              padding: 8px 10px;
               border-radius: 8px;
-              margin-bottom: 8px;
-              transition: background 0.2s;
+              cursor: pointer;
+              transition: all 0.15s;
+              border: none;
+              background: none;
+              width: 100%;
+              text-align: left;
             }
-            .leader-item:hover {
-              background: var(--bg-input);
+            .comm-item:hover {
+              background: var(--bg-card-hover);
             }
-            .leader-item:first-child {
-              border-left: 3px solid var(--color-prosper-green);
+            .comm-item.active {
               background: var(--bg-accent-soft);
             }
-            .leader-avatar-wrap {
-              position: relative;
+            .comm-icon {
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.75rem;
               flex-shrink: 0;
             }
-            .leader-avatar {
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              background: linear-gradient(135deg, var(--color-prosper-green), var(--color-prosper-navy));
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-size: 0.75rem;
-              font-weight: 700;
-            }
-            .leader-rank {
-              position: absolute;
-              top: -4px;
-              right: -4px;
-              width: 16px;
-              height: 16px;
-              border-radius: 50%;
-              background: var(--color-prosper-green);
-              color: white;
-              font-size: 0.5rem;
-              font-weight: 700;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .leader-item:not(:first-child) .leader-rank {
-              background: var(--bg-card-high);
-              color: var(--text-primary);
-            }
-            .leader-info {
+            .comm-info {
               flex: 1;
               min-width: 0;
             }
-            .leader-name {
+            .comm-name {
               font-size: 0.75rem;
-              font-weight: 700;
+              font-weight: 600;
               color: var(--text-primary);
               margin: 0;
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
             }
-            .leader-goals {
-              font-size: 0.5625rem;
+            .comm-desc {
+              font-size: 0.625rem;
               color: var(--text-tertiary);
               margin: 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
             }
-            .leader-points {
-              text-align: right;
-              flex-shrink: 0;
-            }
-            .leader-points-value {
-              font-size: 0.6875rem;
-              font-weight: 900;
+            .comm-unread {
+              font-size: 0.625rem;
+              font-weight: 700;
               color: var(--color-prosper-green);
-              margin: 0;
-            }
-            .leader-item:not(:first-child) .leader-points-value {
-              color: var(--text-primary);
-            }
-            .leader-points-label {
-              font-size: 0.4375rem;
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-              font-weight: 700;
-              color: var(--text-tertiary);
-              margin: 0;
-            }
-            .leaderboard-btn {
-              width: 100%;
-              padding: 8px;
-              border: 1px solid var(--border-default);
-              background: none;
-              border-radius: 8px;
-              font-size: 0.5625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
-              color: var(--text-secondary);
-              cursor: pointer;
-              transition: all 0.2s;
-              margin-top: 8px;
-            }
-            .leaderboard-btn:hover {
-              background: var(--bg-card-high);
+              background: rgba(61,204,142,0.1);
+              padding: 1px 6px;
+              border-radius: 9999px;
             }
 
-            /* Events */
-            .events-card {
-              background: var(--bg-card);
-              border-radius: 12px;
-              padding: 20px;
-              border: 1px solid var(--border-default);
+            /* Search */
+            .search-box {
+              padding: 8px;
+              border-bottom: 1px solid var(--border-default);
             }
-            .events-title {
-              font-size: 0.875rem;
-              font-weight: 800;
+            .search-input {
+              width: 100%;
+              padding: 8px 12px;
+              border-radius: 8px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
               color: var(--text-primary);
+              font-size: 0.75rem;
+              outline: none;
+            }
+            .search-input:focus {
+              border-color: var(--color-prosper-green);
+            }
+            .search-results {
+              max-height: 200px;
+              overflow-y: auto;
+              padding: 4px;
+            }
+            .search-result-item {
               display: flex;
               align-items: center;
               gap: 8px;
-              margin: 0 0 16px 0;
+              padding: 8px;
+              border-radius: 6px;
+              cursor: pointer;
+              transition: background 0.15s;
+              border: none;
+              background: none;
+              width: 100%;
+              text-align: left;
             }
-            .event-item {
-              position: relative;
-              padding-left: 20px;
-              border-left: 2px solid var(--border-default);
-              padding-bottom: 16px;
+            .search-result-item:hover {
+              background: var(--bg-card-hover);
             }
-            .event-item:last-child {
-              padding-bottom: 0;
-            }
-            .event-item.active {
-              border-left-color: var(--color-prosper-green);
-            }
-            .event-dot {
-              position: absolute;
-              left: -7px;
-              top: 4px;
-              width: 12px;
-              height: 12px;
+            .search-avatar {
+              width: 28px;
+              height: 28px;
               border-radius: 50%;
-              background: var(--border-default);
-            }
-            .event-item.active .event-dot {
-              background: var(--color-prosper-green);
-            }
-            .event-date {
-              font-size: 0.5625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-              color: var(--text-tertiary);
-              margin: 0 0 4px 0;
-            }
-            .event-item.active .event-date {
-              color: var(--color-prosper-green);
-            }
-            .event-name {
-              font-size: 0.75rem;
-              font-weight: 700;
-              color: var(--text-primary);
-              margin: 0 0 2px 0;
-            }
-            .event-speaker {
+              background: var(--bg-accent-soft);
+              display: flex;
+              align-items: center;
+              justify-content: center;
               font-size: 0.625rem;
-              color: var(--text-secondary);
+              font-weight: 700;
+              color: var(--color-prosper-green);
+              flex-shrink: 0;
+            }
+            .search-name {
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: var(--text-primary);
               margin: 0;
             }
-            .event-rsvp {
-              margin-top: 6px;
+            .search-email {
+              font-size: 0.625rem;
+              color: var(--text-tertiary);
+              margin: 0;
+            }
+
+            /* Chat window */
+            .chat-window {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+              background: var(--bg-card);
+              overflow: hidden;
+            }
+            .chat-header {
+              padding: 12px 16px;
+              border-bottom: 1px solid var(--border-default);
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              flex-shrink: 0;
+            }
+            .chat-header-icon {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.875rem;
+            }
+            .chat-header-info {
+              flex: 1;
+              min-width: 0;
+            }
+            .chat-header-name {
+              font-size: 0.8125rem;
+              font-weight: 700;
+              color: var(--text-primary);
+              margin: 0;
+            }
+            .chat-header-desc {
+              font-size: 0.625rem;
+              color: var(--text-tertiary);
+              margin: 0;
+            }
+
+            /* Messages */
+            .messages-container {
+              flex: 1;
+              overflow-y: auto;
+              padding: 12px;
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .msg-item {
+              display: flex;
+              gap: 6px;
+              align-items: flex-end;
+              max-width: 80%;
+            }
+            .msg-item.msg-own {
+              align-self: flex-end;
+              flex-direction: row-reverse;
+            }
+            .msg-avatar {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              overflow: hidden;
+              flex-shrink: 0;
+            }
+            .msg-avatar img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            .msg-avatar-placeholder {
+              width: 100%;
+              height: 100%;
+              background: var(--bg-accent-soft);
+              color: var(--color-prosper-green);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.625rem;
+              font-weight: 700;
+            }
+            .msg-bubble {
+              background: var(--bg-input);
+              border: 1px solid var(--border-default);
+              border-radius: 10px;
+              padding: 6px 10px;
+              max-width: 100%;
+            }
+            .msg-item.msg-own .msg-bubble {
+              background: var(--bg-accent-soft);
+              border-color: var(--color-prosper-green);
+            }
+            .msg-sender {
+              font-size: 0.625rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+              margin-bottom: 2px;
+            }
+            .msg-text {
+              font-size: 0.75rem;
+              color: var(--text-primary);
+              line-height: 1.4;
+              word-break: break-word;
+            }
+            .msg-footer {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              margin-top: 2px;
+            }
+            .msg-time {
+              font-size: 0.5625rem;
+              color: var(--text-tertiary);
+            }
+            .msg-like-btn {
               background: none;
               border: none;
               font-size: 0.625rem;
-              font-weight: 700;
-              color: var(--color-prosper-green);
+              cursor: pointer;
+              padding: 1px 3px;
+              border-radius: 3px;
+            }
+            .msg-like-btn:hover {
+              background: var(--bg-card-hover);
+            }
+
+            /* Input */
+            .chat-input-area {
+              padding: 10px 12px;
+              border-top: 1px solid var(--border-default);
+              flex-shrink: 0;
+            }
+            .chat-input-row {
+              display: flex;
+              gap: 6px;
+              align-items: center;
+            }
+            .chat-input {
+              flex: 1;
+              padding: 8px 12px;
+              border-radius: 16px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.75rem;
+              outline: none;
+            }
+            .chat-input:focus {
+              border-color: var(--color-prosper-green);
+            }
+            .chat-send-btn {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              border: none;
+              background: var(--color-prosper-green);
+              color: white;
               cursor: pointer;
               display: flex;
               align-items: center;
-              gap: 4px;
-              padding: 0;
+              justify-content: center;
+              font-size: 0.875rem;
+              flex-shrink: 0;
             }
-            .event-rsvp:hover {
-              opacity: 0.8;
+            .chat-send-btn:hover {
+              opacity: 0.9;
             }
 
-            /* Responsive */
-            @media (max-width: 1024px) {
-              .grid-layout {
-                grid-template-columns: 1fr;
-              }
+            /* Empty state */
+            .empty-state {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              color: var(--text-tertiary);
+              text-align: center;
+              padding: 20px;
             }
+            .empty-state-icon {
+              font-size: 2rem;
+              margin-bottom: 8px;
+            }
+            .empty-state-title {
+              font-size: 0.8125rem;
+              font-weight: 600;
+              color: var(--text-secondary);
+              margin: 0 0 2px 0;
+            }
+            .empty-state-desc {
+              font-size: 0.6875rem;
+              margin: 0;
+            }
+
+            /* New Community Modal */
+            .modal-overlay {
+              position: fixed;
+              inset: 0;
+              background: rgba(0,0,0,0.5);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 100;
+            }
+            .modal-card {
+              background: var(--bg-card);
+              border-radius: 12px;
+              padding: 20px;
+              width: 90%;
+              max-width: 320px;
+              border: 1px solid var(--border-default);
+            }
+            .modal-title {
+              font-size: 0.875rem;
+              font-weight: 800;
+              color: var(--text-primary);
+              margin: 0 0 12px 0;
+            }
+            .modal-input {
+              width: 100%;
+              padding: 8px 12px;
+              border-radius: 6px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.75rem;
+              margin-bottom: 10px;
+              outline: none;
+            }
+            .modal-actions {
+              display: flex;
+              gap: 6px;
+              margin-top: 6px;
+            }
+            .modal-btn {
+              flex: 1;
+              padding: 8px;
+              border-radius: 6px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-secondary);
+              font-size: 0.75rem;
+              font-weight: 600;
+              cursor: pointer;
+            }
+            .modal-btn.primary {
+              background: var(--color-prosper-green);
+              color: white;
+              border-color: var(--color-prosper-green);
+            }
+
+            /* Mobile */
             @media (max-width: 768px) {
               .comunidad-page {
-                padding: 16px;
-              }
-              .hero {
                 height: auto;
-                padding: 24px;
+                max-height: none;
               }
-              .hero-title {
-                font-size: 1.5rem;
+              .main-layout {
+                flex-direction: column;
               }
-              .hero-desc {
-                font-size: 0.8125rem;
+              .sidebar {
+                width: 100%;
+                min-width: 100%;
+                max-height: 180px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-default);
               }
-              .foros-grid {
-                grid-template-columns: 1fr;
+              .comm-list {
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                padding: 8px;
               }
-              .recursos-grid {
-                grid-template-columns: 1fr;
+              .comm-item {
+                min-width: 120px;
+                flex-direction: column;
+                text-align: center;
+                padding: 8px;
               }
-              .leaderboard-card {
-                padding: 16px;
+              .comm-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
               }
-              .events-card {
-                padding: 16px;
+              .chat-window {
+                height: calc(100vh - 340px);
+                min-height: 300px;
+              }
+              .msg-item {
+                max-width: 90%;
               }
             }
             @media (max-width: 480px) {
-              .comunidad-page {
-                padding: 12px;
-              }
-              .hero {
-                padding: 16px;
-                border-radius: 12px;
-              }
-              .hero-title {
-                font-size: 1.25rem;
-              }
-              .hero-welcome {
-                font-size: 0.5625rem;
-              }
-              .foros-card, .recursos-card {
-                padding: 16px;
-              }
-              .foro-card {
-                padding: 12px;
-              }
-              .foro-name {
-                font-size: 0.8125rem;
-              }
-              .foro-desc {
+              .msg-text {
                 font-size: 0.6875rem;
-              }
-              .leader-item {
-                padding: 8px;
-                gap: 8px;
-              }
-              .leader-avatar {
-                width: 32px;
-                height: 32px;
-                font-size: 0.6875rem;
-              }
-              .leader-name {
-                font-size: 0.6875rem;
-              }
-              .leader-goals {
-                font-size: 0.5rem;
-              }
-              .leader-points-value {
-                font-size: 0.625rem;
               }
             }
           `}</style>
 
-          {/* Hero Section */}
-          <div className="hero">
-            <div className="hero-content">
-              <p className="hero-welcome">Bienvenido de nuevo</p>
-              <h1 className="hero-title">
-                Comunidad Prosper: <span>El Capital del Conocimiento</span>
-              </h1>
-              <p className="hero-desc">Conéctate, aprende y crece junto a la élite de los arquitectos digitales.</p>
+          {loading ? (
+            <div className="empty-state">
+              <div className="loading-spinner" style={{ width: 28, height: 28, border: '3px solid var(--border-default)', borderTopColor: 'var(--color-prosper-green)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cargando...</p>
             </div>
-          </div>
-
-          {/* Grid Layout - Sidebar (ranking) a la derecha */}
-          <div className="grid-layout">
-            {/* Contenido principal a la izquierda */}
-            <div className="main-column">
-              {/* Foros de Discusión */}
-              <div className="foros-card">
-                <div className="foros-header">
-                  <h2 className="foros-title">
-                    <span className="foros-title-icon">💬</span>
-                    Foros de Discusión
-                  </h2>
-                  <a className="foros-link">Ver todos</a>
-                </div>
-                <div className="foros-grid">
-                  {FORUMS.map((foro) => (
-                    <div key={foro.id} className="foro-card">
-                      <div className="foro-top">
-                        <span className="foro-tag" style={{ background: `${foro.tagColor}20`, color: foro.tagColor }}>
-                          {foro.tag}
-                        </span>
-                        <div className="foro-avatars">
-                          {Array.from({ length: Math.min(foro.avatars, 2) }).map((_, i) => (
-                            <div key={i} className="foro-avatar">{String.fromCharCode(65 + i)}</div>
-                          ))}
-                          {foro.avatars > 2 && (
-                            <div className="foro-avatar">+{foro.avatars - 2}</div>
-                          )}
-                        </div>
-                      </div>
-                      <h3 className="foro-name">{foro.title}</h3>
-                      <p className="foro-desc">{foro.description}</p>
-                      <div className="foro-stats">
-                        <span className="foro-stat">💬 {foro.messages} mensajes</span>
-                        <span className="foro-stat">👥 {foro.members} activos</span>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="foro-add">
-                    <div className="foro-add-icon">➕</div>
-                    <p className="foro-add-text">Proponer nuevo tema</p>
-                  </div>
-                </div>
+          ) : (
+            <>
+              {/* Tabs */}
+              <div className="tabs">
+                <button
+                  className={`tab-btn ${activeTab === 'public' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('public')}
+                >
+                  💬 Canales Públicos
+                </button>
+                <button
+                  className={`tab-btn ${activeTab === 'private' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('private')}
+                >
+                  🔒 Chats Privados
+                  {unreadCount > 0 && <span className="tab-badge">{unreadCount}</span>}
+                </button>
               </div>
 
-              {/* Recursos de la Comunidad */}
-              <div className="recursos-card">
-                <h2 className="recursos-title">📥 Recursos de la Comunidad</h2>
-                <div className="recursos-grid">
-                  {RESOURCES.map((recurso) => (
-                    <div key={recurso.id} className="recurso-item">
-                      <div className="recurso-icon" style={{ background: `${recurso.color}20` }}>
-                        {recurso.icon}
-                      </div>
-                      <div className="recurso-info">
-                        <p className="recurso-name">{recurso.title}</p>
-                        <p className="recurso-type">{recurso.type}</p>
-                      </div>
-                      <button className="recurso-download" title="Descargar">⬇️</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar derecha: Ranking + Eventos */}
-            <aside className="sidebar">
-              {/* Tablero de Líderes */}
-              <div className="leaderboard-card">
-                <h2 className="leaderboard-title">🏆 Tablero de Líderes</h2>
-                {LEADERS.map((leader) => (
-                  <div key={leader.rank} className="leader-item">
-                    <div className="leader-avatar-wrap">
-                      <div className="leader-avatar">{leader.name.charAt(0)}</div>
-                      <div className="leader-rank">{leader.rank}</div>
-                    </div>
-                    <div className="leader-info">
-                      <p className="leader-name">{leader.name}</p>
-                      <p className="leader-goals">{leader.goals} Metas Cumplidas</p>
-                    </div>
-                    <div className="leader-points">
-                      <p className="leader-points-value">{leader.points.toLocaleString()}</p>
-                      <p className="leader-points-label">Puntos</p>
-                    </div>
-                  </div>
-                ))}
-                <button className="leaderboard-btn">Ver Ranking Completo</button>
-              </div>
-
-              {/* Próximos Eventos */}
-              <div className="events-card">
-                <h2 className="events-title">📅 Próximos Eventos</h2>
-                {EVENTS.map((event) => (
-                  <div key={event.id} className={`event-item ${event.active ? 'active' : ''}`}>
-                    <div className="event-dot" />
-                    <p className="event-date">{event.date}</p>
-                    <h4 className="event-name">{event.title}</h4>
-                    <p className="event-speaker">{event.speaker}</p>
-                    {event.active && (
-                      <button className="event-rsvp">
-                        Reservar lugar →
-                      </button>
+              {/* Main Layout */}
+              <div className="main-layout">
+                {/* Sidebar */}
+                <aside className="sidebar">
+                  <div className="sidebar-header">
+                    <h2 className="sidebar-title">
+                      {activeTab === 'public' ? 'Canales' : 'Conversaciones'}
+                    </h2>
+                    {activeTab === 'public' ? (
+                      <button className="sidebar-btn" onClick={() => setShowNewCommunity(true)} title="Nuevo canal">+</button>
+                    ) : (
+                      <button className="sidebar-btn" onClick={() => setShowSearch(!showSearch)} title="Buscar usuario">🔍</button>
                     )}
                   </div>
-                ))}
+
+                  {/* Search users */}
+                  {activeTab === 'private' && showSearch && (
+                    <div className="search-box">
+                      <input
+                        className="search-input"
+                        placeholder="Buscar por nombre o email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                      {searchResults.length > 0 && (
+                        <div className="search-results">
+                          {searchResults.map(u => (
+                            <button key={u.uid} className="search-result-item" onClick={() => startPrivateChat(u)}>
+                              <div className="search-avatar">{u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}</div>
+                              <div>
+                                <p className="search-name">{u.displayName || 'Usuario'}</p>
+                                <p className="search-email">{u.email}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Comm/Conv list */}
+                  <div className="comm-list">
+                    {activeTab === 'public' ? (
+                      communities.map(comm => (
+                        <button
+                          key={comm.id}
+                          className={`comm-item ${activeCommunity === comm.id ? 'active' : ''}`}
+                          onClick={() => handleSelectCommunity(comm.id)}
+                        >
+                          <div className="comm-icon" style={{ background: `${comm.color}20` }}>
+                            {comm.icon}
+                          </div>
+                          <div className="comm-info">
+                            <p className="comm-name">{comm.name}</p>
+                            <p className="comm-desc">{comm.description}</p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      conversations.map(conv => (
+                        <button
+                          key={conv.id}
+                          className={`comm-item ${activeConversation === conv.id ? 'active' : ''}`}
+                          onClick={() => setActiveConversation(conv.id)}
+                        >
+                          <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
+                            {conv.otherUser?.displayName?.charAt(0) || conv.otherUser?.email?.charAt(0) || '👤'}
+                          </div>
+                          <div className="comm-info">
+                            <p className="comm-name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
+                            <p className="comm-desc">{conv.lastMessage || 'Sin mensajes'}</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                    {activeTab === 'private' && conversations.length === 0 && (
+                      <div className="empty-state" style={{ padding: '20px' }}>
+                        <p className="empty-state-icon">💬</p>
+                        <p className="empty-state-title">Sin conversaciones</p>
+                        <p className="empty-state-desc">Busca un usuario para chatear</p>
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                {/* Chat Window */}
+                <main className="chat-window">
+                  {activeTab === 'public' ? (
+                    <>
+                      {/* Header */}
+                      <div className="chat-header">
+                        <div className="chat-header-icon" style={{ background: `${activeComm?.color}20` }}>
+                          {activeComm?.icon}
+                        </div>
+                        <div className="chat-header-info">
+                          <p className="chat-header-name">{activeComm?.name}</p>
+                          <p className="chat-header-desc">{activeComm?.description}</p>
+                        </div>
+                      </div>
+
+                      {/* Messages */}
+                      <div className="messages-container">
+                        {publicMessages.length === 0 ? (
+                          <div className="empty-state">
+                            <div className="empty-state-icon">💬</div>
+                            <h3 className="empty-state-title">Sé el primero en hablar</h3>
+                            <p className="empty-state-desc">Inicia la conversación en {activeComm?.name}</p>
+                          </div>
+                        ) : (
+                          publicMessages.map(msg => (
+                            <div key={msg.id} className={`msg-item ${msg.senderId === user?.uid ? 'msg-own' : ''}`}>
+                              {msg.senderId !== user?.uid && (
+                                <div className="msg-avatar">
+                                  {msg.senderPhoto ? (
+                                    <img src={msg.senderPhoto} alt={msg.senderName} />
+                                  ) : (
+                                    <div className="msg-avatar-placeholder">{msg.senderName.charAt(0).toUpperCase()}</div>
+                                  )}
+                                </div>
+                              )}
+                              <div className="msg-bubble">
+                                {msg.senderId !== user?.uid && <div className="msg-sender">{msg.senderName}</div>}
+                                <div className="msg-text">{msg.text}</div>
+                                <div className="msg-footer">
+                                  <span className="msg-time">{new Date(msg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
+                                  <button className={`msg-like-btn ${msg.likes.includes(user?.uid || '') ? 'liked' : ''}`} onClick={() => handlePublicLike(msg.id)}>
+                                    {msg.likes.includes(user?.uid || '') ? '❤️' : '🤍'} {msg.likes.length > 0 && msg.likes.length}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                        <div ref={publicEndRef} />
+                      </div>
+
+                      {/* Input */}
+                      <div className="chat-input-area">
+                        <div className="chat-input-row">
+                          <input
+                            className="chat-input"
+                            placeholder="Escribe un mensaje..."
+                            value={publicInput}
+                            onChange={(e) => setPublicInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handlePublicSend()}
+                          />
+                          <button className="chat-send-btn" onClick={handlePublicSend}>➤</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {activeConversation ? (
+                        <>
+                          {/* Header */}
+                          <div className="chat-header">
+                            <div className="chat-header-icon" style={{ background: 'var(--bg-accent-soft)' }}>
+                              {activeConv?.otherUser?.displayName?.charAt(0) || '👤'}
+                            </div>
+                            <div className="chat-header-info">
+                              <p className="chat-header-name">{activeConv?.otherUser?.displayName || 'Usuario'}</p>
+                              <p className="chat-header-desc">Chat privado</p>
+                            </div>
+                          </div>
+
+                          {/* Messages */}
+                          <div className="messages-container">
+                            {privateMessages.length === 0 ? (
+                              <div className="empty-state">
+                                <div className="empty-state-icon">🔒</div>
+                                <h3 className="empty-state-title">Inicio de conversación</h3>
+                                <p className="empty-state-desc">Envía el primer mensaje</p>
+                              </div>
+                            ) : (
+                              privateMessages.map(msg => (
+                                <div key={msg.id} className={`msg-item ${msg.senderId === user?.uid ? 'msg-own' : ''}`}>
+                                  {msg.senderId !== user?.uid && activeConv?.otherUser && (
+                                    <div className="msg-avatar">
+                                      {activeConv.otherUser.photoURL ? (
+                                        <img src={activeConv.otherUser.photoURL} alt={activeConv.otherUser.displayName || ''} />
+                                      ) : (
+                                        <div className="msg-avatar-placeholder">{activeConv.otherUser.displayName?.charAt(0) || '?'}</div>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="msg-bubble">
+                                    <div className="msg-text">{msg.text}</div>
+                                    <div className="msg-footer">
+                                      <span className="msg-time">{new Date(msg.timestamp).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                            <div ref={privateEndRef} />
+                          </div>
+
+                          {/* Input */}
+                          <div className="chat-input-area">
+                            <div className="chat-input-row">
+                              <input
+                                className="chat-input"
+                                placeholder="Escribe un mensaje privado..."
+                                value={privateInput}
+                                onChange={(e) => setPrivateInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handlePrivateSend()}
+                              />
+                              <button className="chat-send-btn" onClick={handlePrivateSend}>➤</button>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="empty-state">
+                          <div className="empty-state-icon">🔒</div>
+                          <h3 className="empty-state-title">Chats Privados</h3>
+                          <p className="empty-state-desc">Selecciona una conversación o busca un usuario</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </main>
               </div>
-            </aside>
-          </div>
+
+              {/* New Community Modal */}
+              {showNewCommunity && (
+                <div className="modal-overlay" onClick={() => setShowNewCommunity(false)}>
+                  <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="modal-title">Nuevo Canal</h3>
+                    <input
+                      className="modal-input"
+                      placeholder="Nombre del canal"
+                      value={newCommunityName}
+                      onChange={(e) => setNewCommunityName(e.target.value)}
+                    />
+                    <input
+                      className="modal-input"
+                      placeholder="Descripción (opcional)"
+                      value={newCommunityDesc}
+                      onChange={(e) => setNewCommunityDesc(e.target.value)}
+                    />
+                    <div className="modal-actions">
+                      <button className="modal-btn" onClick={() => setShowNewCommunity(false)}>Cancelar</button>
+                      <button className="modal-btn primary" onClick={handleCreateCommunity}>Crear</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>
