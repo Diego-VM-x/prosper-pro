@@ -23,23 +23,16 @@ import {
 } from '@/lib/firestore/privateMessages';
 import type { Community, CommunityMessage, UserProfile, PrivateConversation, PrivateMessage } from '@/types';
 
-const DEFAULT_COMMUNITIES: Community[] = [
-  { id: 'general', name: 'General', description: 'Conversación abierta', icon: '💬', color: 'var(--color-prosper-green)', memberCount: 0, createdBy: 'system', createdAt: 0 },
-  { id: 'ahorro', name: 'Ahorro', description: 'Tips para ahorrar mejor', icon: '💰', color: 'var(--color-prosper-navy)', memberCount: 0, createdBy: 'system', createdAt: 1 },
-  { id: 'inversion', name: 'Inversión', description: 'Inversiones para todos', icon: '📈', color: '#F59E0B', memberCount: 0, createdBy: 'system', createdAt: 2 },
-  { id: 'educacion', name: 'Educación', description: 'Aprende finanzas', icon: '📚', color: '#3B82F6', memberCount: 0, createdBy: 'system', createdAt: 3 },
-];
-
-type ChatType = 'public' | 'private';
+type ChatType = 'groups' | 'private';
 
 export default function ComunidadPage() {
   const { user } = useAuth();
   const [chatType, setChatType] = useState<ChatType>('private');
   const [showChat, setShowChat] = useState(false);
 
-  // Public channels
-  const [communities, setCommunities] = useState<Community[]>(DEFAULT_COMMUNITIES);
-  const [activeCommunity, setActiveCommunity] = useState<string>('general');
+  // Groups (solo creados por usuarios)
+  const [communities, setCommunities] = useState<Community[]>([]);
+  const [activeCommunity, setActiveCommunity] = useState<string | null>(null);
   const [publicMessages, setPublicMessages] = useState<CommunityMessage[]>([]);
   const [publicInput, setPublicInput] = useState('');
 
@@ -74,9 +67,9 @@ export default function ComunidadPage() {
     return () => unsub();
   }, []);
 
-  // Subscribe to public messages
+  // Subscribe to group messages
   useEffect(() => {
-    if (chatType !== 'public' || !user?.uid) return;
+    if (chatType !== 'groups' || !activeCommunity || !user?.uid) return;
     const unsub = subscribeToMessages(activeCommunity, user.uid, (msgs) => {
       setPublicMessages(msgs);
     });
@@ -141,7 +134,7 @@ export default function ComunidadPage() {
 
   // Send public message
   const handlePublicSend = useCallback(async () => {
-    if (!user || !publicInput.trim()) return;
+    if (!user || !publicInput.trim() || !activeCommunity) return;
     await sendMessage(activeCommunity, {
       text: publicInput.trim(),
       senderId: user.uid,
@@ -180,14 +173,14 @@ export default function ComunidadPage() {
 
   // Handle public like
   const handlePublicLike = useCallback(async (msgId: string) => {
-    if (!user) return;
+    if (!user || !activeCommunity) return;
     await toggleLike(activeCommunity, msgId, user.uid);
   }, [user, activeCommunity]);
 
-  // Join community
+  // Join group
   const handleSelectCommunity = useCallback(async (commId: string) => {
     setActiveCommunity(commId);
-    setChatType('public');
+    setChatType('groups');
     setShowChat(true);
     if (user) {
       await joinCommunity(commId, {
@@ -468,6 +461,7 @@ export default function ComunidadPage() {
               }
               .chat-main {
                 width: 100%;
+                height: 100%;
                 position: absolute;
                 inset: 0;
                 z-index: 2;
@@ -501,10 +495,10 @@ export default function ComunidadPage() {
             <div className="conv-list-header">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 className="conv-list-title">
-                  {chatType === 'private' ? 'Mensajes' : 'Canales'}
+                  {chatType === 'private' ? 'Mensajes' : 'Grupos'}
                 </h2>
                 <button
-                  onClick={() => setChatType(chatType === 'private' ? 'public' : 'private')}
+                  onClick={() => setChatType(chatType === 'private' ? 'groups' : 'private')}
                   style={{
                     background: 'var(--bg-card)',
                     border: '1px solid var(--border-default)',
@@ -515,14 +509,14 @@ export default function ComunidadPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  {chatType === 'private' ? 'Canales' : 'Mensajes'}
+                  {chatType === 'private' ? 'Grupos' : 'Mensajes'}
                 </button>
               </div>
               <div className="conv-search" style={{ marginTop: 12 }}>
                 <span className="conv-search-icon">🔍</span>
                 <input
                   className="conv-search-input"
-                  placeholder={chatType === 'private' ? 'Buscar usuarios...' : 'Buscar canales...'}
+                  placeholder={chatType === 'private' ? 'Buscar usuarios...' : 'Buscar grupos...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -585,21 +579,29 @@ export default function ComunidadPage() {
                 </>
               ) : (
                 <>
-                  {communities.map(comm => (
-                    <div key={comm.id} className={`conv-item ${activeCommunity === comm.id ? 'active' : ''}`} onClick={() => handleSelectCommunity(comm.id)}>
-                      <div className="conv-item-row">
-                        <div className="conv-avatar">
-                          <div className="conv-avatar-img" style={{ background: `${comm.color}20` }}>{comm.icon}</div>
-                        </div>
-                        <div className="conv-info">
-                          <p className="conv-name">{comm.name}</p>
-                          <p className="conv-last-msg">{comm.description}</p>
+                  {communities.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-tertiary)' }}>
+                      <p style={{ fontSize: '2rem', margin: '0 0 8px' }}>👥</p>
+                      <p style={{ fontSize: '0.8125rem', margin: '0 0 4px', color: 'var(--text-secondary)' }}>No hay grupos aún</p>
+                      <p style={{ fontSize: '0.6875rem', margin: 0 }}>Crea un grupo para chatear con varios usuarios</p>
+                    </div>
+                  ) : (
+                    communities.map(comm => (
+                      <div key={comm.id} className={`conv-item ${activeCommunity === comm.id ? 'active' : ''}`} onClick={() => handleSelectCommunity(comm.id)}>
+                        <div className="conv-item-row">
+                          <div className="conv-avatar">
+                            <div className="conv-avatar-img" style={{ background: `${comm.color}20` }}>{comm.icon}</div>
+                          </div>
+                          <div className="conv-info">
+                            <p className="conv-name">{comm.name}</p>
+                            <p className="conv-last-msg">{comm.description}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                   <div className="conv-item" onClick={() => setShowNewCommunity(true)} style={{ textAlign: 'center', color: 'var(--color-prosper-green)', fontWeight: 600 }}>
-                    + Nuevo Canal
+                    + Nuevo Grupo
                   </div>
                 </>
               )}
@@ -675,7 +677,7 @@ export default function ComunidadPage() {
                   </div>
                 </div>
               </>
-            ) : chatType === 'public' ? (
+            ) : chatType === 'groups' ? (
               <>
                 <div className="chat-header">
                   <button onClick={handleBack} className="mobile-back-btn">←</button>
@@ -723,7 +725,7 @@ export default function ComunidadPage() {
 
                 <div className="msg-input-area">
                   <div className="msg-input-wrapper">
-                    <input className="msg-input" placeholder="Escribe un mensaje en el canal..." value={publicInput} onChange={(e) => setPublicInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handlePublicSend()} />
+                    <input className="msg-input" placeholder="Escribe un mensaje en el grupo..." value={publicInput} onChange={(e) => setPublicInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handlePublicSend()} />
                     <button className="msg-send-btn" onClick={handlePublicSend}><span style={{ fontSize: '1rem' }}>➤</span></button>
                   </div>
                 </div>
@@ -732,7 +734,7 @@ export default function ComunidadPage() {
               <div className="empty-chat">
                 <div className="empty-chat-icon">💬</div>
                 <h3 className="empty-chat-title">Selecciona una conversación</h3>
-                <p className="empty-chat-desc">Toca un usuario o canal para comenzar a chatear</p>
+                <p className="empty-chat-desc">Toca un usuario o grupo para comenzar a chatear</p>
               </div>
             )}
           </main>
@@ -741,8 +743,8 @@ export default function ComunidadPage() {
           {showNewCommunity && (
             <div className="modal-overlay" onClick={() => setShowNewCommunity(false)}>
               <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                <h3 className="modal-title">Nuevo Canal</h3>
-                <input className="modal-input" placeholder="Nombre del canal" value={newCommunityName} onChange={(e) => setNewCommunityName(e.target.value)} />
+                <h3 className="modal-title">Nuevo Grupo</h3>
+                <input className="modal-input" placeholder="Nombre del grupo" value={newCommunityName} onChange={(e) => setNewCommunityName(e.target.value)} />
                 <input className="modal-input" placeholder="Descripción (opcional)" value={newCommunityDesc} onChange={(e) => setNewCommunityDesc(e.target.value)} />
                 <div className="modal-actions">
                   <button className="modal-btn" onClick={() => setShowNewCommunity(false)}>Cancelar</button>
