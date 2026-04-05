@@ -154,14 +154,28 @@ export default function ComunidadPage() {
 
   // Send private message
   const handlePrivateSend = useCallback(async () => {
-    if (!user || !privateInput.trim() || !activeConversation) return;
+    if (!user || !privateInput.trim() || !activeConversation) {
+      console.log('handlePrivateSend: missing data', { hasUser: !!user, hasInput: !!privateInput.trim(), hasConv: !!activeConversation });
+      return;
+    }
     const conv = conversations.find(c => c.id === activeConversation);
-    if (!conv) return;
+    if (!conv) {
+      console.log('handlePrivateSend: conversation not found');
+      return;
+    }
     const receiverId = conv.participants.find(p => p !== user.uid);
-    if (!receiverId) return;
+    if (!receiverId) {
+      console.log('handlePrivateSend: receiverId not found', conv.participants);
+      return;
+    }
 
-    await sendPrivateMessage(activeConversation, user.uid, receiverId, privateInput.trim());
-    setPrivateInput('');
+    console.log('handlePrivateSend: sending message', { activeConversation, senderId: user.uid, receiverId, text: privateInput.trim() });
+    try {
+      await sendPrivateMessage(activeConversation, user.uid, receiverId, privateInput.trim());
+      setPrivateInput('');
+    } catch (e) {
+      console.error('handlePrivateSend error:', e);
+    }
   }, [user, privateInput, activeConversation, conversations]);
 
   // Handle public like
