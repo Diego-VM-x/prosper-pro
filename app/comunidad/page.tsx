@@ -694,9 +694,9 @@ export default function ComunidadPage() {
             </div>
           </div>
 
-          {/* Grid Layout */}
+          {/* Grid Layout - Sidebar (ranking) a la derecha */}
           <div className="grid-layout">
-            {/* Main Column */}
+            {/* Contenido principal a la izquierda */}
             <div className="main-column">
               {/* Foros de Discusión */}
               <div className="foros-card">
@@ -758,8 +758,8 @@ export default function ComunidadPage() {
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="sidebar">
+            {/* Sidebar derecha: Ranking + Eventos */}
+            <aside className="sidebar">
               {/* Tablero de Líderes */}
               <div className="leaderboard-card">
                 <h2 className="leaderboard-title">🏆 Tablero de Líderes</h2>
@@ -799,7 +799,7 @@ export default function ComunidadPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </aside>
           </div>
         </div>
       </DashboardLayout>
