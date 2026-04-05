@@ -15,7 +15,6 @@ import {
 } from '@/lib/firestore/communityMessages';
 import {
   searchUsers,
-  subscribeToAllUsers,
   getOrCreateConversation,
   subscribeToConversations,
   subscribeToPrivateMessages,
@@ -47,7 +46,6 @@ export default function ComunidadPage() {
   const [publicInput, setPublicInput] = useState('');
 
   // Private chats
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [conversations, setConversations] = useState<(PrivateConversation & { otherUser?: UserProfile })[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
@@ -81,15 +79,6 @@ export default function ComunidadPage() {
     });
     return () => unsub();
   }, [activeCommunity, chatType]);
-
-  // Subscribe to all users
-  useEffect(() => {
-    if (!user?.uid) return;
-    const unsub = subscribeToAllUsers(user.uid, (users) => {
-      setAllUsers(users);
-    });
-    return () => unsub();
-  }, [user?.uid]);
 
   // Subscribe to conversations
   useEffect(() => {
@@ -229,9 +218,6 @@ export default function ComunidadPage() {
       )
     : conversations;
 
-  const displayUsers = searchTerm
-    ? searchResults
-    : allUsers;
 
   return (
     <ProtectedRoute>
@@ -817,6 +803,7 @@ export default function ComunidadPage() {
                   {chatType === 'private' ? (
                     <>
                       {/* Search results or all users */}
+                      {/* Only show search results when user is searching */}
                       {searchTerm && searchResults.length > 0 ? (
                         searchResults.map(u => (
                           <div
@@ -837,9 +824,13 @@ export default function ComunidadPage() {
                             </div>
                           </div>
                         ))
+                      ) : searchTerm && searchResults.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                          No se encontraron usuarios
+                        </div>
                       ) : (
                         <>
-                          {/* Existing conversations */}
+                          {/* Only existing conversations */}
                           {filteredConversations.map(conv => (
                             <div
                               key={conv.id}
@@ -867,28 +858,11 @@ export default function ComunidadPage() {
                               </div>
                             </div>
                           ))}
-
-                          {/* All users */}
-                          {displayUsers.map(u => (
-                            <div
-                              key={u.uid}
-                              className="conv-item"
-                              onClick={() => startPrivateChat(u)}
-                            >
-                              <div className="conv-item-row">
-                                <div className="conv-avatar">
-                                  <div className="conv-avatar-img">{u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}</div>
-                                  <span className="conv-status-dot online" />
-                                </div>
-                                <div className="conv-info">
-                                  <div className="conv-info-header">
-                                    <p className="conv-name">{u.displayName || 'Usuario'}</p>
-                                  </div>
-                                  <p className="conv-last-msg">{u.email}</p>
-                                </div>
-                              </div>
+                          {filteredConversations.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>
+                              Busca un usuario para chatear
                             </div>
-                          ))}
+                          )}
                         </>
                       )}
                     </>
@@ -983,6 +957,7 @@ export default function ComunidadPage() {
                               </div>
                               <div className={`msg-meta ${isOwn ? 'sent' : ''}`}>
                                 <span className="msg-time">{formatTime(msg.timestamp)}</span>
+                                {isOwn && <span className="msg-check">✓✓</span>}
                               </div>
                             </div>
                           </div>
@@ -1057,6 +1032,7 @@ export default function ComunidadPage() {
                               </div>
                               <div className={`msg-meta ${isOwn ? 'sent' : ''}`}>
                                 <span className="msg-time">{formatTime(msg.timestamp)}</span>
+                                {isOwn && <span className="msg-check">✓✓</span>}
                               </div>
                             </div>
                           </div>
