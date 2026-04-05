@@ -86,6 +86,7 @@ export function subscribeToMembers(communityId: string, callback: (members: Comm
 
 export function subscribeToMessages(
   communityId: string,
+  currentUserId: string,
   callback: (messages: CommunityMessage[]) => void,
   pageSize: number = 40
 ) {
@@ -94,6 +95,8 @@ export function subscribeToMessages(
     orderBy('timestamp', 'desc'),
     limit(pageSize)
   );
+  
+  let previousCount = 0;
   
   return onSnapshot(q, (snapshot) => {
     const messages: CommunityMessage[] = [];
@@ -111,6 +114,25 @@ export function subscribeToMessages(
       });
     });
     messages.reverse();
+    
+    // Detectar mensajes nuevos de otros usuarios para notificación
+    if (previousCount > 0 && messages.length > previousCount) {
+      const newMessages = messages.slice(previousCount);
+      for (const msg of newMessages) {
+        if (msg.senderId !== currentUserId) {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(`📢 ${msg.senderName}`, {
+              body: msg.text.substring(0, 80),
+              icon: '/logo-icon.png',
+              tag: `channel-${msg.id}`,
+            });
+          }
+          break;
+        }
+      }
+    }
+    previousCount = messages.length;
+    
     callback(messages);
   }, (error) => {
     console.error('subscribeToMessages error:', error);

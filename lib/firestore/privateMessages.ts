@@ -165,12 +165,15 @@ export function subscribeToConversations(
 
 export function subscribeToPrivateMessages(
   conversationId: string,
+  currentUserId: string,
   callback: (messages: PrivateMessage[]) => void
 ) {
   const q = query(
     collection(db, MESSAGES_COLLECTION),
     where('conversationId', '==', conversationId)
   );
+  
+  let previousCount = 0;
   
   return onSnapshot(q, (snapshot) => {
     const messages: PrivateMessage[] = [];
@@ -196,6 +199,26 @@ export function subscribeToPrivateMessages(
     });
     // Ordenar por timestamp ascendente (más antiguo primero)
     messages.sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Detectar mensajes nuevos del otro usuario para notificación
+    if (previousCount > 0 && messages.length > previousCount) {
+      const newMessages = messages.slice(previousCount);
+      for (const msg of newMessages) {
+        if (msg.senderId !== currentUserId && !msg.read) {
+          // Disparar notificación del navegador
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('💬 Nuevo mensaje', {
+              body: msg.text.substring(0, 80),
+              icon: '/logo-icon.png',
+              tag: `msg-${msg.id}`,
+            });
+          }
+          break; // Solo una notificación por batch
+        }
+      }
+    }
+    previousCount = messages.length;
+    
     callback(messages);
   }, (error) => {
     console.error('subscribeToPrivateMessages error:', error);

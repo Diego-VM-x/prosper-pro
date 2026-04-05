@@ -71,12 +71,12 @@ export default function ComunidadPage() {
 
   // Subscribe to public messages
   useEffect(() => {
-    if (chatType !== 'public') return;
-    const unsub = subscribeToMessages(activeCommunity, (msgs) => {
+    if (chatType !== 'public' || !user?.uid) return;
+    const unsub = subscribeToMessages(activeCommunity, user.uid, (msgs) => {
       setPublicMessages(msgs);
     });
     return () => unsub();
-  }, [activeCommunity, chatType]);
+  }, [activeCommunity, chatType, user?.uid]);
 
   // Subscribe to conversations
   useEffect(() => {
@@ -89,10 +89,10 @@ export default function ComunidadPage() {
 
   // Subscribe to private messages
   useEffect(() => {
-    if (!activeConversation || chatType !== 'private') return;
-    const unsub = subscribeToPrivateMessages(activeConversation, (msgs) => {
+    if (!activeConversation || chatType !== 'private' || !user?.uid) return;
+    const unsub = subscribeToPrivateMessages(activeConversation, user.uid, (msgs) => {
       setPrivateMessages(msgs);
-      if (user?.uid) markMessagesAsRead(activeConversation, user.uid);
+      markMessagesAsRead(activeConversation, user.uid);
     });
     return () => unsub();
   }, [activeConversation, chatType, user?.uid]);
@@ -451,6 +451,13 @@ export default function ComunidadPage() {
               }
               .chat-main.visible {
                 transform: translateX(0);
+              }
+              .chat-header {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                background: var(--bg-card);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.15);
               }
               .mobile-back-btn {
                 display: block !important;
