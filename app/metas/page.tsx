@@ -92,6 +92,7 @@ export default function MetasPage() {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [showDetailModal, setShowDetailModal] = useState<Goal | null>(null);
   const [showAddFundsModal, setShowAddFundsModal] = useState<Goal | null>(null);
+  const [showShareModal, setShowShareModal] = useState<Goal | null>(null);
   const [addAmount, setAddAmount] = useState('');
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
@@ -445,6 +446,9 @@ export default function MetasPage() {
                 <button className="goal-action-btn goal-action-btn-arrow" onClick={() => setShowDetailModal(goal)} title="Detalles">
                   <IconArrowForward width={16} />
                 </button>
+                <button className="goal-action-btn" onClick={() => setShowShareModal(goal)} title="Compartir meta">
+                  <span style={{ fontSize: '0.875rem' }}>🔗</span>
+                </button>
               </div>
             </div>
           );
@@ -583,6 +587,49 @@ export default function MetasPage() {
             <div className="modal-footer">
               <button className="btn btn-outline" onClick={() => { setShowAddFundsModal(null); setAddAmount(''); }}>Cancelar</button>
               <button className="btn btn-primary" onClick={handleAddFunds}>Agregar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal (Plantilla sin funcionalidad) */}
+      {showShareModal && (
+        <div className="modal-overlay" onClick={() => setShowShareModal(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h2 className="modal-title">🔗 Compartir Meta</h2>
+              <button className="modal-close" onClick={() => setShowShareModal(null)}><IconX width={20} /></button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 16, fontSize: '0.875rem' }}>
+                Comparte tu meta "{showShareModal.title}" con otros usuarios de Prosper.
+              </p>
+              <div style={{ background: 'var(--bg-input)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <span style={{ fontSize: '1.5rem' }}>{showShareModal.icon}</span>
+                  <div>
+                    <p style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{showShareModal.title}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>${showShareModal.current.toLocaleString()} / ${showShareModal.target.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div style={{ height: 6, background: 'var(--bg-card)', borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.min(100, (showShareModal.current / showShareModal.target) * 100)}%`, background: showShareModal.color, borderRadius: 3 }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <button className="btn btn-outline" style={{ justifyContent: 'center' }} onClick={() => { /* TODO: Compartir por WhatsApp */ }}>
+                  <span>📱</span> Compartir por WhatsApp
+                </button>
+                <button className="btn btn-outline" style={{ justifyContent: 'center' }} onClick={() => { /* TODO: Compartir por Telegram */ }}>
+                  <span>✈️</span> Compartir por Telegram
+                </button>
+                <button className="btn btn-outline" style={{ justifyContent: 'center' }} onClick={() => { /* TODO: Copiar enlace */ }}>
+                  <span>🔗</span> Copiar enlace
+                </button>
+              </div>
+              <p style={{ fontSize: '0.625rem', color: 'var(--text-tertiary)', textAlign: 'center', marginTop: 12 }}>
+                Próximamente: compartir gastos y colaborar en metas grupales
+              </p>
             </div>
           </div>
         </div>

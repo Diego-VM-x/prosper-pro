@@ -51,6 +51,11 @@ export default function ComunidadPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Typing indicator & presence
+  const [isTyping, setIsTyping] = useState(false);
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   // UI
   const [loading, setLoading] = useState(true);
@@ -156,10 +161,22 @@ export default function ComunidadPage() {
     try {
       await sendPrivateMessage(activeConversation, user.uid, receiverId, privateInput.trim());
       setPrivateInput('');
+      setIsTyping(false);
     } catch (e) {
       console.error('Error sending private message:', e);
     }
   }, [user, privateInput, activeConversation, conversations]);
+
+  // Typing indicator - detectar escritura
+  useEffect(() => {
+    if (!privateInput.trim() || !activeConversation || !user?.uid) {
+      setIsTyping(false);
+      return;
+    }
+    setIsTyping(true);
+    const timer = setTimeout(() => setIsTyping(false), 2000);
+    return () => clearTimeout(timer);
+  }, [privateInput, activeConversation, user?.uid]);
 
   // Handle public like
   const handlePublicLike = useCallback(async (msgId: string) => {
@@ -375,7 +392,15 @@ export default function ComunidadPage() {
             .chat-header-status { position: absolute; bottom: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--bg-card); }
             .chat-header-status.online { background: var(--color-prosper-green); }
             .chat-header-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-            .chat-header-status-text { font-size: 0.625rem; color: var(--text-tertiary); margin: 0; }
+            .chat-header-status-text { font-size: 0.625rem; color: var(--text-tertiary); margin: 0; transition: color 0.2s; }
+            .chat-header-status-text.typing { color: var(--color-prosper-green); font-weight: 600; }
+            .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 8px 12px; }
+            .typing-indicator span { font-size: 0.625rem; color: var(--text-tertiary); font-style: italic; }
+            .typing-dots { display: flex; gap: 3px; }
+            .typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--color-prosper-green); animation: typingBounce 1.4s infinite; }
+            .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+            .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+            @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
 
             /* Messages Area */
             .messages-area {
@@ -600,7 +625,9 @@ export default function ComunidadPage() {
                     </div>
                     <div>
                       <p className="chat-header-name">{activeChatUser?.displayName || activeChatUser?.email || 'Usuario'}</p>
-                      <p className="chat-header-status-text">En línea</p>
+                      <p className={`chat-header-status-text ${otherUserTyping ? 'typing' : ''}`}>
+                        {otherUserTyping ? 'Escribiendo...' : (activeChatUser ? 'En línea' : 'Desconectado')}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -630,6 +657,14 @@ export default function ComunidadPage() {
                       </div>
                     );
                   })}
+                  {otherUserTyping && (
+                    <div className="typing-indicator">
+                      <div className="typing-dots">
+                        <span /><span /><span />
+                      </div>
+                      <span>Escribiendo...</span>
+                    </div>
+                  )}
                   <div ref={chatEndRef} />
                 </div>
 
