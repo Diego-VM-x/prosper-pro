@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (04 de Abril, 2026 - Logros Funcionales + Notificaciones + Menú Móvil Mejorado)
+## Estado Actual (05 de Abril, 2026 - Avatar Móvil en Topbar + Tareas Vinculadas a Logros)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -123,9 +123,11 @@
 - **Types**:
  - `types/index.ts`: Campo `xpReward: number` añadido a interfaz `Achievement`.
 
-### 04/04/2026 - Menú Móvil Mejorado (Notificaciones + Perfil + Ayuda)
-- **Topbar Mobile**:
- - `app/components/Topbar.tsx`: Sección Ayuda añadida al menú móvil. Sección de notificaciones con últimas 3 notificaciones, badge de contador, items clickeables. Perfil del usuario con tarjeta (avatar, nombre, email) y botón a Configuración. Icono `IconHelp` importado.
+### 05/04/2026 - Avatar Móvil en Topbar + Tareas Vinculadas a Logros
+- **Topbar Mobile Rediseñado**:
+  - `app/components/Topbar.tsx`: Avatar del usuario movido al topbar en móvil (al lado de la barra de búsqueda). Dropdown con Configuración, toggle tema claro/oscuro y Cerrar Sesión. Eliminada sección de perfil duplicada del menú móvil. Estilos CSS `.mobile-user-avatar` y `.mobile-user-dropdown` para posicionamiento correcto.
+- **Tareas Vinculadas a Logros**:
+  - `app/logros/page.tsx`: `handleClaimTask()` ahora ejecuta `checkAndUnlockAchievements()` al completar una tarea, verificando todos los logros posibles.
 
 ### 02/04/2026 - Reset Total de Firebase
 - **Reset Firebase Completo**: Eliminado todo rastro de `userId` y reemplazado por `ownerId` en todos los módulos Firestore, tipos TypeScript, reglas de seguridad y componentes de la app.

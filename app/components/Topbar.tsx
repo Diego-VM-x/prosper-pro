@@ -342,6 +342,40 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         </div>
       </div>
 
+      {/* Avatar móvil con dropdown (Configuración, Tema, Logout) */}
+      {user && (
+        <div className="mobile-user-avatar">
+          <div
+            className="topbar-avatar"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
+            {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+          </div>
+          {showUserMenu && (
+            <div className="user-dropdown mobile-user-dropdown">
+              <div className="user-dropdown-header">
+                <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
+                <p className="user-dropdown-email">{user?.email}</p>
+              </div>
+              <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                <IconSettings /> Configuración
+              </Link>
+              <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); toggleTheme(); }}>
+                {theme === 'light' ? <IconMoon /> : <IconSun />}
+                {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
+              </button>
+              <div className="user-dropdown-divider" />
+              <button
+                className="user-dropdown-item user-dropdown-logout"
+                onClick={() => { setShowUserMenu(false); logout(); }}
+              >
+                <IconLogout /> Cerrar Sesión
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Menú móvil desplegable */}
       {showMobileMenu && (
         <div className="mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
@@ -400,22 +434,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                   <p>Sin notificaciones</p>
                 </div>
               )}
-            </div>
-
-            {/* Perfil en menú móvil */}
-            <div className="mobile-menu-profile">
-              <div className="mobile-menu-profile-card">
-                <div className="mobile-profile-avatar">
-                  {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
-                </div>
-                <div className="mobile-profile-info">
-                  <p className="mobile-profile-name">{user?.displayName || 'Usuario'}</p>
-                  <p className="mobile-profile-email">{user?.email}</p>
-                </div>
-              </div>
-              <Link href="/configuracion" className="mobile-profile-btn" onClick={() => setShowMobileMenu(false)}>
-                ⚙️ Configuración
-              </Link>
             </div>
 
             <div className="mobile-menu-footer">
@@ -853,6 +871,17 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         .topbar-login-btn svg { width: 16px; height: 16px; }
 
+        /* Mobile user avatar */
+        .mobile-user-avatar {
+          display: none;
+          position: relative;
+          margin-left: auto;
+          padding-right: 8px;
+        }
+        .mobile-user-dropdown {
+          right: 0 !important;
+          left: auto !important;
+        }
         /* Responsive */
         @media (max-width: 768px) {
           .topbar-search { max-width: 180px; }
@@ -862,6 +891,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .user-dropdown { width: 220px; }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
+          .mobile-user-avatar { display: block; }
         }
 
         /* Mobile notifications */
@@ -879,58 +909,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           display: flex;
           align-items: center;
           gap: 8px;
-        }
-
-        /* Mobile profile */
-        .mobile-menu-profile {
-          padding: 12px;
-          border-top: 1px solid var(--border-default);
-        }
-        .mobile-menu-profile-card {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px;
-          background: var(--bg-input);
-          border-radius: var(--radius-md);
-          margin-bottom: 8px;
-        }
-        .mobile-profile-avatar {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, var(--color-prosper-green), var(--color-prosper-navy));
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 1rem;
-          font-weight: 700;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-        .mobile-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .mobile-profile-info { flex: 1; min-width: 0; }
-        .mobile-profile-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; }
-        .mobile-profile-email { font-size: 0.75rem; color: var(--text-secondary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .mobile-profile-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          padding: 10px;
-          border-radius: var(--radius-md);
-          background: var(--bg-accent-soft);
-          color: var(--text-primary);
-          font-size: 0.8125rem;
-          font-weight: 600;
-          text-decoration: none;
-          border: 1px solid var(--border-default);
-          transition: all var(--transition-fast);
-        }
-        .mobile-profile-btn:hover {
-          border-color: var(--color-prosper-green);
-          background: var(--bg-card-hover);
         }
         @media (max-width: 480px) {
           .topbar-search { max-width: 120px; }
