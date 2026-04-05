@@ -1,5 +1,6 @@
 import {
   collection,
+  collectionGroup,
   doc,
   addDoc,
   getDocs,
@@ -28,6 +29,44 @@ export async function getCommunities(): Promise<Community[]> {
   const q = query(collection(db, COMMUNITIES_COLLECTION), orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Community));
+}
+
+// Suscribirse a grupos donde el usuario es miembro (grupos privados)
+export function subscribeToUserCommunities(userId: string, callback: (communities: Community[]) => void) {
+  // Primero obtenemos los IDs de los grupos donde el usuario es miembro
+  const membersRef = collectionGroup(db, MEMBERS_SUBCOLLECTION);
+  const membersQ = query(membersRef, where('uid', '==', userId));
+  
+  return onSnapshot(membersQ, async (snapshot) => {
+    const communityIds: string[] = [];
+    snapshot.forEach(d => {
+      // El path es communities/{communityId}/members/{memberId}
+      const pathParts = d.ref.path.split('/');
+      if (pathParts.length >= 2) {
+        communityIds.push(pathParts[1]);
+      }
+    });
+    
+    if (communityIds.length === 0) {
+      callback([]);
+      return;
+    }
+    
+    // Ahora obtenemos los detalles de cada grupo
+    const communities: Community[] = [];
+    for (const id of communityIds) {
+      const commDoc = await getDoc(doc(db, COMMUNITIES_COLLECTION, id));
+      if (commDoc.exists()) {
+        communities.push({ id: commDoc.id, ...commDoc.data() } as Community);
+      }
+    }
+    
+    communities.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    callback(communities);
+  }, (error) => {
+    console.error('subscribeToUserCommunities error:', error);
+    callback([]);
+  });
 }
 
 export function subscribeToCommunities(callback: (communities: Community[]) => void) {
@@ -65,6 +104,34 @@ export async function joinCommunity(communityId: string, member: Omit<CommunityR
   await updateDoc(doc(db, COMMUNITIES_COLLECTION, communityId), {
     memberCount: ((await getDoc(doc(db, COMMUNITIES_COLLECTION, communityId))).data()?.memberCount || 0) + 1,
   });
+}
+
+// Presencia online/offline
+export function setUserOnline(userId: string) {
+  const presenceRef = doc(db, 'presence', userId);
+  return updateDoc(presenceRef, { online: true, lastSeen: Date.now() }).catch(() => {
+    // Si no existe, crearlo
+    return updateDoc(presenceRef, { online: true, lastSeen: Date.now() }).catch(() => {});
+  });
+}
+
+export function setUserOffline(userId: string) {
+  const presenceRef = doc(db, 'presence', userId);
+  return updateDoc(presenceRef, { online: false, lastSeen: Date.now() }).catch(() => {});
+}
+
+export function subscribeToPresence(userId: string, callback: (isOnline: boolean) => void) {
+  const presenceRef = doc(db, 'presence', userId);
+  return onSnapshot(presenceRef, (docSnap) => {
+    if (!docSnap.exists()) {
+      callback(false);
+      return;
+    }
+    const data = docSnap.data();
+    // Considerar offline si lastSeen > 5 minutos
+    const isOnline = data.online && (Date.now() - (data.lastSeen || 0)) < 5 * 60 * 1000;
+    callback(isOnline);
+  }, () => callback(false));
 }
 
 export function subscribeToMembers(communityId: string, callback: (members: CommunityRoomMember[]) => void) {

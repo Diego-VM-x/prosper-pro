@@ -5,13 +5,16 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
-  subscribeToCommunities,
+  subscribeToUserCommunities,
   subscribeToMessages,
   sendMessage,
   toggleLike,
   joinCommunity,
   createCommunity,
   inviteToGroup,
+  setUserOnline,
+  setUserOffline,
+  subscribeToPresence,
 } from '@/lib/firestore/communityMessages';
 import {
   searchUsers,
@@ -64,14 +67,27 @@ export default function ComunidadPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Subscribe to communities
+  // Subscribe to user's communities (private groups)
   useEffect(() => {
-    const unsub = subscribeToCommunities((comms) => {
-      if (comms.length > 0) setCommunities(comms);
+    if (!user?.uid) { setLoading(false); return; }
+    const unsub = subscribeToUserCommunities(user.uid, (comms) => {
+      setCommunities(comms);
       setLoading(false);
     });
     return () => unsub();
-  }, []);
+  }, [user?.uid]);
+
+  // Presence: set online when user loads, offline on unmount
+  useEffect(() => {
+    if (!user?.uid) return;
+    setUserOnline(user.uid);
+    // Heartbeat cada 30 segundos
+    const heartbeat = setInterval(() => setUserOnline(user.uid), 30000);
+    return () => {
+      clearInterval(heartbeat);
+      setUserOffline(user.uid);
+    };
+  }, [user?.uid]);
 
   // Subscribe to group messages
   useEffect(() => {
@@ -90,6 +106,28 @@ export default function ComunidadPage() {
     });
     return () => unsub();
   }, [user?.uid]);
+
+  // Subscribe to other user's presence
+  useEffect(() => {
+    if (!activeConversation || chatType !== 'private') {
+      setOtherUserTyping(false);
+      return;
+    }
+    const conv = conversations.find(c => c.id === activeConversation);
+    const otherUserId = conv?.otherUser?.uid;
+    if (!otherUserId) return;
+    
+    const unsub = subscribeToPresence(otherUserId, (isOnline) => {
+      // Actualizar el estado del otro usuario en las conversaciones
+      setConversations(prev => prev.map(c => {
+        if (c.id === activeConversation && c.otherUser) {
+          return { ...c, otherUser: { ...c.otherUser, online: isOnline } };
+        }
+        return c;
+      }));
+    });
+    return () => unsub();
+  }, [activeConversation, chatType, conversations]);
 
   // Subscribe to private messages
   useEffect(() => {
@@ -657,7 +695,7 @@ export default function ComunidadPage() {
                     <div>
                       <p className="chat-header-name">{activeChatUser?.displayName || activeChatUser?.email || 'Usuario'}</p>
                       <p className={`chat-header-status-text ${otherUserTyping ? 'typing' : ''}`}>
-                        {otherUserTyping ? 'Escribiendo...' : (activeChatUser ? 'En línea' : 'Desconectado')}
+                        {otherUserTyping ? 'Escribiendo...' : (activeChatUser?.online ? 'En línea' : 'Desconectado')}
                       </p>
                     </div>
                   </div>

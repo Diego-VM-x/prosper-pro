@@ -8,6 +8,7 @@ export interface UserProfile {
   level?: number;
   title?: string;
   currentXP?: number;
+  online?: boolean;
 }
 
 export type GoalCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Otro';
