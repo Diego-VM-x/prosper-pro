@@ -12,21 +12,66 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+// Validación de variables de entorno
+const requiredEnvVars = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID',
+];
+
+let missingVars: string[] = [];
+if (typeof window !== 'undefined') {
+  missingVars = requiredEnvVars.filter(
+    (v) => !process.env[v]
+  );
+  if (missingVars.length > 0) {
+    console.error(
+      '[Firebase] Variables de entorno faltantes:',
+      missingVars.join(', '),
+      '\nAsegúrate de configurarlas en Vercel Dashboard → Settings → Environment Variables.'
+    );
+  }
+}
+
 let app: FirebaseApp;
 let db: Firestore;
 let auth: Auth | null = null;
 
 try {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  db = getFirestore(app);
-  if (typeof window !== 'undefined') {
-    auth = getAuth(app);
+  // Verificar que al menos las variables críticas existan
+  const hasCriticalVars = firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId;
+
+  if (hasCriticalVars) {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+    if (typeof window !== 'undefined') {
+      auth = getAuth(app);
+    }
+  } else {
+    // Firebase no configurado - crear app dummy para evitar crashes
+    console.warn('[Firebase] Configuración incompleta. La app funcionará sin datos de Firebase.');
+    app = !getApps().length
+      ? initializeApp({ apiKey: 'dummy', projectId: 'dummy', appId: 'dummy' })
+      : getApp();
+    db = getFirestore(app);
   }
 } catch (e) {
-  console.error('Firebase init error:', e);
-  // Fallback: create app with empty config to prevent crashes
-  app = !getApps().length ? initializeApp({ apiKey: 'invalid', projectId: 'invalid', appId: 'invalid' }) : getApp();
-  db = getFirestore(app);
+  console.error('[Firebase] Error al inicializar:', e);
+  // Fallback: crear app con config inválida para prevenir crashes
+  try {
+    app = !getApps().length
+      ? initializeApp({ apiKey: 'invalid', projectId: 'invalid', appId: 'invalid' })
+      : getApp();
+    db = getFirestore(app);
+  } catch (fallbackErr) {
+    console.error('[Firebase] Fallback también falló:', fallbackErr);
+    // Último recurso: usar valores undefined (las páginas deben manejar auth/db null)
+    app = {} as FirebaseApp;
+    db = {} as Firestore;
+  }
 }
 
 export { app, auth, db };

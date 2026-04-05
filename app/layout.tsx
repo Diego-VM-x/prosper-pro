@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 import { SearchProvider } from '@/lib/contexts/SearchContext';
 import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -67,6 +69,34 @@ export const metadata: Metadata = {
   category: 'finance',
 };
 
+// Skeleton de carga global
+function LoadingSkeleton() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--bg-card, #ffffff)',
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{
+          width: 48,
+          height: 48,
+          border: '4px solid var(--border-default, #e5e7eb)',
+          borderTopColor: 'var(--color-prosper-green, #3DCC8E)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 16px',
+        }} />
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #666)' }}>
+          Cargando Prosper Pro...
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -91,17 +121,21 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider>
-          <AuthProvider>
-            <GoalsProvider>
-              <SearchProvider>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </SearchProvider>
-            </GoalsProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <AuthProvider>
+              <GoalsProvider>
+                <SearchProvider>
+                  <ToastProvider>
+                    <Suspense fallback={<LoadingSkeleton />}>
+                      {children}
+                    </Suspense>
+                  </ToastProvider>
+                </SearchProvider>
+              </GoalsProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
