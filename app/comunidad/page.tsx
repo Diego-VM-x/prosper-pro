@@ -217,7 +217,9 @@ export default function ComunidadPage() {
 
   const formatTime = (timestamp: number) => {
     const d = new Date(timestamp);
-    return d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    const utcHours = d.getUTCHours().toString().padStart(2, '0');
+    const utcMinutes = d.getUTCMinutes().toString().padStart(2, '0');
+    return `${utcHours}:${utcMinutes}`;
   };
 
   const filteredConversations = searchTerm
@@ -981,7 +983,6 @@ export default function ComunidadPage() {
                               </div>
                               <div className={`msg-meta ${isOwn ? 'sent' : ''}`}>
                                 <span className="msg-time">{formatTime(msg.timestamp)}</span>
-                                {isOwn && <span className="msg-check">✓✓</span>}
                               </div>
                             </div>
                           </div>
@@ -1056,7 +1057,6 @@ export default function ComunidadPage() {
                               </div>
                               <div className={`msg-meta ${isOwn ? 'sent' : ''}`}>
                                 <span className="msg-time">{formatTime(msg.timestamp)}</span>
-                                {isOwn && <span className="msg-check">✓✓</span>}
                               </div>
                             </div>
                           </div>

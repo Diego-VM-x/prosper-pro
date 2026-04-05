@@ -173,12 +173,14 @@ export async function sendPrivateMessage(
   receiverId: string,
   text: string
 ) {
+  const utcTimestamp = Date.now();
   // Guardar mensaje en Firestore
   const msgRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
     conversationId,
     senderId,
     text,
-    timestamp: serverTimestamp(),
+    timestamp: utcTimestamp,
+    utcOffset: new Date().getTimezoneOffset(),
     read: false,
   });
   

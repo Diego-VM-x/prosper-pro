@@ -125,9 +125,11 @@ export async function sendMessage(communityId: string, message: {
   senderPhoto: string;
   replyTo?: string;
 }) {
+  const utcTimestamp = Date.now();
   await addDoc(collection(db, COMMUNITIES_COLLECTION, communityId, MESSAGES_SUBCOLLECTION), {
     ...message,
-    timestamp: Date.now(),
+    timestamp: utcTimestamp,
+    utcOffset: new Date().getTimezoneOffset(),
     likes: [],
   });
 }
