@@ -26,26 +26,43 @@ export async function getAllUsers(currentUserId: string): Promise<UserProfile[]>
   const q = query(collection(db, USERS_COLLECTION));
   const snapshot = await getDocs(q);
   
-  const users: UserProfile[] = [];
+  const usersMap = new Map<string, UserProfile>();
   snapshot.forEach((d) => {
-    if (d.id !== currentUserId) {
-      users.push({ uid: d.id, ...d.data() } as UserProfile);
+    const data = d.data();
+    // Filtrar usuarios eliminados (sin displayName ni email)
+    if (d.id !== currentUserId && (data.displayName || data.email)) {
+      const uid = d.id;
+      const email = data.email || '';
+      // Evitar duplicados por email
+      if (email && !usersMap.has(email)) {
+        usersMap.set(email, { uid, ...data } as UserProfile);
+      } else if (!email) {
+        usersMap.set(uid, { uid, ...data } as UserProfile);
+      }
     }
   });
   
-  return users;
+  return Array.from(usersMap.values());
 }
 
 export function subscribeToAllUsers(currentUserId: string, callback: (users: UserProfile[]) => void) {
   const q = query(collection(db, USERS_COLLECTION));
   return onSnapshot(q, (snapshot) => {
-    const users: UserProfile[] = [];
+    const usersMap = new Map<string, UserProfile>();
     snapshot.forEach((d) => {
-      if (d.id !== currentUserId) {
-        users.push({ uid: d.id, ...d.data() } as UserProfile);
+      const data = d.data();
+      // Filtrar usuarios eliminados
+      if (d.id !== currentUserId && (data.displayName || data.email)) {
+        const uid = d.id;
+        const email = data.email || '';
+        if (email && !usersMap.has(email)) {
+          usersMap.set(email, { uid, ...data } as UserProfile);
+        } else if (!email) {
+          usersMap.set(uid, { uid, ...data } as UserProfile);
+        }
       }
     });
-    callback(users);
+    callback(Array.from(usersMap.values()));
   }, (error) => {
     console.error('subscribeToAllUsers error:', error);
     callback([]);
@@ -185,6 +202,20 @@ export async function sendPrivateMessage(
     utcOffset: new Date().getTimezoneOffset(),
     read: false,
   });
+
+  // Enviar notificacion al receptor
+  try {
+    const { addNotification } = await import('./notifications');
+    await addNotification({
+      ownerId: receiverId,
+      title: '💬 Nuevo mensaje privado',
+      message: text.substring(0, 100),
+      type: 'community',
+      read: false,
+    });
+  } catch (e) {
+    console.error('Error sending notification:', e);
+  }
   
   // Actualizar última mensaje de la conversación
   const convRef = doc(db, CONVERSATIONS_COLLECTION, conversationId);
