@@ -19,6 +19,8 @@ import type { PrivateConversation, PrivateMessage, UserProfile } from '@/types';
 const CONVERSATIONS_COLLECTION = 'private_conversations';
 const MESSAGES_COLLECTION = 'private_messages';
 const USERS_COLLECTION = 'users';
+const FRIENDS_COLLECTION = 'friendships';
+const REQUESTS_COLLECTION = 'friend_requests';
 
 // ==================== USER SEARCH ====================
 
@@ -312,4 +314,168 @@ export function subscribeToTotalUnreadCount(
     console.error('subscribeToTotalUnreadCount error:', error);
     callback(0);
   });
+}
+
+// ==================== FRIEND REQUESTS ====================
+
+// Enviar solicitud de amistad
+export async function sendFriendRequest(senderId: string, senderName: string, receiverId: string, receiverName: string) {
+  // Verificar si ya existe una solicitud
+  const q = query(
+    collection(db, REQUESTS_COLLECTION),
+    where('senderId', '==', senderId),
+    where('receiverId', '==', receiverId)
+  );
+  const existing = await getDocs(q);
+  if (!existing.empty) return;
+
+  // Verificar si ya son amigos
+  const friendsQ = query(
+    collection(db, FRIENDS_COLLECTION),
+    where('users', 'array-contains', senderId)
+  );
+  const friendsSnap = await getDocs(friendsQ);
+  for (const d of friendsSnap.docs) {
+    const data = d.data();
+    if (data.users.includes(receiverId)) return;
+  }
+
+  await addDoc(collection(db, REQUESTS_COLLECTION), {
+    senderId,
+    senderName,
+    receiverId,
+    receiverName,
+    status: 'pending',
+    createdAt: Date.now(),
+  });
+
+  // Notificación
+  const { addNotification } = await import('./notifications');
+  await addNotification({
+    ownerId: receiverId,
+    title: '👋 Solicitud de amistad',
+    message: `${senderName} quiere ser tu amigo`,
+    type: 'community',
+    read: false,
+  });
+}
+
+// Aceptar solicitud de amistad
+export async function acceptFriendRequest(requestId: string, senderId: string, receiverId: string) {
+  // Actualizar solicitud
+  await updateDoc(doc(db, REQUESTS_COLLECTION, requestId), { status: 'accepted' });
+
+  // Crear amistad
+  await addDoc(collection(db, FRIENDS_COLLECTION), {
+    users: [senderId, receiverId].sort(),
+    createdAt: Date.now(),
+  });
+}
+
+// Rechazar solicitud de amistad
+export async function rejectFriendRequest(requestId: string) {
+  await updateDoc(doc(db, REQUESTS_COLLECTION, requestId), { status: 'rejected' });
+}
+
+// Eliminar amistad
+export async function removeFriendship(userId1: string, userId2: string) {
+  const q = query(
+    collection(db, FRIENDS_COLLECTION),
+    where('users', 'array-contains', userId1)
+  );
+  const snap = await getDocs(q);
+  for (const d of snap.docs) {
+    const data = d.data();
+    if (data.users.includes(userId2)) {
+      await updateDoc(d.ref, { deleted: true });
+      break;
+    }
+  }
+}
+
+// Suscribirse a solicitudes recibidas
+export function subscribeToFriendRequests(userId: string, callback: (requests: any[]) => void) {
+  const q = query(
+    collection(db, REQUESTS_COLLECTION),
+    where('receiverId', '==', userId),
+    where('status', '==', 'pending')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const requests: any[] = [];
+    snapshot.forEach(d => requests.push({ id: d.id, ...d.data() }));
+    callback(requests);
+  }, () => callback([]));
+}
+
+// Suscribirse a solicitudes enviadas
+export function subscribeToSentRequests(userId: string, callback: (requests: any[]) => void) {
+  const q = query(
+    collection(db, REQUESTS_COLLECTION),
+    where('senderId', '==', userId),
+    where('status', '==', 'pending')
+  );
+  return onSnapshot(q, (snapshot) => {
+    const requests: any[] = [];
+    snapshot.forEach(d => requests.push({ id: d.id, ...d.data() }));
+    callback(requests);
+  }, () => callback([]));
+}
+
+// Suscribirse a amigos
+export function subscribeToFriends(userId: string, callback: (friends: UserProfile[]) => void) {
+  const q = query(
+    collection(db, FRIENDS_COLLECTION),
+    where('users', 'array-contains', userId)
+  );
+  return onSnapshot(q, async (snapshot) => {
+    const friends: UserProfile[] = [];
+    for (const d of snapshot.docs) {
+      const data = d.data();
+      if (data.deleted) continue;
+      const friendId = data.users.find((u: string) => u !== userId);
+      if (friendId) {
+        const userDoc = await getDoc(doc(db, USERS_COLLECTION, friendId));
+        if (userDoc.exists()) {
+          friends.push({ uid: userDoc.id, ...userDoc.data() } as UserProfile);
+        }
+      }
+    }
+    callback(friends);
+  }, () => callback([]));
+}
+
+// ==================== PRESENCE ====================
+
+export function setUserOnline(userId: string) {
+  const presenceRef = doc(db, 'presence', userId);
+  return updateDoc(presenceRef, { online: true, lastSeen: Date.now() }).catch(() => {});
+}
+
+export function setUserOffline(userId: string) {
+  const presenceRef = doc(db, 'presence', userId);
+  return updateDoc(presenceRef, { online: false, lastSeen: Date.now() }).catch(() => {});
+}
+
+export function subscribeToPresence(userId: string, callback: (isOnline: boolean) => void) {
+  const presenceRef = doc(db, 'presence', userId);
+  return onSnapshot(presenceRef, (docSnap) => {
+    if (!docSnap.exists()) { callback(false); return; }
+    const data = docSnap.data();
+    const isOnline = data.online && (Date.now() - (data.lastSeen || 0)) < 5 * 60 * 1000;
+    callback(isOnline);
+  }, () => callback(false));
+}
+
+// Verificar si dos usuarios son amigos
+export async function areFriends(userId1: string, userId2: string): Promise<boolean> {
+  const q = query(
+    collection(db, FRIENDS_COLLECTION),
+    where('users', 'array-contains', userId1)
+  );
+  const snap = await getDocs(q);
+  for (const d of snap.docs) {
+    const data = d.data();
+    if (!data.deleted && data.users.includes(userId2)) return true;
+  }
+  return false;
 }
