@@ -57,6 +57,13 @@ export async function deleteNotification(notificationId: string) {
   await deleteDoc(doc(db, COLLECTION, notificationId));
 }
 
+export async function deleteAllNotifications(ownerId: string) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  const snapshot = await getDocs(q);
+  const promises = snapshot.docs.map(docSnap => deleteDoc(docSnap.ref));
+  await Promise.all(promises);
+}
+
 export async function markAllNotificationsRead(ownerId: string) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('read', '==', false));
   const snapshot = await getDocs(q);

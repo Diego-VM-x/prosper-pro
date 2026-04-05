@@ -11,7 +11,7 @@ import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
-import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification } from '@/lib/firestore/notifications';
+import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
 import {
   IconSearch,
   IconMail,
@@ -276,18 +276,26 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
             <div className="notifications-dropdown">
               <div className="notifications-dropdown-header">
                 <span>Notificaciones</span>
-                {unreadCount > 0 && (
-                  <span className="notifications-badge">{unreadCount} nueva{unreadCount > 1 ? 's' : ''}</span>
-                )}
+                <div className="notif-actions">
+                  {notifications.length > 0 && (
+                    <button className="notif-clear-btn" onClick={() => deleteAllNotifications(user?.uid || '')}>
+                      Limpiar todo
+                    </button>
+                  )}
+                </div>
               </div>
               {notifications.length > 0 ? notifications.slice(0, 5).map((notif) => (
                 <div
                   key={notif.id}
                   className={`notif-item ${notif.read ? 'read' : 'unread'}`}
-                  onClick={() => handleMarkRead(notif.id)}
                 >
-                  <p className="notif-title">{notif.title}</p>
-                  <p className="notif-message">{notif.message}</p>
+                  <div className="notif-content" onClick={() => handleMarkRead(notif.id)}>
+                    <p className="notif-title">{notif.title}</p>
+                    <p className="notif-message">{notif.message}</p>
+                  </div>
+                  <button className="notif-delete-btn" onClick={() => deleteNotification(notif.id)} title="Eliminar">
+                    ✕
+                  </button>
                 </div>
               )) : (
                 <div className="notif-empty">
@@ -779,6 +787,25 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           font-weight: 700;
           color: var(--text-primary);
         }
+        .notif-actions {
+          display: flex;
+          gap: 8px;
+        }
+        .notif-clear-btn {
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          font-size: 0.6875rem;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 2px 8px;
+          border-radius: var(--radius-md);
+          transition: all var(--transition-fast);
+        }
+        .notif-clear-btn:hover {
+          color: var(--color-error);
+          background: rgba(239,68,68,0.08);
+        }
         .notifications-badge {
           background: var(--color-prosper-green);
           color: white;
@@ -790,14 +817,36 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .notif-item {
           padding: 10px 16px;
           border-bottom: 1px solid var(--border-default);
-          cursor: pointer;
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
           transition: background var(--transition-fast);
         }
         .notif-item.unread { background: var(--bg-input); }
         .notif-item:hover { background: var(--bg-card-hover); }
         .notif-item:last-child { border-bottom: none; }
+        .notif-content {
+          flex: 1;
+          min-width: 0;
+          cursor: pointer;
+        }
         .notif-title { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
         .notif-message { font-size: 0.75rem; color: var(--text-secondary); }
+        .notif-delete-btn {
+          background: none;
+          border: none;
+          color: var(--text-tertiary);
+          font-size: 0.875rem;
+          cursor: pointer;
+          padding: 2px 6px;
+          border-radius: var(--radius-md);
+          flex-shrink: 0;
+          transition: all var(--transition-fast);
+        }
+        .notif-delete-btn:hover {
+          color: var(--color-error);
+          background: rgba(239,68,68,0.08);
+        }
         .notif-empty { padding: 24px 16px; text-align: center; font-size: 0.8125rem; color: var(--text-secondary); }
 
         /* User dropdown */
