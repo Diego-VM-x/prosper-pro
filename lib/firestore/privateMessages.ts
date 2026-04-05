@@ -30,13 +30,17 @@ export async function getAllUsers(currentUserId: string): Promise<UserProfile[]>
   snapshot.forEach((d) => {
     const data = d.data();
     // Filtrar usuarios eliminados (sin displayName ni email)
+    // También filtrar documentos huérfanos de cuentas eliminadas
     if (d.id !== currentUserId && (data.displayName || data.email)) {
       const uid = d.id;
       const email = data.email || '';
-      // Evitar duplicados por email
-      if (email && !usersMap.has(email)) {
-        usersMap.set(email, { uid, ...data } as UserProfile);
-      } else if (!email) {
+      // Si ya existe un usuario con este email, mantener el más reciente
+      if (email) {
+        const existing = usersMap.get(email);
+        if (!existing || (data.createdAt || 0) > (existing.createdAt || 0)) {
+          usersMap.set(email, { uid, ...data } as UserProfile);
+        }
+      } else {
         usersMap.set(uid, { uid, ...data } as UserProfile);
       }
     }
@@ -55,9 +59,13 @@ export function subscribeToAllUsers(currentUserId: string, callback: (users: Use
       if (d.id !== currentUserId && (data.displayName || data.email)) {
         const uid = d.id;
         const email = data.email || '';
-        if (email && !usersMap.has(email)) {
-          usersMap.set(email, { uid, ...data } as UserProfile);
-        } else if (!email) {
+        // Si ya existe un usuario con este email, mantener el más reciente
+        if (email) {
+          const existing = usersMap.get(email);
+          if (!existing || (data.createdAt || 0) > (existing.createdAt || 0)) {
+            usersMap.set(email, { uid, ...data } as UserProfile);
+          }
+        } else {
           usersMap.set(uid, { uid, ...data } as UserProfile);
         }
       }
@@ -168,16 +176,25 @@ export function subscribeToPrivateMessages(
     const messages: PrivateMessage[] = [];
     snapshot.forEach((d) => {
       const data = d.data();
+      // Soportar tanto Timestamp de Firestore como número milisegundos
+      let ts: number;
+      if (data.timestamp?.toDate) {
+        ts = data.timestamp.toDate().getTime();
+      } else if (data.createdAt?.toDate) {
+        ts = data.createdAt.toDate().getTime();
+      } else {
+        ts = data.timestamp || data.createdAt || Date.now();
+      }
       messages.push({
         id: d.id,
         conversationId: data.conversationId,
         senderId: data.senderId,
         text: data.text,
-        timestamp: data.timestamp || Date.now(),
+        timestamp: ts,
         read: data.read || false,
       });
     });
-    // Ordenar en el cliente por timestamp
+    // Ordenar por timestamp ascendente (más antiguo primero)
     messages.sort((a, b) => a.timestamp - b.timestamp);
     callback(messages);
   }, (error) => {
@@ -201,18 +218,21 @@ export async function sendPrivateMessage(
     timestamp: utcTimestamp,
     utcOffset: new Date().getTimezoneOffset(),
     read: false,
+    createdAt: serverTimestamp(),
   });
 
-  // Enviar notificacion al receptor
+  // Enviar notificacion al receptor (Firestore + Browser)
   try {
-    const { addNotification } = await import('./notifications');
+    const { addNotification, sendBrowserNotification } = await import('./notifications');
     await addNotification({
       ownerId: receiverId,
       title: '💬 Nuevo mensaje privado',
       message: text.substring(0, 100),
-      type: 'community',
+      type: 'private_message',
       read: false,
     });
+    // Notificación del navegador
+    sendBrowserNotification('💬 Nuevo mensaje privado', text.substring(0, 80));
   } catch (e) {
     console.error('Error sending notification:', e);
   }

@@ -98,7 +98,7 @@ export interface Notification {
   ownerId: string;
   title: string;
   message: string;
-  type: 'goal' | 'achievement' | 'community' | 'system';
+  type: 'goal' | 'achievement' | 'community' | 'system' | 'private_message' | 'channel_message';
   read: boolean;
   createdAt: number;
 }

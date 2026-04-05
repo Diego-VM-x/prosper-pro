@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (05 de Abril, 2026 - Chats Privados + Busqueda de Usuarios)
+## Estado Actual (05 de Abril, 2026 - Bug Fixes Chats + Notificaciones Push Completas)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -147,6 +147,24 @@
   - `lib/firestore/privateMessages.ts`: Nuevo modulo con `searchUsers`, `getOrCreateConversation`, `subscribeToConversations`, `subscribeToPrivateMessages`, `sendPrivateMessage`, `markMessagesAsRead`, `subscribeToTotalUnreadCount`.
 - **Types**:
   - `types/index.ts`: Nuevos tipos `PrivateConversation`, `PrivateMessage`. `UserProfile` extendido con `level`, `title`, `currentXP`.
+
+### 05/04/2026 - Bug Fixes Chats + Notificaciones Push Completas
+- **Bug Fix - Orden de mensajes**:
+  - `lib/firestore/privateMessages.ts`: `subscribeToPrivateMessages` ahora parsea correctamente timestamps de Firestore (Timestamp.toDate().getTime()) y fallbacks numericos. Ordenamiento ascendente garantizado.
+- **Bug Fix - Usuarios duplicados**:
+  - `lib/firestore/privateMessages.ts`: `getAllUsers` y `subscribeToAllUsers` ahora comparan por `createdAt` cuando hay emails duplicados, manteniendo el usuario mas reciente.
+- **Bug Fix - Cuentas huerfanas**:
+  - `lib/contexts/AuthContext.tsx`: `deleteAccount` ahora elimina conversaciones privadas, mensajes privados y documento `users/{uid}` al borrar cuenta.
+- **Notificaciones Push - Mensajes privados**:
+  - `lib/firestore/privateMessages.ts`: Al enviar mensaje privado se crea notificacion Firestore (tipo `private_message`) + `sendBrowserNotification()` para alerta en navegador del receptor.
+- **Notificaciones Push - Canales**:
+  - `lib/firestore/communityMessages.ts`: Al enviar mensaje en canal se notifica a todos los miembros (tipo `channel_message`) + `sendBrowserNotification()`.
+- **Notificaciones Push - Tipos nuevos**:
+  - `types/index.ts`: Agregados `private_message` y `channel_message` al union type de `Notification.type`.
+- **Notificaciones Push - Permiso automatico**:
+  - `lib/contexts/AuthContext.tsx`: Al autenticarse se solicita permiso para notificaciones push del navegador automaticamente.
+- **Notificaciones Push - Toggle en Configuracion**:
+  - `app/configuracion/page.tsx`: Nuevo toggle "Notificaciones Push" en seccion de notificaciones. Detecta estado actual del permiso al cargar pagina. Nuevo metodo `enableNotifications()` en AuthContext.
 
 ### 05/04/2026 - Error Boundaries + Firebase Validation + Suspense
 - **ErrorBoundary**:

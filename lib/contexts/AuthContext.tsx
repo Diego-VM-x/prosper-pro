@@ -25,6 +25,7 @@ interface AuthContextType {
   registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
+  enableNotifications: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   registerWithEmail: async () => {},
   logout: async () => {},
   deleteAccount: async () => ({ success: false, error: 'No disponible' }),
+  enableNotifications: async () => false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -69,6 +71,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               } catch (seedErr) {
                 console.error('Seed error:', seedErr);
               }
+            }
+            // Solicitar permiso para notificaciones push
+            try {
+              const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
+              await requestNotificationPermission();
+            } catch (notifErr) {
+              console.error('Notification permission error:', notifErr);
             }
           } catch (profileErr) {
             console.error('Profile error:', profileErr);
@@ -117,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { deleteGoal } = await import('@/lib/firestore/goals');
       const { deleteTransaction } = await import('@/lib/firestore/transactions');
       const { deleteReminder } = await import('@/lib/firestore/reminders');
-      const { deleteDoc: fsDeleteDoc, collection, query, where, getDocs } = await import('firebase/firestore');
+      const { deleteDoc: fsDeleteDoc, doc, collection, query, where, getDocs } = await import('firebase/firestore');
       const { db } = await import('@/lib/firebase');
 
       // Eliminar metas
@@ -162,6 +171,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
+      // Eliminar conversaciones privadas
+      try {
+        console.log('[deleteAccount] Eliminando conversaciones privadas...');
+        const convQ = query(collection(db, 'private_conversations'), where('participants', 'array-contains', uid));
+        const convSnap = await getDocs(convQ);
+        if (convSnap.size > 0) {
+          await Promise.all(convSnap.docs.map((d) => fsDeleteDoc(d.ref)));
+        }
+      } catch (err) {
+        console.log('[deleteAccount] Error eliminando conversaciones:', err);
+      }
+
+      // Eliminar mensajes privados
+      try {
+        console.log('[deleteAccount] Eliminando mensajes privados...');
+        const msgQ = query(collection(db, 'private_messages'), where('senderId', '==', uid));
+        const msgSnap = await getDocs(msgQ);
+        if (msgSnap.size > 0) {
+          await Promise.all(msgSnap.docs.map((d) => fsDeleteDoc(d.ref)));
+        }
+      } catch (err) {
+        console.log('[deleteAccount] Error eliminando mensajes:', err);
+      }
+
+      // Eliminar documento de usuario (evitar duplicados huérfanos)
+      try {
+        console.log('[deleteAccount] Eliminando documento de usuario...');
+        await fsDeleteDoc(doc(db, 'users', uid));
+      } catch (err) {
+        console.log('[deleteAccount] Error eliminando doc de usuario:', err);
+      }
+
       // 2. Eliminar usuario de Firebase Auth (Storage se omite por problemas de CORS)
       console.log('[deleteAccount] Eliminando usuario de Auth...');
       await deleteUser(user);
@@ -182,8 +223,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const enableNotifications = async (): Promise<boolean> => {
+    const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
+    return requestNotificationPermission();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout, deleteAccount }}>
+    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout, deleteAccount, enableNotifications }}>
       {children}
     </AuthContext.Provider>
   );

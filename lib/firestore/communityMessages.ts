@@ -132,6 +132,35 @@ export async function sendMessage(communityId: string, message: {
     utcOffset: new Date().getTimezoneOffset(),
     likes: [],
   });
+
+  // Enviar notificación a todos los miembros del canal (excepto el remitente)
+  try {
+    const { addNotification, sendBrowserNotification } = await import('./notifications');
+    const { getDocs, query, where, collection } = await import('firebase/firestore');
+    const { db } = await import('../firebase');
+
+    const membersRef = collection(db, COMMUNITIES_COLLECTION, communityId, MEMBERS_SUBCOLLECTION);
+    const membersQ = query(membersRef, where('uid', '!=', message.senderId));
+    const membersSnap = await getDocs(membersQ);
+
+    for (const memberDoc of membersSnap.docs) {
+      const member = memberDoc.data();
+      if (member.uid) {
+        await addNotification({
+          ownerId: member.uid,
+          title: `📢 Nuevo mensaje en ${communityId}`,
+          message: `${message.senderName}: ${message.text.substring(0, 80)}`,
+          type: 'channel_message',
+          read: false,
+        });
+      }
+    }
+
+    // Notificación del navegador
+    sendBrowserNotification(`📢 ${message.senderName}`, message.text.substring(0, 80));
+  } catch (e) {
+    console.error('Error sending channel notification:', e);
+  }
 }
 
 export async function toggleLike(communityId: string, messageId: string, userId: string) {

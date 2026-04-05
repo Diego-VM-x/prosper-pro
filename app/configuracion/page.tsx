@@ -9,7 +9,9 @@ import { useTheme } from '@/app/components/ThemeProvider';
 import type { UserProfile } from '@/types';
 
 export default function ConfiguracionPage() {
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, enableNotifications } = useAuth();
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifSaving, setNotifSaving] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -27,6 +29,10 @@ export default function ConfiguracionPage() {
 
   // Cargar perfil
   useEffect(() => {
+    // Detectar estado de notificaciones push
+    if ('Notification' in window) {
+      setNotifEnabled(Notification.permission === 'granted');
+    }
     const uid = user?.uid as string;
     if (!uid) return;
 
@@ -1010,6 +1016,26 @@ export default function ConfiguracionPage() {
               <div className="card prefs-section" style={{ marginTop: 24 }}>
                 <h3 className="prefs-title">🔔 Notificaciones</h3>
                 <div className="prefs-list">
+                  <div className="toggle-row">
+                    <div className="toggle-info">
+                      <div className="toggle-icon">🌐</div>
+                      <div className="toggle-text">
+                        <span className="toggle-label">Notificaciones Push</span>
+                        <span className="toggle-desc">Recibe alertas en el navegador</span>
+                      </div>
+                    </div>
+                    <button
+                      className={`toggle-switch ${notifEnabled ? 'active' : ''}`}
+                      onClick={async () => {
+                        if (notifSaving) return;
+                        setNotifSaving(true);
+                        const result = await enableNotifications();
+                        setNotifEnabled(result);
+                        setNotifSaving(false);
+                      }}
+                      disabled={notifSaving}
+                    />
+                  </div>
                   <div className="toggle-row">
                     <div className="toggle-info">
                       <div className="toggle-icon">📈</div>
