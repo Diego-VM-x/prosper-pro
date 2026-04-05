@@ -84,6 +84,7 @@ export default function ComunidadPage() {
   useEffect(() => {
     if (!user?.uid) return;
     const unsub = subscribeToConversations(user.uid, (convs) => {
+      console.log('subscribeToConversations callback:', convs);
       setConversations(convs);
     });
     return () => unsub();
@@ -158,9 +159,11 @@ export default function ComunidadPage() {
       console.log('handlePrivateSend: missing data', { hasUser: !!user, hasInput: !!privateInput.trim(), hasConv: !!activeConversation });
       return;
     }
+    console.log('handlePrivateSend: conversations state', conversations);
+    console.log('handlePrivateSend: activeConversation', activeConversation);
     const conv = conversations.find(c => c.id === activeConversation);
     if (!conv) {
-      console.log('handlePrivateSend: conversation not found');
+      console.log('handlePrivateSend: conversation not found, available IDs:', conversations.map(c => c.id));
       return;
     }
     const receiverId = conv.participants.find(p => p !== user.uid);
