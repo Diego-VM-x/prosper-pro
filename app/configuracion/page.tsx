@@ -691,6 +691,11 @@ export default function ConfiguracionPage() {
             }
 
             /* Responsive */
+            @media (max-width: 1024px) {
+              .grid-layout {
+                grid-template-columns: 1fr;
+              }
+            }
             @media (max-width: 768px) {
               .configuracion-page {
                 padding: 16px;
@@ -698,16 +703,92 @@ export default function ConfiguracionPage() {
               .hero-title {
                 font-size: 1.5rem;
               }
+              .hero-desc {
+                font-size: 0.8125rem;
+              }
               .profile-section {
                 padding: 20px;
               }
+              .profile-layout {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+              }
+              .profile-avatar-wrap {
+                width: 96px;
+                height: 96px;
+              }
+              .profile-avatar {
+                font-size: 2rem;
+              }
+              .profile-form {
+                width: 100%;
+              }
+              .form-row {
+                grid-template-columns: 1fr;
+              }
+              .save-btn {
+                width: 100%;
+              }
+              .security-header {
+                flex-direction: column;
+                gap: 12px;
+              }
+              .security-actions {
+                width: 100%;
+                flex-direction: column;
+              }
+              .change-pass-btn, .tfa-badge {
+                width: 100%;
+                justify-content: center;
+              }
               .sessions-table {
                 font-size: 0.6875rem;
+                overflow-x: auto;
+              }
+              .sessions-table table {
+                min-width: 500px;
               }
               .danger-zone {
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
+              }
+              .prefs-section {
+                padding: 16px;
+              }
+              .sub-card {
+                padding: 16px;
+              }
+            }
+            @media (max-width: 480px) {
+              .hero-title {
+                font-size: 1.25rem;
+              }
+              .profile-avatar-wrap {
+                width: 80px;
+                height: 80px;
+              }
+              .profile-avatar {
+                font-size: 1.75rem;
+              }
+              .form-input, .form-textarea, .form-select {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+              }
+              .toggle-row {
+                padding: 10px;
+              }
+              .toggle-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
+              }
+              .toggle-label {
+                font-size: 0.6875rem;
+              }
+              .toggle-desc {
+                font-size: 0.5625rem;
               }
             }
           `}</style>

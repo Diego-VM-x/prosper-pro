@@ -349,6 +349,29 @@ export default function LogrosPage() {
     return () => unsub();
   }, [user]);
 
+  // Verificar y desbloquear logros que cumplan condiciones al cargar
+  useEffect(() => {
+    if (!user) return;
+    const uid = user.uid;
+    const hasData = transactions.length > 0 || accounts.length > 0 || goals.length > 0;
+    if (!hasData) return;
+    let cancelled = false;
+    async function checkAchievements() {
+      try {
+        const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
+        await checkAndUnlockAchievements(uid, {
+          transactions,
+          accounts,
+          goals,
+        });
+      } catch (e) {
+        if (!cancelled) console.error('Error checking achievements:', e);
+      }
+    }
+    checkAchievements();
+    return () => { cancelled = true; };
+  }, [user?.uid, transactions, accounts, goals]);
+
   const userData: UserData = useMemo(() => ({
     transactions,
     accounts,

@@ -603,7 +603,12 @@ export default function ComunidadPage() {
               opacity: 0.8;
             }
 
-            /* Mobile */
+            /* Responsive */
+            @media (max-width: 1024px) {
+              .grid-layout {
+                grid-template-columns: 1fr;
+              }
+            }
             @media (max-width: 768px) {
               .comunidad-page {
                 padding: 16px;
@@ -615,11 +620,65 @@ export default function ComunidadPage() {
               .hero-title {
                 font-size: 1.5rem;
               }
+              .hero-desc {
+                font-size: 0.8125rem;
+              }
               .foros-grid {
                 grid-template-columns: 1fr;
               }
               .recursos-grid {
                 grid-template-columns: 1fr;
+              }
+              .leaderboard-card {
+                padding: 16px;
+              }
+              .events-card {
+                padding: 16px;
+              }
+            }
+            @media (max-width: 480px) {
+              .comunidad-page {
+                padding: 12px;
+              }
+              .hero {
+                padding: 16px;
+                border-radius: 12px;
+              }
+              .hero-title {
+                font-size: 1.25rem;
+              }
+              .hero-welcome {
+                font-size: 0.5625rem;
+              }
+              .foros-card, .recursos-card {
+                padding: 16px;
+              }
+              .foro-card {
+                padding: 12px;
+              }
+              .foro-name {
+                font-size: 0.8125rem;
+              }
+              .foro-desc {
+                font-size: 0.6875rem;
+              }
+              .leader-item {
+                padding: 8px;
+                gap: 8px;
+              }
+              .leader-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 0.6875rem;
+              }
+              .leader-name {
+                font-size: 0.6875rem;
+              }
+              .leader-goals {
+                font-size: 0.5rem;
+              }
+              .leader-points-value {
+                font-size: 0.625rem;
               }
             }
           `}</style>
