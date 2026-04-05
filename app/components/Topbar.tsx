@@ -342,9 +342,46 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         </div>
       </div>
 
-      {/* Avatar móvil con dropdown (Configuración, Tema, Logout) */}
+      {/* Acciones móviles: Notificaciones + Avatar */}
       {user && (
-        <div className="mobile-user-avatar">
+        <div className="mobile-user-actions">
+          {/* Notificaciones móvil */}
+          <div className="mobile-notif-wrapper">
+            <button
+              className="topbar-icon-btn mobile-notif-btn"
+              aria-label="Notificaciones"
+              onClick={() => setShowNotifications(!showNotifications)}
+            >
+              <IconBell />
+              {unreadCount > 0 && <span className="topbar-notif-dot" />}
+            </button>
+            {showNotifications && (
+              <div className="notifications-dropdown mobile-notif-dropdown">
+                <div className="notifications-dropdown-header">
+                  <span>Notificaciones</span>
+                  {unreadCount > 0 && (
+                    <span className="notifications-badge">{unreadCount} nueva{unreadCount > 1 ? 's' : ''}</span>
+                  )}
+                </div>
+                {notifications.length > 0 ? notifications.slice(0, 5).map((notif) => (
+                  <div
+                    key={notif.id}
+                    className={`notif-item ${notif.read ? 'read' : 'unread'}`}
+                    onClick={() => { handleMarkRead(notif.id); }}
+                  >
+                    <p className="notif-title">{notif.title}</p>
+                    <p className="notif-message">{notif.message}</p>
+                  </div>
+                )) : (
+                  <div className="notif-empty">
+                    <p>Sin notificaciones</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Avatar con dropdown */}
           <div
             className="topbar-avatar"
             onClick={() => setShowUserMenu(!showUserMenu)}
@@ -871,16 +908,25 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         .topbar-login-btn svg { width: 16px; height: 16px; }
 
-        /* Mobile user avatar */
-        .mobile-user-avatar {
+        /* Mobile user actions (notif + avatar) */
+        .mobile-user-actions {
           display: none;
-          position: relative;
+          align-items: center;
+          gap: 4px;
           margin-left: auto;
           padding-right: 8px;
         }
         .mobile-user-dropdown {
           right: 0 !important;
           left: auto !important;
+        }
+        .mobile-notif-wrapper {
+          position: relative;
+        }
+        .mobile-notif-dropdown {
+          right: 0 !important;
+          left: auto !important;
+          width: 280px;
         }
         /* Responsive */
         @media (max-width: 768px) {
@@ -891,7 +937,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .user-dropdown { width: 220px; }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
-          .mobile-user-avatar { display: block; }
+          .mobile-user-actions { display: flex; }
         }
 
         /* Mobile notifications */
