@@ -87,5 +87,36 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
+
+    // Communities: lectura publica, escritura para autenticados
+    match /communities/{communityId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if request.auth != null;
+      }
+
+      // Members subcollection
+      match /members/{memberId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update, delete: if request.auth != null;
+      }
+    }
+
+    // Private conversations: solo participantes
+    match /private_conversations/{conversationId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Private messages: solo autenticados
+    match /private_messages/{messageId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }
