@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (05 de Abril, 2026 - Error Boundaries + Responsive Completo + Logros XP Auto)
+## Estado Actual (05 de Abril, 2026 - Chats Privados + Busqueda de Usuarios)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -139,6 +139,14 @@
   - `app/comunidad/page.tsx`: Rediseñada según `design/comunidad/code.html`. Hero con gradiente, foros de discusión en grid, recursos descargables, leaderboard top 3 a la derecha, próximos eventos. Sidebar derecha con ranking y eventos. Responsive completo 3 breakpoints.
 - **Configuración Page - Rediseño Completo**:
   - `app/configuracion/page.tsx`: Rediseñada según `design/configuracion/code.html`. Perfil editable (nombre, bio) con guardado en Firestore. Preferencias de idioma/moneda. Toggles de notificaciones funcionales. Tabla de sesiones activas. Zona de peligro con eliminación de cuenta. Suscripción `subscribeToUserProfile` para cambios en tiempo real. Toast de éxito/error. Responsive completo 3 breakpoints (1024px, 768px, 480px).
+
+### 05/04/2026 - Chats Privados + Busqueda de Usuarios en Comunidad
+- **Comunidad Page - Chats Privados**:
+  - `app/comunidad/page.tsx`: Tabs para Canales Publicos y Chats Privados. Busqueda de usuarios por nombre/email. Conversaciones 1:1 con mensajes en tiempo real via Firestore. Contador de mensajes no leidos. Creacion de nuevos canales.
+- **Private Messages Module**:
+  - `lib/firestore/privateMessages.ts`: Nuevo modulo con `searchUsers`, `getOrCreateConversation`, `subscribeToConversations`, `subscribeToPrivateMessages`, `sendPrivateMessage`, `markMessagesAsRead`, `subscribeToTotalUnreadCount`.
+- **Types**:
+  - `types/index.ts`: Nuevos tipos `PrivateConversation`, `PrivateMessage`. `UserProfile` extendido con `level`, `title`, `currentXP`.
 
 ### 05/04/2026 - Error Boundaries + Firebase Validation + Suspense
 - **ErrorBoundary**:
