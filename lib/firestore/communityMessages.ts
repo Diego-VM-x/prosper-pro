@@ -52,17 +52,24 @@ export function subscribeToUserCommunities(userId: string, callback: (communitie
       return;
     }
     
-    // Ahora obtenemos los detalles de cada grupo
-    const communities: Community[] = [];
-    for (const id of communityIds) {
-      const commDoc = await getDoc(doc(db, COMMUNITIES_COLLECTION, id));
-      if (commDoc.exists()) {
-        communities.push({ id: commDoc.id, ...commDoc.data() } as Community);
-      }
+    // Ahora obtenemos los detalles de cada grupo en paralelo
+    try {
+      const communityPromises = communityIds.map(async (id) => {
+        const commDoc = await getDoc(doc(db, COMMUNITIES_COLLECTION, id));
+        if (commDoc.exists()) {
+          return { id: commDoc.id, ...commDoc.data() } as Community;
+        }
+        return null;
+      });
+      
+      const results = await Promise.all(communityPromises);
+      const communities = results.filter((c): c is Community => c !== null);
+      communities.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      callback(communities);
+    } catch (err) {
+      console.error('subscribeToUserCommunities: error fetching communities:', err);
+      callback([]);
     }
-    
-    communities.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-    callback(communities);
   }, (error) => {
     console.error('subscribeToUserCommunities error:', error);
     callback([]);
