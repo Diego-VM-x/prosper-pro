@@ -22,26 +22,46 @@ const USERS_COLLECTION = 'users';
 
 // ==================== USER SEARCH ====================
 
-export async function searchUsers(searchTerm: string, currentUserId: string): Promise<UserProfile[]> {
-  if (!searchTerm.trim()) return [];
-  
+export async function getAllUsers(currentUserId: string): Promise<UserProfile[]> {
   const q = query(collection(db, USERS_COLLECTION));
   const snapshot = await getDocs(q);
   
   const users: UserProfile[] = [];
-  const term = searchTerm.toLowerCase();
-  
   snapshot.forEach((d) => {
-    const data = d.data() as UserProfile;
-    if (d.id !== currentUserId && (
-      (data.displayName && data.displayName.toLowerCase().includes(term)) ||
-      (data.email && data.email.toLowerCase().includes(term))
-    )) {
-      users.push({ id: d.id, ...data } as UserProfile);
+    if (d.id !== currentUserId) {
+      users.push({ uid: d.id, ...d.data() } as UserProfile);
     }
   });
   
-  return users.slice(0, 20);
+  return users;
+}
+
+export function subscribeToAllUsers(currentUserId: string, callback: (users: UserProfile[]) => void) {
+  const q = query(collection(db, USERS_COLLECTION));
+  return onSnapshot(q, (snapshot) => {
+    const users: UserProfile[] = [];
+    snapshot.forEach((d) => {
+      if (d.id !== currentUserId) {
+        users.push({ uid: d.id, ...d.data() } as UserProfile);
+      }
+    });
+    callback(users);
+  }, (error) => {
+    console.error('subscribeToAllUsers error:', error);
+    callback([]);
+  });
+}
+
+export async function searchUsers(searchTerm: string, currentUserId: string): Promise<UserProfile[]> {
+  if (!searchTerm.trim()) return [];
+  
+  const users = await getAllUsers(currentUserId);
+  const term = searchTerm.toLowerCase();
+  
+  return users.filter(u =>
+    (u.displayName && u.displayName.toLowerCase().includes(term)) ||
+    (u.email && u.email.toLowerCase().includes(term))
+  ).slice(0, 20);
 }
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {

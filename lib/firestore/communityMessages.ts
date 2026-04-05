@@ -127,7 +127,7 @@ export async function sendMessage(communityId: string, message: {
 }) {
   await addDoc(collection(db, COMMUNITIES_COLLECTION, communityId, MESSAGES_SUBCOLLECTION), {
     ...message,
-    timestamp: serverTimestamp(),
+    timestamp: Date.now(),
     likes: [],
   });
 }

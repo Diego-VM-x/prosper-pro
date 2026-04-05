@@ -15,6 +15,7 @@ import {
 } from '@/lib/firestore/communityMessages';
 import {
   searchUsers,
+  subscribeToAllUsers,
   getOrCreateConversation,
   subscribeToConversations,
   subscribeToPrivateMessages,
@@ -50,6 +51,7 @@ export default function ComunidadPage() {
   const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
   const [privateInput, setPrivateInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -87,6 +89,15 @@ export default function ComunidadPage() {
     });
     return () => unsub();
   }, [activeCommunity]);
+
+  // Subscribe to all users
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = subscribeToAllUsers(user.uid, (users) => {
+      setAllUsers(users);
+    });
+    return () => unsub();
+  }, [user?.uid]);
 
   // Subscribe to conversations
   useEffect(() => {
@@ -130,10 +141,11 @@ export default function ComunidadPage() {
 
   // Search users
   const handleSearch = useCallback(async () => {
-    if (!user?.uid || !searchTerm.trim()) {
+    if (!searchTerm.trim()) {
       setSearchResults([]);
       return;
     }
+    if (!user?.uid) return;
     const results = await searchUsers(searchTerm, user.uid);
     setSearchResults(results);
   }, [searchTerm, user?.uid]);
@@ -783,7 +795,7 @@ export default function ComunidadPage() {
                   </div>
 
                   {/* Search users */}
-                  {activeTab === 'private' && showSearch && (
+                  {activeTab === 'private' && (
                     <div className="search-box">
                       <input
                         className="search-input"
@@ -791,19 +803,6 @@ export default function ComunidadPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
-                      {searchResults.length > 0 && (
-                        <div className="search-results">
-                          {searchResults.map(u => (
-                            <button key={u.uid} className="search-result-item" onClick={() => startPrivateChat(u)}>
-                              <div className="search-avatar">{u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}</div>
-                              <div>
-                                <p className="search-name">{u.displayName || 'Usuario'}</p>
-                                <p className="search-email">{u.email}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -826,21 +825,53 @@ export default function ComunidadPage() {
                         </button>
                       ))
                     ) : (
-                      conversations.map(conv => (
-                        <button
-                          key={conv.id}
-                          className={`comm-item ${activeConversation === conv.id ? 'active' : ''}`}
-                          onClick={() => setActiveConversation(conv.id)}
-                        >
-                          <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
-                            {conv.otherUser?.displayName?.charAt(0) || conv.otherUser?.email?.charAt(0) || '👤'}
-                          </div>
-                          <div className="comm-info">
-                            <p className="comm-name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
-                            <p className="comm-desc">{conv.lastMessage || 'Sin mensajes'}</p>
-                          </div>
-                        </button>
-                      ))
+                      <>
+                        {/* Search results */}
+                        {searchTerm && searchResults.length > 0 ? (
+                          searchResults.map(u => (
+                            <button key={u.uid} className="comm-item" onClick={() => startPrivateChat(u)}>
+                              <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
+                                {u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}
+                              </div>
+                              <div className="comm-info">
+                                <p className="comm-name">{u.displayName || 'Usuario'}</p>
+                                <p className="comm-desc">{u.email}</p>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <>
+                            {/* All users */}
+                            {allUsers.map(u => (
+                              <button key={u.uid} className="comm-item" onClick={() => startPrivateChat(u)}>
+                                <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
+                                  {u.displayName?.charAt(0) || u.email?.charAt(0) || '?'}
+                                </div>
+                                <div className="comm-info">
+                                  <p className="comm-name">{u.displayName || 'Usuario'}</p>
+                                  <p className="comm-desc">{u.email}</p>
+                                </div>
+                              </button>
+                            ))}
+                            {/* Existing conversations */}
+                            {conversations.map(conv => (
+                              <button
+                                key={conv.id}
+                                className={`comm-item ${activeConversation === conv.id ? 'active' : ''}`}
+                                onClick={() => setActiveConversation(conv.id)}
+                              >
+                                <div className="comm-icon" style={{ background: 'var(--bg-accent-soft)' }}>
+                                  {conv.otherUser?.displayName?.charAt(0) || conv.otherUser?.email?.charAt(0) || '💬'}
+                                </div>
+                                <div className="comm-info">
+                                  <p className="comm-name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
+                                  <p className="comm-desc">{conv.lastMessage || 'Sin mensajes'}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </>
+                        )}
+                      </>
                     )}
                     {activeTab === 'private' && conversations.length === 0 && (
                       <div className="empty-state" style={{ padding: '20px' }}>
