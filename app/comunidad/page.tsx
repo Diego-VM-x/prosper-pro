@@ -193,7 +193,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', borderRadius: '24px', margin: '8px' }}>
           <style jsx>{`
             /* Comunidad - variables heredadas de globals.css (--comm-*) */
             /* Sidebar navigation (desktop) */
