@@ -112,6 +112,41 @@
   --shadow-accent:     0 4px 20px rgba(43,133,96,0.35);
 }
 
+/* === COMUNIDAD - Chat Variables === */
+:root {
+  --comm-bg-primary: #0e1511;
+  --comm-bg-secondary: #161d19;
+  --comm-bg-tertiary: #1a211d;
+  --comm-bg-card: #242c27;
+  --comm-text-primary: #dde4dd;
+  --comm-text-secondary: #91c4a8;
+  --comm-text-muted: #6b7a72;
+  --comm-accent: #4edea3;
+  --comm-accent-dark: #003824;
+  --comm-border: rgba(60,74,66,0.1);
+  --comm-gradient-accent: linear-gradient(135deg, #4edea3 0%, #10b981 100%);
+  --comm-gradient-bg: linear-gradient(135deg, #242c27 0%, #1a211d 100%);
+  --comm-gradient-header: linear-gradient(180deg, rgba(22,29,25,0.95) 0%, rgba(14,21,17,0.9) 100%);
+  --comm-shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  --comm-shadow-md: 0 4px 16px rgba(0,0,0,0.2);
+  --comm-shadow-accent: 0 4px 16px rgba(78,222,163,0.2);
+}
+[data-theme="light"] {
+  --comm-bg-primary: #f5f7f6;
+  --comm-bg-secondary: #ffffff;
+  --comm-bg-tertiary: #eef2f0;
+  --comm-bg-card: #e8ede9;
+  --comm-text-primary: #1a2e23;
+  --comm-text-secondary: #2d6a4f;
+  --comm-text-muted: #8a9d92;
+  --comm-border: rgba(45,106,79,0.12);
+  --comm-gradient-bg: linear-gradient(135deg, #e8ede9 0%, #eef2f0 100%);
+  --comm-gradient-header: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(245,247,246,0.9) 100%);
+  --comm-shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --comm-shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --comm-shadow-accent: 0 4px 16px rgba(78,222,163,0.15);
+}
+
 /* ============================================================
    RESET & BASE
    ============================================================ */
