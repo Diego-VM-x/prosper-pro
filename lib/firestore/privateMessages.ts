@@ -288,6 +288,36 @@ export async function sendPrivateMessage(
   return msgRef.id;
 }
 
+// ==================== CHAT MANAGEMENT ====================
+
+// Vaciar todos los mensajes de una conversación
+export async function clearConversationMessages(conversationId: string) {
+  const msgQ = query(
+    collection(db, MESSAGES_COLLECTION),
+    where('conversationId', '==', conversationId)
+  );
+  const msgSnap = await getDocs(msgQ);
+  for (const m of msgSnap.docs) {
+    await deleteDoc(m.ref);
+  }
+  
+  // Actualizar la conversación
+  const convRef = doc(db, CONVERSATIONS_COLLECTION, conversationId);
+  await updateDoc(convRef, {
+    lastMessage: '',
+    lastMessageAt: Date.now(),
+  });
+}
+
+// Eliminar una conversación completa (mensajes + conversación)
+export async function deleteConversation(conversationId: string) {
+  // Eliminar mensajes
+  await clearConversationMessages(conversationId);
+  
+  // Eliminar conversación
+  await deleteDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId));
+}
+
 // ==================== CLEANUP (para pruebas) ====================
 
 // Eliminar todas las conversaciones y mensajes de un usuario
