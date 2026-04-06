@@ -203,7 +203,7 @@ export default function ComunidadPage() {
             .btn-s { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-default); }
             .btn-x { background: transparent; color: var(--text-tertiary); padding: 6px; border: none; cursor: pointer; font-size: 1rem; }
             .btn-x:hover { color: #ef4444; }
-            .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-card); }
+            .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-card); position: relative; }
             .header { height: 60px; padding: 0 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; }
             .back { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 8px; margin-right: 8px; font-size: 1.25rem; display: none; }
             .hinfo { display: flex; align-items: center; gap: 12px; }
@@ -236,7 +236,7 @@ export default function ComunidadPage() {
             .empty-desc { font-size: 0.8125rem; margin: 0; max-width: 280px; }
             .sec { padding: 12px 16px 8px; font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
             @media (max-width: 768px) {
-              .sidebar { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 1; }
+              .sidebar { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 1; transition: transform 0.2s ease; }
               .sidebar.hide { transform: translateX(-100%); pointer-events: none; }
               .chat { width: 100%; height: 100%; position: absolute; inset: 0; z-index: 2; transform: translateX(100%); transition: transform 0.2s ease; }
               .chat.show { transform: translateX(0); }
