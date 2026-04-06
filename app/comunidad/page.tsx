@@ -31,6 +31,7 @@ export default function ComunidadPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('messages');
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -494,9 +495,29 @@ export default function ComunidadPage() {
             .btn-accept { flex: 1; padding: 8px; border-radius: 8px; border: none; background: #4edea3; color: #003824; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
             .btn-reject { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #3c4a42; background: transparent; color: #bbcabf; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
-            /* Mobile */
+            /* Mobile menu button */
+            .mobile-menu-btn { display: none; }
+            .mobile-overlay { display: none; }
             @media (max-width: 768px) {
-              .nav-sidebar { display: none; }
+              .mobile-menu-btn { display: flex; }
+              .mobile-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 40;
+              }
+              .mobile-overlay.show { display: block; }
+              .nav-sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 50;
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+              }
+              .nav-sidebar.mobile-open { transform: translateX(0); }
               .conv-list { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; }
               .conv-list.hide { display: none; }
               .chat-area { position: absolute; inset: 0; z-index: 20; display: none; }
@@ -504,20 +525,48 @@ export default function ComunidadPage() {
               .msgs { padding: 16px; }
               .input-area { padding: 12px 16px; }
               .chat-header { padding: 0 16px; height: 60px; }
+              .chat-back-btn { display: block !important; }
               .msg-row { max-width: 85%; }
             }
           `}</style>
 
+          {/* Mobile overlay */}
+          <div className={`mobile-overlay ${mobileMenuOpen ? 'show' : ''}`} onClick={() => setMobileMenuOpen(false)} />
+
+          {/* Mobile menu button */}
+          <button
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              zIndex: 30,
+              width: 40,
+              height: 40,
+              borderRadius: 8,
+              border: 'none',
+              background: '#1a211d',
+              color: '#dde4dd',
+              cursor: 'pointer',
+              fontSize: '1.25rem',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
+
           {/* Navigation sidebar */}
-          <div className="nav-sidebar">
-            <div className={`nav-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')} style={{ position: 'relative' }}>
+          <div className={`nav-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            <div className={`nav-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }} style={{ position: 'relative' }}>
               💬
               {unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
             </div>
-            <div className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => setActiveTab('channels')}>
+            <div className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => { setActiveTab('channels'); setMobileMenuOpen(false); }}>
               📢
             </div>
-            <div className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>
+            <div className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => { setActiveTab('contacts'); setMobileMenuOpen(false); }}>
               👥
             </div>
           </div>
@@ -659,6 +708,22 @@ export default function ComunidadPage() {
             {activeConversation && activeUser ? (
               <>
                 <div className="chat-header">
+                  <button
+                    onClick={() => setActiveConversation(null)}
+                    style={{
+                      display: 'none',
+                      background: 'none',
+                      border: 'none',
+                      color: '#dde4dd',
+                      cursor: 'pointer',
+                      padding: '8px',
+                      marginRight: '8px',
+                      fontSize: '1.25rem',
+                    }}
+                    className="chat-back-btn"
+                  >
+                    ←
+                  </button>
                   <div className="chat-header-left">
                     <div className="chat-avatar">
                       {activeUser.photoURL ? (
