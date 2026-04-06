@@ -193,7 +193,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', borderRadius: '24px', margin: '8px' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', borderRadius: '24px', margin: '8px', background: 'var(--comm-bg-secondary)' }}>
           <style jsx>{`
             /* Comunidad - variables heredadas de globals.css (--comm-*) */
             /* Sidebar navigation (desktop) */
@@ -207,6 +207,7 @@ export default function ComunidadPage() {
               padding: 24px 0;
               gap: 8px;
               border-right: 1px solid var(--comm-border);
+              border-radius: 24px 0 0 24px;
             }
             .nav-item {
               width: 48px;
@@ -389,6 +390,8 @@ export default function ComunidadPage() {
               min-width: 0;
               background: var(--comm-bg-primary);
               position: relative;
+              border-radius: 0 24px 24px 0;
+              overflow: hidden;
             }
             .chat-header {
               height: 80px;
