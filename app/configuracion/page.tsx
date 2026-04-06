@@ -407,7 +407,44 @@ export default function ConfiguracionPage() {
             .pref-row {
               display: flex;
               flex-direction: column;
+              gap: 8px;
+            }
+            .option-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+              gap: 8px;
+            }
+            .option-btn {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
               gap: 4px;
+              padding: 12px 8px;
+              border-radius: 10px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-secondary);
+              cursor: pointer;
+              transition: all 0.2s;
+              font-size: 0.75rem;
+              font-weight: 500;
+            }
+            .option-btn:hover {
+              border-color: var(--color-prosper-green);
+              background: var(--bg-card);
+            }
+            .option-btn.active {
+              border-color: var(--color-prosper-green);
+              background: rgba(61,204,142,0.1);
+              color: var(--color-prosper-green);
+            }
+            .option-flag {
+              font-size: 1.5rem;
+              line-height: 1;
+            }
+            .option-label {
+              font-size: 0.6875rem;
+              font-weight: 600;
             }
 
             /* Toggle Switch */
@@ -730,6 +767,9 @@ export default function ConfiguracionPage() {
               .profile-form {
                 width: 100%;
               }
+              .option-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
               .form-row {
                 grid-template-columns: 1fr;
               }
@@ -787,6 +827,17 @@ export default function ConfiguracionPage() {
               }
               .toggle-icon {
                 width: 32px;
+              }
+              .option-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 6px;
+              }
+              .option-btn {
+                padding: 10px 6px;
+              }
+              .option-flag {
+                font-size: 1.25rem;
+              }
                 height: 32px;
                 font-size: 0.875rem;
               }
@@ -975,26 +1026,44 @@ export default function ConfiguracionPage() {
                 <h3 className="prefs-title">⚙️ Preferencias de Cuenta</h3>
                 <div className="prefs-list">
                   <div className="pref-row">
-                    <label className="form-label">Idioma de Interfaz</label>
-                    <select
-                      className="form-select"
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                    >
-                      <option value="es">Español</option>
-                      <option value="en">English (US)</option>
-                    </select>
+                    <label className="form-label">🌐 Idioma de Interfaz</label>
+                    <div className="option-grid">
+                      {[
+                        { value: 'es', label: 'Español', flag: '🇪' },
+                        { value: 'en', label: 'English', flag: '🇺' },
+                        { value: 'pt', label: 'Português', flag: '🇧🇷' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          className={`option-btn ${language === opt.value ? 'active' : ''}`}
+                          onClick={() => setLanguage(opt.value)}
+                        >
+                          <span className="option-flag">{opt.flag}</span>
+                          <span className="option-label">{opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="pref-row">
-                    <label className="form-label">Moneda</label>
-                    <select
-                      className="form-select"
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                    >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                    </select>
+                    <label className="form-label">💱 Moneda</label>
+                    <div className="option-grid">
+                      {[
+                        { value: 'USD', label: 'Dólar', symbol: '$', flag: '🇺🇸' },
+                        { value: 'EUR', label: 'Euro', symbol: '€', flag: '🇪🇺' },
+                        { value: 'VES', label: 'Bolívar', symbol: 'Bs.', flag: '🇻🇪' },
+                        { value: 'COP', label: 'Peso CO', symbol: '$', flag: '🇨🇴' },
+                        { value: 'MXN', label: 'Peso MX', symbol: '$', flag: '🇲🇽' },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          className={`option-btn ${currency === opt.value ? 'active' : ''}`}
+                          onClick={() => setCurrency(opt.value)}
+                        >
+                          <span className="option-flag">{opt.flag}</span>
+                          <span className="option-label">{opt.symbol} {opt.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="toggle-row">
                     <div className="toggle-info">
