@@ -171,7 +171,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', flexDirection: 'row-reverse' }}>
           <style jsx>{`
             .sidebar {
               width: 300px;
