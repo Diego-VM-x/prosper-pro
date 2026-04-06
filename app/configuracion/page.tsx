@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
-import { clearUserData } from '@/lib/firestore/privateMessages';
+import { clearUserData, resetAllCommunityData } from '@/lib/firestore/privateMessages';
 import { useTheme } from '@/app/components/ThemeProvider';
 import type { UserProfile } from '@/types';
 
@@ -28,6 +28,7 @@ export default function ConfiguracionPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [clearingCommunity, setClearingCommunity] = useState(false);
+  const [resettingAll, setResettingAll] = useState(false);
 
   // Cargar perfil
   useEffect(() => {
@@ -100,6 +101,23 @@ export default function ConfiguracionPage() {
   };
 
   // Eliminar cuenta
+  const handleResetAllCommunityData = async () => {
+    if (!confirm('⚠️ ¿RESET DE FÁBRICA? Esto eliminará TODOS los datos de comunidad de TODOS los usuarios (amigos, mensajes, solicitudes). Esta acción es IRREVERSIBLE.')) return;
+    if (!confirm('¿Estás SEGURO? Esta acción no se puede deshacer.')) return;
+    setResettingAll(true);
+    try {
+      await resetAllCommunityData();
+      setSuccessMsg('Todos los datos de comunidad han sido eliminados');
+      setTimeout(() => setSuccessMsg(''), 5000);
+    } catch (e) {
+      console.error('Error resetting all community data:', e);
+      setErrorMsg('Error al resetear datos de comunidad');
+      setTimeout(() => setErrorMsg(''), 3000);
+    } finally {
+      setResettingAll(false);
+    }
+  };
+
   const handleClearCommunityData = async () => {
     if (!user?.uid) return;
     if (!confirm('¿Estás seguro de que quieres eliminar todos tus datos de comunidad (amigos, mensajes, solicitudes)? Esta acción es irreversible.')) return;
@@ -1014,7 +1032,15 @@ export default function ConfiguracionPage() {
                     disabled={clearingCommunity}
                     style={{ marginBottom: 12, background: '#92400e', borderColor: '#92400e' }}
                   >
-                    {clearingCommunity ? 'Limpiando...' : 'Limpiar datos de comunidad (amigos, mensajes)'}
+                    {clearingCommunity ? 'Limpiando...' : 'Limpiar MIS datos de comunidad'}
+                  </button>
+                  <button
+                    className="danger-btn"
+                    onClick={handleResetAllCommunityData}
+                    disabled={resettingAll}
+                    style={{ marginBottom: 12, background: '#7f1d1d', borderColor: '#7f1d1d' }}
+                  >
+                    {resettingAll ? 'Reseteando...' : '⚠️ RESET DE FÁBRICA - Eliminar TODOS los datos de comunidad'}
                   </button>
                   <button
                     className="danger-btn"

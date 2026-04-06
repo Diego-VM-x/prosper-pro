@@ -320,6 +320,27 @@ export async function deleteConversation(conversationId: string) {
 
 // ==================== CLEANUP (para pruebas) ====================
 
+// Eliminar TODOS los datos de comunidad de TODOS los usuarios (reset de fábrica)
+export async function resetAllCommunityData() {
+  // Eliminar todas las conversaciones
+  const convSnap = await getDocs(collection(db, CONVERSATIONS_COLLECTION));
+  for (const d of convSnap.docs) {
+    // Eliminar mensajes de esta conversación
+    const msgQ = query(collection(db, MESSAGES_COLLECTION), where('conversationId', '==', d.id));
+    const msgSnap = await getDocs(msgQ);
+    for (const m of msgSnap.docs) await deleteDoc(m.ref);
+    await deleteDoc(d.ref);
+  }
+  
+  // Eliminar todas las solicitudes
+  const reqSnap = await getDocs(collection(db, REQUESTS_COLLECTION));
+  for (const d of reqSnap.docs) await deleteDoc(d.ref);
+  
+  // Eliminar todas las amistades
+  const friendSnap = await getDocs(collection(db, FRIENDS_COLLECTION));
+  for (const d of friendSnap.docs) await deleteDoc(d.ref);
+}
+
 // Eliminar todas las conversaciones y mensajes de un usuario
 export async function clearUserData(userId: string) {
   // Eliminar conversaciones
@@ -403,11 +424,12 @@ export function subscribeToTotalUnreadCount(
 
 // Enviar solicitud de amistad
 export async function sendFriendRequest(senderId: string, senderName: string, receiverId: string, receiverName: string) {
-  // Verificar si ya existe una solicitud
+  // Verificar si ya existe una solicitud PENDIENTE
   const q = query(
     collection(db, REQUESTS_COLLECTION),
     where('senderId', '==', senderId),
-    where('receiverId', '==', receiverId)
+    where('receiverId', '==', receiverId),
+    where('status', '==', 'pending')
   );
   const existing = await getDocs(q);
   if (!existing.empty) return;
@@ -420,7 +442,7 @@ export async function sendFriendRequest(senderId: string, senderName: string, re
   const friendsSnap = await getDocs(friendsQ);
   for (const d of friendsSnap.docs) {
     const data = d.data();
-    if (data.users.includes(receiverId)) return;
+    if (!data.deleted && data.users.includes(receiverId)) return;
   }
 
   await addDoc(collection(db, REQUESTS_COLLECTION), {
