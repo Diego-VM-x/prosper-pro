@@ -892,11 +892,17 @@ export default function ConfiguracionPage() {
               .card {
                 padding: 12px;
               }
+              .profile-section, .security-section, .prefs-section {
+                padding: 12px;
+              }
               .danger-zone {
                 padding: 12px;
               }
               .hero-title {
                 font-size: 1.25rem;
+              }
+              .hero-desc {
+                font-size: 0.75rem;
               }
               .profile-avatar-wrap {
                 width: 80px;
@@ -909,11 +915,16 @@ export default function ConfiguracionPage() {
                 padding: 8px 12px;
                 font-size: 0.75rem;
               }
+              .form-label {
+                font-size: 0.5rem;
+              }
               .toggle-row {
                 padding: 10px;
               }
               .toggle-icon {
                 width: 32px;
+                height: 32px;
+                font-size: 0.875rem;
               }
               .option-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -925,6 +936,9 @@ export default function ConfiguracionPage() {
               .option-flag {
                 font-size: 1.25rem;
               }
+              .option-label {
+                font-size: 0.625rem;
+              }
               .toggle-switch {
                 width: 32px;
                 height: 16px;
@@ -934,6 +948,203 @@ export default function ConfiguracionPage() {
               }
               .toggle-desc {
                 font-size: 0.5625rem;
+              }
+              .save-btn {
+                padding: 10px 16px;
+                font-size: 0.625rem;
+              }
+              .sub-card {
+                padding: 12px;
+              }
+              .sub-title {
+                font-size: 1rem;
+              }
+              .sub-detail-row {
+                flex-direction: column;
+                gap: 2px;
+                padding: 8px 0;
+              }
+              .sessions-table {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+              }
+              .sessions-table table {
+                min-width: 400px;
+                font-size: 0.6875rem;
+              }
+              .sessions-table th, .sessions-table td {
+                padding: 8px 10px;
+              }
+              .security-header {
+                flex-direction: column;
+                gap: 8px;
+              }
+              .security-actions {
+                width: 100%;
+                flex-direction: column;
+                gap: 8px;
+              }
+              .change-pass-btn, .tfa-badge {
+                width: 100%;
+                justify-content: center;
+                font-size: 0.5625rem;
+                padding: 8px;
+              }
+              .danger-zone {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                padding: 12px;
+                gap: 8px;
+              }
+              .danger-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.25rem;
+                margin-bottom: 0;
+              }
+              .danger-title {
+                font-size: 0.75rem;
+              }
+              .danger-desc {
+                font-size: 0.6875rem;
+              }
+              .danger-btn {
+                font-size: 0.625rem;
+                padding: 10px 12px;
+                line-height: 1.3;
+              }
+              .prefs-title {
+                font-size: 0.875rem;
+                margin-bottom: 12px;
+              }
+              .footer {
+                font-size: 0.5rem;
+                padding: 12px 0;
+              }
+            }
+
+            /* Pantallas muy pequeñas (360px y menos) */
+            @media (max-width: 360px) {
+              .configuracion-page {
+                padding: 4px;
+              }
+              .card {
+                padding: 8px;
+                border-radius: 8px;
+              }
+              .profile-section, .security-section, .prefs-section {
+                padding: 8px;
+              }
+              .hero-title {
+                font-size: 1.125rem;
+              }
+              .hero-desc {
+                font-size: 0.6875rem;
+              }
+              .profile-avatar-wrap {
+                width: 64px;
+                height: 64px;
+              }
+              .profile-avatar {
+                font-size: 1.5rem;
+              }
+              .form-input, .form-textarea, .form-select {
+                padding: 8px 10px;
+                font-size: 0.6875rem;
+              }
+              .form-label {
+                font-size: 0.4375rem;
+                padding-left: 2px;
+              }
+              .option-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 4px;
+              }
+              .option-btn {
+                padding: 8px 4px;
+                border-radius: 6px;
+              }
+              .option-flag {
+                font-size: 1rem;
+              }
+              .option-label {
+                font-size: 0.5rem;
+              }
+              .toggle-row {
+                padding: 8px;
+                gap: 8px;
+              }
+              .toggle-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+              }
+              .toggle-text {
+                gap: 0;
+              }
+              .toggle-label {
+                font-size: 0.625rem;
+              }
+              .toggle-desc {
+                font-size: 0.5rem;
+              }
+              .toggle-switch {
+                width: 28px;
+                height: 14px;
+              }
+              .toggle-switch::after {
+                width: 10px;
+                height: 10px;
+              }
+              .save-btn {
+                padding: 8px 12px;
+                font-size: 0.5625rem;
+              }
+              .sub-title {
+                font-size: 0.875rem;
+              }
+              .sub-desc {
+                font-size: 0.625rem;
+              }
+              .sub-badge {
+                font-size: 0.5rem;
+              }
+              .sub-detail-row {
+                font-size: 0.625rem;
+              }
+              .sub-btn {
+                padding: 8px;
+                font-size: 0.5625rem;
+              }
+              .sessions-table table {
+                min-width: 340px;
+                font-size: 0.625rem;
+              }
+              .sessions-table th, .sessions-table td {
+                padding: 6px 8px;
+              }
+              .danger-zone {
+                padding: 8px;
+                gap: 6px;
+              }
+              .danger-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+              }
+              .danger-title {
+                font-size: 0.6875rem;
+              }
+              .danger-desc {
+                font-size: 0.625rem;
+              }
+              .danger-btn {
+                font-size: 0.5625rem;
+                padding: 8px 10px;
+              }
+              .footer {
+                font-size: 0.4375rem;
               }
             }
           `}</style>
