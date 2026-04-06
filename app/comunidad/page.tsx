@@ -200,7 +200,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-container" style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: 'transparent' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 64px)', overflow: 'hidden', background: 'transparent' }}>
           <style jsx>{`
             /* Comunidad - variables heredadas de globals.css (--comm-*) */
             /* Sidebar navigation (desktop) */
@@ -652,7 +652,7 @@ export default function ComunidadPage() {
             .comunidad-container { position: relative; }
             @media (max-width: 768px) {
               .comunidad-container {
-                height: 100dvh !important;
+                height: calc(100dvh - 64px) !important;
                 height: -webkit-fill-available;
                 padding-bottom: 0;
               }
@@ -680,7 +680,7 @@ export default function ComunidadPage() {
             }
             @media (max-width: 480px) {
               .comunidad-container {
-                height: 100dvh !important;
+                height: calc(100dvh - 56px) !important;
                 padding-bottom: 0;
               }
               .bottom-nav { height: 56px; }
