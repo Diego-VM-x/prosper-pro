@@ -31,6 +31,7 @@ export default function ComunidadPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('chats');
   const [showChat, setShowChat] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -173,81 +174,149 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: 'var(--bg-card)', position: 'relative' }}>
+        <div className="community-layout">
           <style jsx>{`
-            .sidebar { width: 340px; min-width: 340px; background: var(--bg-input); display: flex; flex-direction: column; border-right: 1px solid var(--border-default); }
-            .tabs { display: flex; border-bottom: 1px solid var(--border-default); background: var(--bg-card); }
-            .tab { flex: 1; padding: 14px 8px; text-align: center; font-size: 0.75rem; font-weight: 600; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; }
-            .tab:hover { color: var(--text-primary); background: var(--bg-input); }
+            .community-layout {
+              display: grid;
+              grid-template-columns: 1fr;
+              height: calc(100vh - 140px);
+              overflow: hidden;
+              background: var(--bg-card);
+            }
+            @media (min-width: 1024px) {
+              .community-layout {
+                grid-template-columns: 300px 1fr;
+              }
+            }
+
+            /* Sidebar */
+            .sidebar {
+              background: var(--bg-input);
+              display: flex;
+              flex-direction: column;
+              border-right: 1px solid var(--border-default);
+              overflow: hidden;
+              transition: width 0.2s ease;
+            }
+            @media (min-width: 1024px) {
+              .sidebar { width: 300px; min-width: 300px; }
+              .sidebar.collapsed { width: 0; min-width: 0; border: none; }
+            }
+            @media (max-width: 1023px) {
+              .sidebar {
+                position: absolute;
+                inset: 0;
+                z-index: 10;
+                width: 100%;
+              }
+              .sidebar.hidden { display: none; }
+            }
+
+            /* Toggle btn */
+            .toggle-btn {
+              display: none;
+              background: none;
+              border: none;
+              color: var(--text-primary);
+              cursor: pointer;
+              padding: 8px;
+              font-size: 1.25rem;
+            }
+            @media (min-width: 1024px) {
+              .toggle-btn { display: block; }
+            }
+
+            /* Tabs */
+            .tabs { display: flex; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; }
+            .tab { flex: 1; padding: 12px 4px; text-align: center; font-size: 0.6875rem; font-weight: 600; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; }
+            .tab:hover { color: var(--text-primary); }
             .tab.active { color: var(--color-prosper-green); border-bottom-color: var(--color-prosper-green); }
-            .badge { position: absolute; top: 6px; right: 50%; margin-right: -18px; background: var(--color-prosper-green); color: white; font-size: 0.625rem; min-width: 16px; height: 16px; line-height: 16px; text-align: center; border-radius: 8px; font-weight: 700; }
-            .search-box { padding: 12px; }
-            .search-input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-primary); font-size: 0.8125rem; outline: none; box-sizing: border-box; }
+            .badge { position: absolute; top: 4px; right: 50%; margin-right: -16px; background: var(--color-prosper-green); color: white; font-size: 0.5625rem; min-width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 7px; font-weight: 700; }
+
+            /* Search */
+            .search-box { padding: 10px 12px; flex-shrink: 0; }
+            .search-input { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-primary); font-size: 0.75rem; outline: none; box-sizing: border-box; }
             .search-input:focus { border-color: var(--color-prosper-green); }
-            .list { flex: 1; overflow-y: auto; }
-            .item { padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-default); transition: background 0.15s; }
+
+            /* List */
+            .list { flex: 1; overflow-y: auto; overflow-x: hidden; }
+            .item { padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-default); transition: background 0.15s; }
             .item:hover { background: var(--bg-card); }
-            .item.active { background: var(--bg-card-high); border-left: 3px solid var(--color-prosper-green); }
-            .avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; position: relative; overflow: hidden; }
+            .item.active { background: var(--bg-card-high); }
+            .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; position: relative; overflow: hidden; }
             .avatar img { width: 100%; height: 100%; object-fit: cover; }
-            .dot { position: absolute; bottom: 1px; right: 1px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--bg-input); }
+            .dot { position: absolute; bottom: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--bg-input); }
             .dot.on { background: var(--color-prosper-green); }
             .dot.off { background: var(--text-tertiary); }
             .info { flex: 1; min-width: 0; }
-            .name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .sub { font-size: 0.75rem; color: var(--text-tertiary); margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .time { font-size: 0.6875rem; color: var(--text-tertiary); flex-shrink: 0; }
-            .btn { padding: 6px 12px; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+            .name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .sub { font-size: 0.6875rem; color: var(--text-tertiary); margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .time { font-size: 0.625rem; color: var(--text-tertiary); flex-shrink: 0; }
+            .btn { padding: 5px 10px; border-radius: 6px; border: none; font-size: 0.6875rem; font-weight: 600; cursor: pointer; }
             .btn-g { background: var(--color-prosper-green); color: white; }
-            .btn-g:hover { filter: brightness(1.1); }
             .btn-s { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-default); }
-            .btn-x { background: transparent; color: var(--text-tertiary); padding: 6px; border: none; cursor: pointer; font-size: 1rem; }
+            .btn-x { background: transparent; color: var(--text-tertiary); padding: 4px; border: none; cursor: pointer; font-size: 0.875rem; }
             .btn-x:hover { color: #ef4444; }
-            .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-card); position: relative; }
-            .header { height: 60px; padding: 0 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; }
-            .back { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 8px; margin-right: 8px; font-size: 1.25rem; display: none; }
-            .hinfo { display: flex; align-items: center; gap: 12px; }
-            .hname { font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); margin: 0; }
-            .hstatus { font-size: 0.6875rem; color: var(--text-tertiary); margin: 0; }
+            .sec { padding: 10px 12px 6px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+
+            /* Chat area */
+            .chat-area {
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+              background: var(--bg-card);
+              overflow: hidden;
+            }
+            .chat-header {
+              height: 56px;
+              padding: 0 12px;
+              display: flex;
+              align-items: center;
+              border-bottom: 1px solid var(--border-default);
+              background: var(--bg-card);
+              flex-shrink: 0;
+              gap: 10px;
+            }
+            .back { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 6px; font-size: 1.125rem; display: none; }
+            .hinfo { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+            .hname { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .hstatus { font-size: 0.625rem; color: var(--text-tertiary); margin: 0; }
             .hstatus.on { color: var(--color-prosper-green); }
-            .msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-            .divider { display: flex; justify-content: center; margin: 12px 0; }
-            .divider span { padding: 4px 12px; background: var(--bg-input); color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 600; border-radius: 12px; }
-            .row { display: flex; gap: 8px; max-width: 70%; }
+            .msgs { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+            .divider { display: flex; justify-content: center; margin: 10px 0; }
+            .divider span { padding: 3px 10px; background: var(--bg-input); color: var(--text-tertiary); font-size: 0.625rem; font-weight: 600; border-radius: 10px; }
+            .row { display: flex; gap: 6px; max-width: 80%; }
             .row.r { align-self: flex-start; }
             .row.s { align-self: flex-end; flex-direction: row-reverse; }
-            .av-sm { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; overflow: hidden; }
+            .av-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; overflow: hidden; }
             .av-sm img { width: 100%; height: 100%; object-fit: cover; }
             .content { display: flex; flex-direction: column; }
             .row.s .content { align-items: flex-end; }
-            .bubble { padding: 10px 14px; border-radius: 16px; font-size: 0.875rem; line-height: 1.4; word-break: break-word; }
+            .bubble { padding: 8px 12px; border-radius: 14px; font-size: 0.8125rem; line-height: 1.4; word-break: break-word; }
             .bubble.r { background: var(--bg-input); color: var(--text-primary); border-bottom-left-radius: 4px; }
             .bubble.s { background: var(--color-prosper-green); color: white; border-bottom-right-radius: 4px; }
-            .mt { font-size: 0.625rem; color: var(--text-tertiary); margin-top: 2px; padding: 0 4px; }
-            .input-area { padding: 12px 16px; background: var(--bg-card); border-top: 1px solid var(--border-default); }
-            .input-wrap { display: flex; align-items: center; gap: 8px; background: var(--bg-input); border-radius: 24px; padding: 6px 6px 6px 16px; }
-            .input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 0.875rem; padding: 8px 0; outline: none; }
+            .mt { font-size: 0.5625rem; color: var(--text-tertiary); margin-top: 2px; padding: 0 4px; }
+            .input-area { padding: 10px 12px; background: var(--bg-card); border-top: 1px solid var(--border-default); flex-shrink: 0; }
+            .input-wrap { display: flex; align-items: center; gap: 6px; background: var(--bg-input); border-radius: 20px; padding: 4px 4px 4px 12px; }
+            .input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 0.8125rem; padding: 6px 0; outline: none; }
             .input::placeholder { color: var(--text-tertiary); }
-            .send { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--color-prosper-green); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
-            .send:hover { filter: brightness(1.1); }
-            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-tertiary); text-align: center; padding: 32px; }
-            .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
-            .empty-title { font-size: 1.125rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 8px; }
-            .empty-desc { font-size: 0.8125rem; margin: 0; max-width: 280px; }
-            .sec { padding: 12px 16px 8px; font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
-            @media (max-width: 768px) {
-              .sidebar { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 1; transition: transform 0.2s ease; }
-              .sidebar.hide { transform: translateX(-100%); pointer-events: none; }
-              .chat { width: 100%; height: 100%; position: absolute; inset: 0; z-index: 2; transform: translateX(100%); transition: transform 0.2s ease; }
-              .chat.show { transform: translateX(0); }
-              .header { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+            .send { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--color-prosper-green); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-tertiary); text-align: center; padding: 24px; }
+            .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
+            .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px; }
+            .empty-desc { font-size: 0.75rem; margin: 0; max-width: 240px; }
+
+            /* Mobile chat view */
+            @media (max-width: 1023px) {
+              .chat-area { position: absolute; inset: 0; z-index: 20; display: none; }
+              .chat-area.show { display: flex; }
               .back { display: block; }
               .row { max-width: 85%; }
             }
           `}</style>
 
           {/* Sidebar */}
-          <div className={`sidebar ${showChat ? 'hide' : ''}`}>
+          <div className={`sidebar ${!sidebarOpen ? 'collapsed' : ''} ${showChat ? 'hidden' : ''}`}>
             <div className="tabs">
               <div className={`tab ${activeTab === 'chats' ? 'active' : ''}`} onClick={() => setActiveTab('chats')}>
                 💬 Chats
@@ -264,7 +333,7 @@ export default function ComunidadPage() {
 
             {activeTab === 'friends' && (
               <div className="search-box">
-                <input className="search-input" placeholder="Buscar personas..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <input className="search-input" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             )}
 
@@ -272,10 +341,10 @@ export default function ComunidadPage() {
               {activeTab === 'chats' && (
                 <>
                   {conversations.length === 0 && (
-                    <div className="empty" style={{ padding: '48px 24px' }}>
+                    <div className="empty" style={{ padding: '40px 16px' }}>
                       <div className="empty-icon">💬</div>
                       <p className="empty-title">Sin conversaciones</p>
-                      <p className="empty-desc">Agrega amigos para empezar a chatear</p>
+                      <p className="empty-desc">Agrega amigos para chatear</p>
                     </div>
                   )}
                   {conversations.map(conv => (
@@ -286,7 +355,7 @@ export default function ComunidadPage() {
                       </div>
                       <div className="info">
                         <p className="name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
-                        <p className="sub">{conv.lastMessage || 'Sin mensajes aún'}</p>
+                        <p className="sub">{conv.lastMessage || 'Sin mensajes'}</p>
                       </div>
                       {conv.lastMessageAt && <span className="time">{fmtRel(conv.lastMessageAt)}</span>}
                     </div>
@@ -306,18 +375,18 @@ export default function ComunidadPage() {
                             <p className="name">{u.displayName || 'Usuario'}</p>
                             <p className="sub">{u.email}</p>
                           </div>
-                          <button className="btn btn-g" onClick={() => handleSendRequest(u)}>Agregar</button>
+                          <button className="btn btn-g" onClick={() => handleSendRequest(u)}>+</button>
                         </div>
                       ))}
                     </>
                   )}
                   {searchTerm && searchResults.length === 0 && (
-                    <div className="empty" style={{ padding: '32px 16px' }}><p className="empty-desc">No se encontraron usuarios</p></div>
+                    <div className="empty" style={{ padding: '24px 16px' }}><p className="empty-desc">No encontrado</p></div>
                   )}
                   {!searchTerm && friends.length === 0 && (
-                    <div className="empty" style={{ padding: '48px 24px' }}>
+                    <div className="empty" style={{ padding: '40px 16px' }}>
                       <div className="empty-icon">👥</div>
-                      <p className="empty-title">Sin amigos aún</p>
+                      <p className="empty-title">Sin amigos</p>
                       <p className="empty-desc">Busca personas para agregar</p>
                     </div>
                   )}
@@ -339,16 +408,16 @@ export default function ComunidadPage() {
               {activeTab === 'requests' && (
                 <>
                   {receivedRequests.length === 0 && (
-                    <div className="empty" style={{ padding: '48px 24px' }}>
+                    <div className="empty" style={{ padding: '40px 16px' }}>
                       <div className="empty-icon">📨</div>
                       <p className="empty-title">Sin solicitudes</p>
-                      <p className="empty-desc">No tienes solicitudes pendientes</p>
+                      <p className="empty-desc">No hay solicitudes pendientes</p>
                     </div>
                   )}
                   {receivedRequests.map(r => (
-                    <div key={r.id} className="item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 10 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div className="avatar" style={{ width: 40, height: 40, fontSize: '0.875rem' }}>{r.senderName?.charAt(0) || '?'}</div>
+                    <div key={r.id} className="item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="avatar" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>{r.senderName?.charAt(0) || '?'}</div>
                         <div className="info">
                           <p className="name">{r.senderName}</p>
                           <p className="sub">Quiere ser tu amigo</p>
@@ -365,14 +434,14 @@ export default function ComunidadPage() {
             </div>
           </div>
 
-          {/* Chat */}
-          <div className={`chat ${showChat ? 'show' : ''}`}>
+          {/* Chat area */}
+          <div className={`chat-area ${showChat ? 'show' : ''}`}>
             {activeConversation && activeUser ? (
               <>
-                <div className="header">
+                <div className="chat-header">
                   <button onClick={() => { setShowChat(false); setActiveConversation(null); }} className="back">←</button>
                   <div className="hinfo">
-                    <div className="avatar" style={{ width: 40, height: 40, fontSize: '0.875rem' }}>
+                    <div className="avatar" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>
                       {activeUser.photoURL ? <img src={activeUser.photoURL} alt="" /> : activeUser.displayName?.charAt(0) || '?'}
                       <span className={`dot ${otherUserOnline ? 'on' : 'off'}`} />
                     </div>
@@ -400,7 +469,7 @@ export default function ComunidadPage() {
                 </div>
                 <div className="input-area">
                   <div className="input-wrap">
-                    <input className="input" placeholder="Escribe un mensaje..." value={privateInput} onChange={(e) => setPrivateInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} />
+                    <input className="input" placeholder="Mensaje..." value={privateInput} onChange={(e) => setPrivateInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} />
                     <button className="send" onClick={handleSend}>➤</button>
                   </div>
                 </div>
@@ -409,7 +478,7 @@ export default function ComunidadPage() {
               <div className="empty">
                 <div className="empty-icon">💬</div>
                 <h3 className="empty-title">Selecciona una conversación</h3>
-                <p className="empty-desc">Toca un amigo para comenzar a chatear</p>
+                <p className="empty-desc">Toca un amigo para chatear</p>
               </div>
             )}
           </div>
