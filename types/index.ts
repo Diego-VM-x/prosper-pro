@@ -9,6 +9,15 @@ export interface UserProfile {
   title?: string;
   currentXP?: number;
   online?: boolean;
+  bio?: string;
+  language?: string;
+  currency?: string;
+  darkModeSync?: boolean;
+  notifications?: {
+    priceAlerts?: boolean;
+    budgetAlerts?: boolean;
+    communityMsgs?: boolean;
+  };
 }
 
 export type GoalCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Otro';

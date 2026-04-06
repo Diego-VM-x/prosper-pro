@@ -56,6 +56,12 @@ export default function ConfiguracionPage() {
         setProfile(p);
         setDisplayName(p.displayName || '');
         setBio((p as any).bio || '');
+        setLanguage((p as any).language || 'es');
+        setCurrency((p as any).currency || 'USD');
+        setDarkModeSync((p as any).darkModeSync ?? true);
+        setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
+        setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
+        setCommunityMsgs((p as any).notifications?.communityMsgs ?? true);
       }
     });
 
