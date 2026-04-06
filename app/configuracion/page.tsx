@@ -705,6 +705,8 @@ export default function ConfiguracionPage() {
               display: flex;
               gap: 16px;
               align-items: flex-start;
+              max-width: 100%;
+              overflow: hidden;
             }
             [data-theme="dark"] .danger-zone {
               background: rgba(127,29,29,0.15);
@@ -723,6 +725,8 @@ export default function ConfiguracionPage() {
             }
             .danger-content {
               flex: 1;
+              min-width: 0;
+              max-width: 100%;
             }
             .danger-title {
               font-size: 0.875rem;
@@ -755,6 +759,10 @@ export default function ConfiguracionPage() {
               font-weight: 700;
               cursor: pointer;
               transition: all 0.2s;
+              word-break: break-word;
+              white-space: normal;
+              text-align: center;
+              line-height: 1.4;
             }
             .danger-btn:hover:not(:disabled) {
               background: #dc2626;
@@ -857,6 +865,14 @@ export default function ConfiguracionPage() {
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
+                padding: 16px;
+              }
+              .danger-icon {
+                margin-bottom: 12px;
+              }
+              .danger-btn {
+                font-size: 0.6875rem;
+                padding: 10px 12px;
               }
               .prefs-section {
                 padding: 16px;
