@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
+import { clearUserData } from '@/lib/firestore/privateMessages';
 import { useTheme } from '@/app/components/ThemeProvider';
 import type { UserProfile } from '@/types';
 
@@ -26,6 +27,7 @@ export default function ConfiguracionPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [clearingCommunity, setClearingCommunity] = useState(false);
 
   // Cargar perfil
   useEffect(() => {
@@ -98,6 +100,23 @@ export default function ConfiguracionPage() {
   };
 
   // Eliminar cuenta
+  const handleClearCommunityData = async () => {
+    if (!user?.uid) return;
+    if (!confirm('¿Estás seguro de que quieres eliminar todos tus datos de comunidad (amigos, mensajes, solicitudes)? Esta acción es irreversible.')) return;
+    setClearingCommunity(true);
+    try {
+      await clearUserData(user.uid);
+      setSuccessMsg('Datos de comunidad eliminados correctamente');
+      setTimeout(() => setSuccessMsg(''), 3000);
+    } catch (e) {
+      console.error('Error clearing community data:', e);
+      setErrorMsg('Error al eliminar datos de comunidad');
+      setTimeout(() => setErrorMsg(''), 3000);
+    } finally {
+      setClearingCommunity(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setErrorMsg('');
     setDeleting(true);
@@ -989,6 +1008,14 @@ export default function ConfiguracionPage() {
                   <p className="danger-desc">
                     Al eliminar tu cuenta, se borrarán permanentemente tus metas, historial de ahorro, mensajes y tu acceso a la plataforma. Esta acción es irreversible.
                   </p>
+                  <button
+                    className="danger-btn"
+                    onClick={handleClearCommunityData}
+                    disabled={clearingCommunity}
+                    style={{ marginBottom: 12, background: '#92400e', borderColor: '#92400e' }}
+                  >
+                    {clearingCommunity ? 'Limpiando...' : 'Limpiar datos de comunidad (amigos, mensajes)'}
+                  </button>
                   <button
                     className="danger-btn"
                     onClick={handleDeleteAccount}

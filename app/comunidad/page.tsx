@@ -159,9 +159,16 @@ export default function ComunidadPage() {
     return () => document.removeEventListener('mousedown', handler);
   }, [showMenu]);
 
+  const [chatError, setChatError] = useState<string | null>(null);
+
   const startChat = useCallback(async (f: UserProfile) => {
     if (!user?.uid) return;
+    setChatError(null);
     const cid = await getOrCreateConversation(user.uid, f.uid);
+    if (!cid) {
+      setChatError('Debes ser amigo de este usuario para chatear');
+      return;
+    }
     setActiveConversation(cid);
   }, [user?.uid]);
 
@@ -968,9 +975,16 @@ export default function ComunidadPage() {
                   </div>
                 </div>
               </>
+            ) : chatError ? (
+              <div className="empty">
+                <div className="empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+                <h3 className="empty-title">No puedes chatear</h3>
+                <p className="empty-desc">{chatError}</p>
+                <button onClick={() => setChatError(null)} style={{ marginTop: 16, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--comm-border)', background: 'var(--comm-bg-tertiary)', color: 'var(--comm-text-primary)', cursor: 'pointer' }}>Cerrar</button>
+              </div>
             ) : (
               <div className="empty">
-                <div className="empty-icon">💬</div>
+                <div className="empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
                 <h3 className="empty-title">Selecciona una conversación</h3>
                 <p className="empty-desc">Toca un contacto para comenzar a chatear</p>
               </div>

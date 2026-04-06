@@ -5,6 +5,7 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -99,8 +100,15 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
 // ==================== CONVERSATIONS ====================
 
-// Obtener o crear una conversación 1:1
-export async function getOrCreateConversation(userId1: string, userId2: string): Promise<string> {
+// Obtener o crear una conversación 1:1 (solo si son amigos)
+export async function getOrCreateConversation(userId1: string, userId2: string): Promise<string | null> {
+  // Verificar que son amigos
+  const friends = await areFriends(userId1, userId2);
+  if (!friends) {
+    console.warn('No se puede crear conversación: no son amigos');
+    return null;
+  }
+  
   // Buscar conversación existente
   const q = query(
     collection(db, CONVERSATIONS_COLLECTION),
@@ -233,7 +241,14 @@ export async function sendPrivateMessage(
   senderId: string,
   receiverId: string,
   text: string
-) {
+): Promise<string | null> {
+  // Verificar que son amigos
+  const friends = await areFriends(senderId, receiverId);
+  if (!friends) {
+    console.warn('No se puede enviar mensaje: no son amigos');
+    return null;
+  }
+  
   const utcTimestamp = Date.now();
   // Guardar mensaje en Firestore
   const msgRef = await addDoc(collection(db, MESSAGES_COLLECTION), {
@@ -271,6 +286,44 @@ export async function sendPrivateMessage(
   });
   
   return msgRef.id;
+}
+
+// ==================== CLEANUP (para pruebas) ====================
+
+// Eliminar todas las conversaciones y mensajes de un usuario
+export async function clearUserData(userId: string) {
+  // Eliminar conversaciones
+  const convQ = query(
+    collection(db, CONVERSATIONS_COLLECTION),
+    where('participants', 'array-contains', userId)
+  );
+  const convSnap = await getDocs(convQ);
+  for (const d of convSnap.docs) {
+    // Eliminar mensajes de esta conversación
+    const msgQ = query(
+      collection(db, MESSAGES_COLLECTION),
+      where('conversationId', '==', d.id)
+    );
+    const msgSnap = await getDocs(msgQ);
+    for (const m of msgSnap.docs) {
+      await deleteDoc(m.ref);
+    }
+    // Eliminar conversación
+    await deleteDoc(d.ref);
+  }
+  
+  // Eliminar solicitudes de amistad
+  const reqQ1 = query(collection(db, REQUESTS_COLLECTION), where('senderId', '==', userId));
+  const reqQ2 = query(collection(db, REQUESTS_COLLECTION), where('receiverId', '==', userId));
+  const reqSnap1 = await getDocs(reqQ1);
+  const reqSnap2 = await getDocs(reqQ2);
+  for (const d of reqSnap1.docs) await deleteDoc(d.ref);
+  for (const d of reqSnap2.docs) await deleteDoc(d.ref);
+  
+  // Eliminar amistades
+  const friendQ = query(collection(db, FRIENDS_COLLECTION), where('users', 'array-contains', userId));
+  const friendSnap = await getDocs(friendQ);
+  for (const d of friendSnap.docs) await deleteDoc(d.ref);
 }
 
 export async function markMessagesAsRead(conversationId: string, userId: string) {
