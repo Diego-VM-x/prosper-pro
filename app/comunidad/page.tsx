@@ -25,11 +25,11 @@ import {
 } from '@/lib/firestore/privateMessages';
 import type { UserProfile, PrivateConversation, PrivateMessage } from '@/types';
 
-type TabType = 'chats' | 'friends' | 'requests';
+type TabType = 'messages' | 'channels' | 'contacts';
 
 export default function ComunidadPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('chats');
+  const [activeTab, setActiveTab] = useState<TabType>('messages');
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
@@ -171,194 +171,481 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', flexDirection: 'row-reverse' }}>
+        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: '#0e1511' }}>
           <style jsx>{`
-            .sidebar {
-              width: 300px;
-              min-width: 300px;
-              background: var(--bg-input);
+            /* Sidebar navigation */
+            .nav-sidebar {
+              width: 64px;
+              min-width: 64px;
+              background: #161d19;
               display: flex;
               flex-direction: column;
-              border-right: 1px solid var(--border-default);
+              align-items: center;
+              padding: 24px 0;
+              gap: 8px;
+              border-right: 1px solid rgba(60,74,66,0.1);
             }
-            .tabs { display: flex; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; }
-            .tab { flex: 1; padding: 12px 4px; text-align: center; font-size: 0.6875rem; font-weight: 600; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; }
-            .tab:hover { color: var(--text-primary); }
-            .tab.active { color: var(--color-prosper-green); border-bottom-color: var(--color-prosper-green); }
-            .badge { position: absolute; top: 4px; right: 50%; margin-right: -16px; background: var(--color-prosper-green); color: white; font-size: 0.5625rem; min-width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 7px; font-weight: 700; }
-            .search-box { padding: 10px 12px; flex-shrink: 0; }
-            .search-input { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-primary); font-size: 0.75rem; outline: none; box-sizing: border-box; }
-            .search-input:focus { border-color: var(--color-prosper-green); }
-            .list { flex: 1; overflow-y: auto; }
-            .item { padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-default); transition: background 0.15s; }
-            .item:hover { background: var(--bg-card); }
-            .item.active { background: var(--bg-card-high); }
-            .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; position: relative; overflow: hidden; }
-            .avatar img { width: 100%; height: 100%; object-fit: cover; }
-            .dot { position: absolute; bottom: 0; right: 0; width: 8px; height: 8px; border-radius: 50%; border: 2px solid var(--bg-input); }
-            .dot.on { background: var(--color-prosper-green); }
-            .dot.off { background: var(--text-tertiary); }
-            .info { flex: 1; min-width: 0; }
-            .name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .sub { font-size: 0.6875rem; color: var(--text-tertiary); margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .time { font-size: 0.625rem; color: var(--text-tertiary); flex-shrink: 0; }
-            .btn { padding: 5px 10px; border-radius: 6px; border: none; font-size: 0.6875rem; font-weight: 600; cursor: pointer; }
-            .btn-g { background: var(--color-prosper-green); color: white; }
-            .btn-s { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-default); }
-            .btn-x { background: transparent; color: var(--text-tertiary); padding: 4px; border: none; cursor: pointer; font-size: 0.875rem; }
-            .btn-x:hover { color: #ef4444; }
-            .sec { padding: 10px 12px 6px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; }
+            .nav-item {
+              width: 48px;
+              height: 48px;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              transition: all 0.2s;
+              color: #91c4a8;
+              opacity: 0.7;
+              font-size: 1.25rem;
+            }
+            .nav-item:hover { background: #1a211d; opacity: 1; }
+            .nav-item.active { background: rgba(78,222,163,0.1); color: #4edea3; opacity: 1; }
+            .nav-badge {
+              position: absolute;
+              top: 4px;
+              right: 4px;
+              background: #4edea3;
+              color: #003824;
+              font-size: 0.5625rem;
+              min-width: 14px;
+              height: 14px;
+              line-height: 14px;
+              text-align: center;
+              border-radius: 7px;
+              font-weight: 700;
+            }
 
-            .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-card); }
-            .chat-header { height: 56px; padding: 0 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; gap: 10px; }
-            .hinfo { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-            .hname { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .hstatus { font-size: 0.625rem; color: var(--text-tertiary); margin: 0; }
-            .hstatus.on { color: var(--color-prosper-green); }
-            .msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-            .divider { display: flex; justify-content: center; margin: 10px 0; }
-            .divider span { padding: 3px 10px; background: var(--bg-input); color: var(--text-tertiary); font-size: 0.625rem; font-weight: 600; border-radius: 10px; }
-            .row { display: flex; gap: 6px; max-width: 75%; }
-            .row.r { align-self: flex-start; }
-            .row.s { align-self: flex-end; flex-direction: row-reverse; }
-            .av-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; overflow: hidden; }
-            .av-sm img { width: 100%; height: 100%; object-fit: cover; }
-            .content { display: flex; flex-direction: column; }
-            .row.s .content { align-items: flex-end; }
-            .bubble { padding: 8px 12px; border-radius: 14px; font-size: 0.8125rem; line-height: 1.4; word-break: break-word; }
-            .bubble.r { background: var(--bg-input); color: var(--text-primary); border-bottom-left-radius: 4px; }
-            .bubble.s { background: var(--color-prosper-green); color: white; border-bottom-right-radius: 4px; }
-            .mt { font-size: 0.5625rem; color: var(--text-tertiary); margin-top: 2px; padding: 0 4px; }
-            .input-area { padding: 10px 16px; background: var(--bg-card); border-top: 1px solid var(--border-default); flex-shrink: 0; }
-            .input-wrap { display: flex; align-items: center; gap: 6px; background: var(--bg-input); border-radius: 20px; padding: 4px 4px 4px 12px; }
-            .input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 0.8125rem; padding: 6px 0; outline: none; }
-            .input::placeholder { color: var(--text-tertiary); }
-            .send { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--color-prosper-green); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
-            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-tertiary); text-align: center; padding: 24px; }
-            .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
-            .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px; }
+            /* Conversation list */
+            .conv-list {
+              width: 320px;
+              min-width: 320px;
+              background: #161d19;
+              display: flex;
+              flex-direction: column;
+              border-right: 1px solid rgba(60,74,66,0.05);
+            }
+            .conv-header { padding: 24px; }
+            .conv-title { font-size: 1.25rem; font-weight: 700; color: #dde4dd; margin: 0 0 16px; }
+            .search-wrap { position: relative; }
+            .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #bbcabf; font-size: 0.875rem; }
+            .search-input {
+              width: 100%;
+              padding: 10px 12px 10px 36px;
+              border-radius: 8px;
+              border: none;
+              background: #1a211d;
+              color: #dde4dd;
+              font-size: 0.8125rem;
+              outline: none;
+              box-sizing: border-box;
+            }
+            .search-input:focus { box-shadow: 0 0 0 1px #4edea3; }
+            .conv-scroll { flex: 1; overflow-y: auto; padding: 8px 16px; }
+            .conv-item {
+              padding: 12px;
+              border-radius: 12px;
+              cursor: pointer;
+              margin-bottom: 8px;
+              transition: all 0.15s;
+            }
+            .conv-item:hover { background: #1a211d; }
+            .conv-item.active { background: #242c27; }
+            .conv-row { display: flex; align-items: center; gap: 12px; }
+            .conv-avatar { position: relative; flex-shrink: 0; }
+            .conv-avatar img, .conv-avatar .initials {
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              object-fit: cover;
+            }
+            .conv-avatar .initials {
+              background: #1a211d;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1rem;
+              font-weight: 700;
+              color: #4edea3;
+            }
+            .status-dot {
+              position: absolute;
+              bottom: 0;
+              right: 0;
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+              border: 2px solid #1a211d;
+            }
+            .status-dot.on { background: #4edea3; }
+            .status-dot.off { background: #3c4a42; }
+            .conv-info { flex: 1; min-width: 0; }
+            .conv-top { display: flex; justify-content: space-between; align-items: flex-start; }
+            .conv-name { font-size: 0.875rem; font-weight: 700; color: #dde4dd; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .conv-time { font-size: 0.625rem; color: #bbcabf; flex-shrink: 0; }
+            .conv-msg { font-size: 0.75rem; color: #4edea3; margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+            .conv-msg.muted { color: #bbcabf; font-weight: 400; }
+
+            /* Chat area */
+            .chat-area {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+              background: #0e1511;
+              position: relative;
+            }
+            .chat-header {
+              height: 80px;
+              padding: 0 32px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              border-bottom: 1px solid rgba(60,74,66,0.05);
+              background: rgba(14,21,17,0.8);
+              backdrop-filter: blur(20px);
+              flex-shrink: 0;
+            }
+            .chat-header-left { display: flex; align-items: center; gap: 16px; }
+            .chat-avatar { position: relative; }
+            .chat-avatar img, .chat-avatar .initials {
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              object-fit: cover;
+            }
+            .chat-avatar .initials {
+              background: #1a211d;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.875rem;
+              font-weight: 700;
+              color: #4edea3;
+            }
+            .chat-avatar .status-dot { width: 10px; height: 10px; border-color: #0e1511; }
+            .chat-name { font-size: 1rem; font-weight: 700; color: #dde4dd; margin: 0; }
+            .chat-status { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+            .chat-status span { font-size: 0.625rem; color: #bbcabf; font-weight: 500; }
+            .chat-status .encrypted { color: #4edea3; }
+            .chat-actions { display: flex; gap: 8px; }
+            .chat-action-btn {
+              width: 40px;
+              height: 40px;
+              border-radius: 8px;
+              border: none;
+              background: transparent;
+              color: #bbcabf;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.125rem;
+              transition: all 0.15s;
+            }
+            .chat-action-btn:hover { background: #242c27; color: #dde4dd; }
+
+            /* Messages */
+            .msgs {
+              flex: 1;
+              overflow-y: auto;
+              padding: 32px;
+              display: flex;
+              flex-direction: column;
+              gap: 24px;
+              background: radial-gradient(circle at center, rgba(16,185,129,0.03) 0%, transparent 70%);
+            }
+            .date-divider { display: flex; justify-content: center; }
+            .date-divider span {
+              padding: 4px 12px;
+              background: #242c27;
+              color: #bbcabf;
+              font-size: 0.625rem;
+              font-weight: 700;
+              border-radius: 9999px;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+            }
+            .msg-row { display: flex; gap: 12px; max-width: 70%; }
+            .msg-row.received { align-self: flex-start; }
+            .msg-row.sent { align-self: flex-end; flex-direction: row-reverse; }
+            .msg-avatar-sm {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              object-fit: cover;
+              flex-shrink: 0;
+            }
+            .msg-content { display: flex; flex-direction: column; gap: 4px; }
+            .msg-row.sent .msg-content { align-items: flex-end; }
+            .msg-bubble {
+              padding: 16px;
+              border-radius: 16px;
+              font-size: 0.875rem;
+              line-height: 1.6;
+              word-break: break-word;
+            }
+            .msg-bubble.received { background: #242c27; color: #dde4dd; border-bottom-left-radius: 4px; }
+            .msg-bubble.sent { background: #10b981; color: #003824; border-bottom-right-radius: 4px; box-shadow: 0 4px 16px rgba(78,222,163,0.1); }
+            .msg-time { font-size: 0.625rem; color: #bbcabf; padding: 0 4px; }
+            .msg-check { font-size: 0.75rem; color: #4edea3; }
+
+            /* Input */
+            .input-area { padding: 24px 32px; background: #0e1511; }
+            .input-wrap {
+              max-width: 800px;
+              margin: 0 auto;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              background: #1a211d;
+              border-radius: 16px;
+              padding: 8px 8px 8px 16px;
+            }
+            .input-wrap:focus-within { box-shadow: 0 0 0 1px #4edea3; }
+            .attach-btn, .emoji-btn {
+              width: 40px;
+              height: 40px;
+              border-radius: 8px;
+              border: none;
+              background: transparent;
+              color: #bbcabf;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.125rem;
+              transition: color 0.15s;
+            }
+            .attach-btn:hover, .emoji-btn:hover { color: #4edea3; }
+            .msg-input {
+              flex: 1;
+              background: transparent;
+              border: none;
+              color: #dde4dd;
+              font-size: 0.875rem;
+              padding: 8px;
+              outline: none;
+            }
+            .msg-input::placeholder { color: rgba(187,202,191,0.5); }
+            .send-btn {
+              width: 40px;
+              height: 40px;
+              border-radius: 12px;
+              border: none;
+              background: #4edea3;
+              color: #003824;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.125rem;
+              transition: all 0.15s;
+              box-shadow: 0 4px 12px rgba(78,222,163,0.2);
+            }
+            .send-btn:hover { filter: brightness(1.1); }
+            .send-btn:active { transform: scale(0.95); }
+            .input-hint { text-align: center; font-size: 0.625rem; color: rgba(187,202,191,0.4); margin-top: 16px; font-weight: 500; }
+
+            /* Empty state */
+            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbcabf; text-align: center; padding: 32px; }
+            .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+            .empty-title { font-size: 1.125rem; font-weight: 600; color: #dde4dd; margin: 0 0 8px; }
             .empty-desc { font-size: 0.75rem; margin: 0; max-width: 240px; }
 
+            /* Contacts list */
+            .contact-item {
+              padding: 12px;
+              border-radius: 12px;
+              cursor: pointer;
+              margin-bottom: 8px;
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              transition: background 0.15s;
+            }
+            .contact-item:hover { background: #1a211d; }
+            .contact-info { flex: 1; min-width: 0; }
+            .contact-name { font-size: 0.875rem; font-weight: 600; color: #dde4dd; margin: 0; }
+            .contact-email { font-size: 0.6875rem; color: #bbcabf; margin: 2px 0 0; }
+            .btn-add {
+              padding: 6px 12px;
+              border-radius: 6px;
+              border: none;
+              background: #4edea3;
+              color: #003824;
+              font-size: 0.6875rem;
+              font-weight: 600;
+              cursor: pointer;
+            }
+            .btn-add:hover { filter: brightness(1.1); }
+
+            /* Requests */
+            .request-item {
+              padding: 12px;
+              border-radius: 12px;
+              margin-bottom: 8px;
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+              background: #1a211d;
+            }
+            .request-top { display: flex; align-items: center; gap: 12px; }
+            .request-actions { display: flex; gap: 8px; }
+            .btn-accept { flex: 1; padding: 8px; border-radius: 8px; border: none; background: #4edea3; color: #003824; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+            .btn-reject { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #3c4a42; background: transparent; color: #bbcabf; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+
+            /* Mobile */
             @media (max-width: 768px) {
-              .sidebar { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; }
-              .sidebar.hide { display: none; }
-              .chat { position: absolute; inset: 0; z-index: 20; display: none; }
-              .chat.show { display: flex; }
-              .row { max-width: 85%; }
+              .nav-sidebar { display: none; }
+              .conv-list { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; }
+              .conv-list.hide { display: none; }
+              .chat-area { position: absolute; inset: 0; z-index: 20; display: none; }
+              .chat-area.show { display: flex; }
+              .msgs { padding: 16px; }
+              .input-area { padding: 12px 16px; }
+              .chat-header { padding: 0 16px; height: 60px; }
+              .msg-row { max-width: 85%; }
             }
           `}</style>
 
-          {/* Sidebar */}
-          <div className={`sidebar ${activeConversation ? 'hide' : ''}`}>
-            <div className="tabs">
-              <div className={`tab ${activeTab === 'chats' ? 'active' : ''}`} onClick={() => setActiveTab('chats')}>
-                💬 Chats
-                {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
-              </div>
-              <div className={`tab ${activeTab === 'friends' ? 'active' : ''}`} onClick={() => setActiveTab('friends')}>
-                👥 Amigos
-              </div>
-              <div className={`tab ${activeTab === 'requests' ? 'active' : ''}`} onClick={() => setActiveTab('requests')}>
-                📨
-                {receivedRequests.length > 0 && <span className="badge">{receivedRequests.length}</span>}
+          {/* Navigation sidebar */}
+          <div className="nav-sidebar">
+            <div className={`nav-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')} style={{ position: 'relative' }}>
+              💬
+              {unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
+            </div>
+            <div className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => setActiveTab('channels')}>
+              📢
+            </div>
+            <div className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>
+              👥
+            </div>
+          </div>
+
+          {/* Conversation list */}
+          <div className={`conv-list ${activeConversation ? 'hide' : ''}`}>
+            <div className="conv-header">
+              <h2 className="conv-title">
+                {activeTab === 'messages' ? 'Mensajes' : activeTab === 'channels' ? 'Canales' : 'Contactos'}
+              </h2>
+              <div className="search-wrap">
+                <span className="search-icon">🔍</span>
+                <input
+                  className="search-input"
+                  placeholder={activeTab === 'contacts' ? 'Buscar personas...' : 'Buscar conversaciones...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
 
-            {activeTab === 'friends' && (
-              <div className="search-box">
-                <input className="search-input" placeholder="Buscar..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </div>
-            )}
-
-            <div className="list">
-              {activeTab === 'chats' && (
+            <div className="conv-scroll">
+              {/* Messages tab */}
+              {activeTab === 'messages' && (
                 <>
                   {conversations.length === 0 && (
                     <div className="empty" style={{ padding: '40px 16px' }}>
                       <div className="empty-icon">💬</div>
                       <p className="empty-title">Sin conversaciones</p>
-                      <p className="empty-desc">Agrega amigos para chatear</p>
+                      <p className="empty-desc">Agrega contactos para empezar</p>
                     </div>
                   )}
                   {conversations.map(conv => (
-                    <div key={conv.id} className={`item ${activeConversation === conv.id ? 'active' : ''}`} onClick={() => setActiveConversation(conv.id)}>
-                      <div className="avatar">
-                        {conv.otherUser?.photoURL ? <img src={conv.otherUser.photoURL} alt="" /> : conv.otherUser?.displayName?.charAt(0) || '?'}
-                        <span className={`dot ${conv.otherUser ? 'on' : 'off'}`} />
+                    <div key={conv.id} className={`conv-item ${activeConversation === conv.id ? 'active' : ''}`} onClick={() => setActiveConversation(conv.id)}>
+                      <div className="conv-row">
+                        <div className="conv-avatar">
+                          {conv.otherUser?.photoURL ? (
+                            <img src={conv.otherUser.photoURL} alt="" />
+                          ) : (
+                            <div className="initials">{conv.otherUser?.displayName?.charAt(0) || '?'}</div>
+                          )}
+                          <span className={`status-dot ${conv.otherUser ? 'on' : 'off'}`} />
+                        </div>
+                        <div className="conv-info">
+                          <div className="conv-top">
+                            <p className="conv-name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
+                            {conv.lastMessageAt && <span className="conv-time">{fmtRel(conv.lastMessageAt)}</span>}
+                          </div>
+                          <p className={`conv-msg ${!conv.lastMessage ? 'muted' : ''}`}>{conv.lastMessage || 'Sin mensajes aún'}</p>
+                        </div>
                       </div>
-                      <div className="info">
-                        <p className="name">{conv.otherUser?.displayName || conv.otherUser?.email || 'Usuario'}</p>
-                        <p className="sub">{conv.lastMessage || 'Sin mensajes'}</p>
-                      </div>
-                      {conv.lastMessageAt && <span className="time">{fmtRel(conv.lastMessageAt)}</span>}
                     </div>
                   ))}
                 </>
               )}
 
-              {activeTab === 'friends' && (
+              {/* Channels tab */}
+              {activeTab === 'channels' && (
+                <div className="empty" style={{ padding: '40px 16px' }}>
+                  <div className="empty-icon">📢</div>
+                  <p className="empty-title">Próximamente</p>
+                  <p className="empty-desc">Los canales estarán disponibles pronto</p>
+                </div>
+              )}
+
+              {/* Contacts tab */}
+              {activeTab === 'contacts' && (
                 <>
                   {searchTerm && searchResults.length > 0 && (
                     <>
-                      <div className="sec">Resultados</div>
+                      <p style={{ fontSize: '0.625rem', fontWeight: 700, color: '#bbcabf', textTransform: 'uppercase', padding: '8px 12px 4px', letterSpacing: '0.05em' }}>Resultados</p>
                       {searchResults.map(u => (
-                        <div key={u.uid} className="item">
-                          <div className="avatar">{u.photoURL ? <img src={u.photoURL} alt="" /> : u.displayName?.charAt(0) || '?'}</div>
-                          <div className="info">
-                            <p className="name">{u.displayName || 'Usuario'}</p>
-                            <p className="sub">{u.email}</p>
+                        <div key={u.uid} className="contact-item">
+                          <div className="conv-avatar" style={{ width: 40, height: 40 }}>
+                            {u.photoURL ? <img src={u.photoURL} alt="" style={{ width: 40, height: 40 }} /> : <div className="initials" style={{ width: 40, height: 40, fontSize: '0.875rem' }}>{u.displayName?.charAt(0) || '?'}</div>}
                           </div>
-                          <button className="btn btn-g" onClick={() => handleSendRequest(u)}>+</button>
+                          <div className="contact-info">
+                            <p className="contact-name">{u.displayName || 'Usuario'}</p>
+                            <p className="contact-email">{u.email}</p>
+                          </div>
+                          <button className="btn-add" onClick={() => handleSendRequest(u)}>Agregar</button>
                         </div>
                       ))}
                     </>
                   )}
                   {searchTerm && searchResults.length === 0 && (
-                    <div className="empty" style={{ padding: '24px 16px' }}><p className="empty-desc">No encontrado</p></div>
+                    <div className="empty" style={{ padding: '24px 16px' }}><p className="empty-desc">No se encontraron usuarios</p></div>
                   )}
                   {!searchTerm && friends.length === 0 && (
                     <div className="empty" style={{ padding: '40px 16px' }}>
                       <div className="empty-icon">👥</div>
-                      <p className="empty-title">Sin amigos</p>
+                      <p className="empty-title">Sin contactos</p>
                       <p className="empty-desc">Busca personas para agregar</p>
                     </div>
                   )}
                   {!searchTerm && friends.map(f => (
-                    <div key={f.uid} className="item">
-                      <div className="avatar" onClick={() => startChat(f)} style={{ cursor: 'pointer' }}>
-                        {f.photoURL ? <img src={f.photoURL} alt="" /> : f.displayName?.charAt(0) || '?'}
+                    <div key={f.uid} className="contact-item">
+                      <div className="conv-avatar" style={{ width: 40, height: 40, cursor: 'pointer' }} onClick={() => startChat(f)}>
+                        {f.photoURL ? <img src={f.photoURL} alt="" style={{ width: 40, height: 40 }} /> : <div className="initials" style={{ width: 40, height: 40, fontSize: '0.875rem' }}>{f.displayName?.charAt(0) || '?'}</div>}
                       </div>
-                      <div className="info" onClick={() => startChat(f)} style={{ cursor: 'pointer' }}>
-                        <p className="name">{f.displayName || 'Usuario'}</p>
-                        <p className="sub">Toca para chatear</p>
+                      <div className="contact-info" onClick={() => startChat(f)} style={{ cursor: 'pointer' }}>
+                        <p className="contact-name">{f.displayName || 'Usuario'}</p>
+                        <p className="contact-email">Toca para chatear</p>
                       </div>
-                      <button className="btn-x" onClick={() => handleRemove(f.uid)}>✕</button>
+                      <button style={{ background: 'transparent', border: 'none', color: '#bbcabf', cursor: 'pointer', fontSize: '0.875rem', padding: '4px' }} onClick={() => handleRemove(f.uid)}>✕</button>
                     </div>
                   ))}
                 </>
               )}
 
-              {activeTab === 'requests' && (
+              {/* Requests */}
+              {receivedRequests.length > 0 && (
                 <>
-                  {receivedRequests.length === 0 && (
-                    <div className="empty" style={{ padding: '40px 16px' }}>
-                      <div className="empty-icon">📨</div>
-                      <p className="empty-title">Sin solicitudes</p>
-                      <p className="empty-desc">No hay solicitudes pendientes</p>
-                    </div>
-                  )}
+                  <p style={{ fontSize: '0.625rem', fontWeight: 700, color: '#bbcabf', textTransform: 'uppercase', padding: '16px 12px 8px', letterSpacing: '0.05em' }}>Solicitudes</p>
                   {receivedRequests.map(r => (
-                    <div key={r.id} className="item" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="avatar" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>{r.senderName?.charAt(0) || '?'}</div>
-                        <div className="info">
-                          <p className="name">{r.senderName}</p>
-                          <p className="sub">Quiere ser tu amigo</p>
+                    <div key={r.id} className="request-item">
+                      <div className="request-top">
+                        <div className="conv-avatar" style={{ width: 36, height: 36 }}>
+                          <div className="initials" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>{r.senderName?.charAt(0) || '?'}</div>
+                        </div>
+                        <div className="contact-info">
+                          <p className="contact-name">{r.senderName}</p>
+                          <p className="contact-email">Quiere ser tu amigo</p>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button className="btn btn-g" style={{ flex: 1 }} onClick={() => handleAccept(r)}>Aceptar</button>
-                        <button className="btn btn-s" style={{ flex: 1 }} onClick={() => handleReject(r.id)}>Rechazar</button>
+                      <div className="request-actions">
+                        <button className="btn-accept" onClick={() => handleAccept(r)}>Aceptar</button>
+                        <button className="btn-reject" onClick={() => handleReject(r.id)}>Rechazar</button>
                       </div>
                     </div>
                   ))}
@@ -367,51 +654,78 @@ export default function ComunidadPage() {
             </div>
           </div>
 
-          {/* Chat */}
-          <div className={`chat ${activeConversation ? 'show' : ''}`}>
+          {/* Chat area */}
+          <div className={`chat-area ${activeConversation ? 'show' : ''}`}>
             {activeConversation && activeUser ? (
               <>
                 <div className="chat-header">
-                  <button onClick={() => setActiveConversation(null)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '6px', fontSize: '1.125rem', display: 'none' }} className="back-btn">←</button>
-                  <div className="hinfo">
-                    <div className="avatar" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>
-                      {activeUser.photoURL ? <img src={activeUser.photoURL} alt="" /> : activeUser.displayName?.charAt(0) || '?'}
-                      <span className={`dot ${otherUserOnline ? 'on' : 'off'}`} />
+                  <div className="chat-header-left">
+                    <div className="chat-avatar">
+                      {activeUser.photoURL ? (
+                        <img src={activeUser.photoURL} alt="" />
+                      ) : (
+                        <div className="initials">{activeUser.displayName?.charAt(0) || '?'}</div>
+                      )}
+                      <span className={`status-dot ${otherUserOnline ? 'on' : 'off'}`} />
                     </div>
                     <div>
-                      <p className="hname">{activeUser.displayName || activeUser.email || 'Usuario'}</p>
-                      <p className={`hstatus ${otherUserOnline ? 'on' : ''}`}>{otherUserOnline ? 'En línea' : 'Desconectado'}</p>
+                      <p className="chat-name">{activeUser.displayName || activeUser.email || 'Usuario'}</p>
+                      <div className="chat-status">
+                        <span className="encrypted">🔒</span>
+                        <span>{otherUserOnline ? 'En línea' : 'Desconectado'}</span>
+                      </div>
                     </div>
                   </div>
+                  <div className="chat-actions">
+                    <button className="chat-action-btn">📞</button>
+                    <button className="chat-action-btn">📹</button>
+                    <button className="chat-action-btn">⋮</button>
+                  </div>
                 </div>
+
                 <div className="msgs">
-                  <div className="divider"><span>Hoy</span></div>
+                  <div className="date-divider"><span>Hoy</span></div>
                   {privateMessages.map(msg => {
                     const own = msg.senderId === user?.uid;
                     return (
-                      <div key={msg.id} className={`row ${own ? 's' : 'r'}`}>
-                        {!own && <div className="av-sm">{activeUser.photoURL ? <img src={activeUser.photoURL} alt="" /> : activeUser.displayName?.charAt(0) || '?'}</div>}
-                        <div className="content">
-                          <div className={`bubble ${own ? 's' : 'r'}`}>{msg.text}</div>
-                          <span className="mt">{fmtTime(msg.timestamp)}</span>
+                      <div key={msg.id} className={`msg-row ${own ? 'sent' : 'received'}`}>
+                        {!own && (
+                          <div className="conv-avatar" style={{ width: 32, height: 32 }}>
+                            {activeUser.photoURL ? (
+                              <img src={activeUser.photoURL} alt="" style={{ width: 32, height: 32 }} />
+                            ) : (
+                              <div className="initials" style={{ width: 32, height: 32, fontSize: '0.6875rem' }}>{activeUser.displayName?.charAt(0) || '?'}</div>
+                            )}
+                          </div>
+                        )}
+                        <div className="msg-content">
+                          <div className={`msg-bubble ${own ? 'sent' : 'received'}`}>{msg.text}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span className="msg-time">{fmtTime(msg.timestamp)}</span>
+                            {own && <span className="msg-check">✓✓</span>}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
                   <div ref={chatEndRef} />
                 </div>
+
                 <div className="input-area">
                   <div className="input-wrap">
-                    <input className="input" placeholder="Mensaje..." value={privateInput} onChange={(e) => setPrivateInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} />
-                    <button className="send" onClick={handleSend}>➤</button>
+                    <button className="attach-btn" title="Adjuntar">📎</button>
+                    <input className="msg-input" placeholder="Escribe un mensaje..." value={privateInput} onChange={(e) => setPrivateInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} />
+                    <button className="emoji-btn" title="Emoji">😊</button>
+                    <button className="send-btn" onClick={handleSend}>➤</button>
                   </div>
+                  <p className="input-hint">Al enviar un mensaje, aceptas las normas de la comunidad de Prosper.</p>
                 </div>
               </>
             ) : (
               <div className="empty">
                 <div className="empty-icon">💬</div>
                 <h3 className="empty-title">Selecciona una conversación</h3>
-                <p className="empty-desc">Toca un amigo para chatear</p>
+                <p className="empty-desc">Toca un contacto para comenzar a chatear</p>
               </div>
             )}
           </div>
