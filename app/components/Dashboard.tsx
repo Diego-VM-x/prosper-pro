@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -16,7 +16,10 @@ import {
 import { CustomSelect } from './CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts } from '@/lib/firestore/accounts';
-import { FinancialStatusChart } from './FinancialStatusChart';
+
+const FinancialStatusChart = lazy(() =>
+  import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
+);
 import type { Goal, XPState, CommunityMember, Achievement, GoalCategory, FinancialAccount } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
@@ -229,7 +232,9 @@ export function Dashboard() {
         {/* Sección Principal: Gráfico Financiero + Metas Activas */}
         <div className="main-grid">
           {/* Gráfico Financiero Premium con Recharts */}
-          <FinancialStatusChart />
+          <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
+            <FinancialStatusChart />
+          </Suspense>
 
           {/* Panel Lateral: Metas Activas */}
           <div className="dash-card goals-panel">

@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (06 de Abril, 2026 - Comunidad: Menú Dropdown + Modo Claro + Sin Llamadas)
+## Estado Actual (06 de Abril, 2026 - Optimización Web Maxima)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -13,6 +13,13 @@
 - **Escritura:** Respuestas concisas, ediciones parciales, confirmar tareas grandes (>50k tokens).
 - **Memoria:** Consultar CONTEXT.md antes de preguntar, no repetir errores solucionados.
 - **Optimización:** PC de bajos recursos (i3/4GB RAM), evitar librerías pesadas.
+
+## Optimizaciones de Rendimiento (06/04/2026)
+- **Google Fonts**: Migrado de `@import` CSS a `next/font/google` con `display: 'swap'`. Elimina bloqueo de renderizado.
+- **Ably eliminado**: Removida dependencia `ably` (~31 paquetes, ~500KB). Archivo `lib/ably.ts` eliminado. No se usaba en la app.
+- **Recharts lazy load**: `FinancialStatusChart` usa `lazy()` + `Suspense`. ~100KB de Recharts no bloquean renderizado inicial.
+- **Comunidad listeners optimizados**: 5 `useEffect` consolidados en 1. Heartbeat de presencia reducido de 30s a 60s. Mismas suscripciones activas, menos overhead.
+- **Build verificado**: `npm run build` exitoso en 46s, 14/14 páginas generadas.
 
 ## Estructura de Archivos Clave
 - `app/page.tsx` → Dashboard principal (rediseñado con grid system compacto)

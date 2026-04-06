@@ -1,7 +1,15 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter } from 'next/font/google';
 import { Suspense } from 'react';
 import './globals.css';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-inter',
+});
 import { SearchProvider } from '@/lib/contexts/SearchContext';
 import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 import { ThemeProvider } from './components/ThemeProvider';
@@ -120,7 +128,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
+      <body className={inter.variable}>
         <ErrorBoundary>
           <ThemeProvider>
             <AuthProvider>

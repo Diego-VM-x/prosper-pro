@@ -49,35 +49,29 @@ export default function ComunidadPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Heartbeat de presencia (optimizado: solo cada 60s)
   useEffect(() => {
     if (!user?.uid) return;
     setUserOnline(user.uid);
-    const hb = setInterval(() => setUserOnline(user.uid), 30000);
+    const hb = setInterval(() => setUserOnline(user.uid), 60000);
     return () => { clearInterval(hb); setUserOffline(user.uid); };
   }, [user?.uid]);
 
+  // Consolidar suscripciones en un solo efecto para reducir overhead
   useEffect(() => {
     if (!user?.uid) return;
-    const u = subscribeToFriends(user.uid, setFriends);
-    return () => u();
-  }, [user?.uid]);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    const u = subscribeToFriendRequests(user.uid, setReceivedRequests);
-    return () => u();
-  }, [user?.uid]);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    const u = subscribeToSentRequests(user.uid, setPendingSent);
-    return () => u();
-  }, [user?.uid]);
-
-  useEffect(() => {
-    if (!user?.uid) return;
-    const u = subscribeToConversations(user.uid, setConversations);
-    return () => u();
+    const unsubFriends = subscribeToFriends(user.uid, setFriends);
+    const unsubConversations = subscribeToConversations(user.uid, setConversations);
+    const unsubUnreadCount = subscribeToTotalUnreadCount(user.uid, setUnreadCount);
+    const unsubReceived = subscribeToFriendRequests(user.uid, setReceivedRequests);
+    const unsubSent = subscribeToSentRequests(user.uid, setPendingSent);
+    return () => {
+      unsubFriends();
+      unsubConversations();
+      unsubUnreadCount();
+      unsubReceived();
+      unsubSent();
+    };
   }, [user?.uid]);
 
   useEffect(() => {
