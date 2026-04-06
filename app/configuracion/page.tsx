@@ -164,6 +164,9 @@ export default function ConfiguracionPage() {
               padding: 24px;
               max-width: 1100px;
               margin: 0 auto;
+              overflow-x: hidden;
+              width: 100%;
+              box-sizing: border-box;
             }
 
             /* Toast messages */
