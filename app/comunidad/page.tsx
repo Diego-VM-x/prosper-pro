@@ -30,8 +30,7 @@ type TabType = 'chats' | 'friends' | 'requests';
 export default function ComunidadPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('chats');
-  const [showChat, setShowChat] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +38,6 @@ export default function ComunidadPage() {
   const [pendingSent, setPendingSent] = useState<any[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
   const [conversations, setConversations] = useState<(PrivateConversation & { otherUser?: UserProfile })[]>([]);
-  const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
   const [privateInput, setPrivateInput] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
@@ -143,7 +141,6 @@ export default function ComunidadPage() {
     if (!user?.uid) return;
     const cid = await getOrCreateConversation(user.uid, f.uid);
     setActiveConversation(cid);
-    setShowChat(true);
   }, [user?.uid]);
 
   const handleSend = useCallback(async () => {
@@ -174,72 +171,25 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="community-layout">
+        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden' }}>
           <style jsx>{`
-            .community-layout {
-              display: grid;
-              grid-template-columns: 1fr;
-              height: calc(100vh - 140px);
-              overflow: hidden;
-              background: var(--bg-card);
-            }
-            @media (min-width: 1024px) {
-              .community-layout {
-                grid-template-columns: 300px 1fr;
-              }
-            }
-
-            /* Sidebar */
             .sidebar {
+              width: 300px;
+              min-width: 300px;
               background: var(--bg-input);
               display: flex;
               flex-direction: column;
               border-right: 1px solid var(--border-default);
-              overflow: hidden;
-              transition: width 0.2s ease;
             }
-            @media (min-width: 1024px) {
-              .sidebar { width: 300px; min-width: 300px; }
-              .sidebar.collapsed { width: 0; min-width: 0; border: none; }
-            }
-            @media (max-width: 1023px) {
-              .sidebar {
-                position: absolute;
-                inset: 0;
-                z-index: 10;
-                width: 100%;
-              }
-              .sidebar.hidden { display: none; }
-            }
-
-            /* Toggle btn */
-            .toggle-btn {
-              display: none;
-              background: none;
-              border: none;
-              color: var(--text-primary);
-              cursor: pointer;
-              padding: 8px;
-              font-size: 1.25rem;
-            }
-            @media (min-width: 1024px) {
-              .toggle-btn { display: block; }
-            }
-
-            /* Tabs */
             .tabs { display: flex; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; }
             .tab { flex: 1; padding: 12px 4px; text-align: center; font-size: 0.6875rem; font-weight: 600; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; }
             .tab:hover { color: var(--text-primary); }
             .tab.active { color: var(--color-prosper-green); border-bottom-color: var(--color-prosper-green); }
             .badge { position: absolute; top: 4px; right: 50%; margin-right: -16px; background: var(--color-prosper-green); color: white; font-size: 0.5625rem; min-width: 14px; height: 14px; line-height: 14px; text-align: center; border-radius: 7px; font-weight: 700; }
-
-            /* Search */
             .search-box { padding: 10px 12px; flex-shrink: 0; }
             .search-input { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-primary); font-size: 0.75rem; outline: none; box-sizing: border-box; }
             .search-input:focus { border-color: var(--color-prosper-green); }
-
-            /* List */
-            .list { flex: 1; overflow-y: auto; overflow-x: hidden; }
+            .list { flex: 1; overflow-y: auto; }
             .item { padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-default); transition: background 0.15s; }
             .item:hover { background: var(--bg-card); }
             .item.active { background: var(--bg-card-high); }
@@ -257,35 +207,18 @@ export default function ComunidadPage() {
             .btn-s { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-default); }
             .btn-x { background: transparent; color: var(--text-tertiary); padding: 4px; border: none; cursor: pointer; font-size: 0.875rem; }
             .btn-x:hover { color: #ef4444; }
-            .sec { padding: 10px 12px 6px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; }
+            .sec { padding: 10px 12px 6px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; }
 
-            /* Chat area */
-            .chat-area {
-              display: flex;
-              flex-direction: column;
-              min-width: 0;
-              background: var(--bg-card);
-              overflow: hidden;
-            }
-            .chat-header {
-              height: 56px;
-              padding: 0 12px;
-              display: flex;
-              align-items: center;
-              border-bottom: 1px solid var(--border-default);
-              background: var(--bg-card);
-              flex-shrink: 0;
-              gap: 10px;
-            }
-            .back { background: none; border: none; color: var(--text-primary); cursor: pointer; padding: 6px; font-size: 1.125rem; display: none; }
+            .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-card); }
+            .chat-header { height: 56px; padding: 0 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-default); background: var(--bg-card); flex-shrink: 0; gap: 10px; }
             .hinfo { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
             .hname { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .hstatus { font-size: 0.625rem; color: var(--text-tertiary); margin: 0; }
             .hstatus.on { color: var(--color-prosper-green); }
-            .msgs { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+            .msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
             .divider { display: flex; justify-content: center; margin: 10px 0; }
             .divider span { padding: 3px 10px; background: var(--bg-input); color: var(--text-tertiary); font-size: 0.625rem; font-weight: 600; border-radius: 10px; }
-            .row { display: flex; gap: 6px; max-width: 80%; }
+            .row { display: flex; gap: 6px; max-width: 75%; }
             .row.r { align-self: flex-start; }
             .row.s { align-self: flex-end; flex-direction: row-reverse; }
             .av-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--bg-accent-soft); display: flex; align-items: center; justify-content: center; font-size: 0.6875rem; font-weight: 700; color: var(--color-prosper-green); flex-shrink: 0; overflow: hidden; }
@@ -296,7 +229,7 @@ export default function ComunidadPage() {
             .bubble.r { background: var(--bg-input); color: var(--text-primary); border-bottom-left-radius: 4px; }
             .bubble.s { background: var(--color-prosper-green); color: white; border-bottom-right-radius: 4px; }
             .mt { font-size: 0.5625rem; color: var(--text-tertiary); margin-top: 2px; padding: 0 4px; }
-            .input-area { padding: 10px 12px; background: var(--bg-card); border-top: 1px solid var(--border-default); flex-shrink: 0; }
+            .input-area { padding: 10px 16px; background: var(--bg-card); border-top: 1px solid var(--border-default); flex-shrink: 0; }
             .input-wrap { display: flex; align-items: center; gap: 6px; background: var(--bg-input); border-radius: 20px; padding: 4px 4px 4px 12px; }
             .input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 0.8125rem; padding: 6px 0; outline: none; }
             .input::placeholder { color: var(--text-tertiary); }
@@ -306,17 +239,17 @@ export default function ComunidadPage() {
             .empty-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px; }
             .empty-desc { font-size: 0.75rem; margin: 0; max-width: 240px; }
 
-            /* Mobile chat view */
-            @media (max-width: 1023px) {
-              .chat-area { position: absolute; inset: 0; z-index: 20; display: none; }
-              .chat-area.show { display: flex; }
-              .back { display: block; }
+            @media (max-width: 768px) {
+              .sidebar { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; }
+              .sidebar.hide { display: none; }
+              .chat { position: absolute; inset: 0; z-index: 20; display: none; }
+              .chat.show { display: flex; }
               .row { max-width: 85%; }
             }
           `}</style>
 
           {/* Sidebar */}
-          <div className={`sidebar ${!sidebarOpen ? 'collapsed' : ''} ${showChat ? 'hidden' : ''}`}>
+          <div className={`sidebar ${activeConversation ? 'hide' : ''}`}>
             <div className="tabs">
               <div className={`tab ${activeTab === 'chats' ? 'active' : ''}`} onClick={() => setActiveTab('chats')}>
                 💬 Chats
@@ -348,7 +281,7 @@ export default function ComunidadPage() {
                     </div>
                   )}
                   {conversations.map(conv => (
-                    <div key={conv.id} className={`item ${activeConversation === conv.id ? 'active' : ''}`} onClick={() => { setActiveConversation(conv.id); setShowChat(true); }}>
+                    <div key={conv.id} className={`item ${activeConversation === conv.id ? 'active' : ''}`} onClick={() => setActiveConversation(conv.id)}>
                       <div className="avatar">
                         {conv.otherUser?.photoURL ? <img src={conv.otherUser.photoURL} alt="" /> : conv.otherUser?.displayName?.charAt(0) || '?'}
                         <span className={`dot ${conv.otherUser ? 'on' : 'off'}`} />
@@ -434,12 +367,12 @@ export default function ComunidadPage() {
             </div>
           </div>
 
-          {/* Chat area */}
-          <div className={`chat-area ${showChat ? 'show' : ''}`}>
+          {/* Chat */}
+          <div className={`chat ${activeConversation ? 'show' : ''}`}>
             {activeConversation && activeUser ? (
               <>
                 <div className="chat-header">
-                  <button onClick={() => { setShowChat(false); setActiveConversation(null); }} className="back">←</button>
+                  <button onClick={() => setActiveConversation(null)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '6px', fontSize: '1.125rem', display: 'none' }} className="back-btn">←</button>
                   <div className="hinfo">
                     <div className="avatar" style={{ width: 36, height: 36, fontSize: '0.75rem' }}>
                       {activeUser.photoURL ? <img src={activeUser.photoURL} alt="" /> : activeUser.displayName?.charAt(0) || '?'}
