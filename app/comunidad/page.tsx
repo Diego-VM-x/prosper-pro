@@ -544,42 +544,27 @@ export default function ComunidadPage() {
             .msg-check { font-size: 0.75rem; color: #60a5fa; }
 
             /* Input */
-            .input-area { padding: 16px 32px 24px; background: var(--comm-bg-primary); }
+            .input-area { padding: 12px 32px 16px; background: var(--comm-bg-primary); flex-shrink: 0; }
             .input-wrap {
               max-width: 800px;
               margin: 0 auto;
               display: flex;
               align-items: center;
-              gap: 6px;
+              gap: 8px;
               background: var(--comm-gradient-bg);
               border-radius: 28px;
-              padding: 6px 6px 6px 16px;
+              padding: 8px 8px 8px 16px;
               box-shadow: 0 4px 20px rgba(59,130,246,0.08), 0 0 0 1px rgba(59,130,246,0.1);
               transition: all 0.3s;
             }
             .input-wrap:focus-within { box-shadow: 0 4px 24px rgba(59,130,246,0.15), 0 0 0 2px rgba(59,130,246,0.3), 0 0 20px rgba(59,130,246,0.1); }
-            .attach-btn, .emoji-btn {
-              width: 40px;
-              height: 40px;
-              border-radius: 12px;
-              border: none;
-              background: transparent;
-              color: var(--comm-text-secondary);
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-size: 1.125rem;
-              transition: all 0.2s;
-            }
-            .attach-btn:hover, .emoji-btn:hover { color: var(--comm-text-primary); background: var(--comm-bg-card); }
             .msg-input {
               flex: 1;
               background: transparent;
               border: none;
               color: var(--comm-text-primary);
               font-size: 0.875rem;
-              padding: 10px 8px;
+              padding: 8px;
               outline: none;
             }
             .msg-input::placeholder { color: var(--comm-text-muted); }
@@ -660,20 +645,22 @@ export default function ComunidadPage() {
             .comunidad-container { position: relative; }
             @media (max-width: 768px) {
               .comunidad-container {
-                height: calc(100dvh - 64px) !important;
+                height: 100dvh !important;
                 height: -webkit-fill-available;
-                padding-bottom: 60px;
+                padding-bottom: 0;
               }
               .nav-sidebar { display: none; }
-              .bottom-nav { display: block; }
+              .bottom-nav { display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; }
               .bottom-nav.hidden { display: none; }
-              .conv-list { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; }
+              .conv-list { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; }
               .conv-list.hide { display: none; }
-              .chat-area { position: absolute; inset: 0; z-index: 20; display: none; }
+              .conv-header { flex-shrink: 0; position: sticky; top: 0; z-index: 5; background: var(--comm-bg-secondary); }
+              .conv-scroll { flex: 1; overflow-y: auto; }
+              .chat-area { position: absolute; inset: 0; z-index: 20; display: none; flex-direction: column; }
               .chat-area.show { display: flex; }
-              .msgs { padding: 16px; gap: 12px; }
-              .input-area { padding: 12px 16px; }
-              .chat-header { padding: 0 16px; height: 64px; }
+              .chat-header { flex-shrink: 0; position: sticky; top: 0; z-index: 5; }
+              .msgs { flex: 1; overflow-y: auto; padding: 16px; gap: 12px; }
+              .input-area { flex-shrink: 0; padding: 8px 12px 12px; }
               .chat-back-btn { display: flex !important; align-items: center; justify-content: center; }
               .msg-row { max-width: 85%; }
               .conv-header { padding: 16px; }
@@ -686,8 +673,8 @@ export default function ComunidadPage() {
             }
             @media (max-width: 480px) {
               .comunidad-container {
-                height: calc(100dvh - 56px) !important;
-                padding-bottom: 56px;
+                height: 100dvh !important;
+                padding-bottom: 0;
               }
               .bottom-nav { height: 56px; }
               .bottom-nav-item { min-width: 56px; padding: 4px 12px; }
@@ -701,7 +688,7 @@ export default function ComunidadPage() {
               .conv-name { font-size: 0.8125rem; }
               .conv-msg { font-size: 0.6875rem; }
               .chat-header { padding: 0 12px; height: 56px; }
-              .chat-avatar img, .chat-avatar .initials { width: 36px; height: 36px; }
+              .chat-avatar img, .chat-avatar .initials { width: 32px; height: 32px; }
               .chat-name { font-size: 0.875rem; }
               .chat-status span { font-size: 0.625rem; }
               .msg-bubble { padding: 12px; font-size: 0.8125rem; }
@@ -709,7 +696,6 @@ export default function ComunidadPage() {
               .input-area { padding: 8px 12px; }
               .input-wrap { padding: 6px 6px 6px 12px; border-radius: 16px; }
               .msg-input { font-size: 0.8125rem; padding: 6px; }
-              .attach-btn, .emoji-btn, .send-btn { width: 36px; height: 36px; }
               .send-btn { width: 40px; height: 40px; }
               .date-divider span { font-size: 0.5625rem; padding: 4px 12px; }
               .empty-icon { font-size: 3rem; }
@@ -973,12 +959,9 @@ export default function ComunidadPage() {
 
                 <div className="input-area">
                   <div className="input-wrap">
-                    <button className="attach-btn" title="Adjuntar">📎</button>
                     <input className="msg-input" placeholder="Escribe un mensaje..." value={privateInput} onChange={(e) => setPrivateInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} />
-                    <button className="emoji-btn" title="Emoji">😊</button>
                     <button className="send-btn" onClick={handleSend}>➤</button>
                   </div>
-                  <p className="input-hint">Al enviar un mensaje, aceptas las normas de la comunidad de Prosper.</p>
                 </div>
               </>
             ) : (
