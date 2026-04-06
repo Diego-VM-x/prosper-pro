@@ -784,7 +784,22 @@ export default function ConfiguracionPage() {
             }
             @media (max-width: 768px) {
               .configuracion-page {
-                padding: 16px;
+                padding: 12px;
+                overflow-x: hidden;
+              }
+              .grid-layout {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                overflow-x: hidden;
+              }
+              .card {
+                overflow-x: hidden;
+              }
+              .sessions-table {
+                overflow-x: auto;
+              }
+              .sessions-table table {
+                min-width: 500px;
               }
               .hero-title {
                 font-size: 1.5rem;
@@ -851,6 +866,16 @@ export default function ConfiguracionPage() {
               }
             }
             @media (max-width: 480px) {
+              .configuracion-page {
+                padding: 8px;
+                overflow-x: hidden;
+              }
+              .card {
+                padding: 12px;
+              }
+              .danger-zone {
+                padding: 12px;
+              }
               .hero-title {
                 font-size: 1.25rem;
               }
