@@ -145,19 +145,30 @@ export default function ComunidadPage() {
 
   const handleClearChat = useCallback(async () => {
     if (!activeConversation) return;
-    await clearConversationMessages(activeConversation);
-    setPrivateMessages([]);
-    setShowMenu(false);
+    try {
+      await clearConversationMessages(activeConversation);
+      setPrivateMessages([]);
+      setShowMenu(false);
+    } catch (e) {
+      console.error('Error al vaciar chat:', e);
+      alert('Error al vaciar el chat. Intenta de nuevo.');
+    }
   }, [activeConversation]);
 
   const handleDeleteChat = useCallback(async () => {
     if (!activeConversation) return;
-    const conv = conversations.find(c => c.id === activeConversation);
-    const friendId = conv?.participants?.find((p: string) => p !== user?.uid);
-    if (friendId) await removeFriendship(user!.uid, friendId);
-    await deleteConversation(activeConversation);
-    setActiveConversation(null);
-    setShowMenu(false);
+    if (!confirm('¿Eliminar este chat y la amistad? Esta acción es irreversible.')) return;
+    try {
+      const conv = conversations.find(c => c.id === activeConversation);
+      const friendId = conv?.participants?.find((p: string) => p !== user?.uid);
+      if (friendId) await removeFriendship(user!.uid, friendId);
+      await deleteConversation(activeConversation);
+      setActiveConversation(null);
+      setShowMenu(false);
+    } catch (e) {
+      console.error('Error al eliminar chat:', e);
+      alert('Error al eliminar el chat. Intenta de nuevo.');
+    }
   }, [activeConversation, conversations, user?.uid]);
 
   // Close menu on outside click

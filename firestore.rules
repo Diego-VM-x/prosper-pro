@@ -103,32 +103,32 @@ service cloud.firestore {
       }
     }
 
-    // Private conversations: participantes pueden leer/escribir
+    // Private conversations: participantes pueden leer/escribir/eliminar
     match /private_conversations/{convId} {
       allow read: if request.auth != null && request.auth.uid in resource.data.participants;
       allow create: if request.auth != null && request.auth.uid in request.resource.data.participants;
-      allow update: if request.auth != null && request.auth.uid in resource.data.participants;
+      allow update, delete: if request.auth != null && request.auth.uid in resource.data.participants;
     }
 
-    // Private messages: participantes de la conversacion pueden leer/escribir
+    // Private messages: participantes de la conversacion pueden leer/escribir/eliminar
     match /private_messages/{msgId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow update, delete: if request.auth != null;
     }
 
-    // Friendships: usuarios involucrados pueden leer
+    // Friendships: usuarios involucrados pueden leer/eliminar
     match /friendships/{friendshipId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow update, delete: if request.auth != null;
     }
 
-    // Friend requests: sender y receiver pueden leer
+    // Friend requests: sender y receiver pueden leer/eliminar
     match /friend_requests/{requestId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow update, delete: if request.auth != null;
     }
 
     // Presence: todos pueden leer, solo el propio usuario escribe
