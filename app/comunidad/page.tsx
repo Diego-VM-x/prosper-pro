@@ -193,7 +193,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', borderRadius: '24px', margin: '8px', background: 'var(--comm-bg-secondary)' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: 'transparent' }}>
           <style jsx>{`
             /* Comunidad - variables heredadas de globals.css (--comm-*) */
             /* Sidebar navigation (desktop) */
@@ -206,8 +206,10 @@ export default function ComunidadPage() {
               align-items: center;
               padding: 24px 0;
               gap: 8px;
-              border-right: 1px solid var(--comm-border);
-              border-radius: 24px 0 0 24px;
+              border: 1px solid rgba(59,130,246,0.15);
+              border-radius: 24px;
+              margin: 8px 4px 8px 8px;
+              box-shadow: 0 0 16px rgba(59,130,246,0.08), 0 0 0 1px rgba(59,130,246,0.1);
             }
             .nav-item {
               width: 48px;
@@ -304,9 +306,11 @@ export default function ComunidadPage() {
               background: var(--comm-bg-secondary);
               display: flex;
               flex-direction: column;
-              border-right: 1px solid var(--comm-border);
-              border-radius: 0 24px 24px 0;
+              border: 1px solid rgba(59,130,246,0.12);
+              border-radius: 24px;
               overflow: hidden;
+              margin: 8px 4px 8px 0;
+              box-shadow: 0 0 20px rgba(59,130,246,0.06), 0 0 0 1px rgba(59,130,246,0.08);
             }
             .conv-header { padding: 24px; }
             .conv-title { font-size: 1.25rem; font-weight: 700; color: var(--comm-text-primary); margin: 0 0 16px; }
@@ -390,8 +394,11 @@ export default function ComunidadPage() {
               min-width: 0;
               background: var(--comm-bg-primary);
               position: relative;
-              border-radius: 0 24px 24px 0;
+              border-radius: 24px;
               overflow: hidden;
+              margin: 8px 8px 8px 0;
+              border: 1px solid rgba(59,130,246,0.1);
+              box-shadow: 0 0 24px rgba(59,130,246,0.06), 0 0 0 1px rgba(59,130,246,0.08);
             }
             .chat-header {
               height: 80px;
