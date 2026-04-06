@@ -161,13 +161,15 @@ export default function ConfiguracionPage() {
         <div className="configuracion-page">
           <style jsx>{`
             .configuracion-page {
-              padding: 24px;
-              max-width: 1100px;
-              margin: 0 auto;
-              overflow-x: hidden;
               width: 100%;
+              max-width: 896px;
+              margin: 0 auto;
+              padding: 16px;
+              overflow-x: hidden;
               box-sizing: border-box;
             }
+            @media (min-width: 640px) { .configuracion-page { padding: 24px; } }
+            @media (min-width: 1024px) { .configuracion-page { padding: 32px; } }
 
             /* Toast messages */
             .toast {
@@ -193,20 +195,22 @@ export default function ConfiguracionPage() {
             }
 
             /* Hero */
-            .hero {
-              margin-bottom: 32px;
-            }
+            .hero { margin-bottom: 20px; }
             .hero-title {
-              font-size: 2rem;
+              font-size: 1.375rem;
               font-weight: 900;
               color: var(--text-primary);
               letter-spacing: -0.02em;
               margin: 0 0 4px 0;
+              line-height: 1.2;
             }
+            @media (min-width: 640px) { .hero-title { font-size: 1.75rem; } }
+            @media (min-width: 1024px) { .hero-title { font-size: 2rem; } }
             .hero-desc {
-              font-size: 0.875rem;
+              font-size: 0.8125rem;
               color: var(--text-secondary);
               margin: 0;
+              line-height: 1.5;
             }
 
             /* Grid */
@@ -230,28 +234,34 @@ export default function ConfiguracionPage() {
             }
 
             /* Profile Section */
-            .profile-section {
-              padding: 32px;
-            }
+            .profile-section { padding: 16px; }
+            @media (min-width: 640px) { .profile-section { padding: 24px; } }
+            @media (min-width: 1024px) { .profile-section { padding: 32px; } }
             .profile-layout {
               display: flex;
-              gap: 32px;
+              flex-direction: column;
+              align-items: center;
+              gap: 20px;
             }
-            @media (max-width: 768px) {
+            @media (min-width: 768px) {
               .profile-layout {
-                flex-direction: column;
-                align-items: center;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 28px;
               }
             }
             .profile-avatar-wrap {
               position: relative;
-              width: 120px;
-              height: 120px;
+              width: 88px;
+              height: 88px;
               flex-shrink: 0;
               cursor: pointer;
               border-radius: 50%;
               overflow: hidden;
               border: 3px solid rgba(61,204,142,0.2);
+            }
+            @media (min-width: 768px) {
+              .profile-avatar-wrap { width: 112px; height: 112px; }
             }
             .profile-avatar {
               width: 100%;
@@ -280,21 +290,18 @@ export default function ConfiguracionPage() {
               opacity: 1;
             }
             .profile-form {
-              flex: 1;
-              min-width: 0;
+              width: 100%;
               display: flex;
               flex-direction: column;
-              gap: 16px;
+              gap: 14px;
             }
             .form-row {
               display: grid;
               grid-template-columns: 1fr;
-              gap: 16px;
+              gap: 14px;
             }
-            @media (min-width: 640px) {
-              .form-row {
-                grid-template-columns: 1fr 1fr;
-              }
+            @media (min-width: 480px) {
+              .form-row { grid-template-columns: 1fr 1fr; }
             }
             .form-group {
               display: flex;
@@ -302,26 +309,30 @@ export default function ConfiguracionPage() {
               gap: 4px;
             }
             .form-label {
-              font-size: 0.5625rem;
+              display: block;
+              font-size: 0.6875rem;
               font-weight: 700;
               text-transform: uppercase;
-              letter-spacing: 0.15em;
+              letter-spacing: 0.1em;
               color: var(--text-tertiary);
-              padding-left: 4px;
+              margin-bottom: 2px;
             }
             .form-input, .form-textarea, .form-select {
-              padding: 10px 14px;
+              width: 100%;
+              padding: 12px 14px;
               border-radius: 8px;
-              border: none;
+              border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-primary);
-              font-size: 0.8125rem;
+              font-size: 0.875rem;
               outline: none;
               transition: all 0.2s;
               font-family: inherit;
+              box-sizing: border-box;
             }
             .form-input:focus, .form-textarea:focus, .form-select:focus {
-              box-shadow: 0 0 0 2px var(--color-prosper-green);
+              border-color: var(--color-prosper-green);
+              box-shadow: 0 0 0 2px rgba(61,204,142,0.2);
             }
             .form-textarea {
               resize: none;
@@ -336,17 +347,20 @@ export default function ConfiguracionPage() {
               padding-right: 32px;
             }
             .save-btn {
-              align-self: flex-end;
-              padding: 10px 24px;
+              width: 100%;
+              padding: 12px 24px;
               background: var(--color-prosper-green);
               color: white;
               border: none;
               border-radius: 8px;
-              font-size: 0.6875rem;
+              font-size: 0.8125rem;
               font-weight: 700;
               cursor: pointer;
               transition: all 0.2s;
               box-shadow: 0 4px 12px rgba(61,204,142,0.2);
+            }
+            @media (min-width: 768px) {
+              .save-btn { width: auto; align-self: flex-end; }
             }
             .save-btn:hover:not(:disabled) {
               opacity: 0.9;
