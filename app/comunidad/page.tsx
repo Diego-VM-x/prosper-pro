@@ -304,6 +304,8 @@ export default function ComunidadPage() {
               display: flex;
               flex-direction: column;
               border-right: 1px solid var(--comm-border);
+              border-radius: 0 24px 24px 0;
+              overflow: hidden;
             }
             .conv-header { padding: 24px; }
             .conv-title { font-size: 1.25rem; font-weight: 700; color: var(--comm-text-primary); margin: 0 0 16px; }
