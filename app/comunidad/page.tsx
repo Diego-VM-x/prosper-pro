@@ -193,7 +193,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: 'transparent' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: 'transparent' }}>
           <style jsx>{`
             /* Comunidad - variables heredadas de globals.css (--comm-*) */
             /* Sidebar navigation (desktop) */
@@ -888,7 +888,7 @@ export default function ComunidadPage() {
                     }}
                     className="chat-back-btn"
                   >
-                    ←
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                   </button>
                   <div className="chat-header-left">
                     <div className="chat-avatar">
@@ -903,25 +903,27 @@ export default function ComunidadPage() {
                       <p className="chat-name">{activeUser.displayName || activeUser.email || 'Usuario'}</p>
                       <div className="chat-status">
                         <span className={otherUserOnline ? 'online' : 'offline'}>
-                          {otherUserOnline ? '● En línea' : '○ Desconectado'}
+                          {otherUserOnline ? 'En línea' : 'Desconectado'}
                         </span>
-                        <span className="encrypted">• 🔒 Cifrado</span>
+                        <span className="encrypted">Cifrado</span>
                       </div>
                     </div>
                   </div>
                   <div className="chat-actions" ref={menuRef}>
-                    <button className="chat-action-btn" onClick={() => setShowMenu(!showMenu)} title="Opciones">⋮</button>
+                    <button className="chat-action-btn" onClick={() => setShowMenu(!showMenu)} title="Opciones">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                    </button>
                     {showMenu && (
                       <div className="chat-dropdown">
                         <button className="chat-dropdown-item danger" onClick={() => {
                           const friendId = activeConv?.participants?.find((p: string) => p !== user?.uid);
                           if (friendId) handleRemove(friendId);
                         }}>
-                          <span className="chat-dropdown-icon">🗑️</span>
+                          <span className="chat-dropdown-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
                           Eliminar de amigos
                         </button>
                         <button className="chat-dropdown-item" onClick={handleClearChat}>
-                          <span className="chat-dropdown-icon">🧹</span>
+                          <span className="chat-dropdown-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
                           Vaciar chat
                         </button>
                       </div>
@@ -960,7 +962,9 @@ export default function ComunidadPage() {
                 <div className="input-area">
                   <div className="input-wrap">
                     <input className="msg-input" placeholder="Escribe un mensaje..." value={privateInput} onChange={(e) => setPrivateInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} />
-                    <button className="send-btn" onClick={handleSend}>➤</button>
+                    <button className="send-btn" onClick={handleSend}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
                   </div>
                 </div>
               </>
