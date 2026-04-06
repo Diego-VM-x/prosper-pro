@@ -172,7 +172,7 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: '#0e1511' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: '#0e1511' }}>
           <style jsx>{`
             /* Sidebar navigation */
             .nav-sidebar {
@@ -498,8 +498,13 @@ export default function ComunidadPage() {
             /* Mobile menu button */
             .mobile-menu-btn { display: none; }
             .mobile-overlay { display: none; }
+            .comunidad-container { position: relative; }
             @media (max-width: 768px) {
-              .mobile-menu-btn { display: flex; }
+              .comunidad-container {
+                height: calc(100dvh - 64px) !important;
+                height: -webkit-fill-available;
+              }
+              .mobile-menu-btn { display: flex !important; }
               .mobile-overlay {
                 display: none;
                 position: fixed;
@@ -527,6 +532,30 @@ export default function ComunidadPage() {
               .chat-header { padding: 0 16px; height: 60px; }
               .chat-back-btn { display: block !important; }
               .msg-row { max-width: 85%; }
+              .conv-header { padding: 16px; }
+              .conv-title { font-size: 1rem; }
+            }
+            @media (max-width: 480px) {
+              .comunidad-container {
+                height: calc(100dvh - 56px) !important;
+              }
+              .nav-sidebar { width: 56px; min-width: 56px; }
+              .nav-item { width: 40px; height: 40px; font-size: 1rem; }
+              .conv-header { padding: 12px; }
+              .conv-title { font-size: 0.875rem; margin-bottom: 12px; }
+              .search-input { padding: 8px 10px 8px 32px; font-size: 0.75rem; }
+              .conv-item { padding: 10px; }
+              .conv-avatar img, .conv-avatar .initials { width: 40px; height: 40px; }
+              .conv-name { font-size: 0.8125rem; }
+              .conv-msg { font-size: 0.6875rem; }
+              .chat-header { padding: 0 12px; height: 56px; }
+              .chat-avatar img, .chat-avatar .initials { width: 32px; height: 32px; }
+              .chat-name { font-size: 0.875rem; }
+              .msg-bubble { padding: 12px; font-size: 0.8125rem; }
+              .input-area { padding: 8px 12px; }
+              .input-wrap { padding: 6px 6px 6px 12px; }
+              .msg-input { font-size: 0.8125rem; padding: 6px; }
+              .attach-btn, .emoji-btn, .send-btn { width: 36px; height: 36px; }
             }
           `}</style>
 

@@ -27,6 +27,7 @@ import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accou
 import type { Goal, GoalCategory, GoalStatus, Transaction, FinancialAccount } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
+const CATEGORY_ICONS: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
 
 // Generar sparkline real desde transacciones de ahorro de la meta
@@ -104,7 +105,7 @@ export default function MetasPage() {
   const [goalStreakDays, setGoalStreakDays] = useState<Record<string, number>>({});
 
   const [formData, setFormData] = useState({
-    title: '', category: 'Ahorro' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯',
+    title: '', category: 'Ahorro' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '💰',
   });
 
   useEffect(() => {
@@ -188,7 +189,7 @@ export default function MetasPage() {
   }, [goals]);
 
   const resetForm = () => {
-    setFormData({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
+    setFormData({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: CATEGORY_ICONS['Ahorro'] });
     setEditingGoal(null);
   };
 
@@ -740,9 +741,10 @@ export default function MetasPage() {
           .goal-card-actions { width: auto; margin-left: auto; }
           .insight-card { flex-direction: column; text-align: center; padding: 24px; }
           .insight-card-decoration { display: none; }
-          .modal-content { width: 95%; padding: 16px; }
+          .modal-content { width: 95%; padding: 16px; max-height: 90dvh; max-height: -webkit-fill-available; }
           .modal-footer { flex-direction: column-reverse; }
           .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
+          .modal-overlay { align-items: flex-start; padding-top: 10vh; }
         }
         @media (max-width: 480px) {
           .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; }

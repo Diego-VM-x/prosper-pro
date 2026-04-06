@@ -838,8 +838,9 @@ export default function ConfiguracionPage() {
               .option-flag {
                 font-size: 1.25rem;
               }
-                height: 32px;
-                font-size: 0.875rem;
+              .toggle-switch {
+                width: 32px;
+                height: 16px;
               }
               .toggle-label {
                 font-size: 0.6875rem;

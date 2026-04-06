@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (05 de Abril, 2026 - Bug Fixes Chats + Notificaciones Push Completas)
+## Estado Actual (06 de Abril, 2026 - Responsive Comunidad + Configuración + Modal Metas Móvil)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -165,6 +165,14 @@
   - `lib/contexts/AuthContext.tsx`: Al autenticarse se solicita permiso para notificaciones push del navegador automaticamente.
 - **Notificaciones Push - Toggle en Configuracion**:
   - `app/configuracion/page.tsx`: Nuevo toggle "Notificaciones Push" en seccion de notificaciones. Detecta estado actual del permiso al cargar pagina. Nuevo metodo `enableNotifications()` en AuthContext.
+
+### 06/04/2026 - Responsive Comunidad + Configuración + Modal Metas Móvil
+- **Comunidad Page - Responsive Móvil**:
+  - `app/comunidad/page.tsx`: Agregada clase `comunidad-container`. Media queries mejorados para `@media (max-width: 768px)` con altura `100dvh` para móviles con barras dinámicas. Menú lateral con posición fixed y transición suave. Lista de conversaciones y chat en pantalla completa. Botón de retroceso visible en móvil. Media queries para `@media (max-width: 480px)` con sidebar reducido a 56px, elementos de navegación compactos (40px), headers, avatares y burbujas de mensaje reducidos, input area optimizado.
+- **Configuración Page - Bug Fix CSS**:
+  - `app/configuracion/page.tsx`: Corregido error de sintaxis CSS (selector `.toggle-switch` faltante en línea 841).
+- **Metas Page - Modal Móvil Fix**:
+  - `app/metas/page.tsx`: Modal de creación/edición ajustado para móvil con `max-height: 90dvh` y fallback `-webkit-fill-available`. Overlay con `align-items: flex-start` y `padding-top: 10vh` para mejor scroll. Footer con botones en columna y ancho completo.
 
 ### 05/04/2026 - Error Boundaries + Firebase Validation + Suspense
 - **ErrorBoundary**:
