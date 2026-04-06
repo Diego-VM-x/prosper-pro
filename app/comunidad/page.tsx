@@ -31,6 +31,8 @@ export default function ComunidadPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('messages');
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,7 +137,27 @@ export default function ComunidadPage() {
   const handleRemove = useCallback(async (fid: string) => {
     if (!user) return;
     await removeFriendship(user.uid, fid);
+    setActiveConversation(null);
+    setShowMenu(false);
   }, [user]);
+
+  const handleClearChat = useCallback(async () => {
+    if (!activeConversation) return;
+    // Clear local messages - actual Firestore delete would need batch delete
+    setPrivateMessages([]);
+    setShowMenu(false);
+  }, [activeConversation]);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMenu]);
 
   const startChat = useCallback(async (f: UserProfile) => {
     if (!user?.uid) return;
@@ -171,19 +193,52 @@ export default function ComunidadPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: '#0e1511' }}>
+        <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden' }}>
           <style jsx>{`
+            :root, .comunidad-container {
+              --bg-primary: #0e1511;
+              --bg-secondary: #161d19;
+              --bg-tertiary: #1a211d;
+              --bg-card: #242c27;
+              --text-primary: #dde4dd;
+              --text-secondary: #91c4a8;
+              --text-muted: #6b7a72;
+              --accent: #4edea3;
+              --accent-dark: #003824;
+              --border: rgba(60,74,66,0.1);
+              --gradient-accent: linear-gradient(135deg, #4edea3 0%, #10b981 100%);
+              --gradient-bg: linear-gradient(135deg, #242c27 0%, #1a211d 100%);
+              --gradient-header: linear-gradient(180deg, rgba(22,29,25,0.95) 0%, rgba(14,21,17,0.9) 100%);
+              --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+              --shadow-md: 0 4px 16px rgba(0,0,0,0.2);
+              --shadow-accent: 0 4px 16px rgba(78,222,163,0.2);
+            }
+            [data-theme="light"] {
+              --bg-primary: #f5f7f6;
+              --bg-secondary: #ffffff;
+              --bg-tertiary: #eef2f0;
+              --bg-card: #e8ede9;
+              --text-primary: #1a2e23;
+              --text-secondary: #2d6a4f;
+              --text-muted: #8a9d92;
+              --border: rgba(45,106,79,0.12);
+              --gradient-bg: linear-gradient(135deg, #e8ede9 0%, #eef2f0 100%);
+              --gradient-header: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(245,247,246,0.9) 100%);
+              --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+              --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+              --shadow-accent: 0 4px 16px rgba(78,222,163,0.15);
+            }
             /* Sidebar navigation (desktop) */
             .nav-sidebar {
               width: 64px;
               min-width: 64px;
-              background: #161d19;
+              background: var(--bg-secondary);
               display: flex;
               flex-direction: column;
               align-items: center;
               padding: 24px 0;
               gap: 8px;
-              border-right: 1px solid rgba(60,74,66,0.1);
+              border-right: 1px solid var(--border);
             }
             .nav-item {
               width: 48px;
@@ -194,18 +249,18 @@ export default function ComunidadPage() {
               justify-content: center;
               cursor: pointer;
               transition: all 0.2s;
-              color: #91c4a8;
+              color: var(--text-secondary);
               opacity: 0.7;
               font-size: 1.25rem;
             }
-            .nav-item:hover { background: #1a211d; opacity: 1; }
-            .nav-item.active { background: rgba(78,222,163,0.1); color: #4edea3; opacity: 1; }
+            .nav-item:hover { background: var(--bg-tertiary); opacity: 1; }
+            .nav-item.active { background: rgba(78,222,163,0.1); color: var(--accent); opacity: 1; }
             .nav-badge {
               position: absolute;
               top: 4px;
               right: 4px;
-              background: #4edea3;
-              color: #003824;
+              background: var(--accent);
+              color: var(--accent-dark);
               font-size: 0.5625rem;
               min-width: 14px;
               height: 14px;
@@ -223,8 +278,8 @@ export default function ComunidadPage() {
               left: 0;
               right: 0;
               height: 60px;
-              background: #161d19;
-              border-top: 1px solid rgba(60,74,66,0.2);
+              background: var(--bg-secondary);
+              border-top: 1px solid var(--border);
               z-index: 100;
               padding: 0 8px;
               padding-bottom: env(safe-area-inset-bottom, 0);
@@ -247,21 +302,21 @@ export default function ComunidadPage() {
               border-radius: 12px;
               cursor: pointer;
               transition: all 0.2s;
-              color: #91c4a8;
+              color: var(--text-secondary);
               opacity: 0.6;
               position: relative;
               min-width: 64px;
             }
             .bottom-nav-item:hover { opacity: 0.8; }
-            .bottom-nav-item.active { opacity: 1; color: #4edea3; }
+            .bottom-nav-item.active { opacity: 1; color: var(--accent); }
             .bottom-nav-item .nav-icon { font-size: 1.25rem; line-height: 1; }
             .bottom-nav-item .nav-label { font-size: 0.625rem; font-weight: 600; }
             .bottom-nav-badge {
               position: absolute;
               top: 2px;
               right: 12px;
-              background: #4edea3;
-              color: #003824;
+              background: var(--accent);
+              color: var(--accent-dark);
               font-size: 0.5rem;
               min-width: 14px;
               height: 14px;
@@ -275,27 +330,27 @@ export default function ComunidadPage() {
             .conv-list {
               width: 320px;
               min-width: 320px;
-              background: #161d19;
+              background: var(--bg-secondary);
               display: flex;
               flex-direction: column;
-              border-right: 1px solid rgba(60,74,66,0.05);
+              border-right: 1px solid var(--border);
             }
             .conv-header { padding: 24px; }
-            .conv-title { font-size: 1.25rem; font-weight: 700; color: #dde4dd; margin: 0 0 16px; }
+            .conv-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0 0 16px; }
             .search-wrap { position: relative; }
-            .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #bbcabf; font-size: 0.875rem; }
+            .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.875rem; }
             .search-input {
               width: 100%;
               padding: 10px 12px 10px 36px;
               border-radius: 8px;
               border: none;
-              background: #1a211d;
-              color: #dde4dd;
+              background: var(--bg-tertiary);
+              color: var(--text-primary);
               font-size: 0.8125rem;
               outline: none;
               box-sizing: border-box;
             }
-            .search-input:focus { box-shadow: 0 0 0 1px #4edea3; }
+            .search-input:focus { box-shadow: 0 0 0 1px var(--accent); }
             .conv-scroll { flex: 1; overflow-y: auto; padding: 8px 16px; }
             .conv-item {
               padding: 12px;
@@ -304,8 +359,8 @@ export default function ComunidadPage() {
               margin-bottom: 8px;
               transition: all 0.15s;
             }
-            .conv-item:hover { background: #1a211d; }
-            .conv-item.active { background: #242c27; }
+            .conv-item:hover { background: var(--bg-tertiary); }
+            .conv-item.active { background: var(--bg-card); }
             .conv-row { display: flex; align-items: center; gap: 12px; }
             .conv-avatar { position: relative; flex-shrink: 0; }
             .conv-avatar img, .conv-avatar .initials {
@@ -315,13 +370,13 @@ export default function ComunidadPage() {
               object-fit: cover;
             }
             .conv-avatar .initials {
-              background: #1a211d;
+              background: var(--bg-tertiary);
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 1rem;
               font-weight: 700;
-              color: #4edea3;
+              color: var(--accent);
             }
             .status-dot {
               position: absolute;
@@ -330,16 +385,16 @@ export default function ComunidadPage() {
               width: 12px;
               height: 12px;
               border-radius: 50%;
-              border: 2px solid #1a211d;
+              border: 2px solid var(--bg-tertiary);
             }
-            .status-dot.on { background: #4edea3; }
-            .status-dot.off { background: #3c4a42; }
+            .status-dot.on { background: var(--accent); }
+            .status-dot.off { background: var(--text-muted); }
             .conv-info { flex: 1; min-width: 0; }
             .conv-top { display: flex; justify-content: space-between; align-items: flex-start; }
-            .conv-name { font-size: 0.875rem; font-weight: 700; color: #dde4dd; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .conv-time { font-size: 0.625rem; color: #bbcabf; flex-shrink: 0; }
-            .conv-msg { font-size: 0.75rem; color: #4edea3; margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-            .conv-msg.muted { color: #bbcabf; font-weight: 400; }
+            .conv-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .conv-time { font-size: 0.625rem; color: var(--text-muted); flex-shrink: 0; }
+            .conv-msg { font-size: 0.75rem; color: var(--accent); margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+            .conv-msg.muted { color: var(--text-muted); font-weight: 400; }
 
             /* Chat area */
             .chat-area {
@@ -347,7 +402,7 @@ export default function ComunidadPage() {
               display: flex;
               flex-direction: column;
               min-width: 0;
-              background: #0e1511;
+              background: var(--bg-primary);
               position: relative;
             }
             .chat-header {
@@ -356,8 +411,8 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               justify-content: space-between;
-              border-bottom: 1px solid rgba(60,74,66,0.1);
-              background: linear-gradient(180deg, rgba(22,29,25,0.95) 0%, rgba(14,21,17,0.9) 100%);
+              border-bottom: 1px solid var(--border);
+              background: var(--gradient-header);
               backdrop-filter: blur(20px);
               flex-shrink: 0;
             }
@@ -371,7 +426,7 @@ export default function ComunidadPage() {
               box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             }
             .chat-avatar .initials {
-              background: linear-gradient(135deg, #1a211d 0%, #242c27 100%);
+              background: var(--gradient-bg);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -379,21 +434,21 @@ export default function ComunidadPage() {
               font-weight: 700;
               color: #4edea3;
             }
-            .chat-avatar .status-dot { width: 12px; height: 12px; border-color: #0e1511; }
-            .chat-name { font-size: 1rem; font-weight: 700; color: #dde4dd; margin: 0; }
+            .chat-avatar .status-dot { width: 12px; height: 12px; border-color: var(--bg-primary); }
+            .chat-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
             .chat-status { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-            .chat-status span { font-size: 0.6875rem; color: #91c4a8; font-weight: 500; }
-            .chat-status .online { color: #4edea3; }
-            .chat-status .offline { color: #6b7a72; }
-            .chat-status .encrypted { color: #4edea3; }
-            .chat-actions { display: flex; gap: 8px; }
+            .chat-status span { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 500; }
+            .chat-status .online { color: var(--accent); }
+            .chat-status .offline { color: var(--text-muted); }
+            .chat-status .encrypted { color: var(--accent); }
+            .chat-actions { display: flex; gap: 8px; position: relative; }
             .chat-action-btn {
               width: 40px;
               height: 40px;
               border-radius: 10px;
               border: none;
-              background: rgba(26,33,29,0.6);
-              color: #91c4a8;
+              background: var(--bg-tertiary);
+              color: var(--text-secondary);
               cursor: pointer;
               display: flex;
               align-items: center;
@@ -401,8 +456,39 @@ export default function ComunidadPage() {
               font-size: 1.125rem;
               transition: all 0.2s;
             }
-            .chat-action-btn:hover { background: #242c27; color: #4edea3; transform: scale(1.05); }
+            .chat-action-btn:hover { background: var(--bg-card); color: var(--accent); transform: scale(1.05); }
             .chat-action-btn:active { transform: scale(0.95); }
+
+            /* Dropdown menu */
+            .chat-dropdown {
+              position: absolute;
+              top: calc(100% + 8px);
+              right: 0;
+              width: 200px;
+              background: var(--bg-secondary);
+              border: 1px solid var(--border);
+              border-radius: 12px;
+              box-shadow: var(--shadow-md);
+              overflow: hidden;
+              z-index: 50;
+            }
+            .chat-dropdown-item {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              width: 100%;
+              padding: 12px 16px;
+              border: none;
+              background: transparent;
+              color: var(--text-primary);
+              font-size: 0.8125rem;
+              cursor: pointer;
+              transition: background 0.15s;
+              text-align: left;
+            }
+            .chat-dropdown-item:hover { background: var(--bg-tertiary); }
+            .chat-dropdown-item.danger { color: #ef4444; }
+            .chat-dropdown-item.danger:hover { background: rgba(239,68,68,0.1); }
 
             /* Messages */
             .msgs {
@@ -421,8 +507,8 @@ export default function ComunidadPage() {
             .date-divider { display: flex; justify-content: center; }
             .date-divider span {
               padding: 6px 16px;
-              background: linear-gradient(135deg, #242c27 0%, #1a211d 100%);
-              color: #91c4a8;
+              background: var(--gradient-bg);
+              color: var(--text-secondary);
               font-size: 0.625rem;
               font-weight: 700;
               border-radius: 9999px;
@@ -451,20 +537,20 @@ export default function ComunidadPage() {
               transition: transform 0.15s;
             }
             .msg-bubble:hover { transform: scale(1.01); }
-            .msg-bubble.received { background: linear-gradient(135deg, #242c27 0%, #1a211d 100%); color: #dde4dd; border-bottom-left-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-            .msg-bubble.sent { background: linear-gradient(135deg, #4edea3 0%, #10b981 100%); color: #003824; border-bottom-right-radius: 6px; box-shadow: 0 4px 16px rgba(78,222,163,0.2); }
-            .msg-time { font-size: 0.625rem; color: #6b7a72; padding: 0 4px; }
-            .msg-check { font-size: 0.75rem; color: #4edea3; }
+            .msg-bubble.received { background: var(--gradient-bg); color: var(--text-primary); border-bottom-left-radius: 6px; box-shadow: var(--shadow-sm); }
+            .msg-bubble.sent { background: var(--gradient-accent); color: var(--accent-dark); border-bottom-right-radius: 6px; box-shadow: var(--shadow-accent); }
+            .msg-time { font-size: 0.625rem; color: var(--text-muted); padding: 0 4px; }
+            .msg-check { font-size: 0.75rem; color: var(--accent); }
 
             /* Input */
-            .input-area { padding: 16px 32px 24px; background: linear-gradient(180deg, #0e1511 0%, rgba(14,21,17,0.95) 100%); }
+            .input-area { padding: 16px 32px 24px; background: var(--bg-primary); }
             .input-wrap {
               max-width: 800px;
               margin: 0 auto;
               display: flex;
               align-items: center;
               gap: 6px;
-              background: linear-gradient(135deg, #1a211d 0%, #242c27 100%);
+              background: var(--gradient-bg);
               border-radius: 20px;
               padding: 6px 6px 6px 16px;
               box-shadow: 0 4px 16px rgba(0,0,0,0.2);
@@ -477,7 +563,7 @@ export default function ComunidadPage() {
               border-radius: 12px;
               border: none;
               background: transparent;
-              color: #91c4a8;
+              color: var(--text-secondary);
               cursor: pointer;
               display: flex;
               align-items: center;
@@ -490,19 +576,19 @@ export default function ComunidadPage() {
               flex: 1;
               background: transparent;
               border: none;
-              color: #dde4dd;
+              color: var(--text-primary);
               font-size: 0.875rem;
               padding: 10px 8px;
               outline: none;
             }
-            .msg-input::placeholder { color: rgba(145,196,168,0.4); }
+            .msg-input::placeholder { color: var(--text-muted); }
             .send-btn {
               width: 44px;
               height: 44px;
               border-radius: 14px;
               border: none;
-              background: linear-gradient(135deg, #4edea3 0%, #10b981 100%);
-              color: #003824;
+              background: var(--gradient-accent);
+              color: var(--accent-dark);
               cursor: pointer;
               display: flex;
               align-items: center;
@@ -514,13 +600,13 @@ export default function ComunidadPage() {
             .send-btn:hover { filter: brightness(1.1); transform: scale(1.05); }
             .send-btn:active { transform: scale(0.95); }
             .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-            .input-hint { text-align: center; font-size: 0.625rem; color: rgba(145,196,168,0.3); margin-top: 12px; font-weight: 500; }
+            .input-hint { text-align: center; font-size: 0.625rem; color: var(--text-muted); margin-top: 12px; font-weight: 500; opacity: 0.5; }
 
             /* Empty state */
-            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #91c4a8; text-align: center; padding: 32px; }
+            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-secondary); text-align: center; padding: 32px; }
             .empty-icon { font-size: 3.5rem; margin-bottom: 20px; opacity: 0.4; }
-            .empty-title { font-size: 1.125rem; font-weight: 700; color: #dde4dd; margin: 0 0 8px; }
-            .empty-desc { font-size: 0.8125rem; margin: 0; max-width: 280px; line-height: 1.5; color: #6b7a72; }
+            .empty-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0 0 8px; }
+            .empty-desc { font-size: 0.8125rem; margin: 0; max-width: 280px; line-height: 1.5; color: var(--text-muted); }
 
             /* Contacts list */
             .contact-item {
@@ -535,14 +621,14 @@ export default function ComunidadPage() {
             }
             .contact-item:hover { background: #1a211d; }
             .contact-info { flex: 1; min-width: 0; }
-            .contact-name { font-size: 0.875rem; font-weight: 600; color: #dde4dd; margin: 0; }
-            .contact-email { font-size: 0.6875rem; color: #bbcabf; margin: 2px 0 0; }
+            .contact-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; }
+            .contact-email { font-size: 0.6875rem; color: var(--text-muted); margin: 2px 0 0; }
             .btn-add {
               padding: 6px 12px;
               border-radius: 6px;
               border: none;
-              background: #4edea3;
-              color: #003824;
+              background: var(--accent);
+              color: var(--accent-dark);
               font-size: 0.6875rem;
               font-weight: 600;
               cursor: pointer;
@@ -557,12 +643,12 @@ export default function ComunidadPage() {
               display: flex;
               flex-direction: column;
               gap: 10px;
-              background: #1a211d;
+              background: var(--bg-tertiary);
             }
             .request-top { display: flex; align-items: center; gap: 12px; }
             .request-actions { display: flex; gap: 8px; }
-            .btn-accept { flex: 1; padding: 8px; border-radius: 8px; border: none; background: #4edea3; color: #003824; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
-            .btn-reject { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #3c4a42; background: transparent; color: #bbcabf; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+            .btn-accept { flex: 1; padding: 8px; border-radius: 8px; border: none; background: var(--accent); color: var(--accent-dark); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+            .btn-reject { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
             /* Mobile styles */
             .comunidad-container { position: relative; }
@@ -759,7 +845,7 @@ export default function ComunidadPage() {
                         <p className="contact-name">{f.displayName || 'Usuario'}</p>
                         <p className="contact-email">Toca para chatear</p>
                       </div>
-                      <button style={{ background: 'transparent', border: 'none', color: '#bbcabf', cursor: 'pointer', fontSize: '0.875rem', padding: '4px' }} onClick={() => handleRemove(f.uid)}>✕</button>
+                      <button style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.875rem', padding: '4px' }} onClick={() => handleRemove(f.uid)}>✕</button>
                     </div>
                   ))}
                 </>
@@ -768,7 +854,7 @@ export default function ComunidadPage() {
               {/* Requests */}
               {receivedRequests.length > 0 && (
                 <>
-                  <p style={{ fontSize: '0.625rem', fontWeight: 700, color: '#bbcabf', textTransform: 'uppercase', padding: '16px 12px 8px', letterSpacing: '0.05em' }}>Solicitudes</p>
+                  <p style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', padding: '16px 12px 8px', letterSpacing: '0.05em' }}>Solicitudes</p>
                   {receivedRequests.map(r => (
                     <div key={r.id} className="request-item">
                       <div className="request-top">
@@ -797,12 +883,12 @@ export default function ComunidadPage() {
               <>
                 <div className="chat-header">
                   <button
-                    onClick={() => setActiveConversation(null)}
+                    onClick={() => { setActiveConversation(null); setShowMenu(false); }}
                     style={{
                       display: 'none',
                       background: 'none',
                       border: 'none',
-                      color: '#dde4dd',
+                      color: 'var(--text-primary)',
                       cursor: 'pointer',
                       padding: '8px',
                       marginRight: '8px',
@@ -831,10 +917,23 @@ export default function ComunidadPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="chat-actions">
-                    <button className="chat-action-btn">📞</button>
-                    <button className="chat-action-btn">📹</button>
-                    <button className="chat-action-btn">⋮</button>
+                  <div className="chat-actions" ref={menuRef}>
+                    <button className="chat-action-btn" onClick={() => setShowMenu(!showMenu)} title="Opciones">⋮</button>
+                    {showMenu && (
+                      <div className="chat-dropdown">
+                        <button className="chat-dropdown-item danger" onClick={() => {
+                          const friendId = activeConv?.participants?.find((p: string) => p !== user?.uid);
+                          if (friendId) handleRemove(friendId);
+                        }}>
+                          <span className="chat-dropdown-icon">🗑️</span>
+                          Eliminar de amigos
+                        </button>
+                        <button className="chat-dropdown-item" onClick={handleClearChat}>
+                          <span className="chat-dropdown-icon">🧹</span>
+                          Vaciar chat
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

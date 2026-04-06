@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (06 de Abril, 2026 - Bottom Nav Comunidad + Estética Chat + Configuración)
+## Estado Actual (06 de Abril, 2026 - Comunidad: Menú Dropdown + Modo Claro + Sin Llamadas)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
