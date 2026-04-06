@@ -31,7 +31,6 @@ export default function ComunidadPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('messages');
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [friends, setFriends] = useState<UserProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -174,7 +173,7 @@ export default function ComunidadPage() {
       <DashboardLayout>
         <div className="comunidad-container" style={{ display: 'flex', height: 'calc(100vh - 140px)', overflow: 'hidden', background: '#0e1511' }}>
           <style jsx>{`
-            /* Sidebar navigation */
+            /* Sidebar navigation (desktop) */
             .nav-sidebar {
               width: 64px;
               min-width: 64px;
@@ -208,6 +207,62 @@ export default function ComunidadPage() {
               background: #4edea3;
               color: #003824;
               font-size: 0.5625rem;
+              min-width: 14px;
+              height: 14px;
+              line-height: 14px;
+              text-align: center;
+              border-radius: 7px;
+              font-weight: 700;
+            }
+
+            /* Bottom navigation (mobile) */
+            .bottom-nav {
+              display: none;
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              height: 60px;
+              background: #161d19;
+              border-top: 1px solid rgba(60,74,66,0.2);
+              z-index: 100;
+              padding: 0 8px;
+              padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+            .bottom-nav-inner {
+              display: flex;
+              align-items: center;
+              justify-content: space-around;
+              height: 100%;
+              max-width: 500px;
+              margin: 0 auto;
+            }
+            .bottom-nav-item {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              gap: 2px;
+              padding: 6px 16px;
+              border-radius: 12px;
+              cursor: pointer;
+              transition: all 0.2s;
+              color: #91c4a8;
+              opacity: 0.6;
+              position: relative;
+              min-width: 64px;
+            }
+            .bottom-nav-item:hover { opacity: 0.8; }
+            .bottom-nav-item.active { opacity: 1; color: #4edea3; }
+            .bottom-nav-item .nav-icon { font-size: 1.25rem; line-height: 1; }
+            .bottom-nav-item .nav-label { font-size: 0.625rem; font-weight: 600; }
+            .bottom-nav-badge {
+              position: absolute;
+              top: 2px;
+              right: 12px;
+              background: #4edea3;
+              color: #003824;
+              font-size: 0.5rem;
               min-width: 14px;
               height: 14px;
               line-height: 14px;
@@ -301,72 +356,81 @@ export default function ComunidadPage() {
               display: flex;
               align-items: center;
               justify-content: space-between;
-              border-bottom: 1px solid rgba(60,74,66,0.05);
-              background: rgba(14,21,17,0.8);
+              border-bottom: 1px solid rgba(60,74,66,0.1);
+              background: linear-gradient(180deg, rgba(22,29,25,0.95) 0%, rgba(14,21,17,0.9) 100%);
               backdrop-filter: blur(20px);
               flex-shrink: 0;
             }
             .chat-header-left { display: flex; align-items: center; gap: 16px; }
             .chat-avatar { position: relative; }
             .chat-avatar img, .chat-avatar .initials {
-              width: 40px;
-              height: 40px;
+              width: 44px;
+              height: 44px;
               border-radius: 50%;
               object-fit: cover;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             }
             .chat-avatar .initials {
-              background: #1a211d;
+              background: linear-gradient(135deg, #1a211d 0%, #242c27 100%);
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 0.875rem;
+              font-size: 1rem;
               font-weight: 700;
               color: #4edea3;
             }
-            .chat-avatar .status-dot { width: 10px; height: 10px; border-color: #0e1511; }
+            .chat-avatar .status-dot { width: 12px; height: 12px; border-color: #0e1511; }
             .chat-name { font-size: 1rem; font-weight: 700; color: #dde4dd; margin: 0; }
             .chat-status { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-            .chat-status span { font-size: 0.625rem; color: #bbcabf; font-weight: 500; }
+            .chat-status span { font-size: 0.6875rem; color: #91c4a8; font-weight: 500; }
+            .chat-status .online { color: #4edea3; }
+            .chat-status .offline { color: #6b7a72; }
             .chat-status .encrypted { color: #4edea3; }
             .chat-actions { display: flex; gap: 8px; }
             .chat-action-btn {
               width: 40px;
               height: 40px;
-              border-radius: 8px;
+              border-radius: 10px;
               border: none;
-              background: transparent;
-              color: #bbcabf;
+              background: rgba(26,33,29,0.6);
+              color: #91c4a8;
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 1.125rem;
-              transition: all 0.15s;
+              transition: all 0.2s;
             }
-            .chat-action-btn:hover { background: #242c27; color: #dde4dd; }
+            .chat-action-btn:hover { background: #242c27; color: #4edea3; transform: scale(1.05); }
+            .chat-action-btn:active { transform: scale(0.95); }
 
             /* Messages */
             .msgs {
               flex: 1;
               overflow-y: auto;
-              padding: 32px;
+              padding: 24px 32px;
               display: flex;
               flex-direction: column;
-              gap: 24px;
-              background: radial-gradient(circle at center, rgba(16,185,129,0.03) 0%, transparent 70%);
+              gap: 16px;
+              background: radial-gradient(ellipse at top, rgba(16,185,129,0.04) 0%, transparent 60%);
             }
+            .msgs::-webkit-scrollbar { width: 6px; }
+            .msgs::-webkit-scrollbar-track { background: transparent; }
+            .msgs::-webkit-scrollbar-thumb { background: #3c4a42; border-radius: 3px; }
+            .msgs::-webkit-scrollbar-thumb:hover { background: #4edea3; }
             .date-divider { display: flex; justify-content: center; }
             .date-divider span {
-              padding: 4px 12px;
-              background: #242c27;
-              color: #bbcabf;
+              padding: 6px 16px;
+              background: linear-gradient(135deg, #242c27 0%, #1a211d 100%);
+              color: #91c4a8;
               font-size: 0.625rem;
               font-weight: 700;
               border-radius: 9999px;
               text-transform: uppercase;
               letter-spacing: 0.1em;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             }
-            .msg-row { display: flex; gap: 12px; max-width: 70%; }
+            .msg-row { display: flex; gap: 10px; max-width: 75%; }
             .msg-row.received { align-self: flex-start; }
             .msg-row.sent { align-self: flex-end; flex-direction: row-reverse; }
             .msg-avatar-sm {
@@ -379,79 +443,84 @@ export default function ComunidadPage() {
             .msg-content { display: flex; flex-direction: column; gap: 4px; }
             .msg-row.sent .msg-content { align-items: flex-end; }
             .msg-bubble {
-              padding: 16px;
-              border-radius: 16px;
+              padding: 14px 18px;
+              border-radius: 18px;
               font-size: 0.875rem;
-              line-height: 1.6;
+              line-height: 1.5;
               word-break: break-word;
+              transition: transform 0.15s;
             }
-            .msg-bubble.received { background: #242c27; color: #dde4dd; border-bottom-left-radius: 4px; }
-            .msg-bubble.sent { background: #10b981; color: #003824; border-bottom-right-radius: 4px; box-shadow: 0 4px 16px rgba(78,222,163,0.1); }
-            .msg-time { font-size: 0.625rem; color: #bbcabf; padding: 0 4px; }
+            .msg-bubble:hover { transform: scale(1.01); }
+            .msg-bubble.received { background: linear-gradient(135deg, #242c27 0%, #1a211d 100%); color: #dde4dd; border-bottom-left-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+            .msg-bubble.sent { background: linear-gradient(135deg, #4edea3 0%, #10b981 100%); color: #003824; border-bottom-right-radius: 6px; box-shadow: 0 4px 16px rgba(78,222,163,0.2); }
+            .msg-time { font-size: 0.625rem; color: #6b7a72; padding: 0 4px; }
             .msg-check { font-size: 0.75rem; color: #4edea3; }
 
             /* Input */
-            .input-area { padding: 24px 32px; background: #0e1511; }
+            .input-area { padding: 16px 32px 24px; background: linear-gradient(180deg, #0e1511 0%, rgba(14,21,17,0.95) 100%); }
             .input-wrap {
               max-width: 800px;
               margin: 0 auto;
               display: flex;
               align-items: center;
-              gap: 8px;
-              background: #1a211d;
-              border-radius: 16px;
-              padding: 8px 8px 8px 16px;
+              gap: 6px;
+              background: linear-gradient(135deg, #1a211d 0%, #242c27 100%);
+              border-radius: 20px;
+              padding: 6px 6px 6px 16px;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+              transition: box-shadow 0.2s;
             }
-            .input-wrap:focus-within { box-shadow: 0 0 0 1px #4edea3; }
+            .input-wrap:focus-within { box-shadow: 0 4px 20px rgba(78,222,163,0.15), 0 0 0 1px rgba(78,222,163,0.3); }
             .attach-btn, .emoji-btn {
               width: 40px;
               height: 40px;
-              border-radius: 8px;
+              border-radius: 12px;
               border: none;
               background: transparent;
-              color: #bbcabf;
+              color: #91c4a8;
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 1.125rem;
-              transition: color 0.15s;
+              transition: all 0.2s;
             }
-            .attach-btn:hover, .emoji-btn:hover { color: #4edea3; }
+            .attach-btn:hover, .emoji-btn:hover { color: #4edea3; background: rgba(78,222,163,0.1); }
             .msg-input {
               flex: 1;
               background: transparent;
               border: none;
               color: #dde4dd;
               font-size: 0.875rem;
-              padding: 8px;
+              padding: 10px 8px;
               outline: none;
             }
-            .msg-input::placeholder { color: rgba(187,202,191,0.5); }
+            .msg-input::placeholder { color: rgba(145,196,168,0.4); }
             .send-btn {
-              width: 40px;
-              height: 40px;
-              border-radius: 12px;
+              width: 44px;
+              height: 44px;
+              border-radius: 14px;
               border: none;
-              background: #4edea3;
+              background: linear-gradient(135deg, #4edea3 0%, #10b981 100%);
               color: #003824;
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 1.125rem;
-              transition: all 0.15s;
-              box-shadow: 0 4px 12px rgba(78,222,163,0.2);
+              font-size: 1.25rem;
+              transition: all 0.2s;
+              box-shadow: 0 4px 16px rgba(78,222,163,0.3);
             }
-            .send-btn:hover { filter: brightness(1.1); }
+            .send-btn:hover { filter: brightness(1.1); transform: scale(1.05); }
             .send-btn:active { transform: scale(0.95); }
-            .input-hint { text-align: center; font-size: 0.625rem; color: rgba(187,202,191,0.4); margin-top: 16px; font-weight: 500; }
+            .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+            .input-hint { text-align: center; font-size: 0.625rem; color: rgba(145,196,168,0.3); margin-top: 12px; font-weight: 500; }
 
             /* Empty state */
-            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #bbcabf; text-align: center; padding: 32px; }
-            .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
-            .empty-title { font-size: 1.125rem; font-weight: 600; color: #dde4dd; margin: 0 0 8px; }
-            .empty-desc { font-size: 0.75rem; margin: 0; max-width: 240px; }
+            .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #91c4a8; text-align: center; padding: 32px; }
+            .empty-icon { font-size: 3.5rem; margin-bottom: 20px; opacity: 0.4; }
+            .empty-title { font-size: 1.125rem; font-weight: 700; color: #dde4dd; margin: 0 0 8px; }
+            .empty-desc { font-size: 0.8125rem; margin: 0; max-width: 280px; line-height: 1.5; color: #6b7a72; }
 
             /* Contacts list */
             .contact-item {
@@ -495,52 +564,43 @@ export default function ComunidadPage() {
             .btn-accept { flex: 1; padding: 8px; border-radius: 8px; border: none; background: #4edea3; color: #003824; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
             .btn-reject { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #3c4a42; background: transparent; color: #bbcabf; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 
-            /* Mobile menu button */
-            .mobile-menu-btn { display: none; }
-            .mobile-overlay { display: none; }
+            /* Mobile styles */
             .comunidad-container { position: relative; }
             @media (max-width: 768px) {
               .comunidad-container {
                 height: calc(100dvh - 64px) !important;
                 height: -webkit-fill-available;
+                padding-bottom: 60px;
               }
-              .mobile-menu-btn { display: flex !important; }
-              .mobile-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 40;
-              }
-              .mobile-overlay.show { display: block; }
-              .nav-sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                z-index: 50;
-                transform: translateX(-100%);
-                transition: transform 0.2s ease;
-              }
-              .nav-sidebar.mobile-open { transform: translateX(0); }
+              .nav-sidebar { display: none; }
+              .bottom-nav { display: block; }
+              .bottom-nav.hidden { display: none; }
               .conv-list { width: 100%; min-width: 100%; position: absolute; inset: 0; z-index: 10; }
               .conv-list.hide { display: none; }
               .chat-area { position: absolute; inset: 0; z-index: 20; display: none; }
               .chat-area.show { display: flex; }
-              .msgs { padding: 16px; }
+              .msgs { padding: 16px; gap: 12px; }
               .input-area { padding: 12px 16px; }
-              .chat-header { padding: 0 16px; height: 60px; }
-              .chat-back-btn { display: block !important; }
+              .chat-header { padding: 0 16px; height: 64px; }
+              .chat-back-btn { display: flex !important; align-items: center; justify-content: center; }
               .msg-row { max-width: 85%; }
               .conv-header { padding: 16px; }
               .conv-title { font-size: 1rem; }
+              .chat-avatar img, .chat-avatar .initials { width: 40px; height: 40px; }
+              .chat-name { font-size: 0.9375rem; }
+              .chat-status span { font-size: 0.6875rem; }
+              .chat-actions { gap: 4px; }
+              .chat-action-btn { width: 36px; height: 36px; font-size: 1rem; }
             }
             @media (max-width: 480px) {
               .comunidad-container {
                 height: calc(100dvh - 56px) !important;
+                padding-bottom: 56px;
               }
-              .nav-sidebar { width: 56px; min-width: 56px; }
-              .nav-item { width: 40px; height: 40px; font-size: 1rem; }
+              .bottom-nav { height: 56px; }
+              .bottom-nav-item { min-width: 56px; padding: 4px 12px; }
+              .bottom-nav-item .nav-icon { font-size: 1.125rem; }
+              .bottom-nav-item .nav-label { font-size: 0.5625rem; }
               .conv-header { padding: 12px; }
               .conv-title { font-size: 0.875rem; margin-bottom: 12px; }
               .search-input { padding: 8px 10px 8px 32px; font-size: 0.75rem; }
@@ -549,54 +609,53 @@ export default function ComunidadPage() {
               .conv-name { font-size: 0.8125rem; }
               .conv-msg { font-size: 0.6875rem; }
               .chat-header { padding: 0 12px; height: 56px; }
-              .chat-avatar img, .chat-avatar .initials { width: 32px; height: 32px; }
+              .chat-avatar img, .chat-avatar .initials { width: 36px; height: 36px; }
               .chat-name { font-size: 0.875rem; }
+              .chat-status span { font-size: 0.625rem; }
               .msg-bubble { padding: 12px; font-size: 0.8125rem; }
+              .msg-row { gap: 8px; }
               .input-area { padding: 8px 12px; }
-              .input-wrap { padding: 6px 6px 6px 12px; }
+              .input-wrap { padding: 6px 6px 6px 12px; border-radius: 16px; }
               .msg-input { font-size: 0.8125rem; padding: 6px; }
               .attach-btn, .emoji-btn, .send-btn { width: 36px; height: 36px; }
+              .send-btn { width: 40px; height: 40px; }
+              .date-divider span { font-size: 0.5625rem; padding: 4px 12px; }
+              .empty-icon { font-size: 3rem; }
+              .empty-title { font-size: 1rem; }
+              .empty-desc { font-size: 0.75rem; }
             }
           `}</style>
 
-          {/* Mobile overlay */}
-          <div className={`mobile-overlay ${mobileMenuOpen ? 'show' : ''}`} onClick={() => setMobileMenuOpen(false)} />
-
-          {/* Mobile menu button */}
-          <button
-            className="mobile-menu-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              zIndex: 30,
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              border: 'none',
-              background: '#1a211d',
-              color: '#dde4dd',
-              cursor: 'pointer',
-              fontSize: '1.25rem',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
-
-          {/* Navigation sidebar */}
-          <div className={`nav-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-            <div className={`nav-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => { setActiveTab('messages'); setMobileMenuOpen(false); }} style={{ position: 'relative' }}>
+          {/* Navigation sidebar (desktop) */}
+          <div className="nav-sidebar">
+            <div className={`nav-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')} style={{ position: 'relative' }}>
               💬
               {unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
             </div>
-            <div className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => { setActiveTab('channels'); setMobileMenuOpen(false); }}>
+            <div className={`nav-item ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => setActiveTab('channels')}>
               📢
             </div>
-            <div className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => { setActiveTab('contacts'); setMobileMenuOpen(false); }}>
+            <div className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>
               👥
+            </div>
+          </div>
+
+          {/* Bottom navigation (mobile) */}
+          <div className={`bottom-nav ${activeConversation ? 'hidden' : ''}`}>
+            <div className="bottom-nav-inner">
+              <div className={`bottom-nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>
+                <span className="nav-icon">👥</span>
+                <span className="nav-label">Amigos</span>
+              </div>
+              <div className={`bottom-nav-item ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')} style={{ position: 'relative' }}>
+                <span className="nav-icon">💬</span>
+                <span className="nav-label">Mensajes</span>
+                {unreadCount > 0 && <span className="bottom-nav-badge">{unreadCount}</span>}
+              </div>
+              <div className={`bottom-nav-item ${activeTab === 'channels' ? 'active' : ''}`} onClick={() => setActiveTab('channels')}>
+                <span className="nav-icon">📢</span>
+                <span className="nav-label">Canales</span>
+              </div>
             </div>
           </div>
 
@@ -765,8 +824,10 @@ export default function ComunidadPage() {
                     <div>
                       <p className="chat-name">{activeUser.displayName || activeUser.email || 'Usuario'}</p>
                       <div className="chat-status">
-                        <span className="encrypted">🔒</span>
-                        <span>{otherUserOnline ? 'En línea' : 'Desconectado'}</span>
+                        <span className={otherUserOnline ? 'online' : 'offline'}>
+                          {otherUserOnline ? '● En línea' : '○ Desconectado'}
+                        </span>
+                        <span className="encrypted">• 🔒 Cifrado</span>
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (06 de Abril, 2026 - Responsive Comunidad + Configuración + Modal Metas Móvil)
+## Estado Actual (06 de Abril, 2026 - Bottom Nav Comunidad + Estética Chat + Configuración)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -34,7 +34,7 @@
 - `app/configuracion/page.tsx` → Perfil editable, preferencias, notificaciones, seguridad, zona de peligro (rediseñado)
 - `app/logros/page.tsx` → Logros funcionales con XP en tiempo real, tareas diarias/semanales completables, nivel máximo 30
 - `app/ayuda/page.tsx` → FAQ con 40+ preguntas, accesos rápidos, filtros por categoría
-- `app/comunidad/page.tsx` → UI de foros, recursos, leaderboard, eventos (sin Firebase)
+- `app/comunidad/page.tsx` → Chat privado con Firebase, bottom nav móvil (Amigos/Mensajes/Canales), sidebar desktop, estética mejorada (gradientes, sombras, animaciones)
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
 - `lib/contexts/GoalsContext.tsx` → Contexto reactivo de metas y recordatorios (onSnapshot)
