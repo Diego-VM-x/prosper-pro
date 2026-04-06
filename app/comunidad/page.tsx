@@ -211,7 +211,7 @@ export default function ComunidadPage() {
             .nav-item {
               width: 48px;
               height: 48px;
-              border-radius: 12px;
+              border-radius: 14px;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -220,9 +220,10 @@ export default function ComunidadPage() {
               color: var(--comm-text-secondary);
               opacity: 0.7;
               font-size: 1.25rem;
+              border: 1px solid transparent;
             }
-            .nav-item:hover { background: var(--comm-bg-tertiary); opacity: 1; }
-            .nav-item.active { background: var(--comm-bg-card); color: var(--comm-text-primary); opacity: 1; border: 1px solid var(--comm-border); }
+            .nav-item:hover { background: var(--comm-bg-tertiary); opacity: 1; box-shadow: 0 2px 8px rgba(59,130,246,0.08); }
+            .nav-item.active { background: var(--comm-bg-card); color: #60a5fa; opacity: 1; border: 1px solid rgba(59,130,246,0.2); box-shadow: 0 2px 12px rgba(59,130,246,0.12); }
             .nav-badge {
               position: absolute;
               top: 4px;
@@ -267,24 +268,25 @@ export default function ComunidadPage() {
               justify-content: center;
               gap: 2px;
               padding: 6px 16px;
-              border-radius: 12px;
+              border-radius: 16px;
               cursor: pointer;
               transition: all 0.2s;
               color: var(--comm-text-secondary);
               opacity: 0.6;
               position: relative;
               min-width: 64px;
+              border: 1px solid transparent;
             }
-            .bottom-nav-item:hover { opacity: 0.8; }
-            .bottom-nav-item.active { opacity: 1; color: var(--comm-text-primary); }
+            .bottom-nav-item:hover { opacity: 0.8; box-shadow: 0 2px 8px rgba(59,130,246,0.08); }
+            .bottom-nav-item.active { opacity: 1; color: #60a5fa; border: 1px solid rgba(59,130,246,0.15); box-shadow: 0 2px 12px rgba(59,130,246,0.1); }
             .bottom-nav-item .nav-icon { font-size: 1.25rem; line-height: 1; }
             .bottom-nav-item .nav-label { font-size: 0.625rem; font-weight: 600; }
             .bottom-nav-badge {
               position: absolute;
               top: 2px;
               right: 12px;
-              background: var(--comm-text-muted);
-              color: var(--comm-bg-primary);
+              background: rgba(59,130,246,0.3);
+              color: #60a5fa;
               font-size: 0.5rem;
               min-width: 14px;
               height: 14px;
@@ -310,25 +312,27 @@ export default function ComunidadPage() {
             .search-input {
               width: 100%;
               padding: 10px 12px 10px 36px;
-              border-radius: 8px;
-              border: none;
+              border-radius: 14px;
+              border: 1px solid rgba(59,130,246,0.08);
               background: var(--comm-bg-tertiary);
               color: var(--comm-text-primary);
               font-size: 0.8125rem;
               outline: none;
               box-sizing: border-box;
+              transition: all 0.2s;
             }
-            .search-input:focus { box-shadow: 0 0 0 1px var(--comm-border); }
+            .search-input:focus { box-shadow: 0 0 0 2px rgba(59,130,246,0.15), 0 2px 8px rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2); }
             .conv-scroll { flex: 1; overflow-y: auto; padding: 8px 16px; }
             .conv-item {
               padding: 12px;
-              border-radius: 12px;
+              border-radius: 16px;
               cursor: pointer;
               margin-bottom: 8px;
-              transition: all 0.15s;
+              transition: all 0.2s;
+              border: 1px solid transparent;
             }
-            .conv-item:hover { background: var(--comm-bg-tertiary); }
-            .conv-item.active { background: var(--comm-bg-card); }
+            .conv-item:hover { background: var(--comm-bg-tertiary); border-color: rgba(59,130,246,0.1); box-shadow: 0 2px 8px rgba(59,130,246,0.06); }
+            .conv-item.active { background: var(--comm-bg-card); border-color: rgba(59,130,246,0.15); box-shadow: 0 2px 12px rgba(59,130,246,0.1); }
             .conv-row { display: flex; align-items: center; gap: 12px; }
             .conv-avatar { position: relative; flex-shrink: 0; }
             .conv-avatar img, .conv-avatar .initials {
@@ -344,7 +348,7 @@ export default function ComunidadPage() {
               justify-content: center;
               font-size: 1rem;
               font-weight: 700;
-              color: var(--comm-accent);
+              color: #60a5fa;
             }
             .status-dot {
               position: absolute;
@@ -355,13 +359,23 @@ export default function ComunidadPage() {
               border-radius: 50%;
               border: 2px solid var(--comm-bg-tertiary);
             }
-            .status-dot.on { background: var(--comm-accent); }
+            .status-dot.on { background: #60a5fa; box-shadow: 0 0 6px rgba(59,130,246,0.4); }
             .status-dot.off { background: var(--comm-text-muted); }
             .conv-info { flex: 1; min-width: 0; }
             .conv-top { display: flex; justify-content: space-between; align-items: flex-start; }
-            .conv-name { font-size: 0.875rem; font-weight: 700; color: var(--comm-text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .conv-time { font-size: 0.625rem; color: var(--comm-text-muted); flex-shrink: 0; }
             .conv-name { font-size: 0.875rem; font-weight: 600; color: var(--comm-text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .conv-time { font-size: 0.625rem; color: var(--comm-text-muted); flex-shrink: 0; }
+            .conv-avatar .initials {
+              background: var(--comm-bg-tertiary);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1rem;
+              font-weight: 700;
+              color: #60a5fa;
+              border: 1px solid rgba(59,130,246,0.1);
+              box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+            }
             .conv-msg { font-size: 0.75rem; color: var(--comm-text-secondary); margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
             .conv-msg.muted { color: var(--comm-text-muted); font-weight: 400; }
 
@@ -396,6 +410,8 @@ export default function ComunidadPage() {
             }
             .chat-avatar .initials {
               background: var(--comm-gradient-bg);
+              border: 1px solid rgba(59,130,246,0.08);
+              box-shadow: 0 2px 12px rgba(59,130,246,0.06);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -403,19 +419,19 @@ export default function ComunidadPage() {
               font-weight: 700;
               color: #4edea3;
             }
-            .chat-avatar .status-dot { width: 12px; height: 12px; border-color: var(--comm-bg-primary); }
+            .chat-avatar .status-dot { width: 12px; height: 12px; border-color: var(--comm-bg-primary); box-shadow: 0 0 6px rgba(59,130,246,0.3); }
             .chat-name { font-size: 1rem; font-weight: 700; color: var(--comm-text-primary); margin: 0; }
             .chat-status { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
             .chat-status span { font-size: 0.6875rem; color: var(--comm-text-secondary); font-weight: 500; }
-            .chat-status .online { color: var(--comm-accent); }
+            .chat-status .online { color: #60a5fa; }
             .chat-status .offline { color: var(--comm-text-muted); }
-            .chat-status .encrypted { color: var(--comm-accent); }
+            .chat-status .encrypted { color: #60a5fa; }
             .chat-actions { display: flex; gap: 8px; position: relative; }
             .chat-action-btn {
               width: 40px;
               height: 40px;
-              border-radius: 10px;
-              border: none;
+              border-radius: 12px;
+              border: 1px solid rgba(59,130,246,0.1);
               background: var(--comm-bg-tertiary);
               color: var(--comm-text-secondary);
               cursor: pointer;
@@ -424,8 +440,9 @@ export default function ComunidadPage() {
               justify-content: center;
               font-size: 1.125rem;
               transition: all 0.2s;
+              box-shadow: 0 1px 4px rgba(59,130,246,0.05);
             }
-            .chat-action-btn:hover { background: var(--comm-bg-card); color: var(--comm-text-primary); transform: scale(1.05); }
+            .chat-action-btn:hover { background: var(--comm-bg-card); color: #60a5fa; border-color: rgba(59,130,246,0.2); transform: scale(1.08); box-shadow: 0 2px 8px rgba(59,130,246,0.12); }
             .chat-action-btn:active { transform: scale(0.95); }
 
             /* Dropdown menu */
@@ -435,9 +452,9 @@ export default function ComunidadPage() {
               right: 0;
               width: 200px;
               background: var(--comm-bg-secondary);
-              border: 1px solid var(--comm-border);
-              border-radius: 12px;
-              box-shadow: var(--comm-shadow-md);
+              border: 1px solid rgba(59,130,246,0.15);
+              border-radius: 16px;
+              box-shadow: 0 8px 32px rgba(59,130,246,0.12), 0 0 0 1px rgba(59,130,246,0.08);
               overflow: hidden;
               z-index: 50;
             }
@@ -457,6 +474,7 @@ export default function ComunidadPage() {
             }
             .chat-dropdown-item:hover { background: var(--comm-bg-tertiary); }
             .chat-dropdown-item:not(.danger) { color: var(--comm-text-secondary); }
+            .chat-dropdown-item:not(.danger):hover { color: #60a5fa; }
             .chat-dropdown-item.danger { color: #ef4444; }
             .chat-dropdown-item.danger:hover { background: rgba(239,68,68,0.1); }
 
@@ -479,6 +497,7 @@ export default function ComunidadPage() {
               padding: 6px 16px;
               background: var(--comm-gradient-bg);
               color: var(--comm-text-secondary);
+              border: 1px solid rgba(59,130,246,0.08);
               font-size: 0.625rem;
               font-weight: 700;
               border-radius: 9999px;
@@ -499,18 +518,18 @@ export default function ComunidadPage() {
             .msg-content { display: flex; flex-direction: column; gap: 4px; }
             .msg-row.sent .msg-content { align-items: flex-end; }
             .msg-bubble {
-              padding: 12px 16px;
-              border-radius: 20px;
+              padding: 12px 18px;
+              border-radius: 24px;
               font-size: 0.875rem;
               line-height: 1.5;
               word-break: break-word;
-              transition: transform 0.15s;
+              transition: all 0.2s;
             }
-            .msg-bubble:hover { transform: scale(1.01); }
-            .msg-bubble.received { background: var(--comm-bg-card); color: var(--comm-text-primary); border-bottom-left-radius: 20px; box-shadow: var(--comm-shadow-sm); }
-            .msg-bubble.sent { background: var(--comm-bg-tertiary); color: var(--comm-text-primary); border-bottom-right-radius: 20px; box-shadow: var(--comm-shadow-sm); border: 1px solid var(--comm-border); }
+            .msg-bubble:hover { transform: scale(1.02); }
+            .msg-bubble.received { background: var(--comm-bg-card); color: var(--comm-text-primary); border-radius: 24px 24px 24px 8px; box-shadow: 0 2px 12px rgba(59,130,246,0.08), 0 0 0 1px rgba(59,130,246,0.1); }
+            .msg-bubble.sent { background: var(--comm-bg-tertiary); color: var(--comm-text-primary); border-radius: 24px 24px 8px 24px; box-shadow: 0 2px 12px rgba(59,130,246,0.12), 0 0 0 1px rgba(59,130,246,0.15); }
             .msg-time { font-size: 0.625rem; color: var(--comm-text-muted); padding: 0 4px; }
-            .msg-check { font-size: 0.75rem; color: var(--comm-text-muted); }
+            .msg-check { font-size: 0.75rem; color: #60a5fa; }
 
             /* Input */
             .input-area { padding: 16px 32px 24px; background: var(--comm-bg-primary); }
@@ -521,12 +540,12 @@ export default function ComunidadPage() {
               align-items: center;
               gap: 6px;
               background: var(--comm-gradient-bg);
-              border-radius: 20px;
+              border-radius: 28px;
               padding: 6px 6px 6px 16px;
-              box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-              transition: box-shadow 0.2s;
+              box-shadow: 0 4px 20px rgba(59,130,246,0.08), 0 0 0 1px rgba(59,130,246,0.1);
+              transition: all 0.3s;
             }
-            .input-wrap:focus-within { box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px var(--comm-border); }
+            .input-wrap:focus-within { box-shadow: 0 4px 24px rgba(59,130,246,0.15), 0 0 0 2px rgba(59,130,246,0.3), 0 0 20px rgba(59,130,246,0.1); }
             .attach-btn, .emoji-btn {
               width: 40px;
               height: 40px;
@@ -553,22 +572,21 @@ export default function ComunidadPage() {
             }
             .msg-input::placeholder { color: var(--comm-text-muted); }
             .send-btn {
-              width: 44px;
-              height: 44px;
-              border-radius: 14px;
-              border: none;
+              width: 48px;
+              height: 48px;
+              border-radius: 16px;
+              border: 1px solid rgba(59,130,246,0.2);
               background: var(--comm-bg-tertiary);
               color: var(--comm-text-primary);
-              border: 1px solid var(--comm-border);
               cursor: pointer;
               display: flex;
               align-items: center;
               justify-content: center;
               font-size: 1.25rem;
-              transition: all 0.2s;
-              box-shadow: var(--comm-shadow-sm);
+              transition: all 0.25s;
+              box-shadow: 0 2px 8px rgba(59,130,246,0.1), 0 0 0 1px rgba(59,130,246,0.08);
             }
-            .send-btn:hover { background: var(--comm-accent); color: var(--comm-accent-dark); border-color: var(--comm-accent); transform: scale(1.05); }
+            .send-btn:hover { background: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.4); transform: scale(1.08); box-shadow: 0 4px 16px rgba(59,130,246,0.2), 0 0 12px rgba(59,130,246,0.15); }
             .send-btn:active { transform: scale(0.95); }
             .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
             .input-hint { text-align: center; font-size: 0.625rem; color: var(--comm-text-muted); margin-top: 12px; font-weight: 500; opacity: 0.5; }
@@ -600,7 +618,9 @@ export default function ComunidadPage() {
               border: none;
               background: var(--comm-bg-card);
               color: var(--comm-text-primary);
-              border: 1px solid var(--comm-border);
+              border: 1px solid rgba(59,130,246,0.12);
+              border-radius: 10px;
+              box-shadow: 0 1px 4px rgba(59,130,246,0.05);
               font-size: 0.6875rem;
               font-weight: 600;
               cursor: pointer;
@@ -619,8 +639,10 @@ export default function ComunidadPage() {
             }
             .request-top { display: flex; align-items: center; gap: 12px; }
             .request-actions { display: flex; gap: 8px; }
-            .btn-accept { flex: 1; padding: 8px; border-radius: 8px; border: none; background: var(--comm-bg-card); color: var(--comm-text-primary); font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid var(--comm-border); }
-            .btn-reject { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--comm-border); background: transparent; color: var(--comm-text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+            .btn-accept { flex: 1; padding: 8px; border-radius: 12px; border: 1px solid rgba(59,130,246,0.15); background: var(--comm-bg-card); color: var(--comm-text-primary); font-size: 0.75rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 8px rgba(59,130,246,0.06); }
+            .btn-accept:hover { border-color: rgba(59,130,246,0.3); box-shadow: 0 2px 12px rgba(59,130,246,0.12); }
+            .btn-reject { flex: 1; padding: 8px; border-radius: 12px; border: 1px solid rgba(59,130,246,0.1); background: transparent; color: var(--comm-text-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+            .btn-reject:hover { border-color: rgba(239,68,68,0.3); color: #ef4444; }
 
             /* Mobile styles */
             .comunidad-container { position: relative; }
