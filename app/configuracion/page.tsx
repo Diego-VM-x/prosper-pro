@@ -8,6 +8,8 @@ import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib
 import { useTheme } from '@/app/components/ThemeProvider';
 import type { UserProfile } from '@/types';
 
+type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
+
 export default function ConfiguracionPage() {
   const { user, logout, deleteAccount, enableNotifications } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
@@ -18,17 +20,17 @@ export default function ConfiguracionPage() {
   const [bio, setBio] = useState('');
   const [language, setLanguage] = useState('es');
   const [currency, setCurrency] = useState('USD');
-  const [darkModeSync, setDarkModeSync] = useState(true);
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [activeTab, setActiveTab] = useState<TabId>('perfil');
 
-  // Cargar perfil
   useEffect(() => {
-    // Detectar estado de notificaciones push
     if ('Notification' in window) {
       setNotifEnabled(Notification.permission === 'granted');
     }
@@ -49,7 +51,6 @@ export default function ConfiguracionPage() {
     }
     loadProfile();
 
-    // Suscribirse a cambios en tiempo real
     const unsub = subscribeToUserProfile(uid, (p) => {
       if (p) {
         setProfile(p);
@@ -57,7 +58,6 @@ export default function ConfiguracionPage() {
         setBio((p as any).bio || '');
         setLanguage((p as any).language || 'es');
         setCurrency((p as any).currency || 'USD');
-        setDarkModeSync((p as any).darkModeSync ?? true);
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
       }
@@ -66,7 +66,6 @@ export default function ConfiguracionPage() {
     return () => unsub();
   }, [user?.uid]);
 
-  // Guardar perfil
   const handleSaveProfile = async () => {
     if (!user?.uid) return;
     setSaving(true);
@@ -78,7 +77,6 @@ export default function ConfiguracionPage() {
         bio: bio.trim(),
         language,
         currency,
-        darkModeSync,
         notifications: {
           priceAlerts,
           budgetAlerts,
@@ -95,6 +93,7 @@ export default function ConfiguracionPage() {
   };
 
   const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'ELIMINAR') return;
     setErrorMsg('');
     setDeleting(true);
     try {
@@ -113,33 +112,389 @@ export default function ConfiguracionPage() {
 
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
   const userEmail = user?.email || 'sin-email@ejemplo.com';
+  const photoURL = user?.photoURL;
+
+  const tabs: { id: TabId; label: string; icon: string }[] = [
+    { id: 'perfil', label: 'Perfil', icon: '👤' },
+    { id: 'preferencias', label: 'Preferencias', icon: '⚙️' },
+    { id: 'notificaciones', label: 'Alertas', icon: '🔔' },
+    { id: 'seguridad', label: 'Seguridad', icon: '🔒' },
+  ];
 
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="configuracion-page">
-          <style jsx>{`
-            .configuracion-page {
-              width: 100%;
-              max-width: 896px;
-              margin: 0 auto;
-              padding: 16px;
-              overflow-x: hidden;
-              box-sizing: border-box;
-            }
-            @media (min-width: 640px) { .configuracion-page { padding: 24px; } }
-            @media (min-width: 1024px) { .configuracion-page { padding: 32px; } }
+        <div className="settings-page">
+          {/* Toast */}
+          {successMsg && <div className="toast toast-success">✓ {successMsg}</div>}
+          {errorMsg && <div className="toast toast-error">⚠ {errorMsg}</div>}
 
-            /* Toast messages */
+          {/* Header */}
+          <div className="settings-header">
+            <div>
+              <h1 className="settings-title">Configuración</h1>
+              <p className="settings-subtitle">Gestiona tu perfil, preferencias y seguridad.</p>
+            </div>
+          </div>
+
+          {/* Mobile Tabs */}
+          <div className="mobile-tabs">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                className={`mobile-tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="mobile-tab-icon">{tab.icon}</span>
+                <span className="mobile-tab-label">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="settings-layout">
+            {/* Desktop Sidebar */}
+            <aside className="settings-sidebar">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  className={`sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  <span className="sidebar-tab-icon">{tab.icon}</span>
+                  <span className="sidebar-tab-label">{tab.label}</span>
+                </button>
+              ))}
+            </aside>
+
+            {/* Content */}
+            <div className="settings-content">
+              {/* ===== PERFIL ===== */}
+              {activeTab === 'perfil' && (
+                <div className="settings-panel">
+                  <div className="panel-card">
+                    <div className="panel-header">
+                      <h2 className="panel-title">Información Personal</h2>
+                      <p className="panel-desc">Tu identidad en Prosper</p>
+                    </div>
+
+                    <div className="profile-grid">
+                      {/* Avatar */}
+                      <div className="avatar-section">
+                        <div className="avatar-circle">
+                          {photoURL ? (
+                            <img src={photoURL} alt="Avatar" className="avatar-img" />
+                          ) : (
+                            <span className="avatar-initial">{userInitial}</span>
+                          )}
+                        </div>
+                        <p className="avatar-hint">{user?.email}</p>
+                      </div>
+
+                      {/* Form */}
+                      <div className="profile-fields">
+                        <div className="field-grid">
+                          <div className="field">
+                            <label className="field-label">Nombre</label>
+                            <input
+                              className="field-input"
+                              type="text"
+                              value={displayName}
+                              onChange={(e) => setDisplayName(e.target.value)}
+                              placeholder="Tu nombre"
+                            />
+                          </div>
+                          <div className="field">
+                            <label className="field-label">Email</label>
+                            <input
+                              className="field-input field-disabled"
+                              type="email"
+                              value={userEmail}
+                              disabled
+                              tabIndex={-1}
+                            />
+                          </div>
+                        </div>
+                        <div className="field">
+                          <label className="field-label">Bio</label>
+                          <textarea
+                            className="field-textarea"
+                            rows={3}
+                            value={bio}
+                            onChange={(e) => setBio(e.target.value)}
+                            placeholder="Describe tu perfil financiero..."
+                          />
+                        </div>
+                        <button
+                          className="btn-save"
+                          onClick={handleSaveProfile}
+                          disabled={saving}
+                        >
+                          {saving ? (
+                            <span className="btn-loading">
+                              <span className="spinner" /> Guardando...
+                            </span>
+                          ) : 'Guardar Cambios'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Plan Card */}
+                  <div className="panel-card plan-card">
+                    <div className="plan-content">
+                      <div className="plan-badge">Free</div>
+                      <div>
+                        <h3 className="plan-title">Plan Gratuito</h3>
+                        <p className="plan-desc">Acceso completo a Prosper</p>
+                      </div>
+                    </div>
+                    <div className="plan-features">
+                      <div className="plan-feature">
+                        <span className="plan-feature-icon">🎯</span>
+                        <span>Metas ilimitadas</span>
+                      </div>
+                      <div className="plan-feature">
+                        <span className="plan-feature-icon">📊</span>
+                        <span>Dashboard completo</span>
+                      </div>
+                      <div className="plan-feature">
+                        <span className="plan-feature-icon">📚</span>
+                        <span>Cursos educativos</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== PREFERENCIAS ===== */}
+              {activeTab === 'preferencias' && (
+                <div className="settings-panel">
+                  <div className="panel-card">
+                    <div className="panel-header">
+                      <h2 className="panel-title">Idioma y Moneda</h2>
+                      <p className="panel-desc">Personaliza tu experiencia</p>
+                    </div>
+
+                    <div className="pref-section">
+                      <label className="pref-label">Idioma de Interfaz</label>
+                      <div className="option-grid">
+                        {[
+                          { value: 'es', label: 'Español', flag: '🇪🇸' },
+                          { value: 'en', label: 'English', flag: '🇺🇸' },
+                          { value: 'pt', label: 'Português', flag: '🇧🇷' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            className={`option-btn ${language === opt.value ? 'active' : ''}`}
+                            onClick={() => setLanguage(opt.value)}
+                          >
+                            <span className="option-flag">{opt.flag}</span>
+                            <span className="option-text">{opt.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pref-section">
+                      <label className="pref-label">Moneda</label>
+                      <div className="option-grid currency-grid">
+                        {[
+                          { value: 'USD', label: 'Dólar', symbol: '$', flag: '🇺🇸' },
+                          { value: 'EUR', label: 'Euro', symbol: '€', flag: '🇪🇺' },
+                          { value: 'VES', label: 'Bolívar', symbol: 'Bs.', flag: '🇻🇪' },
+                          { value: 'COP', label: 'Peso CO', symbol: '$', flag: '🇨🇴' },
+                          { value: 'MXN', label: 'Peso MX', symbol: '$', flag: '🇲🇽' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            className={`option-btn ${currency === opt.value ? 'active' : ''}`}
+                            onClick={() => setCurrency(opt.value)}
+                          >
+                            <span className="option-flag">{opt.flag}</span>
+                            <span className="option-text">{opt.symbol} {opt.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="panel-card">
+                    <div className="panel-header">
+                      <h2 className="panel-title">Apariencia</h2>
+                      <p className="panel-desc">Tema visual de la aplicación</p>
+                    </div>
+
+                    <div className="theme-selector">
+                      <button
+                        className={`theme-option ${theme === 'light' ? 'active' : ''}`}
+                        onClick={() => { if (theme === 'dark') toggleTheme(); }}
+                      >
+                        <div className="theme-preview theme-preview-light">
+                          <div className="theme-preview-bar" />
+                          <div className="theme-preview-blocks">
+                            <div className="theme-preview-block" />
+                            <div className="theme-preview-block" />
+                          </div>
+                        </div>
+                        <span className="theme-label">Claro</span>
+                      </button>
+                      <button
+                        className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
+                        onClick={() => { if (theme === 'light') toggleTheme(); }}
+                      >
+                        <div className="theme-preview theme-preview-dark">
+                          <div className="theme-preview-bar" />
+                          <div className="theme-preview-blocks">
+                            <div className="theme-preview-block" />
+                            <div className="theme-preview-block" />
+                          </div>
+                        </div>
+                        <span className="theme-label">Oscuro</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== NOTIFICACIONES ===== */}
+              {activeTab === 'notificaciones' && (
+                <div className="settings-panel">
+                  <div className="panel-card">
+                    <div className="panel-header">
+                      <h2 className="panel-title">Centro de Notificaciones</h2>
+                      <p className="panel-desc">Controla qué alertas recibes</p>
+                    </div>
+
+                    <div className="toggle-list">
+                      <ToggleRow
+                        icon="🌐"
+                        label="Notificaciones Push"
+                        desc="Alertas en el navegador"
+                        checked={notifEnabled}
+                        onChange={async () => {
+                          if (notifSaving) return;
+                          setNotifSaving(true);
+                          const result = await enableNotifications();
+                          setNotifEnabled(result);
+                          setNotifSaving(false);
+                        }}
+                        disabled={notifSaving}
+                      />
+                      <ToggleRow
+                        icon="📈"
+                        label="Alertas de Precio"
+                        desc="Cambios en tiempo real"
+                        checked={priceAlerts}
+                        onChange={() => setPriceAlerts(!priceAlerts)}
+                      />
+                      <ToggleRow
+                        icon="💰"
+                        label="Alertas de Presupuesto"
+                        desc="Violaciones de límite"
+                        checked={budgetAlerts}
+                        onChange={() => setBudgetAlerts(!budgetAlerts)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== SEGURIDAD ===== */}
+              {activeTab === 'seguridad' && (
+                <div className="settings-panel">
+                  <div className="panel-card">
+                    <div className="panel-header">
+                      <h2 className="panel-title">Sesiones Activas</h2>
+                      <p className="panel-desc">Dispositivos conectados a tu cuenta</p>
+                    </div>
+
+                    <div className="session-card">
+                      <div className="session-icon">💻</div>
+                      <div className="session-info">
+                        <span className="session-name">Este Dispositivo</span>
+                        <span className="session-detail">Chrome · Activo ahora</span>
+                      </div>
+                      <span className="session-badge">Actual</span>
+                    </div>
+                  </div>
+
+                  <div className="panel-card danger-card">
+                    <div className="panel-header">
+                      <div className="danger-header">
+                        <div className="danger-icon-wrap">⚠️</div>
+                        <div>
+                          <h2 className="danger-title">Eliminar Cuenta</h2>
+                          <p className="danger-desc">Esta acción es irreversible. Se borrarán todos tus datos permanentemente.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!showDeleteConfirm ? (
+                      <button
+                        className="btn-danger"
+                        onClick={() => setShowDeleteConfirm(true)}
+                      >
+                        Eliminar mi cuenta
+                      </button>
+                    ) : (
+                      <div className="delete-confirm">
+                        <p className="delete-confirm-label">
+                          Escribe <strong>ELIMINAR</strong> para confirmar:
+                        </p>
+                        <input
+                          className="delete-confirm-input"
+                          type="text"
+                          value={deleteConfirmText}
+                          onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                          placeholder="ELIMINAR"
+                        />
+                        <div className="delete-confirm-actions">
+                          <button
+                            className="btn-cancel"
+                            onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            className="btn-danger-confirm"
+                            onClick={handleDeleteAccount}
+                            disabled={deleteConfirmText !== 'ELIMINAR' || deleting}
+                          >
+                            {deleting ? 'Eliminando...' : 'Confirmar Eliminación'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="settings-footer">
+            Prosper Pro © 2026 — Inteligencia Financiera Encriptada
+          </div>
+
+          <style>{`
+            /* ===== BASE ===== */
+            .settings-page {
+              width: 100%;
+              max-width: 960px;
+              margin: 0 auto;
+              padding: 20px 16px;
+            }
+
+            /* Toast */
             .toast {
               padding: 12px 16px;
-              border-radius: 8px;
-              margin-bottom: 20px;
+              border-radius: 10px;
+              margin-bottom: 16px;
               display: flex;
               align-items: center;
               gap: 8px;
-              animation: fadeInUp 0.3s ease;
-              font-size: 0.875rem;
+              animation: toastIn 0.3s ease;
+              font-size: 0.8125rem;
               font-weight: 600;
             }
             .toast-success {
@@ -150,288 +505,377 @@ export default function ConfiguracionPage() {
             .toast-error {
               background: rgba(239,68,68,0.1);
               border: 1px solid rgba(239,68,68,0.2);
-              color: var(--color-error, #EF4444);
+              color: #EF4444;
+            }
+            @keyframes toastIn {
+              from { opacity: 0; transform: translateY(-8px); }
+              to { opacity: 1; transform: translateY(0); }
             }
 
-            /* Hero */
-            .hero { margin-bottom: 20px; }
-            .hero-title {
-              font-size: 1.375rem;
-              font-weight: 900;
-              color: var(--text-primary);
-              letter-spacing: -0.02em;
-              margin: 0 0 4px 0;
-              line-height: 1.2;
+            /* Header */
+            .settings-header {
+              margin-bottom: 24px;
             }
-            @media (min-width: 640px) { .hero-title { font-size: 1.75rem; } }
-            @media (min-width: 1024px) { .hero-title { font-size: 2rem; } }
-            .hero-desc {
+            .settings-title {
+              font-size: 1.5rem;
+              font-weight: 800;
+              color: var(--text-primary);
+              margin: 0 0 4px 0;
+              letter-spacing: -0.02em;
+            }
+            .settings-subtitle {
               font-size: 0.8125rem;
               color: var(--text-secondary);
               margin: 0;
-              line-height: 1.5;
             }
 
-            /* Grid */
-            .grid-layout {
-              display: grid;
-              grid-template-columns: 1fr;
+            /* Mobile Tabs */
+            .mobile-tabs {
+              display: flex;
+              gap: 6px;
+              margin-bottom: 20px;
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+              scrollbar-width: none;
+              padding-bottom: 4px;
+            }
+            .mobile-tabs::-webkit-scrollbar { display: none; }
+            .mobile-tab {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              padding: 8px 14px;
+              border-radius: 10px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-card);
+              color: var(--text-secondary);
+              font-size: 0.75rem;
+              font-weight: 600;
+              cursor: pointer;
+              white-space: nowrap;
+              transition: all 0.2s;
+              flex-shrink: 0;
+            }
+            .mobile-tab:hover {
+              border-color: var(--color-prosper-green);
+              color: var(--text-primary);
+            }
+            .mobile-tab.active {
+              background: var(--color-prosper-green);
+              border-color: var(--color-prosper-green);
+              color: white;
+            }
+            .mobile-tab-icon { font-size: 0.875rem; }
+
+            /* Layout */
+            .settings-layout {
+              display: flex;
               gap: 24px;
             }
-            @media (min-width: 1024px) {
-              .grid-layout {
-                grid-template-columns: 2fr 1fr;
-              }
+
+            /* Desktop Sidebar */
+            .settings-sidebar {
+              display: none;
+              flex-direction: column;
+              gap: 4px;
+              width: 200px;
+              flex-shrink: 0;
+              position: sticky;
+              top: 80px;
+              align-self: flex-start;
+            }
+            .sidebar-tab {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: none;
+              background: transparent;
+              color: var(--text-secondary);
+              font-size: 0.8125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.15s;
+              text-align: left;
+              width: 100%;
+            }
+            .sidebar-tab:hover {
+              background: var(--bg-input);
+              color: var(--text-primary);
+            }
+            .sidebar-tab.active {
+              background: rgba(61,204,142,0.1);
+              color: var(--color-prosper-green);
+            }
+            .sidebar-tab-icon { font-size: 1rem; }
+
+            /* Content */
+            .settings-content {
+              flex: 1;
+              min-width: 0;
+            }
+            .settings-panel {
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+              animation: fadeIn 0.25s ease;
+            }
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(6px); }
+              to { opacity: 1; transform: translateY(0); }
             }
 
-            /* Cards */
-            .card {
+            /* Panel Card */
+            .panel-card {
               background: var(--bg-card);
-              border-radius: 12px;
               border: 1px solid var(--border-default);
-              overflow: hidden;
+              border-radius: 14px;
+              padding: 24px;
+            }
+            .panel-header {
+              margin-bottom: 24px;
+            }
+            .panel-title {
+              font-size: 1.0625rem;
+              font-weight: 700;
+              color: var(--text-primary);
+              margin: 0 0 4px 0;
+            }
+            .panel-desc {
+              font-size: 0.75rem;
+              color: var(--text-tertiary);
+              margin: 0;
             }
 
-            /* Profile Section */
-            .profile-section { padding: 16px; }
-            @media (min-width: 640px) { .profile-section { padding: 24px; } }
-            @media (min-width: 1024px) { .profile-section { padding: 32px; } }
-            .profile-layout {
+            /* Profile */
+            .profile-grid {
               display: flex;
               flex-direction: column;
               align-items: center;
-              gap: 20px;
+              gap: 24px;
             }
-            @media (min-width: 768px) {
-              .profile-layout {
-                flex-direction: row;
-                align-items: flex-start;
-                gap: 28px;
-              }
+            .avatar-section {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 8px;
             }
-            .profile-avatar-wrap {
-              position: relative;
-              width: 88px;
-              height: 88px;
-              flex-shrink: 0;
-              cursor: pointer;
+            .avatar-circle {
+              width: 96px;
+              height: 96px;
               border-radius: 50%;
-              overflow: hidden;
-              border: 3px solid rgba(61,204,142,0.2);
-            }
-            @media (min-width: 768px) {
-              .profile-avatar-wrap { width: 112px; height: 112px; }
-            }
-            .profile-avatar {
-              width: 100%;
-              height: 100%;
-              background: var(--bg-input);
+              background: linear-gradient(135deg, var(--color-prosper-green), var(--color-prosper-navy));
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 2.5rem;
-              font-weight: 700;
-              color: var(--color-prosper-green);
+              cursor: pointer;
+              position: relative;
+              overflow: hidden;
+              border: 3px solid rgba(61,204,142,0.15);
+              transition: border-color 0.2s, transform 0.2s;
             }
-            .profile-avatar-overlay {
+            .avatar-circle:hover {
+              border-color: var(--color-prosper-green);
+              transform: scale(1.03);
+            }
+            .avatar-initial {
+              font-size: 2.25rem;
+              font-weight: 700;
+              color: white;
+            }
+            .avatar-img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            .avatar-overlay {
               position: absolute;
               inset: 0;
-              background: rgba(61,204,142,0.2);
+              background: rgba(0,0,0,0.5);
               display: flex;
               align-items: center;
               justify-content: center;
               opacity: 0;
               transition: opacity 0.2s;
-              color: white;
-              font-size: 1.25rem;
             }
-            .profile-avatar-wrap:hover .profile-avatar-overlay {
-              opacity: 1;
+            .avatar-circle:hover .avatar-overlay { opacity: 1; }
+            .avatar-hint {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+              margin: 0;
             }
-            .profile-form {
+
+            .profile-fields {
               width: 100%;
               display: flex;
               flex-direction: column;
-              gap: 14px;
+              gap: 16px;
             }
-            .form-row {
+            .field-grid {
               display: grid;
               grid-template-columns: 1fr;
-              gap: 14px;
+              gap: 16px;
             }
-            @media (min-width: 480px) {
-              .form-row { grid-template-columns: 1fr 1fr; }
-            }
-            .form-group {
+            .field {
               display: flex;
               flex-direction: column;
-              gap: 4px;
+              gap: 6px;
             }
-            .form-label {
-              display: block;
+            .field-label {
               font-size: 0.6875rem;
               font-weight: 700;
               text-transform: uppercase;
-              letter-spacing: 0.1em;
+              letter-spacing: 0.08em;
               color: var(--text-tertiary);
-              margin-bottom: 2px;
             }
-            .form-input, .form-textarea, .form-select {
+            .field-input {
               width: 100%;
-              padding: 12px 14px;
-              border-radius: 8px;
+              padding: 10px 14px;
+              border-radius: 10px;
               border: 1px solid var(--border-default);
               background: var(--bg-input);
               color: var(--text-primary);
               font-size: 0.875rem;
               outline: none;
-              transition: all 0.2s;
+              transition: border-color 0.2s, box-shadow 0.2s;
               font-family: inherit;
               box-sizing: border-box;
             }
-            .form-input:focus, .form-textarea:focus, .form-select:focus {
+            .field-input:focus {
               border-color: var(--color-prosper-green);
-              box-shadow: 0 0 0 2px rgba(61,204,142,0.2);
+              box-shadow: 0 0 0 3px rgba(61,204,142,0.12);
             }
-            .form-textarea {
+            .field-disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+            .field-textarea {
+              width: 100%;
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.875rem;
+              outline: none;
               resize: none;
               line-height: 1.5;
+              transition: border-color 0.2s, box-shadow 0.2s;
+              font-family: inherit;
+              box-sizing: border-box;
             }
-            .form-select {
-              cursor: pointer;
-              appearance: none;
-              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386948a' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-              background-repeat: no-repeat;
-              background-position: right 12px center;
-              padding-right: 32px;
+            .field-textarea:focus {
+              border-color: var(--color-prosper-green);
+              box-shadow: 0 0 0 3px rgba(61,204,142,0.12);
             }
-            .save-btn {
-              width: 100%;
-              padding: 12px 24px;
+
+            .btn-save {
+              padding: 10px 24px;
               background: var(--color-prosper-green);
               color: white;
               border: none;
-              border-radius: 8px;
+              border-radius: 10px;
               font-size: 0.8125rem;
               font-weight: 700;
               cursor: pointer;
               transition: all 0.2s;
-              box-shadow: 0 4px 12px rgba(61,204,142,0.2);
+              align-self: flex-start;
             }
-            @media (min-width: 768px) {
-              .save-btn { width: auto; align-self: flex-end; }
-            }
-            .save-btn:hover:not(:disabled) {
-              opacity: 0.9;
+            .btn-save:hover:not(:disabled) {
+              filter: brightness(1.08);
               transform: translateY(-1px);
             }
-            .save-btn:disabled {
+            .btn-save:disabled {
               opacity: 0.6;
               cursor: not-allowed;
             }
-
-            /* Subscription Card */
-            .sub-card {
-              padding: 24px;
+            .btn-loading {
               display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-              background: linear-gradient(135deg, var(--bg-card-high), var(--bg-input));
+              align-items: center;
+              gap: 8px;
             }
-            .sub-header {
+            .spinner {
+              width: 14px;
+              height: 14px;
+              border: 2px solid rgba(255,255,255,0.3);
+              border-top-color: white;
+              border-radius: 50%;
+              animation: spin 0.6s linear infinite;
+            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+
+            /* Plan Card */
+            .plan-card {
+              background: linear-gradient(135deg, rgba(61,204,142,0.06), var(--bg-card));
+              border-color: rgba(61,204,142,0.15);
+            }
+            .plan-content {
               display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
+              align-items: center;
+              gap: 12px;
               margin-bottom: 16px;
             }
-            .sub-title {
-              font-size: 1.125rem;
-              font-weight: 800;
+            .plan-badge {
+              padding: 4px 12px;
+              border-radius: 20px;
+              background: rgba(61,204,142,0.12);
               color: var(--color-prosper-green);
+              font-size: 0.625rem;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+            }
+            .plan-title {
+              font-size: 1rem;
+              font-weight: 700;
+              color: var(--text-primary);
               margin: 0;
             }
-            .sub-desc {
+            .plan-desc {
               font-size: 0.75rem;
               color: var(--text-secondary);
-              margin: 0;
+              margin: 2px 0 0 0;
             }
-            .sub-badge {
-              font-size: 0.5625rem;
-              font-weight: 900;
-              text-transform: uppercase;
-              padding: 2px 10px;
-              border-radius: 9999px;
-              background: rgba(61,204,142,0.1);
-              color: var(--color-prosper-green);
-              letter-spacing: 0.05em;
-            }
-            .sub-details {
+            .plan-features {
               display: flex;
-              flex-direction: column;
+              flex-wrap: wrap;
               gap: 12px;
             }
-            .sub-detail-row {
+            .plan-feature {
               display: flex;
-              justify-content: space-between;
-              padding: 10px 0;
-              border-bottom: 1px solid var(--border-default);
+              align-items: center;
+              gap: 8px;
+              padding: 8px 14px;
+              border-radius: 8px;
+              background: var(--bg-input);
               font-size: 0.75rem;
-            }
-            .sub-detail-label {
+              font-weight: 500;
               color: var(--text-secondary);
             }
-            .sub-detail-value {
-              font-weight: 700;
-              color: var(--text-primary);
+            .plan-feature-icon { font-size: 1rem; }
+
+            /* Preferences */
+            .pref-section {
+              margin-bottom: 24px;
             }
-            .sub-btn {
-              width: 100%;
-              padding: 12px;
-              margin-top: 16px;
-              background: var(--bg-accent-soft);
-              color: var(--text-primary);
-              border: 1px solid rgba(61,204,142,0.2);
-              border-radius: 8px;
+            .pref-section:last-child { margin-bottom: 0; }
+            .pref-label {
+              display: block;
               font-size: 0.6875rem;
               font-weight: 700;
-              cursor: pointer;
-              transition: all 0.2s;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 6px;
-            }
-            .sub-btn:hover {
-              background: var(--bg-card-hover);
-            }
-
-            /* Preferences & Notifications */
-            .prefs-section {
-              padding: 24px;
-            }
-            .prefs-title {
-              font-size: 1rem;
-              font-weight: 800;
-              color: var(--text-primary);
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin: 0 0 20px 0;
-            }
-            .prefs-list {
-              display: flex;
-              flex-direction: column;
-              gap: 16px;
-            }
-            .pref-row {
-              display: flex;
-              flex-direction: column;
-              gap: 8px;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              color: var(--text-tertiary);
+              margin-bottom: 10px;
             }
             .option-grid {
               display: grid;
-              grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+              grid-template-columns: repeat(3, 1fr);
               gap: 8px;
+            }
+            .currency-grid {
+              grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
             .option-btn {
               display: flex;
@@ -445,8 +889,7 @@ export default function ConfiguracionPage() {
               color: var(--text-secondary);
               cursor: pointer;
               transition: all 0.2s;
-              font-size: 0.75rem;
-              font-weight: 500;
+              font-family: inherit;
             }
             .option-btn:hover {
               border-color: var(--color-prosper-green);
@@ -454,32 +897,94 @@ export default function ConfiguracionPage() {
             }
             .option-btn.active {
               border-color: var(--color-prosper-green);
-              background: rgba(61,204,142,0.1);
+              background: rgba(61,204,142,0.08);
               color: var(--color-prosper-green);
             }
-            .option-flag {
-              font-size: 1.5rem;
-              line-height: 1;
+            .option-flag { font-size: 1.375rem; line-height: 1; }
+            .option-text { font-size: 0.6875rem; font-weight: 600; }
+
+            /* Theme Selector */
+            .theme-selector {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
             }
-            .option-label {
-              font-size: 0.6875rem;
+            .theme-option {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 10px;
+              padding: 16px;
+              border-radius: 12px;
+              border: 2px solid var(--border-default);
+              background: transparent;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-family: inherit;
+            }
+            .theme-option:hover { border-color: var(--color-prosper-green); }
+            .theme-option.active {
+              border-color: var(--color-prosper-green);
+              background: rgba(61,204,142,0.06);
+            }
+            .theme-preview {
+              width: 100%;
+              height: 80px;
+              border-radius: 8px;
+              padding: 8px;
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .theme-preview-light {
+              background: #f8f9fa;
+              border: 1px solid #e5e7eb;
+            }
+            .theme-preview-dark {
+              background: #1a1a2e;
+              border: 1px solid #2d2d44;
+            }
+            .theme-preview-bar {
+              height: 8px;
+              border-radius: 4px;
+              width: 40%;
+            }
+            .theme-preview-light .theme-preview-bar { background: #d1d5db; }
+            .theme-preview-dark .theme-preview-bar { background: #3d3d5c; }
+            .theme-preview-blocks {
+              display: flex;
+              gap: 6px;
+              flex: 1;
+            }
+            .theme-preview-block {
+              flex: 1;
+              border-radius: 4px;
+            }
+            .theme-preview-light .theme-preview-block { background: #e5e7eb; }
+            .theme-preview-dark .theme-preview-block { background: #2d2d44; }
+            .theme-label {
+              font-size: 0.8125rem;
               font-weight: 600;
+              color: var(--text-primary);
             }
 
-            /* Toggle Switch */
+            /* Toggle List */
+            .toggle-list {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
+            }
             .toggle-row {
               display: flex;
               align-items: center;
               justify-content: space-between;
-              padding: 12px;
+              padding: 14px 16px;
+              border-radius: 10px;
               background: var(--bg-input);
-              border-radius: 8px;
-              transition: background 0.2s;
+              transition: background 0.15s;
             }
-            .toggle-row:hover {
-              background: var(--bg-card-high);
-            }
-            .toggle-info {
+            .toggle-row:hover { background: var(--bg-card-hover); }
+            .toggle-left {
               display: flex;
               align-items: center;
               gap: 12px;
@@ -487,929 +992,320 @@ export default function ConfiguracionPage() {
             .toggle-icon {
               width: 36px;
               height: 36px;
-              border-radius: 50%;
+              border-radius: 10px;
               background: rgba(61,204,142,0.08);
               display: flex;
               align-items: center;
               justify-content: center;
-              color: var(--color-prosper-green);
               font-size: 1rem;
             }
-            .toggle-text {
-              display: flex;
-              flex-direction: column;
-            }
+            .toggle-text { display: flex; flex-direction: column; }
             .toggle-label {
-              font-size: 0.75rem;
-              font-weight: 700;
+              font-size: 0.8125rem;
+              font-weight: 600;
               color: var(--text-primary);
             }
             .toggle-desc {
-              font-size: 0.625rem;
-              color: var(--text-secondary);
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
             }
             .toggle-switch {
               width: 44px;
-              height: 22px;
-              border-radius: 9999px;
-              background: var(--bg-card-high);
+              height: 24px;
+              border-radius: 12px;
+              background: var(--border-default);
               border: none;
               cursor: pointer;
               position: relative;
               transition: background 0.2s;
               flex-shrink: 0;
             }
-            .toggle-switch.active {
-              background: var(--color-prosper-green);
-            }
+            .toggle-switch.active { background: var(--color-prosper-green); }
             .toggle-switch::after {
               content: '';
               position: absolute;
-              width: 16px;
-              height: 16px;
+              width: 18px;
+              height: 18px;
               border-radius: 50%;
               background: white;
               top: 3px;
-              transition: all 0.2s;
-            }
-            .toggle-switch.active::after {
-              right: 3px;
-            }
-            .toggle-switch:not(.active)::after {
               left: 3px;
+              transition: transform 0.2s;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.15);
             }
+            .toggle-switch.active::after { transform: translateX(20px); }
 
-            /* Security Section */
-            .security-section {
-              padding: 24px;
-              border-top: 2px solid rgba(61,204,142,0.2);
-            }
-            .security-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 20px;
-              flex-wrap: wrap;
-              gap: 12px;
-            }
-            .security-header-left {
+            /* Session */
+            .session-card {
               display: flex;
               align-items: center;
-              gap: 10px;
+              gap: 14px;
+              padding: 16px;
+              border-radius: 10px;
+              background: var(--bg-input);
             }
-            .security-title {
-              font-size: 1rem;
-              font-weight: 800;
+            .session-icon { font-size: 1.5rem; }
+            .session-info {
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .session-name {
+              font-size: 0.875rem;
+              font-weight: 600;
               color: var(--text-primary);
-              margin: 0;
             }
-            .security-desc {
-              font-size: 0.625rem;
-              color: var(--text-secondary);
-              margin: 0;
-            }
-            .security-actions {
-              display: flex;
-              gap: 8px;
-              align-items: center;
-            }
-            .change-pass-btn {
-              font-size: 0.625rem;
-              font-weight: 700;
-              color: var(--color-prosper-green);
-              border: 1px solid rgba(61,204,142,0.3);
-              background: none;
-              padding: 6px 12px;
-              border-radius: 6px;
-              cursor: pointer;
-              transition: all 0.2s;
-            }
-            .change-pass-btn:hover {
-              background: rgba(61,204,142,0.05);
-            }
-            .tfa-badge {
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              padding: 6px 12px;
-              background: rgba(61,204,142,0.1);
-              border: 1px solid rgba(61,204,142,0.2);
-              border-radius: 6px;
-            }
-            .tfa-text {
-              font-size: 0.5625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              color: var(--color-prosper-green);
-            }
-
-            /* Sessions Table */
-            .sessions-table {
-              width: 100%;
-              overflow-x: auto;
-            }
-            .sessions-table table {
-              width: 100%;
-              border-collapse: collapse;
-              font-size: 0.75rem;
-            }
-            .sessions-table th {
-              text-align: left;
-              padding: 12px 16px;
-              font-size: 0.5625rem;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 0.1em;
+            .session-detail {
+              font-size: 0.6875rem;
               color: var(--text-tertiary);
-              border-bottom: 1px solid var(--border-default);
             }
-            .sessions-table td {
-              padding: 14px 16px;
-              border-bottom: 1px solid var(--border-default);
-              color: var(--text-secondary);
-            }
-            .sessions-table tr:hover td {
-              background: var(--bg-card-high);
-            }
-            .session-device {
-              display: flex;
-              align-items: center;
-              gap: 10px;
-            }
-            .session-device-icon {
-              font-size: 1.125rem;
-            }
-            .session-device-name {
-              font-weight: 700;
-              color: var(--text-primary);
-            }
-            .session-device-browser {
-              font-size: 0.5625rem;
-            }
-            .status-badge {
-              font-size: 0.5625rem;
-              font-weight: 700;
-              text-transform: uppercase;
-              padding: 3px 8px;
-              border-radius: 4px;
+            .session-badge {
+              padding: 4px 10px;
+              border-radius: 6px;
               background: rgba(61,204,142,0.1);
               color: var(--color-prosper-green);
-            }
-            .revoke-btn {
-              font-size: 0.5625rem;
+              font-size: 0.625rem;
               font-weight: 700;
               text-transform: uppercase;
-              color: var(--color-error, #EF4444);
-              background: none;
-              border: none;
-              cursor: pointer;
-              padding: 6px 12px;
-              border-radius: 4px;
-              transition: all 0.2s;
-            }
-            .revoke-btn:hover {
-              background: rgba(239,68,68,0.1);
             }
 
-            /* Danger Zone */
-            .danger-zone {
-              margin-top: 24px;
-              background: rgba(239,68,68,0.05);
-              border: 1px solid rgba(239,68,68,0.2);
-              border-radius: 12px;
-              padding: 24px;
+            /* Danger */
+            .danger-card {
+              border-color: rgba(239,68,68,0.15);
+              background: rgba(239,68,68,0.03);
+            }
+            [data-theme="dark"] .danger-card {
+              background: rgba(127,29,29,0.08);
+              border-color: rgba(239,68,68,0.2);
+            }
+            .danger-header {
               display: flex;
-              gap: 16px;
               align-items: flex-start;
-              max-width: 100%;
-              overflow: hidden;
+              gap: 14px;
             }
-            [data-theme="dark"] .danger-zone {
-              background: rgba(127,29,29,0.15);
-              border-color: rgba(239,68,68,0.3);
-            }
-            .danger-icon {
+            .danger-icon-wrap {
               width: 44px;
               height: 44px;
-              border-radius: 8px;
+              border-radius: 10px;
               background: rgba(239,68,68,0.1);
               display: flex;
               align-items: center;
               justify-content: center;
-              color: var(--color-error, #EF4444);
+              font-size: 1.25rem;
               flex-shrink: 0;
             }
-            .danger-content {
-              flex: 1;
-              min-width: 0;
-              max-width: 100%;
-            }
             .danger-title {
-              font-size: 0.875rem;
+              font-size: 1rem;
               font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-              color: var(--color-red-900, #7F1D1D);
-              margin: 0 0 6px 0;
+              color: #7F1D1D;
+              margin: 0 0 4px 0;
             }
-            [data-theme="dark"] .danger-title {
-              color: var(--color-red-300, #FCA5A5);
-            }
+            [data-theme="dark"] .danger-title { color: #FCA5A5; }
             .danger-desc {
               font-size: 0.75rem;
-              color: var(--color-red-900, #7F1D1D);
-              margin: 0 0 12px 0;
+              color: #991B1B;
+              margin: 0;
               line-height: 1.5;
             }
-            [data-theme="dark"] .danger-desc {
-              color: var(--color-red-200, #FECACA);
-            }
-            .danger-btn {
+            [data-theme="dark"] .danger-desc { color: #FECACA; }
+            .panel-header { margin-bottom: 20px; }
+            .danger-card .panel-header { margin-bottom: 16px; }
+
+            .btn-danger {
               width: 100%;
-              padding: 10px 16px;
-              background: var(--color-error, #EF4444);
+              padding: 12px;
+              background: #EF4444;
               color: white;
               border: none;
-              border-radius: 6px;
-              font-size: 0.75rem;
+              border-radius: 10px;
+              font-size: 0.8125rem;
               font-weight: 700;
               cursor: pointer;
               transition: all 0.2s;
-              word-break: break-word;
-              white-space: normal;
-              text-align: center;
-              line-height: 1.4;
             }
-            .danger-btn:hover:not(:disabled) {
-              background: #dc2626;
+            .btn-danger:hover { background: #DC2626; }
+
+            .delete-confirm {
+              display: flex;
+              flex-direction: column;
+              gap: 12px;
             }
-            .danger-btn:disabled {
-              opacity: 0.6;
-              cursor: not-allowed;
+            .delete-confirm-label {
+              font-size: 0.8125rem;
+              color: var(--text-secondary);
+              margin: 0;
             }
+            .delete-confirm-label strong { color: #EF4444; }
+            .delete-confirm-input {
+              width: 100%;
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid rgba(239,68,68,0.3);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.875rem;
+              outline: none;
+              font-family: inherit;
+              box-sizing: border-box;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+            }
+            .delete-confirm-input:focus {
+              border-color: #EF4444;
+              box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+            }
+            .delete-confirm-actions {
+              display: flex;
+              gap: 10px;
+            }
+            .btn-cancel {
+              flex: 1;
+              padding: 10px;
+              border-radius: 10px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-secondary);
+              font-size: 0.8125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-family: inherit;
+            }
+            .btn-cancel:hover { background: var(--bg-card-hover); }
+            .btn-danger-confirm {
+              flex: 1;
+              padding: 10px;
+              border-radius: 10px;
+              border: none;
+              background: #EF4444;
+              color: white;
+              font-size: 0.8125rem;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-family: inherit;
+            }
+            .btn-danger-confirm:hover:not(:disabled) { background: #DC2626; }
+            .btn-danger-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
 
             /* Footer */
-            .footer {
+            .settings-footer {
               margin-top: 32px;
-              padding: 16px 0;
-              text-align: center;
-              font-size: 0.5625rem;
-              text-transform: uppercase;
-              letter-spacing: 0.15em;
-              color: var(--text-tertiary);
+              padding-top: 20px;
               border-top: 1px solid var(--border-default);
+              text-align: center;
+              font-size: 0.625rem;
+              text-transform: uppercase;
+              letter-spacing: 0.12em;
+              color: var(--text-tertiary);
             }
 
-            /* Responsive */
-            @media (max-width: 1024px) {
-              .grid-layout {
-                grid-template-columns: 1fr;
+            /* ===== RESPONSIVE: Tablet (1024px) ===== */
+            @media (min-width: 768px) {
+              .settings-page { padding: 24px 20px; }
+              .settings-title { font-size: 1.75rem; }
+              .field-grid { grid-template-columns: 1fr 1fr; }
+              .profile-grid {
+                flex-direction: row;
+                align-items: flex-start;
               }
+              .avatar-section { align-items: flex-start; }
+              .btn-save { align-self: flex-end; }
             }
-            @media (max-width: 768px) {
-              .configuracion-page {
-                padding: 12px;
-                overflow-x: hidden;
-              }
-              .grid-layout {
-                grid-template-columns: 1fr;
-                gap: 16px;
-                overflow-x: hidden;
-              }
-              .card {
-                overflow-x: hidden;
-              }
-              .sessions-table {
-                overflow-x: auto;
-              }
-              .sessions-table table {
-                min-width: 500px;
-              }
-              .hero-title {
-                font-size: 1.5rem;
-              }
-              .hero-desc {
-                font-size: 0.8125rem;
-              }
-              .profile-section {
-                padding: 20px;
-              }
-              .profile-layout {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-              }
-              .profile-avatar-wrap {
-                width: 96px;
-                height: 96px;
-              }
-              .profile-avatar {
-                font-size: 2rem;
-              }
-              .profile-form {
-                width: 100%;
-              }
-              .option-grid {
-                grid-template-columns: repeat(2, 1fr);
-              }
-              .form-row {
-                grid-template-columns: 1fr;
-              }
-              .save-btn {
-                width: 100%;
-              }
-              .security-header {
-                flex-direction: column;
-                gap: 12px;
-              }
-              .security-actions {
-                width: 100%;
-                flex-direction: column;
-              }
-              .change-pass-btn, .tfa-badge {
-                width: 100%;
-                justify-content: center;
-              }
-              .sessions-table {
-                font-size: 0.6875rem;
-                overflow-x: auto;
-              }
-              .sessions-table table {
-                min-width: 500px;
-              }
-              .danger-zone {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                padding: 16px;
-              }
-              .danger-icon {
-                margin-bottom: 12px;
-              }
-              .danger-btn {
-                font-size: 0.6875rem;
-                padding: 10px 12px;
-              }
-              .prefs-section {
-                padding: 16px;
-              }
-              .sub-card {
-                padding: 16px;
-              }
+
+            /* ===== RESPONSIVE: Desktop (1024px+) ===== */
+            @media (min-width: 1024px) {
+              .settings-page { padding: 32px 24px; }
+              .mobile-tabs { display: none; }
+              .settings-sidebar { display: flex; }
+              .settings-title { font-size: 2rem; }
+              .panel-card { padding: 28px; }
+              .avatar-circle { width: 112px; height: 112px; }
+              .avatar-initial { font-size: 2.75rem; }
             }
+
+            /* ===== RESPONSIVE: Small Mobile (480px) ===== */
             @media (max-width: 480px) {
-              .configuracion-page {
-                padding: 8px;
-                overflow-x: hidden;
-              }
-              .card {
-                padding: 12px;
-              }
-              .profile-section, .security-section, .prefs-section {
-                padding: 12px;
-              }
-              .danger-zone {
-                padding: 12px;
-              }
-              .hero-title {
-                font-size: 1.25rem;
-              }
-              .hero-desc {
-                font-size: 0.75rem;
-              }
-              .profile-avatar-wrap {
-                width: 80px;
-                height: 80px;
-              }
-              .profile-avatar {
-                font-size: 1.75rem;
-              }
-              .form-input, .form-textarea, .form-select {
-                padding: 8px 12px;
-                font-size: 0.75rem;
-              }
-              .form-label {
-                font-size: 0.5rem;
-              }
-              .toggle-row {
-                padding: 10px;
-              }
-              .toggle-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 0.875rem;
-              }
-              .option-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 6px;
-              }
-              .option-btn {
-                padding: 10px 6px;
-              }
-              .option-flag {
-                font-size: 1.25rem;
-              }
-              .option-label {
-                font-size: 0.625rem;
-              }
-              .toggle-switch {
-                width: 32px;
-                height: 16px;
-              }
-              .toggle-label {
-                font-size: 0.6875rem;
-              }
-              .toggle-desc {
-                font-size: 0.5625rem;
-              }
-              .save-btn {
-                padding: 10px 16px;
-                font-size: 0.625rem;
-              }
-              .sub-card {
-                padding: 12px;
-              }
-              .sub-title {
-                font-size: 1rem;
-              }
-              .sub-detail-row {
-                flex-direction: column;
-                gap: 2px;
-                padding: 8px 0;
-              }
-              .sessions-table {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-              }
-              .sessions-table table {
-                min-width: 400px;
-                font-size: 0.6875rem;
-              }
-              .sessions-table th, .sessions-table td {
-                padding: 8px 10px;
-              }
-              .security-header {
-                flex-direction: column;
-                gap: 8px;
-              }
-              .security-actions {
-                width: 100%;
-                flex-direction: column;
-                gap: 8px;
-              }
-              .change-pass-btn, .tfa-badge {
-                width: 100%;
-                justify-content: center;
-                font-size: 0.5625rem;
-                padding: 8px;
-              }
-              .danger-zone {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                padding: 12px;
-                gap: 8px;
-              }
-              .danger-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 1.25rem;
-                margin-bottom: 0;
-              }
-              .danger-title {
-                font-size: 0.75rem;
-              }
-              .danger-desc {
-                font-size: 0.6875rem;
-              }
-              .danger-btn {
-                font-size: 0.625rem;
-                padding: 10px 12px;
-                line-height: 1.3;
-              }
-              .prefs-title {
-                font-size: 0.875rem;
-                margin-bottom: 12px;
-              }
-              .footer {
-                font-size: 0.5rem;
-                padding: 12px 0;
-              }
+              .settings-page { padding: 12px 10px; }
+              .settings-title { font-size: 1.25rem; }
+              .settings-subtitle { font-size: 0.75rem; }
+              .panel-card { padding: 16px; border-radius: 12px; }
+              .panel-title { font-size: 0.9375rem; }
+              .panel-desc { font-size: 0.6875rem; }
+              .panel-header { margin-bottom: 16px; }
+              .avatar-circle { width: 72px; height: 72px; }
+              .avatar-initial { font-size: 1.75rem; }
+              .field-input, .field-textarea { padding: 8px 12px; font-size: 0.8125rem; }
+              .field-label { font-size: 0.625rem; }
+              .option-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+              .currency-grid { grid-template-columns: repeat(2, 1fr); }
+              .option-btn { padding: 10px 6px; }
+              .option-flag { font-size: 1.125rem; }
+              .option-text { font-size: 0.625rem; }
+              .theme-selector { grid-template-columns: 1fr 1fr; gap: 10px; }
+              .theme-preview { height: 60px; }
+              .toggle-row { padding: 12px; }
+              .toggle-icon { width: 32px; height: 32px; font-size: 0.875rem; }
+              .toggle-label { font-size: 0.75rem; }
+              .toggle-desc { font-size: 0.625rem; }
+              .toggle-switch { width: 40px; height: 22px; }
+              .toggle-switch::after { width: 16px; height: 16px; }
+              .toggle-switch.active::after { transform: translateX(18px); }
+              .danger-header { flex-direction: column; gap: 10px; }
+              .danger-icon-wrap { width: 36px; height: 36px; font-size: 1rem; }
+              .danger-title { font-size: 0.875rem; }
+              .danger-desc { font-size: 0.6875rem; }
+              .delete-confirm-actions { flex-direction: column; }
+              .plan-features { flex-direction: column; }
+              .plan-feature { padding: 6px 10px; font-size: 0.6875rem; }
+              .settings-footer { font-size: 0.5625rem; margin-top: 24px; }
+              .mobile-tab { padding: 7px 10px; font-size: 0.6875rem; }
+              .mobile-tab-icon { font-size: 0.75rem; }
             }
 
-            /* Pantallas muy pequeñas (360px y menos) */
+            /* ===== RESPONSIVE: Very Small (360px) ===== */
             @media (max-width: 360px) {
-              .configuracion-page {
-                padding: 4px;
-              }
-              .card {
-                padding: 8px;
-                border-radius: 8px;
-              }
-              .profile-section, .security-section, .prefs-section {
-                padding: 8px;
-              }
-              .hero-title {
-                font-size: 1.125rem;
-              }
-              .hero-desc {
-                font-size: 0.6875rem;
-              }
-              .profile-avatar-wrap {
-                width: 64px;
-                height: 64px;
-              }
-              .profile-avatar {
-                font-size: 1.5rem;
-              }
-              .form-input, .form-textarea, .form-select {
-                padding: 8px 10px;
-                font-size: 0.6875rem;
-              }
-              .form-label {
-                font-size: 0.4375rem;
-                padding-left: 2px;
-              }
-              .option-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 4px;
-              }
-              .option-btn {
-                padding: 8px 4px;
-                border-radius: 6px;
-              }
-              .option-flag {
-                font-size: 1rem;
-              }
-              .option-label {
-                font-size: 0.5rem;
-              }
-              .toggle-row {
-                padding: 8px;
-                gap: 8px;
-              }
-              .toggle-icon {
-                width: 28px;
-                height: 28px;
-                font-size: 0.75rem;
-              }
-              .toggle-text {
-                gap: 0;
-              }
-              .toggle-label {
-                font-size: 0.625rem;
-              }
-              .toggle-desc {
-                font-size: 0.5rem;
-              }
-              .toggle-switch {
-                width: 28px;
-                height: 14px;
-              }
-              .toggle-switch::after {
-                width: 10px;
-                height: 10px;
-              }
-              .save-btn {
-                padding: 8px 12px;
-                font-size: 0.5625rem;
-              }
-              .sub-title {
-                font-size: 0.875rem;
-              }
-              .sub-desc {
-                font-size: 0.625rem;
-              }
-              .sub-badge {
-                font-size: 0.5rem;
-              }
-              .sub-detail-row {
-                font-size: 0.625rem;
-              }
-              .sub-btn {
-                padding: 8px;
-                font-size: 0.5625rem;
-              }
-              .sessions-table table {
-                min-width: 340px;
-                font-size: 0.625rem;
-              }
-              .sessions-table th, .sessions-table td {
-                padding: 6px 8px;
-              }
-              .danger-zone {
-                padding: 8px;
-                gap: 6px;
-              }
-              .danger-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
-              }
-              .danger-title {
-                font-size: 0.6875rem;
-              }
-              .danger-desc {
-                font-size: 0.625rem;
-              }
-              .danger-btn {
-                font-size: 0.5625rem;
-                padding: 8px 10px;
-              }
-              .footer {
-                font-size: 0.4375rem;
-              }
+              .settings-page { padding: 8px 6px; }
+              .settings-title { font-size: 1.125rem; }
+              .panel-card { padding: 12px; }
+              .avatar-circle { width: 60px; height: 60px; }
+              .avatar-initial { font-size: 1.5rem; }
+              .option-grid { grid-template-columns: repeat(2, 1fr); }
+              .currency-grid { grid-template-columns: repeat(2, 1fr); }
+              .theme-selector { grid-template-columns: 1fr; }
+              .toggle-row { padding: 10px; gap: 10px; }
+              .toggle-icon { width: 28px; height: 28px; font-size: 0.75rem; border-radius: 8px; }
+              .toggle-label { font-size: 0.6875rem; }
+              .toggle-desc { font-size: 0.5625rem; }
+              .toggle-switch { width: 36px; height: 20px; }
+              .toggle-switch::after { width: 14px; height: 14px; top: 3px; left: 3px; }
+              .toggle-switch.active::after { transform: translateX(16px); }
+              .btn-save { width: 100%; text-align: center; }
+              .plan-content { flex-direction: column; align-items: flex-start; gap: 8px; }
             }
           `}</style>
-
-          {/* Toast Messages */}
-          {successMsg && (
-            <div className="toast toast-success">✓ {successMsg}</div>
-          )}
-          {errorMsg && (
-            <div className="toast toast-error">⚠ {errorMsg}</div>
-          )}
-
-          {/* Hero */}
-          <div className="hero">
-            <h1 className="hero-title">Configuración</h1>
-            <p className="hero-desc">Gestiona tu perfil, preferencias y seguridad de tu cuenta.</p>
-          </div>
-
-          {/* Grid Layout */}
-          <div className="grid-layout">
-            {/* Main Column */}
-            <div>
-              {/* Profile Section */}
-              <div className="card profile-section">
-                <div className="profile-layout">
-                  {/* Avatar */}
-                  <div className="profile-avatar-wrap">
-                    <div className="profile-avatar">{userInitial}</div>
-                    <div className="profile-avatar-overlay">📷</div>
-                  </div>
-
-                  {/* Form */}
-                  <div className="profile-form">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label">Nombre Completo</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          placeholder="Tu nombre"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label">Email</label>
-                        <input
-                          className="form-input"
-                          type="email"
-                          value={userEmail}
-                          disabled
-                          style={{ opacity: 0.6, cursor: 'not-allowed' }}
-                        />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Bio Profesional</label>
-                      <textarea
-                        className="form-textarea"
-                        rows={3}
-                        value={bio}
-                        onChange={(e) => setBio(e.target.value)}
-                        placeholder="Describe tu perfil financiero..."
-                      />
-                    </div>
-                    <button
-                      className="save-btn"
-                      onClick={handleSaveProfile}
-                      disabled={saving}
-                    >
-                      {saving ? 'Guardando...' : 'Guardar Cambios'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Security Section */}
-              <div className="card security-section" style={{ marginTop: 24 }}>
-                <div className="security-header">
-                  <div className="security-header-left">
-                    <span style={{ fontSize: '1.25rem' }}>🔒</span>
-                    <div>
-                      <h3 className="security-title">Protocolos de Seguridad</h3>
-                      <p className="security-desc">Gestión de sesiones activas y estado de encriptación</p>
-                    </div>
-                  </div>
-                  <div className="security-actions">
-                    <button className="change-pass-btn">Cambiar Contraseña</button>
-                    <div className="tfa-badge">
-                      <span className="tfa-text">2FA Activo</span>
-                      <button className="toggle-switch active" style={{ width: 32, height: 16 }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sessions Table */}
-                <div className="sessions-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Dispositivo / Sesión</th>
-                        <th>Ubicación</th>
-                        <th>Última Actividad</th>
-                        <th style={{ textAlign: 'right' }}>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>
-                          <div className="session-device">
-                            <span className="session-device-icon">💻</span>
-                            <div>
-                              <div className="session-device-name">Este Dispositivo</div>
-                              <div className="session-device-browser">Chrome</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td>Actual</td>
-                        <td>Activo ahora</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <span className="status-badge">Actual</span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Danger Zone */}
-              <div className="danger-zone" style={{ marginTop: 24 }}>
-                <div className="danger-icon">⚠️</div>
-                <div className="danger-content">
-                  <h3 className="danger-title">Zona de Peligro</h3>
-                  <p className="danger-desc">
-                    Al eliminar tu cuenta, se borrarán permanentemente tus metas, historial de ahorro y tu acceso a la plataforma. Esta acción es irreversible.
-                  </p>
-                  <button
-                    className="danger-btn"
-                    onClick={handleDeleteAccount}
-                    disabled={deleting}
-                  >
-                    {deleting ? 'Eliminando...' : 'Eliminar mi cuenta permanentemente'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar */}
-            <div>
-              {/* Subscription Card */}
-              <div className="card sub-card">
-                <div>
-                  <div className="sub-header">
-                    <div>
-                      <h3 className="sub-title">Plan Gratuito</h3>
-                      <p className="sub-desc">Acceso completo a Prosper</p>
-                    </div>
-                    <span className="sub-badge">Free</span>
-                  </div>
-                  <div className="sub-details">
-                    <div className="sub-detail-row">
-                      <span className="sub-detail-label">Metas activas</span>
-                      <span className="sub-detail-value">Ilimitadas</span>
-                    </div>
-                  </div>
-                </div>
-                <button className="sub-btn">
-                  Ver Planes Premium →
-                </button>
-              </div>
-
-              {/* Account Preferences */}
-              <div className="card prefs-section" style={{ marginTop: 24 }}>
-                <h3 className="prefs-title">⚙️ Preferencias de Cuenta</h3>
-                <div className="prefs-list">
-                  <div className="pref-row">
-                    <label className="form-label">🌐 Idioma de Interfaz</label>
-                    <div className="option-grid">
-                      {[
-                        { value: 'es', label: 'Español', flag: '🇪' },
-                        { value: 'en', label: 'English', flag: '🇺' },
-                        { value: 'pt', label: 'Português', flag: '🇧🇷' },
-                      ].map(opt => (
-                        <button
-                          key={opt.value}
-                          className={`option-btn ${language === opt.value ? 'active' : ''}`}
-                          onClick={() => setLanguage(opt.value)}
-                        >
-                          <span className="option-flag">{opt.flag}</span>
-                          <span className="option-label">{opt.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="pref-row">
-                    <label className="form-label">💱 Moneda</label>
-                    <div className="option-grid">
-                      {[
-                        { value: 'USD', label: 'Dólar', symbol: '$', flag: '🇺🇸' },
-                        { value: 'EUR', label: 'Euro', symbol: '€', flag: '🇪🇺' },
-                        { value: 'VES', label: 'Bolívar', symbol: 'Bs.', flag: '🇻🇪' },
-                        { value: 'COP', label: 'Peso CO', symbol: '$', flag: '🇨🇴' },
-                        { value: 'MXN', label: 'Peso MX', symbol: '$', flag: '🇲🇽' },
-                      ].map(opt => (
-                        <button
-                          key={opt.value}
-                          className={`option-btn ${currency === opt.value ? 'active' : ''}`}
-                          onClick={() => setCurrency(opt.value)}
-                        >
-                          <span className="option-flag">{opt.flag}</span>
-                          <span className="option-label">{opt.symbol} {opt.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="toggle-row">
-                    <div className="toggle-info">
-                      <div className="toggle-icon">{theme === 'dark' ? '🌙' : '☀️'}</div>
-                      <div className="toggle-text">
-                        <span className="toggle-label">Modo Oscuro</span>
-                        <span className="toggle-desc">Actual: {theme === 'dark' ? 'Oscuro' : 'Claro'}</span>
-                      </div>
-                    </div>
-                    <button
-                      className={`toggle-switch ${theme === 'dark' ? 'active' : ''}`}
-                      onClick={toggleTheme}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Notifications */}
-              <div className="card prefs-section" style={{ marginTop: 24 }}>
-                <h3 className="prefs-title">🔔 Notificaciones</h3>
-                <div className="prefs-list">
-                  <div className="toggle-row">
-                    <div className="toggle-info">
-                      <div className="toggle-icon">🌐</div>
-                      <div className="toggle-text">
-                        <span className="toggle-label">Notificaciones Push</span>
-                        <span className="toggle-desc">Recibe alertas en el navegador</span>
-                      </div>
-                    </div>
-                    <button
-                      className={`toggle-switch ${notifEnabled ? 'active' : ''}`}
-                      onClick={async () => {
-                        if (notifSaving) return;
-                        setNotifSaving(true);
-                        const result = await enableNotifications();
-                        setNotifEnabled(result);
-                        setNotifSaving(false);
-                      }}
-                      disabled={notifSaving}
-                    />
-                  </div>
-                  <div className="toggle-row">
-                    <div className="toggle-info">
-                      <div className="toggle-icon">📈</div>
-                      <div className="toggle-text">
-                        <span className="toggle-label">Alertas de Precio</span>
-                        <span className="toggle-desc">Cambios en tiempo real</span>
-                      </div>
-                    </div>
-                    <button
-                      className={`toggle-switch ${priceAlerts ? 'active' : ''}`}
-                      onClick={() => setPriceAlerts(!priceAlerts)}
-                    />
-                  </div>
-                  <div className="toggle-row">
-                    <div className="toggle-info">
-                      <div className="toggle-icon">💰</div>
-                      <div className="toggle-text">
-                        <span className="toggle-label">Alertas de Presupuesto</span>
-                        <span className="toggle-desc">Violaciones de límite</span>
-                      </div>
-                    </div>
-                    <button
-                      className={`toggle-switch ${budgetAlerts ? 'active' : ''}`}
-                      onClick={() => setBudgetAlerts(!budgetAlerts)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="footer">
-            Prosper Pro © 2026 — Inteligencia Financiera Encriptada
-          </div>
         </div>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+function ToggleRow({ icon, label, desc, checked, onChange, disabled }: { icon: string; label: string; desc: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
+  return (
+    <div className="toggle-row">
+      <div className="toggle-left">
+        <div className="toggle-icon">{icon}</div>
+        <div className="toggle-text">
+          <span className="toggle-label">{label}</span>
+          <span className="toggle-desc">{desc}</span>
+        </div>
+      </div>
+      <button
+        className={`toggle-switch ${checked ? 'active' : ''}`}
+        onClick={onChange}
+        disabled={disabled}
+      />
+    </div>
   );
 }
