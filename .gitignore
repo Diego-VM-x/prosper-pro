@@ -40,3 +40,6 @@ service-account-key.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backups
+/_backup_comunidad_logros/
