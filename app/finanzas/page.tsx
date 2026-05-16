@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
@@ -37,9 +37,18 @@ const CATEGORIES: Record<string, string[]> = {
 const TYPE_LABELS: Record<string, string> = { income: 'Ingreso', expense: 'Gasto', saving: 'Ahorro' };
 const TYPE_COLORS: Record<string, string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', saving: 'var(--color-pine-500)' };
 
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function isoToTimestamp(iso: string): number {
+  return new Date(iso + 'T12:00:00').getTime();
+}
+
 export default function FinanzasPage() {
   const { user } = useAuth();
-  const { success, error, warning, info } = useToast();
+  const { success, error, warning } = useToast();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
@@ -49,9 +58,9 @@ export default function FinanzasPage() {
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
-  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '' });
-  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0 });
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0 });
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
@@ -62,37 +71,36 @@ export default function FinanzasPage() {
     }
     return false;
   });
+  const [txLoading, setTxLoading] = useState(false);
+
+  const uid = user?.uid;
 
   // Suscribirse a cuentas en tiempo real
   useEffect(() => {
-    const uid = user?.uid;
     if (!uid) return;
-
     const unsub = subscribeToAccounts(uid, (accs) => {
       setAccounts(accs);
       if (accs.length === 0) {
         createDefaultAccounts(uid);
       }
     });
-
     return () => unsub();
-  }, [user?.uid]);
+  }, [uid]);
 
   // Calcular balance total
   useEffect(() => {
-    const uid = user?.uid;
     if (!uid) return;
     getTotalBalance(uid).then(setTotalBalance);
-  }, [accounts, user?.uid]);
+  }, [accounts, uid]);
 
   // Cargar preferencias
   useEffect(() => {
-    const uid = user?.uid;
     if (!uid) return;
+    const currentUid = uid;
     let cancelled = false;
     async function loadPrefs() {
       try {
-        const prefs = await getUserPreferences(uid as string);
+        const prefs = await getUserPreferences(currentUid);
         if (!cancelled && prefs.customTransactionCategories) {
           setCustomTxCategories(prefs.customTransactionCategories);
           const updated = { ...DEFAULT_CATEGORIES };
@@ -105,30 +113,27 @@ export default function FinanzasPage() {
     }
     loadPrefs();
     return () => { cancelled = true; };
-  }, [user?.uid]);
+  }, [uid]);
 
   // Cargar transacciones
-  useEffect(() => {
-    const uid = user?.uid as string;
+  const loadTransactions = useCallback(async () => {
     if (!uid) return;
-    let cancelled = false;
-    async function loadData() {
-      try {
-        const [txs, summary] = await Promise.all([
-          getTransactionsByOwnerId(uid),
-          getMonthlySummary(uid),
-        ]);
-        if (!cancelled) {
-          if (txs.length) setTransactions(txs);
-          setSummary(summary);
-        }
-      } catch (e) { console.error(e); }
-    }
-    loadData();
-    return () => { cancelled = true; };
-  }, [user?.uid]);
+    try {
+      const [txs, summaryData] = await Promise.all([
+        getTransactionsByOwnerId(uid),
+        getMonthlySummary(uid),
+      ]);
+      setTransactions(txs);
+      setSummary(summaryData);
+    } catch (e) { console.error(e); }
+  }, [uid]);
 
-  // Filtrar transacciones por cuenta seleccionada
+  useEffect(() => {
+    if (!uid) return;
+    loadTransactions();
+  }, [uid, loadTransactions]);
+
+  // Filtrar transacciones
   const filteredByAccount = selectedAccount === 'all'
     ? transactions
     : transactions.filter((t) => t.accountId === selectedAccount);
@@ -141,34 +146,90 @@ export default function FinanzasPage() {
   });
 
   const handleAddTransaction = async () => {
-    if (!newTx.amount) return;
+    const amount = Number(newTx.amount);
+    if (!amount || amount <= 0) {
+      warning('Ingresa un monto válido mayor a 0.');
+      return;
+    }
+    if (!uid) {
+      error('Debes iniciar sesión.');
+      return;
+    }
+
+    // Validar fondos si es gasto y hay cuenta seleccionada
+    if (newTx.type === 'expense' && newTx.accountId) {
+      const acc = accounts.find(a => a.id === newTx.accountId);
+      if (acc && acc.balance < amount) {
+        error(`Fondos insuficientes en "${acc.name}". Balance: $${acc.balance.toLocaleString()}`);
+        return;
+      }
+    }
+
+    setTxLoading(true);
     const txData: any = {
-      ownerId: user?.uid || 'local',
-      amount: Number(newTx.amount),
+      ownerId: uid,
+      amount,
       type: newTx.type,
       category: newTx.category,
       description: newTx.description,
-      date: Date.now(),
+      date: isoToTimestamp(newTx.date),
     };
-    // Solo incluir accountId si hay una cuenta seleccionada (evita undefined)
     if (newTx.accountId) {
       txData.accountId = newTx.accountId;
     }
-    const tx: Transaction = { id: 't' + Date.now(), ...txData };
-    setTransactions((prev) => [tx, ...prev]);
-    if (user?.uid) {
-      try {
-        await createTransaction(txData);
-        // Actualizar balance de la cuenta si hay una seleccionada
-        if (newTx.accountId) {
-          const { updateAccountBalance } = await import('@/lib/firestore/accounts');
-          const amount = tx.type === 'expense' ? -tx.amount : tx.amount;
-          await updateAccountBalance(newTx.accountId, amount);
-        }
-      } catch (e) { console.error(e); }
+
+    try {
+      await createTransaction(txData);
+
+      // Actualizar balance de la cuenta
+      if (newTx.accountId) {
+        const delta = newTx.type === 'expense' ? -amount : amount;
+        await updateAccountBalance(newTx.accountId, delta);
+      }
+
+      // Recargar datos
+      await loadTransactions();
+
+      const typeLabel = TYPE_LABELS[newTx.type];
+      success(`${typeLabel} de $${amount.toLocaleString()} registrado`);
+      setShowModal(false);
+      setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO() });
+    } catch (e: any) {
+      console.error(e);
+      error(`Error al registrar: ${e?.message || 'Error desconocido'}`);
+    } finally {
+      setTxLoading(false);
     }
-    setShowModal(false);
-    setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '' });
+  };
+
+  const handleDeleteTransaction = async (txId: string) => {
+    const tx = transactions.find(t => t.id === txId);
+    if (!tx) return;
+
+    setConfirmState({
+      isOpen: true,
+      title: 'Eliminar Transacción',
+      message: `¿Eliminar "${tx.description || tx.category}" por $${tx.amount.toLocaleString()}? El balance de la cuenta se ajustará.`,
+      variant: 'danger',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await deleteTransaction(txId);
+
+          // Revertir balance si tenía cuenta
+          if (tx.accountId) {
+            const delta = tx.type === 'expense' ? tx.amount : -tx.amount;
+            await updateAccountBalance(tx.accountId, delta);
+          }
+
+          await loadTransactions();
+          success('Transacción eliminada');
+        } catch (e: any) {
+          error(`Error al eliminar: ${e?.message || 'Error desconocido'}`);
+        }
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const toggleShowAmounts = () => {
@@ -178,9 +239,7 @@ export default function FinanzasPage() {
   };
 
   const handleTransfer = async () => {
-    console.log('[Transfer] Iniciando...', transfer);
     if (!transfer.amount || !transfer.fromAccountId || !transfer.toAccountId) {
-      console.warn('[Transfer] Campos incompletos');
       warning('Completa todos los campos.');
       return;
     }
@@ -196,14 +255,9 @@ export default function FinanzasPage() {
 
     const fromAcc = accounts.find((a) => a.id === transfer.fromAccountId);
     const toAcc = accounts.find((a) => a.id === transfer.toAccountId);
-    console.log('[Transfer] From:', fromAcc, 'To:', toAcc, 'Amount:', amount);
 
-    if (!fromAcc) {
-      error('Cuenta de origen no encontrada.');
-      return;
-    }
-    if (!toAcc) {
-      error('Cuenta de destino no encontrada.');
+    if (!fromAcc || !toAcc) {
+      error('Cuenta no encontrada.');
       return;
     }
     if (fromAcc.balance < amount) {
@@ -212,17 +266,11 @@ export default function FinanzasPage() {
     }
 
     try {
-      const { updateAccountBalance } = await import('@/lib/firestore/accounts');
-      console.log('[Transfer] Debitando', amount, 'de', fromAcc.name);
-      // Debitar de origen
       await updateAccountBalance(transfer.fromAccountId, -amount);
-      console.log('[Transfer] Acreditando', amount, 'en', toAcc.name);
-      // Acreditar en destino
       await updateAccountBalance(transfer.toAccountId, amount);
 
-      // Crear transacción de registro
       const txData: any = {
-        ownerId: user?.uid || 'local',
+        ownerId: uid || 'local',
         amount,
         type: 'saving',
         category: 'Transferencia',
@@ -230,24 +278,21 @@ export default function FinanzasPage() {
         date: Date.now(),
         accountId: transfer.fromAccountId,
       };
-      console.log('[Transfer] Creando transacción:', txData);
       await createTransaction(txData);
-      setTransactions((prev) => [{ id: 't' + Date.now(), ...txData }, ...prev]);
+      await loadTransactions();
 
-      console.log('[Transfer] Completada exitosamente');
       success(`Transferencia exitosa: ${fromAcc.name} → ${toAcc.name}`);
       setShowTransferModal(false);
       setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
     } catch (e: any) {
-      console.error('[Transfer] Error:', e);
       error(`Error al transferir: ${e?.message || 'Error desconocido'}`);
     }
   };
 
   const handleAddAccount = async () => {
-    if (!newAccount.name || !user?.uid) return;
+    if (!newAccount.name || !uid) return;
     const acc: Omit<FinancialAccount, 'id'> = {
-      ownerId: user.uid,
+      ownerId: uid,
       name: newAccount.name,
       type: newAccount.type,
       balance: newAccount.balance,
@@ -257,6 +302,7 @@ export default function FinanzasPage() {
       updatedAt: Date.now(),
     };
     await createAccount(acc);
+    success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
     setNewAccount({ name: '', type: 'checking', balance: 0 });
   };
@@ -271,6 +317,7 @@ export default function FinanzasPage() {
       confirmText: 'Eliminar',
       onConfirm: async () => {
         await deleteAccount(id);
+        await loadTransactions();
         success('Cuenta eliminada');
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -287,6 +334,7 @@ export default function FinanzasPage() {
       confirmText: 'Borrar historial',
       onConfirm: async () => {
         await clearAccountHistory(id);
+        await loadTransactions();
         success('Historial borrado');
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -299,11 +347,12 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: `Eliminar ${typeLabel}s`,
-      message: `¿Eliminar todos los ${typeLabel.toLowerCase()}s de "${acc?.name}"? El balance se ajustará automáticamente. Esta acción no se puede deshacer.`,
+      message: `¿Eliminar todos los ${typeLabel.toLowerCase()}s de "${acc?.name}"? El balance se ajustará automáticamente.`,
       variant: 'danger',
       confirmText: `Eliminar ${typeLabel}s`,
       onConfirm: async () => {
         await deleteTransactionsByType(id, type);
+        await loadTransactions();
         success(`${typeLabel}s eliminados`);
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -315,7 +364,7 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: 'Resetear Balance',
-      message: `¿Resetear el balance de "${acc?.name}" a $0? Se perderá el saldo actual de $${acc?.balance.toLocaleString()}. Esta acción no se puede deshacer.`,
+      message: `¿Resetear el balance de "${acc?.name}" a $0? Se perderá el saldo actual de $${acc?.balance.toLocaleString()}.`,
       variant: 'danger',
       confirmText: 'Resetear balance',
       onConfirm: async () => {
@@ -330,12 +379,13 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: 'Borrar Todo el Historial',
-      message: '¿Borrar el historial de TODAS las transacciones? Los balances de las cuentas se mantendrán intactos. Esta acción no se puede deshacer.',
+      message: '¿Borrar el historial de TODAS las transacciones? Los balances se mantendrán intactos.',
       variant: 'danger',
       confirmText: 'Borrar todo el historial',
       onConfirm: async () => {
-        if (!user?.uid) return;
-        await clearAllTransactionHistory(user.uid);
+        if (!uid) return;
+        await clearAllTransactionHistory(uid);
+        await loadTransactions();
         success('Historial completo borrado');
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -349,309 +399,468 @@ export default function FinanzasPage() {
     return acc ? `${acc.icon} ${acc.name}` : 'Sin cuenta';
   };
 
+  const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="page-header">
-          <div className="page-header-left">
-            <h1 className="page-title">Finanzas</h1>
-            <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
+        <div className="finanzas-page">
+          {/* Header */}
+          <div className="page-header">
+            <div className="page-header-left">
+              <h1 className="page-title">Finanzas</h1>
+              <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
+            </div>
+            <div className="page-header-actions">
+              <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
+                <IconPlus width={14} /> Nueva Cuenta
+              </button>
+              <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
+                <IconWallet width={14} /> Transferir
+              </button>
+              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Borrar todo el historial">
+                <IconArchive width={14} /> Borrar Historial
+              </button>
+              <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {showAmounts ? (
+                    <>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </>
+                  ) : (
+                    <>
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </>
+                  )}
+                </svg>
+                <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                <IconPlus width={14} /> Nueva Transacción
+              </button>
+            </div>
           </div>
-          <div className="page-header-actions">
-            <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
-              <IconPlus width={14} /> Nueva Cuenta
-            </button>
-            <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
-              <IconWallet width={14} /> Transferir
-            </button>
-            <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Borrar todo el historial">
-              <IconArchive width={14} /> Borrar Historial
-            </button>
-            <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {showAmounts ? (
-                  <>
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </>
-                ) : (
-                  <>
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                    <line x1="1" y1="1" x2="23" y2="23"/>
-                  </>
-                )}
-              </svg>
-              <span>{showAmounts ? 'Montos visibles' : 'Montos ocultos'}</span>
-            </button>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-              <IconPlus width={14} /> Nueva Transacción
-            </button>
-          </div>
-        </div>
 
-        {/* Cuentas */}
-        <div className="accounts-grid">
-          {accounts.map((acc) => (
-            <div key={acc.id} className="account-card" style={{ borderLeftColor: acc.color }}>
-              <div className="account-card-header">
-                <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
-                <div className="account-info">
-                  <span className="account-name">{acc.name}</span>
-                  <span className="account-type">{acc.type}</span>
-                </div>
-                <div className="account-actions-group">
-                  <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
-                  <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
-                  <div className="account-dropdown-wrapper">
-                    <button className="account-action account-action-more" title="Más opciones">⋮</button>
-                    <div className="account-dropdown">
-                      <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'income')}>📥 Eliminar Ingresos</button>
-                      <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'expense')}>📤 Eliminar Gastos</button>
-                      <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'saving')}>💰 Eliminar Ahorros</button>
-                      <div className="account-dropdown-divider" />
-                      <button className="account-dropdown-item account-dropdown-danger" onClick={() => handleDeleteAccount(acc.id)}>🗑️ Eliminar Cuenta</button>
+          {/* Cuentas */}
+          <div className="accounts-grid">
+            {accounts.map((acc) => (
+              <div key={acc.id} className="account-card" style={{ borderLeftColor: acc.color }}>
+                <div className="account-card-header">
+                  <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
+                  <div className="account-info">
+                    <span className="account-name">{acc.name}</span>
+                    <span className="account-type">{acc.type}</span>
+                  </div>
+                  <div className="account-actions-group">
+                    <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
+                    <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
+                    <div className="account-dropdown-wrapper">
+                      <button className="account-action account-action-more" title="Más opciones">⋮</button>
+                      <div className="account-dropdown">
+                        <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'income')}>📥 Eliminar Ingresos</button>
+                        <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'expense')}>📤 Eliminar Gastos</button>
+                        <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'saving')}>💰 Eliminar Ahorros</button>
+                        <div className="account-dropdown-divider" />
+                        <button className="account-dropdown-item account-dropdown-danger" onClick={() => handleDeleteAccount(acc.id)}>🗑️ Eliminar Cuenta</button>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div className="account-balance" style={{ color: acc.color }}>
+                  {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
+                </div>
               </div>
-              <div className="account-balance" style={{ color: acc.color }}>
-                {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
+            ))}
+            {accounts.length === 0 && (
+              <div className="empty-accounts">
+                <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
               </div>
+            )}
+          </div>
+
+          {/* Resumen mensual */}
+          <div className="summary-grid">
+            <div className="summary-card summary-income">
+              <span className="summary-label">Ingresos</span>
+              <span className="summary-value">{showAmounts ? `$${summary.income.toLocaleString()}` : '••••••'}</span>
             </div>
-          ))}
-          {accounts.length === 0 && (
-            <div className="empty-accounts">
-              <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
+            <div className="summary-card summary-expense">
+              <span className="summary-label">Gastos</span>
+              <span className="summary-value">{showAmounts ? `$${summary.expenses.toLocaleString()}` : '••••••'}</span>
+            </div>
+            <div className="summary-card summary-saving">
+              <span className="summary-label">Ahorro</span>
+              <span className="summary-value">{showAmounts ? `$${summary.saving.toLocaleString()}` : '••••••'}</span>
+            </div>
+            <div className="summary-card summary-balance">
+              <span className="summary-label">Balance Total</span>
+              <span className="summary-value">{showAmounts ? `$${totalBalance.toLocaleString()}` : '••••••'}</span>
+            </div>
+          </div>
+
+          {/* Gráfico */}
+          <FinancialStatusChart />
+
+          {/* Filtros */}
+          <div className="filter-bar">
+            <CustomSelect
+              value={selectedAccount}
+              onChange={(val) => setSelectedAccount(val)}
+              options={[
+                { value: 'all', label: 'Todas las cuentas', icon: '📊' },
+                ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+              ]}
+              placeholder="Seleccionar cuenta..."
+            />
+            {['Todos', 'income', 'expense', 'saving'].map((t) => (
+              <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
+                {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
+              </button>
+            ))}
+            <CustomSelect
+              value={filterCategory}
+              onChange={(val) => setFilterCategory(val)}
+              options={[
+                { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
+                ...categories.map((c) => ({ value: c, label: c })),
+              ]}
+              placeholder="Seleccionar categoría..."
+            />
+          </div>
+
+          {/* Tabla de transacciones */}
+          <div className="transactions-table-wrapper">
+            <table className="transactions-table">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Cuenta</th>
+                  <th>Categoría</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTx.length > 0 ? filteredTx.map((tx) => (
+                  <tr key={tx.id}>
+                    <td>{tx.description || '—'}</td>
+                    <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
+                    <td>{tx.category}</td>
+                    <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
+                    <td>{formatDate(tx.date)}</td>
+                    <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
+                      {showAmounts ? `${tx.type === 'expense' ? '-' : '+'}$${tx.amount.toLocaleString()}` : '••••••'}
+                    </td>
+                    <td>
+                      <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
+                        <IconTrash width={14} />
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={7} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Modal Transacción */}
+          {showModal && (
+            <div className="modal-overlay" onClick={() => setShowModal(false)}>
+              <div className="modal-content modal-tx" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Nueva Transacción</h2>
+                    <p className="modal-subtitle">Registra un ingreso, gasto o ahorro</p>
+                  </div>
+                  <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+                </div>
+                <div className="modal-body">
+                  {/* Tipo selector visual */}
+                  <div className="tx-type-selector">
+                    {(['income', 'expense', 'saving'] as const).map(type => (
+                      <button
+                        key={type}
+                        className={`tx-type-btn ${newTx.type === type ? 'active' : ''}`}
+                        style={newTx.type === type ? { borderColor: TYPE_COLORS[type], background: TYPE_COLORS[type] + '12' } : {}}
+                        onClick={() => {
+                          const cats = allCategories[type] || CATEGORIES[type];
+                          setNewTx({ ...newTx, type, category: cats[0] });
+                        }}
+                      >
+                        <span className="tx-type-icon">{TYPE_ICONS[type]}</span>
+                        <span className="tx-type-label">{TYPE_LABELS[type]}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="tx-field">
+                    <label className="tx-label">Monto *</label>
+                    <div className="tx-input-wrap">
+                      <span className="tx-currency">$</span>
+                      <input
+                        className="tx-input tx-input-amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={newTx.amount}
+                        onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="tx-field-row">
+                    <div className="tx-field">
+                      <label className="tx-label">Cuenta</label>
+                      <CustomSelect
+                        value={newTx.accountId}
+                        onChange={(val) => setNewTx({ ...newTx, accountId: val })}
+                        options={[
+                          { value: '', label: 'Sin cuenta', icon: '—' },
+                          ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+                        ]}
+                        placeholder="Seleccionar..."
+                      />
+                    </div>
+                    <div className="tx-field">
+                      <label className="tx-label">Fecha</label>
+                      <input
+                        className="tx-input tx-input-date"
+                        type="date"
+                        value={newTx.date}
+                        onChange={(e) => setNewTx({ ...newTx, date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="tx-field">
+                    <label className="tx-label">Categoría</label>
+                    <CustomSelect
+                      value={newTx.category}
+                      onChange={(val) => setNewTx({ ...newTx, category: val })}
+                      options={currentTypeCats.map((c) => ({ value: c, label: c }))}
+                      placeholder="Seleccionar..."
+                      allowCustom
+                      onAddCustom={async (value) => {
+                        if (uid) {
+                          await addCustomTransactionCategory(uid, value);
+                          setCustomTxCategories(prev => [...prev, value]);
+                          setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
+                        }
+                      }}
+                      customPlaceholder="Nombre de la categoría..."
+                    />
+                  </div>
+
+                  <div className="tx-field">
+                    <label className="tx-label">Descripción (opcional)</label>
+                    <input
+                      className="tx-input"
+                      type="text"
+                      placeholder="Ej: Pago de nómina mensual"
+                      value={newTx.description}
+                      onChange={(e) => setNewTx({ ...newTx, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancelar</button>
+                  <button className="btn btn-primary btn-tx-submit" onClick={handleAddTransaction} disabled={txLoading || !newTx.amount}>
+                    {txLoading ? (
+                      <span className="btn-loading">
+                        <span className="spinner" /> Guardando...
+                      </span>
+                    ) : `Registrar ${TYPE_LABELS[newTx.type]}`}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Resumen mensual */}
-        <div className="summary-grid">
-          <div className="summary-card summary-income">
-            <span className="summary-label">Ingresos</span>
-            <span className="summary-value">{showAmounts ? `$${summary.income.toLocaleString()}` : '••••••'}</span>
-          </div>
-          <div className="summary-card summary-expense">
-            <span className="summary-label">Gastos</span>
-            <span className="summary-value">{showAmounts ? `$${summary.expenses.toLocaleString()}` : '••••••'}</span>
-          </div>
-          <div className="summary-card summary-saving">
-            <span className="summary-label">Ahorro</span>
-            <span className="summary-value">{showAmounts ? `$${summary.saving.toLocaleString()}` : '••••••'}</span>
-          </div>
-          <div className="summary-card summary-balance">
-            <span className="summary-label">Balance Total</span>
-            <span className="summary-value">{showAmounts ? `$${totalBalance.toLocaleString()}` : '••••••'}</span>
-          </div>
-        </div>
+          {/* Modal Transferencia */}
+          {showTransferModal && (
+            <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Transferir</h2>
+                    <p className="modal-subtitle">Entre tus cuentas</p>
+                  </div>
+                  <button className="modal-close" onClick={() => setShowTransferModal(false)}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="tx-field">
+                    <label className="tx-label">De</label>
+                    <CustomSelect
+                      value={transfer.fromAccountId}
+                      onChange={(val) => setTransfer({ ...transfer, fromAccountId: val })}
+                      options={accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                      placeholder="Cuenta origen..."
+                    />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">A</label>
+                    <CustomSelect
+                      value={transfer.toAccountId}
+                      onChange={(val) => setTransfer({ ...transfer, toAccountId: val })}
+                      options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                      placeholder="Cuenta destino..."
+                    />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Monto</label>
+                    <div className="tx-input-wrap">
+                      <span className="tx-currency">$</span>
+                      <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => setShowTransferModal(false)}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleTransfer}>Transferir</button>
+                </div>
+              </div>
+            </div>
+          )}
 
-        {/* Gráfico Progreso Financiero en Tiempo Real */}
-        <FinancialStatusChart />
+          {/* Modal Cuenta */}
+          {showAccountModal && (
+            <div className="modal-overlay" onClick={() => setShowAccountModal(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Nueva Cuenta</h2>
+                    <p className="modal-subtitle">Corriente, ahorro o efectivo</p>
+                  </div>
+                  <button className="modal-close" onClick={() => setShowAccountModal(false)}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="tx-field">
+                    <label className="tx-label">Nombre</label>
+                    <input className="tx-input" type="text" placeholder="Ej: Cuenta Principal" value={newAccount.name} onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Tipo</label>
+                    <CustomSelect
+                      value={newAccount.type}
+                      onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
+                      options={[
+                        { value: 'checking', label: 'Corriente', icon: '🏦' },
+                        { value: 'savings', label: 'Ahorro', icon: '💰' },
+                        { value: 'cash', label: 'Efectivo', icon: '💵' },
+                      ]}
+                      placeholder="Seleccionar tipo..."
+                    />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Balance Inicial</label>
+                    <div className="tx-input-wrap">
+                      <span className="tx-currency">$</span>
+                      <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => setShowAccountModal(false)}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleAddAccount}>Crear Cuenta</button>
+                </div>
+              </div>
+            </div>
+          )}
 
-        {/* Filtros */}
-        <div className="filter-bar">
-          <CustomSelect
-            value={selectedAccount}
-            onChange={(val) => setSelectedAccount(val)}
-            options={[
-              { value: 'all', label: 'Todas las cuentas', icon: '📊' },
-              ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
-            ]}
-            placeholder="Seleccionar cuenta..."
+          <ConfirmDialog
+            isOpen={confirmState.isOpen}
+            title={confirmState.title}
+            message={confirmState.message}
+            variant={confirmState.variant}
+            confirmText={confirmState.confirmText || 'Confirmar'}
+            onConfirm={confirmState.onConfirm}
+            onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
           />
-          {['Todos', 'income', 'expense', 'saving'].map((t) => (
-            <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
-              {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
-            </button>
-          ))}
-          <CustomSelect
-            value={filterCategory}
-            onChange={(val) => setFilterCategory(val)}
-            options={[
-              { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
-              ...categories.map((c) => ({ value: c, label: c })),
-            ]}
-            placeholder="Seleccionar categoría..."
-          />
         </div>
-
-        {/* Tabla de transacciones */}
-        <div className="transactions-table-wrapper">
-          <table className="transactions-table">
-            <thead>
-              <tr>
-                <th>Descripción</th>
-                <th>Cuenta</th>
-                <th>Categoría</th>
-                <th>Tipo</th>
-                <th>Fecha</th>
-                <th>Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTx.length > 0 ? filteredTx.map((tx) => (
-                <tr key={tx.id}>
-                  <td>{tx.description || '—'}</td>
-                  <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
-                  <td>{tx.category}</td>
-                  <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
-                  <td>{formatDate(tx.date)}</td>
-                  <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                    {showAmounts ? `${tx.type === 'expense' ? '-' : '+'}$${tx.amount.toLocaleString()}` : '••••••'}
-                  </td>
-                </tr>
-              )) : (
-                <tr><td colSpan={6} className="empty-state">No hay transacciones</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Modal Transacción */}
-        {showModal && (
-          <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2 className="modal-title">Nueva Transacción</h2>
-                <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Tipo</label>
-                <CustomSelect
-                  value={newTx.type}
-                  onChange={(val) => {
-                    const type = val as Transaction['type'];
-                    const cats = allCategories[type] || CATEGORIES[type];
-                    setNewTx({ ...newTx, type, category: cats[0] });
-                  }}
-                  options={[
-                    { value: 'income', label: 'Ingreso', icon: '📥' },
-                    { value: 'expense', label: 'Gasto', icon: '📤' },
-                    { value: 'saving', label: 'Ahorro', icon: '💰' },
-                  ]}
-                  placeholder="Seleccionar tipo..."
-                />
-                <label className="form-label">Cuenta</label>
-                <CustomSelect
-                  value={newTx.accountId}
-                  onChange={(val) => setNewTx({ ...newTx, accountId: val })}
-                  options={[
-                    { value: '', label: 'Sin cuenta', icon: '—' },
-                    ...accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon })),
-                  ]}
-                  placeholder="Seleccionar cuenta..."
-                />
-                <label className="form-label">Monto ($)</label>
-                <input className="form-input" type="number" placeholder="0" value={newTx.amount} onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })} />
-                <label className="form-label">Categoría</label>
-                <CustomSelect
-                  value={newTx.category}
-                  onChange={(val) => setNewTx({ ...newTx, category: val })}
-                  options={(allCategories[newTx.type] || CATEGORIES[newTx.type]).map((c) => ({ value: c, label: c }))}
-                  placeholder="Seleccionar categoría..."
-                  allowCustom
-                  onAddCustom={async (value, label) => {
-                    const uid = user?.uid;
-                    if (uid) {
-                      await addCustomTransactionCategory(uid, value);
-                      setCustomTxCategories(prev => [...prev, value]);
-                      setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
-                    }
-                  }}
-                  customPlaceholder="Nombre de la categoría..."
-                />
-                <label className="form-label">Descripción (opcional)</label>
-                <input className="form-input" type="text" placeholder="Ej: Pago de nómina" value={newTx.description} onChange={(e) => setNewTx({ ...newTx, description: e.target.value })} />
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancelar</button>
-                <button className="btn btn-primary" onClick={handleAddTransaction}>Agregar</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal Transferencia */}
-        {showTransferModal && (
-          <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-              <div className="modal-header">
-                <h2 className="modal-title">Transferir entre Cuentas</h2>
-                <button className="modal-close" onClick={() => setShowTransferModal(false)}>✕</button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">De</label>
-                <CustomSelect
-                  value={transfer.fromAccountId}
-                  onChange={(val) => setTransfer({ ...transfer, fromAccountId: val })}
-                  options={accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
-                  placeholder="Seleccionar cuenta origen..."
-                />
-                <label className="form-label">A</label>
-                <CustomSelect
-                  value={transfer.toAccountId}
-                  onChange={(val) => setTransfer({ ...transfer, toAccountId: val })}
-                  options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
-                  placeholder="Seleccionar cuenta destino..."
-                />
-                <label className="form-label">Monto ($)</label>
-                <input className="form-input" type="number" placeholder="0" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => setShowTransferModal(false)}>Cancelar</button>
-                <button className="btn btn-primary" onClick={handleTransfer}>Transferir</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal Cuenta */}
-        {showAccountModal && (
-          <div className="modal-overlay" onClick={() => setShowAccountModal(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-              <div className="modal-header">
-                <h2 className="modal-title">Nueva Cuenta</h2>
-                <button className="modal-close" onClick={() => setShowAccountModal(false)}>✕</button>
-              </div>
-              <div className="modal-body">
-                <label className="form-label">Nombre</label>
-                <input className="form-input" type="text" placeholder="Ej: Cuenta Corriente" value={newAccount.name} onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
-                <label className="form-label">Tipo</label>
-                <CustomSelect
-                  value={newAccount.type}
-                  onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
-                  options={[
-                    { value: 'checking', label: 'Corriente', icon: '🏦' },
-                    { value: 'savings', label: 'Ahorro', icon: '💰' },
-                    { value: 'cash', label: 'Efectivo', icon: '💵' },
-                  ]}
-                  placeholder="Seleccionar tipo..."
-                />
-                <label className="form-label">Balance Inicial ($)</label>
-                <input className="form-input" type="number" placeholder="0" value={newAccount.balance} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => setShowAccountModal(false)}>Cancelar</button>
-                <button className="btn btn-primary" onClick={handleAddAccount}>Crear Cuenta</button>
-              </div>
-            </div>
-          </div>
-        )}
 
         <style>{`
-          .chart-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
-          .chart-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-          .chart-card-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-          .chart-card-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0 0; }
-          .chart-period-toggle { display: flex; gap: 2px; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
-          .period-btn { padding: 5px 10px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); text-transform: uppercase; letter-spacing: 0.5px; }
-          .period-btn.active { background: var(--color-prosper-green); color: white; }
-          .period-btn:hover:not(.active) { color: var(--text-primary); }
-          .page-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+          .finanzas-page { padding: 0; }
+          .btn-toggle-label { display: none; }
+          .page-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
           .btn-danger-outline { color: var(--color-error) !important; border-color: var(--color-error) !important; }
           .btn-danger-outline:hover { background: var(--color-error) !important; color: white !important; }
+          .btn-toggle-visibility { gap: 4px; }
+
+          /* Type selector in modal */
+          .tx-type-selector { display: flex; gap: 8px; margin-bottom: 4px; }
+          .tx-type-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 8px;
+            border-radius: 10px;
+            border: 2px solid var(--border-default);
+            background: var(--bg-input);
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          .tx-type-btn:hover { border-color: var(--color-prosper-green); }
+          .tx-type-btn.active { font-weight: 600; }
+          .tx-type-icon { font-size: 1.25rem; }
+          .tx-type-label { font-size: 0.6875rem; color: var(--text-secondary); }
+          .tx-type-btn.active .tx-type-label { color: var(--text-primary); }
+
+          /* Fields */
+          .tx-field { display: flex; flex-direction: column; gap: 6px; }
+          .tx-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+          .tx-label { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
+          .tx-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-family: inherit;
+            box-sizing: border-box;
+          }
+          .tx-input:focus { border-color: var(--color-prosper-green); box-shadow: 0 0 0 3px rgba(61,204,142,0.12); }
+          .tx-input-amount { font-size: 1.25rem; font-weight: 700; padding-left: 28px; }
+          .tx-input-date { cursor: pointer; }
+          .tx-input-wrap { position: relative; }
+          .tx-currency { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.875rem; font-weight: 600; color: var(--text-tertiary); pointer-events: none; }
+
+          /* Modal subtitle */
+          .modal-subtitle { font-size: 0.75rem; color: var(--text-tertiary); margin: 2px 0 0 0; }
+
+          /* Submit button */
+          .btn-tx-submit { min-width: 160px; justify-content: center; }
+          .btn-loading { display: flex; align-items: center; gap: 8px; }
+          .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+
+          /* Delete tx button */
+          .delete-tx-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
+            display: flex;
+            transition: all 0.15s;
+          }
+          .delete-tx-btn:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
+
+          /* Accounts */
           .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
           .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
           .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
@@ -674,6 +883,8 @@ export default function FinanzasPage() {
           .account-dropdown-danger:hover { background: rgba(239,68,68,0.1) !important; }
           .account-balance { font-size: 1.375rem; font-weight: 800; }
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
+
+          /* Summary */
           .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
           .summary-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
           .summary-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
@@ -682,8 +893,14 @@ export default function FinanzasPage() {
           .summary-expense { border-left: 4px solid var(--color-error); }
           .summary-saving { border-left: 4px solid var(--color-pine-500); }
           .summary-balance { border-left: 4px solid var(--color-gold-500); }
+
+          /* Filters */
           .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-          .filter-select { padding: 8px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-primary); font-size: 0.8125rem; }
+          .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
+          .filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
+          .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+
+          /* Table */
           .transactions-table-wrapper { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
           .transactions-table { width: 100%; border-collapse: collapse; }
           .transactions-table th { text-align: left; padding: 12px 16px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-input); border-bottom: 1px solid var(--border-default); }
@@ -696,53 +913,58 @@ export default function FinanzasPage() {
           .amount-income { color: var(--color-prosper-green); }
           .amount-expense { color: var(--color-error); }
           .amount-saving { color: var(--color-pine-500); }
-          .delete-btn { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 1rem; padding: 4px; border-radius: 50%; }
-          .delete-btn:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
-          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
-          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 420px; padding: 24px; max-height: 90vh; overflow-y: auto; }
-          .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-          .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-          .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 8px; }
-          .modal-body { display: flex; flex-direction: column; gap: 14px; }
-          .modal-footer { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
-          .form-label { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); margin-bottom: -6px; }
-          .form-input { width: 100%; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-primary); font-size: 0.875rem; outline: none; box-sizing: border-box; }
-          .form-input:focus { border-color: var(--color-prosper-green); }
-          .btn { padding: 10px 20px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
-          .btn-primary { background: var(--color-prosper-green); color: white; }
-          .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
-          .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
-          .filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
-          .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
 
+          /* Modal */
+          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
+          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.25s ease; }
+          .modal-tx { max-width: 480px; }
+          @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+          .modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+          .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; transition: background 0.15s; }
+          .modal-close:hover { background: var(--bg-input); }
+          .modal-body { display: flex; flex-direction: column; gap: 16px; }
+          .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+          /* Buttons */
+          .btn { padding: 10px 18px; border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
+          .btn-primary { background: var(--color-prosper-green); color: white; }
+          .btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
+          .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+          .btn-outline { background: transparent; border: 1px solid var(--border-default); color: var(--text-primary); }
+          .btn-outline:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+
+          /* Responsive */
           @media (max-width: 768px) {
+            .page-header { flex-direction: column; gap: 12px; }
+            .page-header-actions { width: 100%; flex-wrap: wrap; }
+            .page-header-actions .btn { flex: 1; justify-content: center; min-width: 0; }
+            .btn-toggle-label { display: inline; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
             .filter-bar { flex-direction: column; align-items: stretch; }
-            .filter-select { width: 100%; }
             .transactions-table-wrapper { overflow-x: auto; }
-            .transactions-table { min-width: 700px; }
-            .page-header { flex-direction: column; }
-            .page-header-actions { width: 100%; }
-            .page-header-actions .btn { flex: 1; justify-content: center; }
-            .modal-content { width: 95%; padding: 16px; }
+            .transactions-table { min-width: 650px; }
+            .modal-content { width: 95%; padding: 20px 16px; }
             .modal-footer { flex-direction: column-reverse; }
-            .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
+            .modal-footer .btn { width: 100%; justify-content: center; padding: 14px; }
+            .tx-type-selector { gap: 6px; }
+            .tx-type-btn { padding: 10px 6px; }
+            .tx-field-row { grid-template-columns: 1fr; }
           }
           @media (max-width: 480px) {
-            .summary-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .summary-card { padding: 12px; }
+            .summary-value { font-size: 1.25rem; }
             .accounts-grid { grid-template-columns: 1fr; }
+            .page-header-actions .btn { font-size: 0.75rem; padding: 8px 12px; }
+            .modal-content { max-height: 95vh; padding: 16px 14px; }
+            .modal-title { font-size: 1rem; }
+            .tx-type-icon { font-size: 1rem; }
+            .tx-type-label { font-size: 0.625rem; }
+            .tx-input-amount { font-size: 1.125rem; }
           }
         `}</style>
-        <ConfirmDialog
-          isOpen={confirmState.isOpen}
-          title={confirmState.title}
-          message={confirmState.message}
-          variant={confirmState.variant}
-          confirmText={confirmState.confirmText || 'Confirmar'}
-          onConfirm={confirmState.onConfirm}
-          onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
-        />
       </DashboardLayout>
     </ProtectedRoute>
   );
