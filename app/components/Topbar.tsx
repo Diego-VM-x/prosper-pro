@@ -27,12 +27,10 @@ import {
   IconTasks,
   IconCalendar,
   IconAnalytics,
-  IconTeam,
   IconBook,
-  IconTrophy,
   IconHelp,
 } from './icons';
-import type { Notification } from '@/types';
+import type { Notification, Course, Transaction } from '@/types';
 import Link from 'next/link';
 
 interface TopbarProps {
@@ -61,6 +59,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifPermissioned, setNotifPermissioned] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
 
@@ -87,6 +87,33 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       sendBrowserNotification('Prosper', `Tienes ${unreadCount} notificación${unreadCount > 1 ? 'es' : ''} nueva${unreadCount > 1 ? 's' : ''}`);
     }
   }, [unreadCount, notifPermissioned]);
+
+  // Cargar cursos y transacciones para búsqueda
+  useEffect(() => {
+    if (!user?.uid) return;
+    const uid = user.uid;
+    let cancelled = false;
+    async function loadData() {
+      try {
+        const [{ getCourses }, { getTransactionsByOwnerId }] = await Promise.all([
+          import('@/lib/firestore/courses'),
+          import('@/lib/firestore/transactions'),
+        ]);
+        const [coursesData, txData] = await Promise.all([
+          getCourses(),
+          getTransactionsByOwnerId(uid),
+        ]);
+        if (!cancelled) {
+          setCourses(coursesData);
+          setTransactions(txData.slice(0, 50));
+        }
+      } catch (e) {
+        console.error('Search data load error:', e);
+      }
+    }
+    loadData();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -136,6 +163,26 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       )
     : [];
 
+  // Filtrar cursos según query
+  const courseResults = searchQuery.trim()
+    ? courses.filter(c =>
+        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.category.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
+  // Filtrar transacciones según query
+  const txResults = searchQuery.trim()
+    ? transactions.filter(t =>
+        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.category.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 10)
+    : [];
+
+  const hasResults = searchResults.length > 0 || goalResults.length > 0 || courseResults.length > 0 || txResults.length > 0;
+  const noData = goals.length === 0 && courses.length === 0 && transactions.length === 0;
+
   return (
     <header className="topbar" id="main-topbar">
       {/* Logo + colapsar + menú móvil */}
@@ -184,7 +231,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           <IconSearch className="topbar-search-icon" />
           <input
             type="text"
-            placeholder="Buscar metas..."
+            placeholder="Buscar..."
             id="global-search"
             aria-label="Buscador de metas"
             value={searchQuery}
@@ -200,41 +247,122 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           <span className="topbar-search-shortcut">⌘F</span>
         </div>
 
-        {/* Resultados de metas */}
-        {showSearch && goalResults.length > 0 && (
+        {/* Resultados unificados */}
+        {showSearch && searchQuery.trim() && hasResults && (
           <div className="search-results-dropdown">
-            <div className="search-results-header">
-              <span>Metas encontradas</span>
-              <span className="search-results-count">{goalResults.length}</span>
-            </div>
-            {goalResults.slice(0, 8).map((goal) => (
-              <Link
-                key={goal.id}
-                href="/metas"
-                className="search-result-item"
-                onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
-              >
-                <span className={`search-result-status ${goal.status === 'completed' ? 'completed' : goal.status === 'progress' ? 'in-progress' : 'pending'}`} />
-                <div className="search-result-content">
-                  <span className="search-result-name">{goal.title}</span>
-                  <span className="search-result-desc">{goal.category} · {goal.target.toLocaleString()}</span>
+            {/* Rutas */}
+            {searchResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>Páginas</span>
+                  <span className="search-results-count">{searchResults.length}</span>
                 </div>
-                <span className="search-result-arrow">→</span>
-              </Link>
-            ))}
+                {searchResults.map((r) => (
+                  <Link
+                    key={r.route}
+                    href={r.route}
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className="search-result-icon">{r.icon}</span>
+                    <div className="search-result-content">
+                      <span className="search-result-name">{r.name}</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Metas */}
+            {goalResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>Metas</span>
+                  <span className="search-results-count">{goalResults.length}</span>
+                </div>
+                {goalResults.slice(0, 5).map((goal) => (
+                  <Link
+                    key={goal.id}
+                    href="/metas"
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className={`search-result-status ${goal.status === 'completed' ? 'completed' : goal.status === 'progress' ? 'in-progress' : 'pending'}`} />
+                    <div className="search-result-content">
+                      <span className="search-result-name">{goal.title}</span>
+                      <span className="search-result-desc">{goal.category} · ${goal.target.toLocaleString()}</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Cursos */}
+            {courseResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>Cursos</span>
+                  <span className="search-results-count">{courseResults.length}</span>
+                </div>
+                {courseResults.slice(0, 5).map((course) => (
+                  <Link
+                    key={course.id || course.title}
+                    href={`/cursos`}
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className="search-result-icon">📚</span>
+                    <div className="search-result-content">
+                      <span className="search-result-name">{course.title}</span>
+                      <span className="search-result-desc">{course.category} · {course.modulesCount} módulos</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Transacciones */}
+            {txResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>Transacciones</span>
+                  <span className="search-results-count">{txResults.length}</span>
+                </div>
+                {txResults.slice(0, 5).map((tx) => {
+                  const typeIcon = tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '💰';
+                  const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
+                  return (
+                    <div
+                      key={tx.id}
+                      className="search-result-item"
+                      onClick={() => { setSearchQuery(''); }}
+                    >
+                      <span className="search-result-icon">{typeIcon}</span>
+                      <div className="search-result-content">
+                        <span className="search-result-name">{tx.description}</span>
+                        <span className="search-result-desc">{typeLabel} · {tx.category} · ${tx.amount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         )}
-        {showSearch && searchQuery.trim() && goalResults.length === 0 && goals.length > 0 && (
+        {showSearch && searchQuery.trim() && !hasResults && !noData && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>No se encontraron metas para "{searchQuery}"</p>
+              <p>No se encontraron resultados para "{searchQuery}"</p>
             </div>
           </div>
         )}
-        {showSearch && goals.length === 0 && (
+        {showSearch && searchQuery.trim() && noData && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>No tienes metas creadas aún</p>
+              <p>Crea metas, transacciones o cursos para buscar</p>
             </div>
           </div>
         )}
@@ -711,6 +839,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .search-result-status.completed { background: var(--color-pine-500); }
         .search-result-status.in-progress { background: var(--color-gold-500); }
         .search-result-status.pending { background: var(--border-default); }
+        .search-result-icon {
+          font-size: 1rem;
+          flex-shrink: 0;
+          margin-top: 2px;
+        }
         .search-result-content { flex: 1; min-width: 0; }
         .search-result-name { font-size: 0.8125rem; font-weight: 600; display: block; }
         .search-result-desc {
