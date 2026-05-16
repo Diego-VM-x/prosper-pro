@@ -20,7 +20,7 @@ import { subscribeToAccounts } from '@/lib/firestore/accounts';
 const FinancialStatusChart = lazy(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
 );
-import type { Goal, XPState, CommunityMember, Achievement, GoalCategory, FinancialAccount } from '@/types';
+import type { Goal, GoalCategory, FinancialAccount } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
@@ -52,9 +52,6 @@ export function Dashboard() {
   const { goals, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
 
-  const [xp, setXP] = useState<XPState | null>(null);
-  const [members, setMembers] = useState<CommunityMember[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [monthlySavings, setMonthlySavings] = useState(0);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
   const [customCats, setCustomCats] = useState<string[]>([]);
@@ -109,30 +106,13 @@ export function Dashboard() {
 
     async function loadData() {
       try {
-        const [
-          { getTransactionsByOwnerId },
-          { getXPByOwnerId, getAchievementsByOwnerId },
-          { getCommunityUsers },
-        ] = await Promise.all([
+        const [{ getTransactionsByOwnerId }] = await Promise.all([
           import('@/lib/firestore/transactions'),
-          import('@/lib/firestore/gamification'),
-          import('@/lib/firestore/community'),
         ]);
 
         if (cancelled) return;
 
-        const [transactionsData, xpData, achievementsData, membersData] = await Promise.all([
-          getTransactionsByOwnerId(uid),
-          getXPByOwnerId(uid),
-          getAchievementsByOwnerId(uid),
-          getCommunityUsers(),
-        ]);
-
-        if (cancelled) return;
-
-        if (xpData) setXP(xpData);
-        if (achievementsData.length) setAchievements(achievementsData);
-        if (membersData.length) setMembers(membersData);
+        const transactionsData = await getTransactionsByOwnerId(uid);
 
         if (transactionsData.length) {
           const savings = transactionsData.filter((t) => t.type === 'saving');
@@ -275,19 +255,10 @@ export function Dashboard() {
             <div className="activity-item">
               <div className="activity-icon">🚀</div>
               <div className="activity-info">
-                <p className="activity-text">Has alcanzado el estatus de <strong>Arquitecto Nivel 2</strong>.</p>
-                <span className="activity-time">Hace 2 horas</span>
+                <p className="activity-text">Bienvenido a Prosper. ¡Empieza a crear tus metas financieras!</p>
+                <span className="activity-time">Hoy</span>
               </div>
             </div>
-            {achievements.slice(0, 2).map((ach) => (
-              <div className="activity-item" key={ach.id}>
-                <div className="activity-icon">{ach.icon}</div>
-                <div className="activity-info">
-                  <p className="activity-text">{ach.title}</p>
-                  <span className="activity-time">Reciente</span>
-                </div>
-              </div>
-            ))}
           </div>
 
           {/* Progreso Circular */}

@@ -114,16 +114,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
           <Link href="/finanzas" className={`nav-item ${isActive('/finanzas') ? 'active' : ''}`} id="nav-analytics" title={isCollapsed ? 'Finanzas' : undefined}>
             <IconAnalytics /> {!isCollapsed && 'Finanzas'}
           </Link>
-          <Link href="/comunidad" className={`nav-item ${isActive('/comunidad') ? 'active' : ''}`} id="nav-team" title={isCollapsed ? 'Comunidad' : undefined}>
-            <IconTeam /> {!isCollapsed && 'Comunidad'}
-          </Link>
 
           {!isCollapsed && <p className="sidebar-label">Aprendizaje</p>}
           <Link href="/cursos" className={`nav-item ${isActive('/cursos') ? 'active' : ''}`} id="nav-courses" title={isCollapsed ? 'Cursos' : undefined}>
             <IconBook /> {!isCollapsed && 'Cursos'}
-          </Link>
-          <Link href="/logros" className={`nav-item ${isActive('/logros') ? 'active' : ''}`} id="nav-achievements" title={isCollapsed ? 'Logros' : undefined}>
-            <IconTrophy /> {!isCollapsed && 'Logros'}
           </Link>
 
           {!isCollapsed && <p className="sidebar-label">General</p>}

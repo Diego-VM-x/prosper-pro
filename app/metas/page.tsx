@@ -222,21 +222,6 @@ export default function MetasPage() {
       }
     }
 
-    // Verificar logros desbloqueados
-    try {
-      const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
-      const [allTx, allAccounts, allGoals] = await Promise.all([
-        getTransactionsByOwnerId(userId),
-        Promise.resolve(accounts),
-        Promise.resolve(goals.map(g => g.id === editingGoal?.id ? { ...g, ...formData, status: formData.current >= formData.target ? 'completed' as GoalStatus : g.status, updatedAt: Date.now() } : g)),
-      ]);
-      await checkAndUnlockAchievements(userId, {
-        transactions: allTx,
-        accounts: allAccounts,
-        goals: allGoals,
-      });
-    } catch (e) { console.error('Error verificando logros:', e); }
-
     setShowNewGoalModal(false);
     resetForm();
   };
@@ -292,20 +277,7 @@ export default function MetasPage() {
           await updateAccountBalance(selectedAccountId, -amount);
         }
         await createTransaction(txData);
-
-        // Verificar logros desbloqueados
-        const { checkAndUnlockAchievements } = await import('@/lib/firestore/gamification');
-        const [allTx, allAccounts, allGoals] = await Promise.all([
-          getTransactionsByOwnerId(userId),
-          Promise.resolve(accounts),
-          Promise.resolve(goals.map(g => g.id === showAddFundsModal.id ? { ...g, current: newCurrent, status: newStatus, updatedAt: Date.now() } : g)),
-        ]);
-        await checkAndUnlockAchievements(userId, {
-          transactions: allTx,
-          accounts: allAccounts,
-          goals: allGoals,
-        });
-      } catch (e) { console.error('Error creando transacción o verificando logros:', e); }
+      } catch (e) { console.error('Error creando transacción:', e); }
     }
 
     setShowAddFundsModal(null);

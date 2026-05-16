@@ -1,12 +1,13 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (06 de Abril, 2026 - Optimización Web Maxima)
-- **Objetivo**: Dashboard de Libertad Financiera y Educación Gamificada.
+## Estado Actual (16 de Mayo, 2026 - Eliminación de Comunidad y Logros)
+- **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
 - **Modo**: App inicia en BLANCO - sin datos de ejemplo. Todo dato viene de Firebase.
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
+- **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -39,15 +40,17 @@
 - `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
 - `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
 - `app/configuracion/page.tsx` → Perfil editable, preferencias, notificaciones, seguridad, zona de peligro (rediseñado)
-- `app/logros/page.tsx` → Logros funcionales con XP en tiempo real, tareas diarias/semanales completables, nivel máximo 30
+- `app/logros/` → **ELIMINADO** (backup en `_backup_comunidad_logros/logros/`)
 - `app/ayuda/page.tsx` → FAQ con 40+ preguntas, accesos rápidos, filtros por categoría
-- `app/comunidad/page.tsx` → Chat privado con Firebase, bottom nav móvil (Amigos/Mensajes/Canales), sidebar desktop, estética mejorada (gradientes, sombras, animaciones)
+- `app/comunidad/` → **ELIMINADO** (código preservado en backups de diseño)
 - `lib/firebase.ts` → Configuración Firebase
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación
 - `lib/contexts/GoalsContext.tsx` → Contexto reactivo de metas y recordatorios (onSnapshot)
 - `lib/seed.ts` → Vacío (sin datos de ejemplo)
 - `lib/csvParser.ts` → Parser e importador de CSV a Firestore
-- `lib/firestore/` → 11 módulos Firestore (goals, users, transactions, accounts, gamification, reminders, notifications, community, courses, tasks, communityMessages)
+- `lib/firestore/` → 9 módulos Firestore (goals, users, transactions, accounts, reminders, notifications, courses)
+- `lib/firestore/gamification.ts` → **ELIMINADO** (backup en `_backup_comunidad_logros/`)
+- `lib/firestore/tasks.ts` → **ELIMINADO** (backup en `_backup_comunidad_logros/`)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
 - `lib/firestore/accounts.ts` → CRUD de cuentas, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory
@@ -107,6 +110,24 @@
   - Dashboard: Eliminado botón "Importar Datos" y modal CSV. Flechas (↗) de tarjetas ahora son funcionales con `useRouter` → `/metas`, `/finanzas`, `/cursos`.
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
+
+### 16/05/2026 - Eliminación de Comunidad y Logros
+- **Archivos movidos a backup (`_backup_comunidad_logros/`)**:
+  - `app/logros/` → Carpeta completa preservada
+  - `lib/firestore/gamification.ts` → Módulo de XP y logros
+  - `lib/firestore/tasks.ts` → Módulo de tareas diarias/semanales
+- **Referencias eliminadas**:
+  - `Topbar.tsx`: Quitado Logros de searchRoutes y menú móvil
+  - `Sidebar.tsx`: Eliminados links de Comunidad y Logros
+  - `Dashboard.tsx`: Eliminados imports de gamification, estados de achievements/members/xp, carga de datos de logros, actividad de logros
+  - `metas/page.tsx`: Eliminadas llamadas a `checkAndUnlockAchievements` en crear/actualizar meta y añadir fondos
+  - `finanzas/page.tsx`: Eliminadas llamadas a `checkAndUnlockAchievements` en crear transacción y crear cuenta
+  - `cursos/[id]/page.tsx`: Eliminado import de `updateXP` y lógica de XP al completar curso
+  - `configuracion/page.tsx`: Eliminados toggles de communityMsgs, botones de limpiar/resetear datos de comunidad, import de privateMessages
+  - `types/index.ts`: Eliminados tipos `Achievement`, `DailyTask`, `TaskProgress`, `Community`, `CommunityMessage`, `CommunityRoomMember`, `PrivateConversation`, `PrivateMessage`. Quitado campo `achievements` de `XPState`, `achievementsCount` de `CommunityMember`, tipos de notificación `achievement/community/private_message/channel_message`
+  - `AuthContext.tsx`: Eliminadas colecciones `xp_states`, `achievements`, `study_sessions` del deleteAccount. Eliminado código de borrar conversaciones/mensajes privados
+  - `tsconfig.json`: Excluido `_backup_comunidad_logros` del compilador
+- **Build**: `tsc --noEmit` exitoso sin errores.
 
 ### 04/04/2026 - Diseños de Logros, Comunidad y Ayuda
 - **Logros Page Rediseñada**:

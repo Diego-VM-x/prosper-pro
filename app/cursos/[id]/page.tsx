@@ -11,7 +11,6 @@ import {
   completeModule,
   enrollCourse,
 } from '@/lib/firestore/courses';
-import { updateXP } from '@/lib/firestore/gamification';
 import type { Course, CourseModule, UserCourseProgress } from '@/types';
 
 export default function CourseDetail() {
@@ -58,11 +57,6 @@ export default function CourseDetail() {
     await completeModule(user.uid, id, moduleId);
     const p = await getUserCourseProgress(user.uid, id);
     setProgress(p);
-
-    // Si completó todos los módulos, dar XP
-    if (p && course && p.completedModules.length + 1 >= course.modulesCount) {
-      await updateXP(user.uid, course.xpReward);
-    }
   };
 
   const isModuleCompleted = (moduleId: string) => {

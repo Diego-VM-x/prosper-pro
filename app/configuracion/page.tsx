@@ -5,7 +5,6 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
-import { clearUserData, resetAllCommunityData } from '@/lib/firestore/privateMessages';
 import { useTheme } from '@/app/components/ThemeProvider';
 import type { UserProfile } from '@/types';
 
@@ -22,13 +21,10 @@ export default function ConfiguracionPage() {
   const [darkModeSync, setDarkModeSync] = useState(true);
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
-  const [communityMsgs, setCommunityMsgs] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [deleting, setDeleting] = useState(false);
-  const [clearingCommunity, setClearingCommunity] = useState(false);
-  const [resettingAll, setResettingAll] = useState(false);
 
   // Cargar perfil
   useEffect(() => {
@@ -64,7 +60,6 @@ export default function ConfiguracionPage() {
         setDarkModeSync((p as any).darkModeSync ?? true);
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
-        setCommunityMsgs((p as any).notifications?.communityMsgs ?? true);
       }
     });
 
@@ -87,7 +82,6 @@ export default function ConfiguracionPage() {
         notifications: {
           priceAlerts,
           budgetAlerts,
-          communityMsgs,
         },
       } as any);
       setSuccessMsg('Perfil actualizado correctamente');
@@ -97,41 +91,6 @@ export default function ConfiguracionPage() {
       setErrorMsg('Error al guardar los cambios');
     } finally {
       setSaving(false);
-    }
-  };
-
-  // Eliminar cuenta
-  const handleResetAllCommunityData = async () => {
-    if (!confirm('⚠️ ¿RESET DE FÁBRICA? Esto eliminará TODOS los datos de comunidad de TODOS los usuarios (amigos, mensajes, solicitudes). Esta acción es IRREVERSIBLE.')) return;
-    if (!confirm('¿Estás SEGURO? Esta acción no se puede deshacer.')) return;
-    setResettingAll(true);
-    try {
-      await resetAllCommunityData();
-      setSuccessMsg('Todos los datos de comunidad han sido eliminados');
-      setTimeout(() => setSuccessMsg(''), 5000);
-    } catch (e) {
-      console.error('Error resetting all community data:', e);
-      setErrorMsg('Error al resetear datos de comunidad');
-      setTimeout(() => setErrorMsg(''), 3000);
-    } finally {
-      setResettingAll(false);
-    }
-  };
-
-  const handleClearCommunityData = async () => {
-    if (!user?.uid) return;
-    if (!confirm('¿Estás seguro de que quieres eliminar todos tus datos de comunidad (amigos, mensajes, solicitudes)? Esta acción es irreversible.')) return;
-    setClearingCommunity(true);
-    try {
-      await clearUserData(user.uid);
-      setSuccessMsg('Datos de comunidad eliminados correctamente');
-      setTimeout(() => setSuccessMsg(''), 3000);
-    } catch (e) {
-      console.error('Error clearing community data:', e);
-      setErrorMsg('Error al eliminar datos de comunidad');
-      setTimeout(() => setErrorMsg(''), 3000);
-    } finally {
-      setClearingCommunity(false);
     }
   };
 
@@ -1293,24 +1252,8 @@ export default function ConfiguracionPage() {
                 <div className="danger-content">
                   <h3 className="danger-title">Zona de Peligro</h3>
                   <p className="danger-desc">
-                    Al eliminar tu cuenta, se borrarán permanentemente tus metas, historial de ahorro, mensajes y tu acceso a la plataforma. Esta acción es irreversible.
+                    Al eliminar tu cuenta, se borrarán permanentemente tus metas, historial de ahorro y tu acceso a la plataforma. Esta acción es irreversible.
                   </p>
-                  <button
-                    className="danger-btn"
-                    onClick={handleClearCommunityData}
-                    disabled={clearingCommunity}
-                    style={{ marginBottom: 12, background: '#92400e', borderColor: '#92400e' }}
-                  >
-                    {clearingCommunity ? 'Limpiando...' : 'Limpiar MIS datos de comunidad'}
-                  </button>
-                  <button
-                    className="danger-btn"
-                    onClick={handleResetAllCommunityData}
-                    disabled={resettingAll}
-                    style={{ marginBottom: 12, background: '#7f1d1d', borderColor: '#7f1d1d' }}
-                  >
-                    {resettingAll ? 'Reseteando...' : '⚠️ RESET DE FÁBRICA - Eliminar TODOS los datos de comunidad'}
-                  </button>
                   <button
                     className="danger-btn"
                     onClick={handleDeleteAccount}
@@ -1338,10 +1281,6 @@ export default function ConfiguracionPage() {
                     <div className="sub-detail-row">
                       <span className="sub-detail-label">Metas activas</span>
                       <span className="sub-detail-value">Ilimitadas</span>
-                    </div>
-                    <div className="sub-detail-row">
-                      <span className="sub-detail-label">Comunidad</span>
-                      <span className="sub-detail-value">Incluida</span>
                     </div>
                   </div>
                 </div>
@@ -1458,19 +1397,6 @@ export default function ConfiguracionPage() {
                     <button
                       className={`toggle-switch ${budgetAlerts ? 'active' : ''}`}
                       onClick={() => setBudgetAlerts(!budgetAlerts)}
-                    />
-                  </div>
-                  <div className="toggle-row">
-                    <div className="toggle-info">
-                      <div className="toggle-icon">💬</div>
-                      <div className="toggle-text">
-                        <span className="toggle-label">Mensajes de Comunidad</span>
-                        <span className="toggle-desc">Notificaciones directas</span>
-                      </div>
-                    </div>
-                    <button
-                      className={`toggle-switch ${communityMsgs ? 'active' : ''}`}
-                      onClick={() => setCommunityMsgs(!communityMsgs)}
                     />
                   </div>
                 </div>

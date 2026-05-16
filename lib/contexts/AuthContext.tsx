@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Eliminar colecciones adicionales
-      const collectionsToDelete = ['notifications', 'xp_states', 'achievements', 'study_sessions', 'user_profiles', 'user_course_progress'];
+      const collectionsToDelete = ['notifications', 'user_profiles', 'user_course_progress'];
       for (const col of collectionsToDelete) {
         try {
           console.log('[deleteAccount] Eliminando colección:', col);
@@ -169,30 +169,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (err) {
           console.log('[deleteAccount] Colección no existe o error en', col, ':', err);
         }
-      }
-
-      // Eliminar conversaciones privadas
-      try {
-        console.log('[deleteAccount] Eliminando conversaciones privadas...');
-        const convQ = query(collection(db, 'private_conversations'), where('participants', 'array-contains', uid));
-        const convSnap = await getDocs(convQ);
-        if (convSnap.size > 0) {
-          await Promise.all(convSnap.docs.map((d) => fsDeleteDoc(d.ref)));
-        }
-      } catch (err) {
-        console.log('[deleteAccount] Error eliminando conversaciones:', err);
-      }
-
-      // Eliminar mensajes privados
-      try {
-        console.log('[deleteAccount] Eliminando mensajes privados...');
-        const msgQ = query(collection(db, 'private_messages'), where('senderId', '==', uid));
-        const msgSnap = await getDocs(msgQ);
-        if (msgSnap.size > 0) {
-          await Promise.all(msgSnap.docs.map((d) => fsDeleteDoc(d.ref)));
-        }
-      } catch (err) {
-        console.log('[deleteAccount] Error eliminando mensajes:', err);
       }
 
       // Eliminar documento de usuario (evitar duplicados huérfanos)

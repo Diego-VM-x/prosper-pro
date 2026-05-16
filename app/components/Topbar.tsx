@@ -115,9 +115,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     { name: 'Mis Metas', route: '/metas', icon: '🎯', keywords: 'metas objetivos tareas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
     { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos' },
-    { name: 'Comunidad', route: '/comunidad', icon: '👥', keywords: 'comunidad gente usuarios' },
     { name: 'Cursos', route: '/cursos', icon: '📚', keywords: 'cursos aprendizaje educación' },
-    { name: 'Logros', route: '/logros', icon: '🏆', keywords: 'logros trofeos premios' },
     { name: 'Configuración', route: '/configuracion', icon: '⚙️', keywords: 'configuración ajustes preferencias' },
     { name: 'Ayuda', route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
   ];
@@ -456,14 +454,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               <Link href="/finanzas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconAnalytics /> Finanzas
               </Link>
-              <Link href="/comunidad" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconTeam /> Comunidad
-              </Link>
               <Link href="/cursos" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconBook /> Cursos
-              </Link>
-              <Link href="/logros" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconTrophy /> Logros
               </Link>
               <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconSettings /> Configuración
