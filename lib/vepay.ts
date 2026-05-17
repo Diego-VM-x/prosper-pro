@@ -148,7 +148,7 @@ export function getBankDisplayName(bankApp: string | null): string {
   return BANK_DISPLAY_NAMES[bankApp] || bankApp;
 }
 
-export function mapReceiptToTransaction(receipt: VEPayReceipt, overrides?: { flow?: 'income' | 'expense'; accountId?: string; bank?: string }): {
+export function mapReceiptToTransaction(receipt: VEPayReceipt, overrides?: { flow?: 'income' | 'expense'; accountId?: string; bank?: string; date?: string }): {
   amount: number;
   type: 'income' | 'expense' | 'saving';
   category: string;
@@ -236,8 +236,12 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt, overrides?: { flo
   else if (conceptLower.includes('luzmi') || conceptLower.includes('luz') || conceptLower.includes('electricidad')) category = 'Vivienda';
   else if (conceptLower.includes('telefono') || conceptLower.includes('movil') || conceptLower.includes('cantv')) category = 'Vivienda';
 
+  // Date: use override if provided, otherwise parse from receipt
   let date = Date.now();
-  if (receipt.payment.date_time.iso) {
+  if (overrides?.date) {
+    const parsed = new Date(overrides.date + 'T12:00:00');
+    if (!isNaN(parsed.getTime())) date = parsed.getTime();
+  } else if (receipt.payment.date_time.iso) {
     const parsed = new Date(receipt.payment.date_time.iso);
     if (!isNaN(parsed.getTime())) date = parsed.getTime();
   } else if (receipt.payment.date_time.raw) {

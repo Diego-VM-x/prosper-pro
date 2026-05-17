@@ -77,7 +77,7 @@ export default function FinanzasPage() {
   const [vepayProcessing, setVepayProcessing] = useState(false);
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
-  const [vepayOverrides, setVepayOverrides] = useState<Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string }>>({});
+  const [vepayOverrides, setVepayOverrides] = useState<Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string; date: string }>>({});
 
   const uid = user?.uid;
 
@@ -260,6 +260,17 @@ export default function FinanzasPage() {
 
       if (result.receipts && result.receipts.length > 0) {
         setVepayReceipts(result.receipts);
+        // Initialize overrides with detected dates
+        const initialOverrides: Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string; date: string }> = {};
+        result.receipts.forEach(r => {
+          const key = r.transaction_key || '';
+          let dateStr = todayISO();
+          if (r.payment.date_time.iso) {
+            dateStr = r.payment.date_time.iso.split('T')[0];
+          }
+          initialOverrides[key] = { flow: 'expense', accountId: '', bank: '', date: dateStr };
+        });
+        setVepayOverrides(initialOverrides);
         success(`${result.receipts.length} recibo(s) detectado(s)`);
       } else {
         warning('No se pudo detectar un recibo en la captura.');
@@ -934,7 +945,7 @@ export default function FinanzasPage() {
                     <h3 className="vepay-receipts-title">Recibos detectados ({vepayReceipts.length})</h3>
                     {vepayReceipts.map((receipt, idx) => {
                       const key = receipt.transaction_key || String(idx);
-                      const override = vepayOverrides[key] || { flow: 'expense', accountId: '', bank: '' };
+                      const override = vepayOverrides[key] || { flow: 'expense', accountId: '', bank: '', date: todayISO() };
                       const tx = mapReceiptToTransaction(receipt, override);
                       const typeColor = tx.type === 'income' ? 'var(--color-prosper-green)' : tx.type === 'expense' ? 'var(--color-error)' : 'var(--color-pine-500)';
                       const typeLabel = tx.type === 'income' ? 'Entrada' : tx.type === 'expense' ? 'Salida' : 'Ahorro';
@@ -993,6 +1004,17 @@ export default function FinanzasPage() {
                                 <option key={b.value} value={b.value}>{b.label}</option>
                               ))}
                             </select>
+                          </div>
+
+                          {/* Date selector */}
+                          <div className="vepay-field">
+                            <label className="vepay-field-label">Fecha de transacción</label>
+                            <input
+                              className="vepay-select vepay-date-input"
+                              type="date"
+                              value={override.date}
+                              onChange={(e) => updateOverride({ date: e.target.value })}
+                            />
                           </div>
 
                           <div className="vepay-receipt-header">
@@ -1293,36 +1315,74 @@ export default function FinanzasPage() {
             cursor: pointer;
           }
           .vepay-select:focus { border-color: var(--color-prosper-green); }
+          .vepay-date-input { cursor: pointer; }
 
           /* Responsive */
           @media (max-width: 768px) {
-            .page-header { flex-direction: column; gap: 12px; }
-            .page-header-actions { width: 100%; flex-wrap: wrap; }
-            .page-header-actions .btn { flex: 1; justify-content: center; min-width: 0; }
+            .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
+            .page-header-left { text-align: center; }
+            .page-title { font-size: 1.375rem; }
+            .page-subtitle { font-size: 0.8125rem; }
+            .page-header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .page-header-actions .btn { justify-content: center; min-width: 0; padding: 10px 8px; font-size: 0.75rem; }
+            .page-header-actions .btn-primary { grid-column: 1 / -1; }
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
-            .summary-grid { grid-template-columns: repeat(2, 1fr); }
-            .filter-bar { flex-direction: column; align-items: stretch; }
-            .transactions-table-wrapper { overflow-x: auto; }
-            .transactions-table { min-width: 650px; }
-            .modal-content { width: 95%; padding: 20px 16px; }
-            .modal-footer { flex-direction: column-reverse; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .summary-card { padding: 12px; }
+            .summary-value { font-size: 1.25rem; }
+            .accounts-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .account-card { padding: 12px; }
+            .account-balance { font-size: 1.125rem; }
+            .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+            .filter-bar > .custom-select-wrapper { width: 100%; }
+            .transactions-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid var(--border-default); }
+            .transactions-table { min-width: 600px; font-size: 0.8125rem; }
+            .transactions-table th { padding: 10px 8px; font-size: 0.6875rem; }
+            .transactions-table td { padding: 10px 8px; }
+            .modal-content { width: 96%; max-width: none; padding: 20px 16px; max-height: 92vh; }
+            .modal-tx { max-width: none; }
+            .modal-footer { flex-direction: column-reverse; gap: 8px; }
             .modal-footer .btn { width: 100%; justify-content: center; padding: 14px; }
             .tx-type-selector { gap: 6px; }
             .tx-type-btn { padding: 10px 6px; }
             .tx-field-row { grid-template-columns: 1fr; }
+            .modal-vepay { max-width: none; }
+            .vepay-upload-area { padding: 20px 16px; }
+            .vepay-receipt-card { padding: 12px; }
           }
           @media (max-width: 480px) {
-            .summary-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .summary-card { padding: 12px; }
-            .summary-value { font-size: 1.25rem; }
-            .accounts-grid { grid-template-columns: 1fr; }
-            .page-header-actions .btn { font-size: 0.75rem; padding: 8px 12px; }
-            .modal-content { max-height: 95vh; padding: 16px 14px; }
+            .page-header-actions { grid-template-columns: 1fr; }
+            .page-header-actions .btn-primary { grid-column: auto; }
+            .page-title { font-size: 1.25rem; }
+            .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .summary-card { padding: 10px 8px; }
+            .summary-label { font-size: 0.625rem; }
+            .summary-value { font-size: 1.125rem; }
+            .accounts-grid { grid-template-columns: 1fr; gap: 8px; }
+            .account-card { padding: 10px; }
+            .account-icon { width: 32px; height: 32px; font-size: 1rem; }
+            .account-name { font-size: 0.8125rem; }
+            .account-balance { font-size: 1rem; }
+            .page-header-actions .btn { font-size: 0.75rem; padding: 10px 12px; }
+            .modal-content { max-height: 96vh; padding: 16px 12px; border-radius: 12px; }
             .modal-title { font-size: 1rem; }
+            .modal-subtitle { font-size: 0.6875rem; }
             .tx-type-icon { font-size: 1rem; }
             .tx-type-label { font-size: 0.625rem; }
             .tx-input-amount { font-size: 1.125rem; }
+            .vepay-flow-selector { gap: 6px; }
+            .vepay-flow-btn { padding: 8px; font-size: 0.75rem; }
+            .vepay-receipt-amount { font-size: 1.25rem; }
+            .vepay-receipt-actions { flex-direction: column; }
+            .vepay-receipt-actions .btn { width: 100%; justify-content: center; }
+          }
+          @media (max-width: 360px) {
+            .page-title { font-size: 1.125rem; }
+            .summary-value { font-size: 1rem; }
+            .account-balance { font-size: 0.9375rem; }
+            .transactions-table { min-width: 550px; font-size: 0.75rem; }
+            .modal-content { padding: 14px 10px; }
           }
         `}</style>
       </DashboardLayout>
