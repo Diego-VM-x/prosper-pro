@@ -12,7 +12,7 @@ import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
-import { parseReceipt, mapReceiptToTransaction, VEPayReceipt } from '@/lib/vepay';
+import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPayBankApp, getBankDisplayName, VEPAY_BANKS } from '@/lib/vepay';
 import type { Transaction, FinancialAccount, AccountType } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
@@ -77,6 +77,7 @@ export default function FinanzasPage() {
   const [vepayProcessing, setVepayProcessing] = useState(false);
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
+  const [vepayOverrides, setVepayOverrides] = useState<Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string }>>({});
 
   const uid = user?.uid;
 
@@ -249,6 +250,7 @@ export default function FinanzasPage() {
 
     setVepayProcessing(true);
     setVepayReceipts([]);
+    setVepayOverrides({});
 
     try {
       const previewUrl = URL.createObjectURL(file);
@@ -282,7 +284,9 @@ export default function FinanzasPage() {
     setTxLoading(true);
 
     try {
-      const tx = mapReceiptToTransaction(receipt);
+      const key = receipt.transaction_key || '';
+      const override = vepayOverrides[key];
+      const tx = mapReceiptToTransaction(receipt, override);
 
       const txData: any = {
         ownerId: uid,
@@ -292,8 +296,17 @@ export default function FinanzasPage() {
         description: tx.description,
         date: tx.date,
       };
+      if (tx.accountId) {
+        txData.accountId = tx.accountId;
+      }
 
       await createTransaction(txData);
+
+      if (tx.accountId) {
+        const delta = tx.type === 'expense' ? -tx.amount : tx.amount;
+        await updateAccountBalance(tx.accountId, delta);
+      }
+
       await loadTransactions();
 
       const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
@@ -304,6 +317,7 @@ export default function FinanzasPage() {
         setShowVepayModal(false);
         setVepayReceipts([]);
         setVepayPreview('');
+        setVepayOverrides({});
       }
     } catch (err: any) {
       console.error(err);
@@ -919,12 +933,68 @@ export default function FinanzasPage() {
                   <div className="vepay-receipts">
                     <h3 className="vepay-receipts-title">Recibos detectados ({vepayReceipts.length})</h3>
                     {vepayReceipts.map((receipt, idx) => {
-                      const tx = mapReceiptToTransaction(receipt);
+                      const key = receipt.transaction_key || String(idx);
+                      const override = vepayOverrides[key] || { flow: 'expense', accountId: '', bank: '' };
+                      const tx = mapReceiptToTransaction(receipt, override);
                       const typeColor = tx.type === 'income' ? 'var(--color-prosper-green)' : tx.type === 'expense' ? 'var(--color-error)' : 'var(--color-pine-500)';
                       const typeLabel = tx.type === 'income' ? 'Entrada' : tx.type === 'expense' ? 'Salida' : 'Ahorro';
                       const flowIcon = tx.type === 'income' ? '↓' : '↑';
+
+                      const updateOverride = (updates: Partial<typeof override>) => {
+                        setVepayOverrides(prev => ({
+                          ...prev,
+                          [key]: { ...override, ...updates },
+                        }));
+                      };
+
                       return (
-                        <div key={receipt.transaction_key || idx} className="vepay-receipt-card">
+                        <div key={key} className="vepay-receipt-card">
+                          {/* Flow selector */}
+                          <div className="vepay-flow-selector">
+                            <button
+                              className={`vepay-flow-btn ${override.flow === 'expense' ? 'active-out' : ''}`}
+                              onClick={() => updateOverride({ flow: 'expense' })}
+                            >
+                              ↑ Salida
+                            </button>
+                            <button
+                              className={`vepay-flow-btn ${override.flow === 'income' ? 'active-in' : ''}`}
+                              onClick={() => updateOverride({ flow: 'income' })}
+                            >
+                              ↓ Entrada
+                            </button>
+                          </div>
+
+                          {/* Account selector */}
+                          <div className="vepay-field">
+                            <label className="vepay-field-label">Cuenta Prosper</label>
+                            <select
+                              className="vepay-select"
+                              value={override.accountId}
+                              onChange={(e) => updateOverride({ accountId: e.target.value })}
+                            >
+                              <option value="">Seleccionar cuenta...</option>
+                              {accounts.map(acc => (
+                                <option key={acc.id} value={acc.id}>{acc.icon} {acc.name} (${acc.balance.toLocaleString()})</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Bank selector */}
+                          <div className="vepay-field">
+                            <label className="vepay-field-label">Banco del pago</label>
+                            <select
+                              className="vepay-select"
+                              value={override.bank || tx.bank}
+                              onChange={(e) => updateOverride({ bank: e.target.value })}
+                            >
+                              <option value="">Detectado automáticamente</option>
+                              {VEPAY_BANKS.map(b => (
+                                <option key={b.value} value={b.value}>{b.label}</option>
+                              ))}
+                            </select>
+                          </div>
+
                           <div className="vepay-receipt-header">
                             <span className="vepay-bank-badge">{tx.bank}</span>
                             <span className="vepay-type-badge" style={{ background: typeColor + '20', color: typeColor }}>{flowIcon} {typeLabel}</span>
@@ -958,11 +1028,11 @@ export default function FinanzasPage() {
                             {receipt.payment.date_time.raw && <span>{receipt.payment.date_time.raw}</span>}
                           </div>
                           {!receipt.validation.is_complete && receipt.validation.missing_fields.length > 0 && (
-                            <p className="vepay-receipt-warning">⚠ Campos incompletos: {receipt.validation.missing_fields.join(', ')}</p>
+                            <p className="vepay-receipt-warning"> Campos incompletos: {receipt.validation.missing_fields.join(', ')}</p>
                           )}
                           <div className="vepay-receipt-actions">
                             <button className="btn btn-outline btn-sm" onClick={() => handleVepaySkip(receipt)}>Omitir</button>
-                            <button className="btn btn-primary btn-sm" onClick={() => handleVepayConfirm(receipt)} disabled={txLoading}>
+                            <button className="btn btn-primary btn-sm" onClick={() => handleVepayConfirm(receipt)} disabled={txLoading || !override.accountId}>
                               {txLoading ? <span className="btn-loading"><span className="spinner" /> Guardando...</span> : 'Registrar'}
                             </button>
                           </div>
@@ -1193,6 +1263,36 @@ export default function FinanzasPage() {
           .vepay-detail-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.6875rem; }
           .vepay-detail-label { color: var(--text-tertiary); font-weight: 600; }
           .vepay-detail-value { color: var(--text-primary); font-weight: 700; }
+          .vepay-flow-selector { display: flex; gap: 8px; margin-bottom: 12px; }
+          .vepay-flow-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--border-default);
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+          }
+          .vepay-flow-btn:hover { border-color: var(--color-prosper-green); }
+          .vepay-flow-btn.active-out { border-color: var(--color-error); background: rgba(239,68,68,0.1); color: var(--color-error); }
+          .vepay-flow-btn.active-in { border-color: var(--color-prosper-green); background: rgba(61,204,142,0.1); color: var(--color-prosper-green); }
+          .vepay-field { margin-bottom: 10px; }
+          .vepay-field-label { display: block; font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 4px; }
+          .vepay-select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 0.8125rem;
+            outline: none;
+            cursor: pointer;
+          }
+          .vepay-select:focus { border-color: var(--color-prosper-green); }
 
           /* Responsive */
           @media (max-width: 768px) {

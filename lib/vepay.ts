@@ -51,6 +51,8 @@ const BANK_DISPLAY_NAMES: Record<string, string> = {
   banfanb: 'Banfanb',
 };
 
+export const VEPAY_BANKS = Object.entries(BANK_DISPLAY_NAMES).map(([value, label]) => ({ value, label }));
+
 async function extractTextFromImage(file: File, onProgress?: (p: number) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
 
@@ -146,7 +148,7 @@ export function getBankDisplayName(bankApp: string | null): string {
   return BANK_DISPLAY_NAMES[bankApp] || bankApp;
 }
 
-export function mapReceiptToTransaction(receipt: VEPayReceipt): {
+export function mapReceiptToTransaction(receipt: VEPayReceipt, overrides?: { flow?: 'income' | 'expense'; accountId?: string; bank?: string }): {
   amount: number;
   type: 'income' | 'expense' | 'saving';
   category: string;
@@ -156,11 +158,21 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt): {
   bank: string;
   recipientName: string;
   originAccount: string;
+  accountId?: string;
 } {
   const amount = parseAmount(receipt.payment.amount.value);
-  const type = detectTransactionType(receipt);
-  const bank = receipt.payment.bank_app || receipt.recipient.bank || receipt.origin.bank || 'Desconocido';
-  const bankDisplay = getBankDisplayName(bank);
+
+  // Use override flow if provided, otherwise detect from receipt
+  let type: 'income' | 'expense' | 'saving';
+  if (overrides?.flow) {
+    type = overrides.flow;
+  } else {
+    type = detectTransactionType(receipt);
+  }
+
+  // Use override bank if provided, otherwise use detected
+  const bankKey = overrides?.bank || receipt.payment.bank_app || receipt.recipient.bank || receipt.origin.bank || '';
+  const bankDisplay = getBankDisplayName(bankKey);
   const reference = receipt.payment.reference || '';
   const recipientName = receipt.recipient.name || '';
   const originAccount = receipt.origin.account_last_digits || receipt.origin.account || '';
@@ -233,5 +245,5 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt): {
     if (!isNaN(parsed.getTime())) date = parsed.getTime();
   }
 
-  return { amount, type, category, description, date, reference, bank: bankDisplay, recipientName, originAccount };
+  return { amount, type, category, description, date, reference, bank: bankDisplay, recipientName, originAccount, accountId: overrides?.accountId };
 }
