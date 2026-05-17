@@ -1,76 +1,58 @@
 /**
  * VEPay API Client
  * Extracts structured payment data from Venezuelan mobile banking receipt screenshots.
- * API: https://github.com/jp72924/vepay-api
+ * OCR is performed client-side with tesseract.js; parsed text is sent to /api/vepay/parse.
+ * Based on: https://github.com/jp72924/vepay-api
  */
 
-const API_URL = process.env.NEXT_PUBLIC_VEPAY_API_URL || 'http://127.0.0.1:8080';
+import type {
+  VEPayReceipt,
+  VEPayParseResponse,
+} from '@/types';
 
-export interface VEPayAmount {
-  value: string;
-  currency: string;
+export type {
+  VEPayReceipt,
+  VEPayParseResponse,
+  VEPayParseError,
+  VEPayPayment,
+  VEPayAmount,
+  VEPayDateTime,
+  VEPayOrigin,
+  VEPayRecipient,
+  VEPayValidation,
+  VEPayBankApp,
+  VEPayStatus,
+} from '@/types';
+
+async function extractTextFromImage(file: File, onProgress?: (p: number) => void): Promise<string> {
+  const { createWorker } = await import('tesseract.js');
+
+  const worker = await createWorker('spa+eng', 1, {
+    logger: (m) => {
+      if (m.status === 'recognizing text' && onProgress) {
+        onProgress(Math.round((m.progress || 0) * 100));
+      }
+    },
+  });
+
+  try {
+    const { data } = await worker.recognize(file);
+    return data.text;
+  } finally {
+    await worker.terminate();
+  }
 }
 
-export interface VEPayDateTime {
-  raw: string;
-}
-
-export interface VEPayPayment {
-  bank_app: string;
-  status: string;
-  reference: string;
-  amount: VEPayAmount;
-  date_time: VEPayDateTime;
-  concept: string;
-}
-
-export interface VEPayRecipient {
-  phone?: string;
-  document_id?: string;
-  bank?: string;
-}
-
-export interface VEPayOrigin {
-  phone?: string;
-  account?: string;
-  bank?: string;
-}
-
-export interface VEPayValidation {
-  complete: boolean;
-  missing_fields: string[];
-  warnings: string[];
-}
-
-export interface VEPayReceipt {
-  payment: VEPayPayment;
-  origin: VEPayOrigin;
-  recipient: VEPayRecipient;
-  validation: VEPayValidation;
-  transaction_key: string;
-}
-
-export interface VEPayResponse {
-  request_id: string;
-  schema_version: string;
-  receipts: VEPayReceipt[];
-  summary: {
-    total: number;
-    successful: number;
-    failed: number;
-  };
-  errors: Array<{ filename: string; error: string }>;
-}
-
-export async function parseReceipt(file: File): Promise<VEPayResponse> {
-  const form = new FormData();
-  form.append('files', file, file.name);
-  form.append('include_raw_text', 'false');
-  form.append('enable_crops', 'true');
+export async function parseReceipt(file: File, onProgress?: (p: number) => void): Promise<VEPayParseResponse> {
+  const ocrText = await extractTextFromImage(file, onProgress);
 
   const response = await fetch('/api/vepay/parse', {
     method: 'POST',
-    body: form,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      texts: [{ text: ocrText, filename: file.name }],
+      includeRawText: false,
+    }),
   });
 
   if (!response.ok) {
@@ -81,7 +63,34 @@ export async function parseReceipt(file: File): Promise<VEPayResponse> {
   return response.json();
 }
 
-export function parseAmount(value: string): number {
+export async function parseMultipleReceipts(files: File[], onProgress?: (filename: string, p: number) => void): Promise<VEPayParseResponse> {
+  const texts: Array<{ text: string; filename: string }> = [];
+
+  for (const file of files) {
+    const ocrText = await extractTextFromImage(file, (p) => {
+      if (onProgress) onProgress(file.name, p);
+    });
+    texts.push({ text: ocrText, filename: file.name });
+  }
+
+  const response = await fetch('/api/vepay/parse', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      texts,
+      includeRawText: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Error al procesar capturas: ${text}`);
+  }
+
+  return response.json();
+}
+
+export function parseAmount(value: string | null | undefined): number {
   if (!value) return 0;
   const cleaned = value.replace(/,/g, '');
   const num = parseFloat(cleaned);
@@ -90,7 +99,6 @@ export function parseAmount(value: string): number {
 
 export function detectTransactionType(receipt: VEPayReceipt): 'income' | 'expense' | 'saving' {
   const concept = (receipt.payment.concept || '').toLowerCase();
-  const bankApp = (receipt.payment.bank_app || '').toLowerCase();
 
   if (concept.includes('pago') || concept.includes('transfer') || concept.includes('envio') || concept.includes('compra')) {
     return 'expense';
@@ -131,7 +139,10 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt): {
     : `Pago ${bank}${reference ? ` (Ref: ${reference})` : ''}`;
 
   let date = Date.now();
-  if (receipt.payment.date_time.raw) {
+  if (receipt.payment.date_time.iso) {
+    const parsed = new Date(receipt.payment.date_time.iso);
+    if (!isNaN(parsed.getTime())) date = parsed.getTime();
+  } else if (receipt.payment.date_time.raw) {
     const parsed = new Date(receipt.payment.date_time.raw);
     if (!isNaN(parsed.getTime())) date = parsed.getTime();
   }

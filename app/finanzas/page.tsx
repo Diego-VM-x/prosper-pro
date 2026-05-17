@@ -265,7 +265,7 @@ export default function FinanzasPage() {
 
       if (result.errors && result.errors.length > 0) {
         result.errors.forEach(err => {
-          error(`Error: ${err.error}`);
+          error(`Error: ${err.message}`);
         });
       }
     } catch (err: any) {
@@ -936,7 +936,7 @@ export default function FinanzasPage() {
                             {receipt.payment.reference && <span>Ref: {receipt.payment.reference}</span>}
                             {receipt.payment.date_time.raw && <span>{receipt.payment.date_time.raw}</span>}
                           </div>
-                          {!receipt.validation.complete && receipt.validation.missing_fields.length > 0 && (
+                          {!receipt.validation.is_complete && receipt.validation.missing_fields.length > 0 && (
                             <p className="vepay-receipt-warning">⚠ Campos incompletos: {receipt.validation.missing_fields.join(', ')}</p>
                           )}
                           <div className="vepay-receipt-actions">

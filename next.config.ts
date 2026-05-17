@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: process.env.BUILD_TARGET === 'android' ? 'export' : undefined,
   reactStrictMode: true,
+  serverExternalPackages: ['tesseract.js'],
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [

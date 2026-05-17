@@ -1,41 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const VEPAY_API_URL = process.env.VEPAY_API_URL || process.env.NEXT_PUBLIC_VEPAY_API_URL || 'http://127.0.0.1:8080';
+import { parseMultipleOcrTexts } from '@/lib/vepay-core';
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const files = formData.getAll('files') as File[];
+    const body = await request.json();
+    const { texts, lang, includeRawText } = body;
 
-    if (!files || files.length === 0) {
-      return NextResponse.json({ error: 'No files provided' }, { status: 400 });
-    }
-
-    const proxyForm = new FormData();
-    files.forEach((file) => {
-      proxyForm.append('files', file, file.name);
-    });
-    proxyForm.append('include_raw_text', formData.get('include_raw_text') || 'false');
-    proxyForm.append('enable_crops', formData.get('enable_crops') || 'true');
-
-    const response = await fetch(`${VEPAY_API_URL}/v1/receipts/parse`, {
-      method: 'POST',
-      body: proxyForm,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
+    if (!texts || !Array.isArray(texts) || texts.length === 0) {
       return NextResponse.json(
-        { error: `VEPay API error: ${response.status}`, details: errorText },
-        { status: response.status }
+        { error: 'No texts provided', receipts: [], summary: { total: 0, complete: 0, incomplete: 0, errors: 0 }, errors: [] },
+        { status: 400 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error: any) {
+    const { receipts, errors } = parseMultipleOcrTexts(texts, {
+      lang: lang || 'spa+eng',
+      includeRawText: includeRawText !== false,
+    });
+
+    const complete = receipts.filter(r => r.validation.is_complete).length;
+    const incomplete = receipts.length - complete;
+
+    return NextResponse.json({
+      request_id: crypto.randomUUID?.() || Date.now().toString(16),
+      schema_version: 'vepay_api_receipt_v1',
+      receipts,
+      summary: {
+        total: texts.length,
+        complete,
+        incomplete,
+        errors: errors.length,
+      },
+      errors,
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to process receipt', details: error?.message || 'Unknown error' },
+      {
+        error: 'Failed to parse receipt',
+        details: message,
+        receipts: [],
+        summary: { total: 0, complete: 0, incomplete: 0, errors: 1 },
+        errors: [{ filename: 'unknown', code: 'server_error', message }],
+      },
       { status: 500 }
     );
   }

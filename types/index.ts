@@ -144,3 +144,90 @@ export interface FinancialAccount {
   updatedAt: number;
 }
 
+// VEPay OCR Types
+export type VEPayBankApp = 'bancamiga' | 'banesco' | 'bdv' | 'mercantil' | 'provincial' | null;
+export type VEPayStatus = 'success' | 'failed' | 'pending' | null;
+
+export interface VEPayAmount {
+  value: string | null;
+  currency: 'VES';
+  raw: string | null;
+}
+
+export interface VEPayDateTime {
+  raw: string | null;
+  iso: string | null;
+}
+
+export interface VEPayPayment {
+  bank_app: VEPayBankApp;
+  status: VEPayStatus;
+  reference: string | null;
+  amount: VEPayAmount;
+  date_time: VEPayDateTime;
+  concept: string | null;
+}
+
+export interface VEPayOrigin {
+  phone: string | null;
+  account: string | null;
+  bank: string | null;
+}
+
+export interface VEPayRecipient {
+  phone: string | null;
+  document_id: string | null;
+  bank: string | null;
+}
+
+export interface VEPayOCR {
+  engine: 'tesseract';
+  language: string;
+  passes: string[];
+  raw_text?: string;
+}
+
+export interface VEPayValidation {
+  is_complete: boolean;
+  missing_fields: string[];
+  warnings: string[];
+}
+
+export interface VEPaySource {
+  file_name: string;
+  file_path: string;
+  sha256: string;
+}
+
+export interface VEPayReceipt {
+  schema_version: string;
+  source: VEPaySource;
+  payment: VEPayPayment;
+  origin: VEPayOrigin;
+  recipient: VEPayRecipient;
+  ocr: VEPayOCR;
+  transaction_key: string | null;
+  validation: VEPayValidation;
+}
+
+export interface VEPayParseError {
+  filename: string;
+  code: string;
+  message: string;
+}
+
+export interface VEPayParseSummary {
+  total: number;
+  complete: number;
+  incomplete: number;
+  errors: number;
+}
+
+export interface VEPayParseResponse {
+  request_id: string;
+  schema_version: string;
+  receipts: VEPayReceipt[];
+  summary: VEPayParseSummary;
+  errors: VEPayParseError[];
+}
+
