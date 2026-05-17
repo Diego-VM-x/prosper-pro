@@ -4,13 +4,14 @@
  * OCR is performed client-side with tesseract.js; this module handles parsing only.
  * Based on: https://github.com/jp72924/vepay-api (vepay_api_core.py)
  *
- * Supported banks: Bancamiga, Banesco, BDV, Mercantil Tpago, BBVA Provincial
+ * Supported banks: All Venezuelan mobile payment banks
  */
 
 import type {
   VEPayReceipt,
   VEPayBankApp,
   VEPayStatus,
+  VEPayFlow,
   VEPayDateTime,
   VEPayValidation,
   VEPayOCR,
@@ -20,9 +21,73 @@ import type {
 const SCHEMA_VERSION = 'vepay_api_receipt_v1';
 const DEFAULT_LANG = 'spa+eng';
 
+// Venezuelan bank codes (first 4 digits of account number)
+const BANK_CODES: Record<string, VEPayBankApp> = {
+  '0102': 'bdv',
+  '0104': 'bdv',
+  '0105': 'mercantil',
+  '0108': 'provincial',
+  '0114': 'bancaribe',
+  '0115': 'exterior',
+  '0116': 'occidental',
+  '0128': 'caroni',
+  '0134': 'banesco',
+  '0137': 'sofitasa',
+  '0138': 'plaza',
+  '0151': 'fondo_comun',
+  '0156': '100_banco',
+  '0157': 'del_sur',
+  '0163': 'tesoro',
+  '0166': 'agricola',
+  '0168': 'mi_banco',
+  '0169': 'mi_banco',
+  '0171': 'activo',
+  '0172': 'bancamiga',
+  '0174': 'bancrecer',
+  '0175': 'bicentenario',
+  '0191': 'banfanb',
+};
+
+const BANK_NAME_MAP: Record<string, VEPayBankApp> = {
+  'banco de venezuela': 'bdv',
+  'venezuela': 'bdv',
+  'bdv': 'bdv',
+  'bancamiga': 'bancamiga',
+  'banesco': 'banesco',
+  'mercantil': 'mercantil',
+  'bbva provincial': 'provincial',
+  'provincial': 'provincial',
+  'dinero rapido': 'provincial',
+  'bicentenario': 'bicentenario',
+  'bicentenario del pueblo': 'bicentenario',
+  'tesoro': 'tesoro',
+  'caroni': 'caroni',
+  'banco caroni': 'caroni',
+  'exterior': 'exterior',
+  'banco exterior': 'exterior',
+  'fondo comun': 'fondo_comun',
+  '100% banco': '100_banco',
+  '100 banco': '100_banco',
+  'cien por ciento banco': '100_banco',
+  'sofitasa': 'sofitasa',
+  'plaza': 'plaza',
+  'banco plaza': 'plaza',
+  'mi banco': 'mi_banco',
+  'activo': 'activo',
+  'banco activo': 'activo',
+  'del sur': 'del_sur',
+  'banco del sur': 'del_sur',
+  'bancaribe': 'bancaribe',
+  'occidental': 'occidental',
+  'agricola': 'agricola',
+  'banco agricola': 'agricola',
+  'bancrecer': 'bancrecer',
+  'banfanb': 'banfanb',
+};
+
 const BDV_RECEIPT_TOKENS = [
   'pagomovilbdv', 'pago movilbdv', 'pagomovil bdv',
-  'pago movil bdv', 'bdv personas',
+  'pago movil bdv', 'bdv personas', 'banco de venezuela',
 ];
 
 const MERCANTIL_RECEIPT_TOKENS = [
@@ -46,23 +111,56 @@ const GENERIC_EXACT_LABELS = new Set([
 const LABEL_ALIASES: Record<string, string[]> = {
   reference: [
     'numero de referencia', 'nro. de referencia', 'nro de referencia',
-    'referencia', 'operacion',
+    'referencia', 'operacion', 'id transaccion', 'id transaction',
+    'numero de operacion', 'nro operacion',
   ],
-  amount: ['monto de la operacion', 'monto (bs.)', 'monto'],
-  date: ['fecha y hora del envio', 'fecha'],
-  origin_phone: ['numero celular de origen', 'celular de origen'],
-  origin_account: ['cuenta origen', 'origen'],
+  amount: [
+    'monto de la operacion', 'monto (bs.)', 'monto',
+    'monto en bolivares', 'monto bs', 'monto en bs',
+    'total', 'importe',
+  ],
+  date: [
+    'fecha y hora del envio', 'fecha', 'fecha y hora',
+    'fecha de operacion', 'fecha hora',
+  ],
+  origin_phone: [
+    'numero celular de origen', 'celular de origen',
+    'telefono origen', 'telefono celular origen',
+  ],
+  origin_account: [
+    'cuenta origen', 'origen', 'cuenta pagadora',
+    'cuenta debitada', 'cuenta de origen',
+  ],
+  origin_name: [
+    'nombre del pagador', 'pagador', 'titular',
+    'nombre titular', 'nombre cuenta origen',
+  ],
   recipient_phone: [
     'telf beneficiario', 'numero celular de destino',
     'celular de destino', 'numero celular', 'destino',
+    'telefono beneficiario', 'telefono celular beneficiario',
+    'telefono celular',
   ],
   recipient_id: [
     'ci /rif beneficiario', 'cl /rif beneficiario', 'rif beneficiario',
     'identificacion receptor', 'identificacion', 'documento de identidad',
+    'cedula o rif beneficiario', 'cedula beneficiario', 'rif',
+    'cedula', 'ci',
   ],
-  origin_bank: ['banco emisor'],
-  recipient_bank: ['banco receptor', 'banco destino', 'banco'],
-  concept: ['concepto'],
+  recipient_name: [
+    'nombre beneficiario', 'beneficiario', 'nombre del beneficiario',
+    'nombre receptor', 'destinatario', 'nombre',
+  ],
+  origin_bank: [
+    'banco emisor', 'banco origen', 'banco de origen',
+  ],
+  recipient_bank: [
+    'banco receptor', 'banco destino', 'banco',
+    'banco del beneficiario', 'banco beneficiario',
+  ],
+  concept: [
+    'concepto', 'descripcion', 'motivo', 'referencia conceptual',
+  ],
 };
 
 const ALL_LABELS_NORMALIZED = new Set(
@@ -77,7 +175,7 @@ function stripAccents(value: string): string {
 
 function norm(value: string): string {
   value = stripAccents(value).toLowerCase();
-  value = value.replace(/[^a-z0-9/*:.()# -]+/g, ' ');
+  value = value.replace(/[^a-z0-9/*:.()#% -]+/g, ' ');
   return value.replace(/\s+/g, ' ').trim();
 }
 
@@ -99,14 +197,27 @@ function hasAnyToken(text: string, tokens: string[]): boolean {
   return tokens.some(token => ntext.includes(token));
 }
 
+function detectBankFromCode(accountNumber: string | null): VEPayBankApp {
+  if (!accountNumber) return null;
+  const digits = accountNumber.replace(/\D/g, '');
+  const code = digits.substring(0, 4);
+  return BANK_CODES[code] || null;
+}
+
 function detectBankFromName(value: string | null): VEPayBankApp {
   if (!value) return null;
   const ntext = norm(value);
-  if (hasBdvReceiptSignal(value) || ntext.includes('banco de venezuela')) return 'bdv';
-  if (ntext.includes('banesco')) return 'banesco';
-  if (ntext.includes('bancamiga')) return 'bancamiga';
-  if (ntext.includes('tpago') || ntext.includes('mercantil')) return 'mercantil';
-  if (ntext.includes('bbva provincial') || (ntext.includes('dinero rapido') && ntext.includes('provincial'))) return 'provincial';
+
+  // Check bank name map
+  for (const [name, bank] of Object.entries(BANK_NAME_MAP)) {
+    if (ntext.includes(name)) return bank;
+  }
+
+  // Check receipt signals
+  if (hasBdvReceiptSignal(value)) return 'bdv';
+  if (hasAnyToken(value, MERCANTIL_RECEIPT_TOKENS)) return 'mercantil';
+  if (hasAnyToken(value, PROVINCIAL_RECEIPT_TOKENS)) return 'provincial';
+
   return null;
 }
 
@@ -254,9 +365,22 @@ function detectBankFromReceiptText(text: string): VEPayBankApp {
 
 function detectBank(text: string): VEPayBankApp {
   const lines = cleanLines(text);
+
+  // Try origin bank first
   const originBank = valueAfterLabel(lines, LABEL_ALIASES['origin_bank']);
   const bankFromOrigin = detectBankFromName(originBank);
   if (bankFromOrigin) return bankFromOrigin;
+
+  // Try recipient bank
+  const recipientBank = valueAfterLabel(lines, LABEL_ALIASES['recipient_bank']);
+  const bankFromRecipient = detectBankFromName(recipientBank);
+  if (bankFromRecipient) return bankFromRecipient;
+
+  // Try account codes
+  const originAccount = valueAfterLabel(lines, LABEL_ALIASES['origin_account']);
+  const bankFromCode = detectBankFromCode(originAccount);
+  if (bankFromCode) return bankFromCode;
+
   return detectBankFromReceiptText(text);
 }
 
@@ -264,16 +388,54 @@ function detectStatus(text: string): VEPayStatus {
   const ntext = norm(text);
   const successTokens = [
     'transaccion exitosa', 'operacion exitosa', 'fue exitoso',
-    'el dinero fue enviado', 'listo',
+    'el dinero fue enviado', 'listo', 'pago realizado exitosamente',
+    'pago exitoso', 'transferencia exitosa',
   ];
   if (successTokens.some(token => ntext.includes(token))) return 'success';
+
+  const failedTokens = [
+    'transaccion fallida', 'operacion fallida', 'rechazada',
+    'error en la transaccion',
+  ];
+  if (failedTokens.some(token => ntext.includes(token))) return 'failed';
+
+  return null;
+}
+
+function detectFlow(text: string): VEPayFlow {
+  const ntext = norm(text);
+
+  // Outgoing payment indicators
+  const outgoingTokens = [
+    'pago realizado', 'pago exitoso', 'transferencia enviada',
+    'enviado', 'debito', 'debitada', 'pagado', 'pago movil',
+    'pago realizado exitosamente', 'transferencia exitosa',
+  ];
+  if (outgoingTokens.some(token => ntext.includes(token))) return 'outgoing';
+
+  // Incoming payment indicators
+  const incomingTokens = [
+    'recibido', 'deposito recibido', 'transferencia recibida',
+    'abono', 'credito', 'acreditada', 'cobro',
+  ];
+  if (incomingTokens.some(token => ntext.includes(token))) return 'incoming';
+
   return null;
 }
 
 function extractReference(value: string | null): string | null {
   if (!value) return null;
-  const match = value.match(/\d{8,}/);
+  const match = value.match(/\d{6,}/);
   return match ? match[0] : null;
+}
+
+function extractLastDigits(accountNumber: string | null): string | null {
+  if (!accountNumber) return null;
+  const digits = accountNumber.replace(/\D/g, '');
+  if (digits.length >= 4) {
+    return digits.substring(digits.length - 4);
+  }
+  return digits;
 }
 
 function extractAmountFromValue(value: string | null): [string | null, string | null] {
@@ -334,6 +496,16 @@ function normalizeBank(value: string | null): string | null {
   return value ? value.toUpperCase() : null;
 }
 
+function normalizeName(value: string | null): string | null {
+  if (!value) return null;
+  value = value.trim();
+  value = value.replace(/^[=:\-.\s]+/, '');
+  value = value.replace(/\s+/g, ' ').trim();
+  // Capitalize first letter of each word
+  value = value.replace(/\b\w/g, c => c.toUpperCase());
+  return value || null;
+}
+
 function normalizeConcept(value: string | null): string | null {
   if (!value) return null;
   value = stripAccents(value).replace(/[^A-Za-z0-9 /._-]/g, '').trim();
@@ -348,7 +520,8 @@ function parseDateTime(rawValue: string | null): VEPayDateTime {
   cleaned = cleaned.replace(/\ba\s+las\b/gi, ' ');
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
 
-  const dateMatch = cleaned.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  // Try DD-MM-YYYY format first, then DD/MM/YYYY
+  const dateMatch = cleaned.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
   if (!dateMatch) return { raw, iso: null };
 
   const day = parseInt(dateMatch[1], 10);
@@ -429,12 +602,12 @@ function emptyReceipt(): VEPayReceipt {
     schema_version: SCHEMA_VERSION,
     source: { file_name: '', file_path: '', sha256: '' },
     payment: {
-      bank_app: null, status: null, reference: null,
+      bank_app: null, status: null, flow: null, reference: null,
       amount: { value: null, currency: 'VES', raw: null },
       date_time: { raw: null, iso: null }, concept: null,
     },
-    origin: { phone: null, account: null, bank: null },
-    recipient: { phone: null, document_id: null, bank: null },
+    origin: { phone: null, account: null, account_last_digits: null, bank: null, name: null },
+    recipient: { phone: null, document_id: null, bank: null, name: null },
     ocr: { engine: 'tesseract', language: DEFAULT_LANG, passes: ['full_psm_6'] },
     transaction_key: null,
     validation: { is_complete: false, missing_fields: [], warnings: [] },
@@ -453,6 +626,7 @@ export function parseOcrText(
 
   const lines = cleanLines(ocrText);
   const bankApp = detectBank(ocrText);
+  const flow = detectFlow(ocrText);
 
   const reference = extractReference(valueAfterLabel(lines, LABEL_ALIASES['reference']));
   const [amountRaw, amountValue] = extractAmount(lines, ocrText);
@@ -460,23 +634,28 @@ export function parseOcrText(
 
   const originPhone = normalizePhone(valueAfterLabel(lines, LABEL_ALIASES['origin_phone']));
   const originAccount = valueAfterLabel(lines, LABEL_ALIASES['origin_account']);
+  const originName = normalizeName(valueAfterLabel(lines, LABEL_ALIASES['origin_name']));
   const recipientPhone = normalizePhone(valueAfterLabel(lines, LABEL_ALIASES['recipient_phone']));
   const recipientId = normalizeDocumentId(valueAfterLabel(lines, LABEL_ALIASES['recipient_id']));
+  const recipientName = normalizeName(valueAfterLabel(lines, LABEL_ALIASES['recipient_name']));
   const originBank = normalizeBank(valueAfterLabel(lines, LABEL_ALIASES['origin_bank']));
   const recipientBank = normalizeBank(valueAfterLabel(lines, LABEL_ALIASES['recipient_bank']));
 
-  const finalBankApp = detectBankFromName(originBank) || bankApp;
+  const finalBankApp = detectBankFromName(originBank) || detectBankFromCode(originAccount) || bankApp;
   const concept = normalizeConcept(valueAfterLabel(lines, LABEL_ALIASES['concept']));
 
   let finalRecipientPhone = recipientPhone;
   let finalOriginPhone = originPhone;
   let finalOriginAccount = originAccount;
+  let finalOriginName = originName;
   let finalReference = reference;
   let finalDateTime = dateTime;
   let finalRecipientId = recipientId;
+  let finalRecipientName = recipientName;
   let finalRecipientBank = recipientBank;
   let finalConcept = concept;
 
+  // Bank-specific cleanup
   if (finalBankApp === 'banesco') {
     finalRecipientPhone = normalizePhone(
       valueAfterLabel(lines, ['numero celular de destino', 'celular de destino'])
@@ -485,7 +664,7 @@ export function parseOcrText(
 
   if (finalBankApp === 'mercantil') {
     finalOriginPhone = null;
-    finalRecipientPhone = normalizePhone(valueAfterLabel(lines, ['beneficiario']));
+    finalRecipientPhone = normalizePhone(valueAfterLabel(lines, ['beneficiario', 'telefono beneficiario']));
     if (finalOriginAccount) {
       finalOriginAccount = finalOriginAccount.trim();
     }
@@ -500,21 +679,31 @@ export function parseOcrText(
     if (provincialDate.raw) finalDateTime = provincialDate;
 
     finalRecipientPhone = normalizePhone(
-      valueAfterLabelFlexible(lines, ['numero celular'])
+      valueAfterLabelFlexible(lines, ['numero celular', 'telefono celular'])
     ) || finalRecipientPhone;
 
     finalRecipientId = normalizeDocumentId(
-      valueAfterLabelFlexible(lines, ['identificacion'])
+      valueAfterLabelFlexible(lines, ['identificacion', 'cedula'])
     ) || finalRecipientId;
 
+    finalRecipientName = normalizeName(
+      valueAfterLabelFlexible(lines, ['nombre beneficiario', 'nombre', 'beneficiario'])
+    ) || finalRecipientName;
+
     finalRecipientBank = normalizeBank(
-      valueAfterLabelFlexible(lines, ['banco'])
+      valueAfterLabelFlexible(lines, ['banco', 'banco destino'])
     ) || finalRecipientBank;
 
     finalConcept = normalizeConcept(
       valueAfterLabelFlexible(lines, ['concepto'])
     ) || finalConcept;
   }
+
+  // Extract last digits from origin account
+  const originLastDigits = extractLastDigits(finalOriginAccount);
+
+  // Detect bank from recipient bank name if not already detected
+  const finalRecipientBankName = finalRecipientBank || detectBankFromName(recipientBank);
 
   const receipt: VEPayReceipt = {
     schema_version: SCHEMA_VERSION,
@@ -526,6 +715,7 @@ export function parseOcrText(
     payment: {
       bank_app: finalBankApp,
       status: detectStatus(ocrText),
+      flow: flow || (finalBankApp ? 'outgoing' : null),
       reference: finalReference,
       amount: {
         value: amountValue,
@@ -538,12 +728,15 @@ export function parseOcrText(
     origin: {
       phone: finalOriginPhone,
       account: finalOriginAccount,
+      account_last_digits: originLastDigits,
       bank: originBank,
+      name: finalOriginName,
     },
     recipient: {
       phone: finalRecipientPhone,
       document_id: finalRecipientId,
       bank: finalRecipientBank,
+      name: finalRecipientName,
     },
     ocr: {
       engine: 'tesseract',

@@ -921,17 +921,38 @@ export default function FinanzasPage() {
                     {vepayReceipts.map((receipt, idx) => {
                       const tx = mapReceiptToTransaction(receipt);
                       const typeColor = tx.type === 'income' ? 'var(--color-prosper-green)' : tx.type === 'expense' ? 'var(--color-error)' : 'var(--color-pine-500)';
-                      const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
+                      const typeLabel = tx.type === 'income' ? 'Entrada' : tx.type === 'expense' ? 'Salida' : 'Ahorro';
+                      const flowIcon = tx.type === 'income' ? '↓' : '↑';
                       return (
                         <div key={receipt.transaction_key || idx} className="vepay-receipt-card">
                           <div className="vepay-receipt-header">
-                            <span className="vepay-bank-badge">{receipt.payment.bank_app || 'Banco'}</span>
-                            <span className="vepay-type-badge" style={{ background: typeColor + '20', color: typeColor }}>{typeLabel}</span>
+                            <span className="vepay-bank-badge">{tx.bank}</span>
+                            <span className="vepay-type-badge" style={{ background: typeColor + '20', color: typeColor }}>{flowIcon} {typeLabel}</span>
                           </div>
                           <div className="vepay-receipt-amount" style={{ color: typeColor }}>
                             {tx.type === 'expense' ? '-' : '+'}${tx.amount.toLocaleString('es', { minimumFractionDigits: 2 })}
                           </div>
                           <p className="vepay-receipt-concept">{tx.description}</p>
+                          <div className="vepay-receipt-details">
+                            {receipt.recipient.name && (
+                              <div className="vepay-detail-row">
+                                <span className="vepay-detail-label">Beneficiario:</span>
+                                <span className="vepay-detail-value">{receipt.recipient.name}</span>
+                              </div>
+                            )}
+                            {receipt.origin.account_last_digits && (
+                              <div className="vepay-detail-row">
+                                <span className="vepay-detail-label">Cuenta origen:</span>
+                                <span className="vepay-detail-value">****{receipt.origin.account_last_digits}</span>
+                              </div>
+                            )}
+                            {receipt.recipient.document_id && (
+                              <div className="vepay-detail-row">
+                                <span className="vepay-detail-label">CI/RIF:</span>
+                                <span className="vepay-detail-value">{receipt.recipient.document_id}</span>
+                              </div>
+                            )}
+                          </div>
                           <div className="vepay-receipt-meta">
                             {receipt.payment.reference && <span>Ref: {receipt.payment.reference}</span>}
                             {receipt.payment.date_time.raw && <span>{receipt.payment.date_time.raw}</span>}
@@ -1168,6 +1189,10 @@ export default function FinanzasPage() {
           .vepay-receipt-meta { display: flex; gap: 12px; font-size: 0.625rem; color: var(--text-tertiary); margin-bottom: 8px; }
           .vepay-receipt-warning { font-size: 0.6875rem; color: var(--color-gold-500); margin: 0 0 8px 0; }
           .vepay-receipt-actions { display: flex; gap: 8px; justify-content: flex-end; }
+          .vepay-receipt-details { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; padding: 8px 10px; background: var(--bg-card); border-radius: 8px; }
+          .vepay-detail-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.6875rem; }
+          .vepay-detail-label { color: var(--text-tertiary); font-weight: 600; }
+          .vepay-detail-value { color: var(--text-primary); font-weight: 700; }
 
           /* Responsive */
           @media (max-width: 768px) {

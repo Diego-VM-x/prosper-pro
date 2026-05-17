@@ -5,6 +5,7 @@
  * Based on: https://github.com/jp72924/vepay-api
  */
 
+import { createWorker } from 'tesseract.js';
 import type {
   VEPayReceipt,
   VEPayParseResponse,
@@ -22,7 +23,33 @@ export type {
   VEPayValidation,
   VEPayBankApp,
   VEPayStatus,
+  VEPayFlow,
 } from '@/types';
+
+// Venezuelan bank display names
+const BANK_DISPLAY_NAMES: Record<string, string> = {
+  bdv: 'Banco de Venezuela',
+  bancamiga: 'Bancamiga',
+  banesco: 'Banesco',
+  mercantil: 'Mercantil',
+  provincial: 'BBVA Provincial',
+  bicentenario: 'Bicentenario',
+  tesoro: 'Tesoro',
+  caroni: 'Caroní',
+  exterior: 'Exterior',
+  fondo_comun: 'Fondo Común',
+  '100_banco': '100% Banco',
+  sofitasa: 'Sofitasa',
+  plaza: 'Plaza',
+  mi_banco: 'Mi Banco',
+  activo: 'Activo',
+  del_sur: 'Del Sur',
+  bancaribe: 'Bancaribe',
+  occidental: 'Occidental',
+  agricola: 'Agrícola',
+  bancrecer: 'Bancrecer',
+  banfanb: 'Banfanb',
+};
 
 async function extractTextFromImage(file: File, onProgress?: (p: number) => void): Promise<string> {
   const { createWorker } = await import('tesseract.js');
@@ -98,15 +125,25 @@ export function parseAmount(value: string | null | undefined): number {
 }
 
 export function detectTransactionType(receipt: VEPayReceipt): 'income' | 'expense' | 'saving' {
+  // Use flow field if available
+  if (receipt.payment.flow === 'incoming') return 'income';
+  if (receipt.payment.flow === 'outgoing') return 'expense';
+
+  // Fallback to concept analysis
   const concept = (receipt.payment.concept || '').toLowerCase();
 
   if (concept.includes('pago') || concept.includes('transfer') || concept.includes('envio') || concept.includes('compra')) {
     return 'expense';
   }
-  if (concept.includes('recibo') || concept.includes('deposito') || concept.includes('abono')) {
+  if (concept.includes('recibo') || concept.includes('deposito') || concept.includes('abono') || concept.includes('nomina') || concept.includes('salario')) {
     return 'income';
   }
   return 'expense';
+}
+
+export function getBankDisplayName(bankApp: string | null): string {
+  if (!bankApp) return 'Desconocido';
+  return BANK_DISPLAY_NAMES[bankApp] || bankApp;
 }
 
 export function mapReceiptToTransaction(receipt: VEPayReceipt): {
@@ -117,26 +154,75 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt): {
   date: number;
   reference: string;
   bank: string;
+  recipientName: string;
+  originAccount: string;
 } {
   const amount = parseAmount(receipt.payment.amount.value);
   const type = detectTransactionType(receipt);
   const bank = receipt.payment.bank_app || receipt.recipient.bank || receipt.origin.bank || 'Desconocido';
+  const bankDisplay = getBankDisplayName(bank);
   const reference = receipt.payment.reference || '';
+  const recipientName = receipt.recipient.name || '';
+  const originAccount = receipt.origin.account_last_digits || receipt.origin.account || '';
 
+  // Build detailed description
+  let description = '';
+  const concept = receipt.payment.concept || '';
+
+  if (type === 'expense') {
+    // Outgoing payment
+    if (recipientName) {
+      description = `Pago a ${recipientName}`;
+    } else {
+      description = `Pago`;
+    }
+
+    if (bankDisplay && bankDisplay !== 'Desconocido') {
+      description += ` (${bankDisplay})`;
+    }
+
+    if (concept) {
+      description += ` - ${concept}`;
+    }
+
+    if (originAccount) {
+      description += ` [Cuenta ***${originAccount}]`;
+    }
+  } else {
+    // Incoming payment
+    if (recipientName) {
+      description = `Recibido de ${recipientName}`;
+    } else {
+      description = `Recibido`;
+    }
+
+    if (bankDisplay && bankDisplay !== 'Desconocido') {
+      description += ` (${bankDisplay})`;
+    }
+
+    if (concept) {
+      description += ` - ${concept}`;
+    }
+  }
+
+  // Fallback if description is empty
+  if (!description) {
+    description = `Pago ${bankDisplay}${reference ? ` (Ref: ${reference})` : ''}`;
+  }
+
+  // Determine category
   let category = 'Otro';
-  const concept = (receipt.payment.concept || '').toLowerCase();
-  if (concept.includes('comida') || concept.includes('restaurante') || concept.includes('mercado')) category = 'Comida';
-  else if (concept.includes('transporte') || concept.includes('gasolina') || concept.includes('uber')) category = 'Transporte';
-  else if (concept.includes('vivienda') || concept.includes('alquiler') || concept.includes('servicio')) category = 'Vivienda';
-  else if (concept.includes('salud') || concept.includes('medico') || concept.includes('farmacia')) category = 'Salud';
-  else if (concept.includes('educacion') || concept.includes('colegio') || concept.includes('curso')) category = 'Educación';
-  else if (concept.includes('entretenimiento') || concept.includes('cine') || concept.includes('juego')) category = 'Entretenimiento';
-  else if (concept.includes('nomina') || concept.includes('salario') || concept.includes('pago')) category = 'Salario';
-  else if (concept.includes('ahorro') || concept.includes('inversión')) category = 'Ahorro';
-
-  const description = receipt.payment.concept
-    ? `${bank}: ${receipt.payment.concept}`
-    : `Pago ${bank}${reference ? ` (Ref: ${reference})` : ''}`;
+  const conceptLower = (receipt.payment.concept || '').toLowerCase();
+  if (conceptLower.includes('comida') || conceptLower.includes('restaurante') || conceptLower.includes('mercado') || conceptLower.includes('super')) category = 'Comida';
+  else if (conceptLower.includes('transporte') || conceptLower.includes('gasolina') || conceptLower.includes('uber') || conceptLower.includes('taxi')) category = 'Transporte';
+  else if (conceptLower.includes('vivienda') || conceptLower.includes('alquiler') || conceptLower.includes('servicio') || conceptLower.includes('luz') || conceptLower.includes('agua') || conceptLower.includes('internet')) category = 'Vivienda';
+  else if (conceptLower.includes('salud') || conceptLower.includes('medico') || conceptLower.includes('farmacia') || conceptLower.includes('clinica')) category = 'Salud';
+  else if (conceptLower.includes('educacion') || conceptLower.includes('colegio') || conceptLower.includes('curso') || conceptLower.includes('universidad')) category = 'Educación';
+  else if (conceptLower.includes('entretenimiento') || conceptLower.includes('cine') || conceptLower.includes('juego') || conceptLower.includes('netflix')) category = 'Entretenimiento';
+  else if (conceptLower.includes('nomina') || conceptLower.includes('salario') || conceptLower.includes('sueldo') || conceptLower.includes('pago')) category = 'Salario';
+  else if (conceptLower.includes('ahorro') || conceptLower.includes('inversión')) category = 'Ahorro';
+  else if (conceptLower.includes('luzmi') || conceptLower.includes('luz') || conceptLower.includes('electricidad')) category = 'Vivienda';
+  else if (conceptLower.includes('telefono') || conceptLower.includes('movil') || conceptLower.includes('cantv')) category = 'Vivienda';
 
   let date = Date.now();
   if (receipt.payment.date_time.iso) {
@@ -147,5 +233,5 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt): {
     if (!isNaN(parsed.getTime())) date = parsed.getTime();
   }
 
-  return { amount, type, category, description, date, reference, bank };
+  return { amount, type, category, description, date, reference, bank: bankDisplay, recipientName, originAccount };
 }

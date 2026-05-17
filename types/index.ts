@@ -145,8 +145,14 @@ export interface FinancialAccount {
 }
 
 // VEPay OCR Types
-export type VEPayBankApp = 'bancamiga' | 'banesco' | 'bdv' | 'mercantil' | 'provincial' | null;
+export type VEPayBankApp =
+  | 'bdv' | 'bancamiga' | 'banesco' | 'mercantil' | 'provincial'
+  | 'bicentenario' | 'tesoro' | 'caroni' | 'exterior' | 'fondo_comun'
+  | '100_banco' | 'sofitasa' | 'plaza' | 'mi_banco' | 'activo'
+  | 'del_sur' | 'bancaribe' | 'occidental' | 'agricola' | 'bancrecer'
+  | 'banfanb' | 'otro' | null;
 export type VEPayStatus = 'success' | 'failed' | 'pending' | null;
+export type VEPayFlow = 'outgoing' | 'incoming' | null;
 
 export interface VEPayAmount {
   value: string | null;
@@ -162,6 +168,7 @@ export interface VEPayDateTime {
 export interface VEPayPayment {
   bank_app: VEPayBankApp;
   status: VEPayStatus;
+  flow: VEPayFlow;
   reference: string | null;
   amount: VEPayAmount;
   date_time: VEPayDateTime;
@@ -171,13 +178,16 @@ export interface VEPayPayment {
 export interface VEPayOrigin {
   phone: string | null;
   account: string | null;
+  account_last_digits: string | null;
   bank: string | null;
+  name: string | null;
 }
 
 export interface VEPayRecipient {
   phone: string | null;
   document_id: string | null;
   bank: string | null;
+  name: string | null;
 }
 
 export interface VEPayOCR {
