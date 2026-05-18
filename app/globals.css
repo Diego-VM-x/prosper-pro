@@ -43,6 +43,16 @@
   --color-blue-500:    #3B82F6;
   --color-error:       #EF4444;
 
+  /* === NEON GLOW === */
+  --neon-green:        rgba(61,204,142,0.4);
+  --neon-navy:         rgba(30,58,110,0.3);
+  --neon-gold:         rgba(245,158,11,0.3);
+  --neon-red:          rgba(239,68,68,0.3);
+  --neon-blue:         rgba(59,130,246,0.3);
+  --glow-sm:           0 0 8px var(--neon-green);
+  --glow-md:           0 0 16px var(--neon-green);
+  --glow-lg:           0 0 24px var(--neon-green), 0 0 48px rgba(61,204,142,0.15);
+
   /* === SEMANTIC - LIGHT MODE (default) === */
   --bg-primary:        var(--color-stone-50);
   --bg-secondary:      #FFFFFF;
@@ -110,7 +120,14 @@
   --shadow-sm:         0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
   --shadow-md:         0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2);
   --shadow-lg:         0 10px 30px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.2);
-  --shadow-accent:     0 4px 20px rgba(43,133,96,0.35);
+  --shadow-accent:     0 4px 20px rgba(61,204,142,0.35);
+
+  /* === NEON GLOW (DARK) === */
+  --neon-green:        rgba(61,204,142,0.5);
+  --neon-navy:         rgba(30,58,110,0.4);
+  --glow-sm:           0 0 12px var(--neon-green);
+  --glow-md:           0 0 20px var(--neon-green);
+  --glow-lg:           0 0 28px var(--neon-green), 0 0 56px rgba(61,204,142,0.2);
 }
 
 /* === COMUNIDAD - Chat Variables === */
@@ -249,7 +266,7 @@ ul, ol {
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-full); }
-::-webkit-scrollbar-thumb:hover { background: var(--color-pine-400); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-pine-400); box-shadow: 0 0 8px rgba(61,204,142,0.3); }
 
 /* ============================================================
    LAYOUT PRINCIPAL
@@ -497,6 +514,7 @@ ul, ol {
   height: 60%;
   background: var(--color-pine-500);
   border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  box-shadow: 0 0 8px rgba(61,204,142,0.4);
 }
 
 .nav-item svg {
@@ -531,7 +549,7 @@ ul, ol {
   border-radius: var(--radius-lg);
   padding: 16px;
   color: white;
-  box-shadow: 0 10px 15px -3px rgba(30, 58, 110, 0.2);
+  box-shadow: 0 10px 15px -3px rgba(30, 58, 110, 0.2), 0 0 20px rgba(61,204,142,0.15);
 }
 
 .sidebar-promo-card .promo-title {
@@ -815,6 +833,7 @@ ul, ol {
   background: var(--bg-accent-soft);
   color: var(--color-pine-600);
   border-color: var(--border-accent);
+  box-shadow: 0 0 12px rgba(61,204,142,0.2);
 }
 
 .theme-toggle svg { width: 18px; height: 18px; }
@@ -887,13 +906,13 @@ ul, ol {
 .btn-primary {
   background: var(--color-prosper-green);
   color: white;
-  box-shadow: 0 4px 12px rgba(61, 204, 142, 0.3);
+  box-shadow: 0 4px 12px rgba(61, 204, 142, 0.3), 0 0 20px rgba(61,204,142,0.15);
 }
 
 .btn-primary:hover {
   background: #34BB81;
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(61, 204, 142, 0.35);
+  box-shadow: 0 6px 24px rgba(61, 204, 142, 0.4), 0 0 30px rgba(61,204,142,0.2);
 }
 
 .btn-primary:active { transform: translateY(0); }
@@ -947,7 +966,7 @@ ul, ol {
   background: linear-gradient(135deg, var(--color-prosper-navy) 0%, var(--color-prosper-green) 100%);
   border-color: transparent;
   color: white;
-  box-shadow: 0 10px 20px -5px rgba(30, 58, 110, 0.25);
+  box-shadow: 0 10px 20px -5px rgba(30, 58, 110, 0.25), 0 0 24px rgba(61,204,142,0.2);
 }
 
 .stat-card.featured .stat-label { color: rgba(255,255,255,0.75); }

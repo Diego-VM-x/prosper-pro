@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -68,6 +68,13 @@ export function Dashboard() {
   const [customCats, setCustomCats] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
+  const bottomScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollBottom = (dir: 'left' | 'right') => {
+    if (!bottomScrollRef.current) return;
+    const amount = 300;
+    bottomScrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+  };
 
   const [newGoal, setNewGoal] = useState({
     title: '',
@@ -390,9 +397,13 @@ export function Dashboard() {
         </div>
 
         {/* Bottom Section: Progress + Upcoming + Accounts */}
-        <div className="bottom-section">
-          {/* Progress Ring */}
-          <div className="content-card progress-section">
+        <div className="bottom-section-wrapper">
+          <button className="bottom-scroll-arrow bottom-scroll-arrow-left" onClick={() => scrollBottom('left')} aria-label="Scroll left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div className="bottom-section" ref={bottomScrollRef}>
+            {/* Progress Ring */}
+            <div className="content-card progress-section">
             <div className="content-card-header">
               <h2 className="content-card-title">Progreso General</h2>
             </div>
@@ -484,6 +495,10 @@ export function Dashboard() {
               )}
             </div>
           </div>
+          <button className="bottom-scroll-arrow bottom-scroll-arrow-right" onClick={() => scrollBottom('right')} aria-label="Scroll right">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
         </div>
       </div>
 
@@ -565,6 +580,7 @@ export function Dashboard() {
           align-items: center;
           justify-content: space-between;
           min-height: 140px;
+          box-shadow: 0 4px 30px rgba(61,204,142,0.15), 0 0 60px rgba(61,204,142,0.05);
         }
         .welcome-content { position: relative; z-index: 1; }
         .welcome-greeting {
@@ -605,7 +621,8 @@ export function Dashboard() {
         .welcome-shape {
           position: absolute;
           border-radius: 50%;
-          opacity: 0.1;
+          opacity: 0.08;
+          filter: blur(40px);
         }
         .welcome-shape-1 { width: 300px; height: 300px; background: white; top: -100px; right: -50px; }
         .welcome-shape-2 { width: 200px; height: 200px; background: white; bottom: -80px; left: 10%; }
@@ -635,7 +652,7 @@ export function Dashboard() {
           transition: all var(--transition-fast);
           position: relative;
         }
-        .stat-pill:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--color-prosper-green); }
+        .stat-pill:hover { box-shadow: var(--shadow-md), 0 0 20px rgba(61,204,142,0.15); transform: translateY(-2px); border-color: var(--color-prosper-green); }
         .stat-pill-icon {
           width: 44px;
           height: 44px;
@@ -645,10 +662,11 @@ export function Dashboard() {
           justify-content: center;
           font-size: 1.25rem;
           flex-shrink: 0;
+          box-shadow: 0 0 12px rgba(61,204,142,0.1);
         }
         .stat-pill-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .stat-pill-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-pill-value { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
+        .stat-pill-value { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; text-shadow: 0 0 12px rgba(61,204,142,0.1); }
         .stat-pill-badge {
           position: absolute;
           top: -6px;
@@ -680,7 +698,7 @@ export function Dashboard() {
           margin-bottom: 16px;
         }
         .section-header-left { display: flex; align-items: center; gap: 8px; }
-        .section-header-left svg { color: var(--color-prosper-green); }
+        .section-header-left svg { color: var(--color-prosper-green); filter: drop-shadow(0 0 6px rgba(61,204,142,0.4)); }
         .section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .section-count { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-input); padding: 4px 10px; border-radius: var(--radius-full); }
         .today-list { display: flex; flex-direction: column; gap: 8px; }
@@ -694,8 +712,8 @@ export function Dashboard() {
           cursor: pointer;
           transition: all var(--transition-fast);
         }
-        .today-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
-        .today-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .today-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm), 0 0 16px rgba(61,204,142,0.08); }
+        .today-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
         .today-item-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .today-item-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
         .today-item-desc { font-size: 0.75rem; color: var(--text-secondary); }
@@ -713,6 +731,11 @@ export function Dashboard() {
           border: 1px solid var(--border-default);
           border-radius: var(--radius-xl);
           padding: 24px;
+          transition: all var(--transition-fast);
+        }
+        .content-card:hover {
+          border-color: rgba(61,204,142,0.3);
+          box-shadow: 0 0 24px rgba(61,204,142,0.08);
         }
         .content-card-header {
           display: flex;
@@ -721,7 +744,7 @@ export function Dashboard() {
           margin-bottom: 20px;
         }
         .content-card-header-left { display: flex; align-items: center; gap: 8px; }
-        .content-card-header-left svg { color: var(--color-prosper-green); }
+        .content-card-header-left svg { color: var(--color-prosper-green); filter: drop-shadow(0 0 6px rgba(61,204,142,0.4)); }
         .content-card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .content-card-action {
           background: none;
@@ -768,11 +791,44 @@ export function Dashboard() {
         .plans-empty-btn:hover { filter: brightness(1.1); }
 
         /* Bottom Section */
+        .bottom-section-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .bottom-scroll-arrow {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          color: var(--text-secondary);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all var(--transition-fast);
+          box-shadow: var(--shadow-sm);
+        }
+        .bottom-scroll-arrow:hover {
+          background: var(--color-prosper-green);
+          color: white;
+          border-color: var(--color-prosper-green);
+          box-shadow: 0 0 16px rgba(61,204,142,0.4);
+        }
         .bottom-section {
           display: grid;
           grid-template-columns: 200px 1fr 1fr;
           gap: 20px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scrollbar-width: none;
+          padding: 4px 0;
         }
+        .bottom-section::-webkit-scrollbar { display: none; }
+        .bottom-section > * { scroll-snap-align: start; }
 
         /* Progress Section */
         .progress-section { display: flex; flex-direction: column; align-items: center; }
@@ -780,7 +836,7 @@ export function Dashboard() {
         .progress-ring-container { position: relative; width: 120px; height: 120px; }
         .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
         .progress-ring .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 8; }
-        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.292; transition: stroke-dashoffset 1s ease; }
+        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.292; transition: stroke-dashoffset 1s ease; filter: drop-shadow(0 0 8px rgba(61,204,142,0.5)); }
         .progress-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .progress-pct { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
         .progress-label { font-size: 0.625rem; color: var(--text-secondary); margin-top: 2px; }
@@ -812,9 +868,9 @@ export function Dashboard() {
           justify-content: center;
           flex-shrink: 0;
         }
-        .deadline-badge.urgent { background: rgba(239,68,68,0.15); }
-        .deadline-badge.warning { background: rgba(245,158,11,0.15); }
-        .deadline-badge.normal { background: rgba(61,204,142,0.15); }
+        .deadline-badge.urgent { background: rgba(239,68,68,0.15); box-shadow: 0 0 12px rgba(239,68,68,0.2); }
+        .deadline-badge.warning { background: rgba(245,158,11,0.15); box-shadow: 0 0 12px rgba(245,158,11,0.2); }
+        .deadline-badge.normal { background: rgba(61,204,142,0.15); box-shadow: 0 0 12px rgba(61,204,142,0.2); }
         .deadline-badge-days { font-size: 1rem; font-weight: 800; line-height: 1; }
         .deadline-badge.urgent .deadline-badge-days { color: var(--color-error); }
         .deadline-badge.warning .deadline-badge-days { color: var(--color-gold-500); }
@@ -850,7 +906,7 @@ export function Dashboard() {
         .account-item-info { flex: 1; min-width: 0; }
         .account-item-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); display: block; }
         .account-item-type { font-size: 0.6875rem; color: var(--text-secondary); }
-        .account-item-balance { font-size: 0.9375rem; font-weight: 700; flex-shrink: 0; }
+        .account-item-balance { font-size: 0.9375rem; font-weight: 700; flex-shrink: 0; text-shadow: 0 0 10px rgba(61,204,142,0.15); }
 
         .empty-msg { padding: 16px 0; color: var(--text-secondary); font-size: 0.875rem; text-align: center; margin: 0; }
 
@@ -881,15 +937,18 @@ export function Dashboard() {
           .welcome-banner { padding: 24px; }
           .welcome-title { font-size: 1.5rem; }
           .main-content-grid { grid-template-columns: 1fr; }
-          .bottom-section { grid-template-columns: 1fr 1fr; }
-          .progress-section { grid-column: 1 / -1; }
+          .bottom-section { grid-template-columns: 200px 1fr 1fr; }
+          .progress-section { grid-column: auto; }
+          .bottom-scroll-arrow { display: flex; }
+          .bottom-section-wrapper { gap: 4px; }
         }
         @media (max-width: 768px) {
           .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
           .welcome-actions { width: 100%; }
           .welcome-actions .btn-sm { width: 100%; justify-content: center; }
-          .bottom-section { grid-template-columns: 1fr; }
+          .bottom-section { grid-template-columns: repeat(3, minmax(260px, 1fr)); gap: 14px; }
           .stat-pill { min-width: 160px; }
+          .bottom-scroll-arrow { display: flex; }
         }
         @media (max-width: 480px) {
           .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }
