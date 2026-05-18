@@ -1672,9 +1672,15 @@ export default function FinanzasPage() {
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
             .modal-accounting { max-width: none; }
-            .accounting-actions { grid-template-columns: 1fr; }
-            .accounting-accounts-list { grid-template-columns: 1fr; }
+            .accounting-actions { grid-template-columns: 1fr 1fr; }
+            .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
             .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }
+            .accounting-btn { padding: 8px 10px; gap: 8px; }
+            .accounting-btn-icon { font-size: 1rem; }
+            .accounting-btn-label { font-size: 0.6875rem; }
+            .accounting-btn-desc { font-size: 0.5625rem; }
+            .accounting-account-card { padding: 8px; }
+            .accounting-mini-btn { padding: 4px 4px; font-size: 0.5625rem; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-value { font-size: 1.25rem; }
@@ -1723,6 +1729,21 @@ export default function FinanzasPage() {
             .vepay-receipt-amount { font-size: 1.25rem; }
             .vepay-receipt-actions { flex-direction: column; }
             .vepay-receipt-actions .btn { width: 100%; justify-content: center; }
+            .accounting-actions { grid-template-columns: 1fr 1fr; }
+            .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
+            .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }
+            .accounting-btn { padding: 6px 8px; gap: 6px; }
+            .accounting-btn-icon { font-size: 0.875rem; }
+            .accounting-btn-label { font-size: 0.625rem; }
+            .accounting-btn-desc { font-size: 0.5rem; }
+            .accounting-account-card { padding: 6px; }
+            .accounting-account-icon { width: 24px; height: 24px; font-size: 0.75rem; }
+            .accounting-account-name { font-size: 0.6875rem; }
+            .accounting-account-balance { font-size: 0.75rem; }
+            .accounting-mini-btn { padding: 3px 2px; font-size: 0.5rem; }
+            .accounting-info-box { padding: 8px; gap: 8px; }
+            .accounting-info-icon { font-size: 1rem; }
+            .accounting-info-text { font-size: 0.625rem; }
           }
           @media (max-width: 360px) {
             .page-title { font-size: 1.125rem; }
