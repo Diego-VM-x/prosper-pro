@@ -250,13 +250,6 @@ export function Dashboard() {
         {/* Stats Pills - Horizontal Scroll */}
         <div className="stats-scroll">
           <div className="stat-pill" onClick={() => router.push('/finanzas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(61,204,142,0.15)' }}>💰</div>
-            <div className="stat-pill-info">
-              <span className="stat-pill-label">Balance Total</span>
-              <span className="stat-pill-value" style={{ color: 'var(--color-prosper-green)' }}>{formatCurrency(totalBalance)}</span>
-            </div>
-          </div>
-          <div className="stat-pill" onClick={() => router.push('/finanzas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro Mensual</span>
