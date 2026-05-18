@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (16 de Mayo, 2026 - Eliminación de Comunidad y Logros)
+## Estado Actual (17 de Mayo, 2026 - Planes Financieros + Gestión Contable)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -53,11 +53,15 @@
 - `lib/firestore/tasks.ts` → **ELIMINADO** (backup en `_backup_comunidad_logros/`)
 - `lib/firestore/users.ts` → Preferencias de usuario (categorías custom, tipos custom)
 - `lib/firestore/transactions.ts` → Transacciones + historial de ahorro por meta + streaks
-- `lib/firestore/accounts.ts` → CRUD de cuentas, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory
+- `lib/firestore/plans.ts` → CRUD FinancialPlan (savings/expense/recurring), resumen financiero
+- `lib/firestore/requests.ts` → Solicitudes entre usuarios (enviar/aceptar/rechazar divisiones de gastos)
+- `lib/firestore/recurring.ts` → Pagos recurrentes, cálculo próximo pago, resumen mensual
+- `lib/firestore/accounts.ts` → CRUD de cuentas, gestión contable avanzada (recalculateAccountBalance, wipeAllTransactions, etc.)
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
-- ✅ **Cuentas Financieras + Transacciones Vinculadas (04/04/2026)**: Nueva colección `accounts` en Firestore. Tipo `FinancialAccount` con `checking`, `savings`, `cash`, `custom`. Cards de cuentas con iconos, colores y balances. Modal para crear cuentas personalizadas. Transacciones vinculadas a cuentas con `accountId`. Al crear transacción se actualiza balance automáticamente. Filtro por cuenta en tabla. Balance total calculado desde todas las cuentas. Cuentas por defecto creadas automáticamente.
+- ✅ **Planes Financieros - Reestructuración Completa (17/05/2026)**: Sección Metas transformada en sistema de gestión financiera real. Nuevos tipos: `FinancialPlan` (savings/expense/recurring), `ExpenseRequest`, `RecurringPayment`. 3 módulos Firestore nuevos: `plans.ts` (CRUD planes, resumen financiero), `requests.ts` (solicitudes entre usuarios para dividir gastos), `recurring.ts` (pagos recurrentes, cálculo próximo pago). UI completamente reescrita: stats cards con totales, filtros por tipo/estado, grid de planes con progreso visual. Funcionalidades: crear planes (ahorro/gasto/recurrente), añadir fondos con transacción automática, registrar pagos recurrentes con cálculo de próxima fecha, compartir gastos con usuarios vía email (enviar/aceptar/rechazar solicitudes). GoalsContext actualizado con soporte para FinancialPlan. Icons IconUsers e IconClock añadidos.
+- ✅ **Gestión Contable Avanzada + CSS Fixes (17/05/2026)**: Modal de gestión contable en Finanzas con acciones globales (vaciar todo, vaciar por tipo, recalcular balances) y acciones por cuenta. Lógica contable: eliminar ingresos resta del balance, eliminar gastos/ahorros suma. Funciones nuevas en accounts.ts: recalculateAccountBalance, recalculateAllBalances, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, wipeAllUserTransactions, wipeUserTransactionsByType, wipeTransactionsByDateRange. CSS fixes: agregada variable --color-error (#EF4444), corregido fondo btn-outline a transparent.: Nueva colección `accounts` en Firestore. Tipo `FinancialAccount` con `checking`, `savings`, `cash`, `custom`. Cards de cuentas con iconos, colores y balances. Modal para crear cuentas personalizadas. Transacciones vinculadas a cuentas con `accountId`. Al crear transacción se actualiza balance automáticamente. Filtro por cuenta en tabla. Balance total calculado desde todas las cuentas. Cuentas por defecto creadas automáticamente.
 - ✅ **Selects Estéticos + Custom Categories + Sparklines Reales (04/04/2026)**: Nuevo componente `CustomSelect` con dropdown animado, iconos, check de selección y botón "Añadir personalizado". Categorías personalizadas en Metas, tipos en Calendario, categorías de transacción en Finanzas. Sparklines ahora usan transacciones reales de Firestore. Al agregar fondos a meta se crea transacción automática. Textos de monthlyGrowth y streakDays calculados desde datos reales.
 - ✅ **Overflow-X Global Fix (04/04/2026)**: Agregado `overflow-x: hidden` y `max-width: 100vw` a html/body en globals.css. Clase `.page-content-overflow-fix` en DashboardLayout. Elimina scroll horizontal en móvil para Finanzas y Metas.
 - ✅ **Dashboard Funcional (04/04/2026)**: Stat cards clickeables (navegan a /metas, /finanzas, /cursos). Círculo de progreso corregido (r=54, circumference=339.292). Botón "+ Añadir Nuevo Objetivo" navega a /metas. Milestone items clickeables.
@@ -217,6 +221,32 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 17/05/2026 - Planes Financieros (Reestructuración Metas)
+- **Types**:
+  - `types/index.ts`: Nuevos tipos `FinancialPlan` (reemplaza Goal como entidad principal), `ExpenseRequest`, `RecurringPayment`. `PlanType` = 'savings' | 'expense' | 'recurring'. `PlanCategory` con 13 categorías (Ahorro, Inversión, Comida, Tecnología, Vivienda, etc.). `RecurringFrequency` = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'. `RequestStatus` = 'pending' | 'accepted' | 'rejected' | 'cancelled'. Goal mantenido para compatibilidad.
+- **Firestore Plans**:
+  - `lib/firestore/plans.ts`: Nuevo módulo con `subscribeToPlans`, `getPlansByOwnerId`, `createPlan`, `updatePlan`, `deletePlan`, `addFundsToPlan`, `recordPayment`, `completePlan`, `cancelPlan`, `resetPlan`, `getPlansByType`, `getPlansByStatus`, `getPlanSummary` (resumen financiero total).
+- **Firestore Requests**:
+  - `lib/firestore/requests.ts`: Nuevo módulo con `sendExpenseRequest`, `respondToRequest`, `cancelRequest`, `deleteRequest`, `subscribeToSentRequests`, `subscribeToReceivedRequests`, `getRequestsByPlan`, `getPendingReceivedRequests`, `searchUserByEmail`.
+- **Firestore Recurring**:
+  - `lib/firestore/recurring.ts`: Nuevo módulo con `recordRecurringPayment`, `getPaymentsByPlan`, `subscribeToPlanPayments`, `getPaymentsByOwner`, `deletePayment`, `getDueRecurringPlans`, `getMonthlyRecurringSummary`. Cálculo automático de próxima fecha según frecuencia.
+- **Metas Page**:
+  - `app/metas/page.tsx`: Reescritura completa. Header con stats cards (ahorro total, gastos planificados, recurrentes mensuales, estado general). Filtros por tipo y estado. Sección de solicitudes recibidas con aceptar/rechazar. Grid de planes con icono, tipo, progreso visual, metadata (fecha, frecuencia, invitados). Acciones por plan: añadir fondos (savings), registrar pago (recurring), abonar (expense), compartir, editar, eliminar. Modales: crear/editar plan con selector de tipo visual, añadir fondos con cuenta vinculada, registrar pago recurrente, compartir gasto con email de usuario.
+- **GoalsContext**:
+  - `lib/contexts/GoalsContext.tsx`: Agregado soporte para `FinancialPlan` con `plans` state, `addPlan`, `updatePlanFn`, `deletePlanFn`, `refresh`.
+- **Icons**:
+  - `app/components/icons.tsx`: Añadidos `IconUsers` (compartir) e `IconClock` (tiempo/frecuencia).
+- **Build**: `tsc --noEmit` y `npm run build` exitosos sin errores.
+
+### 17/05/2026 - Gestión Contable Avanzada + CSS Fixes
+- **Firestore Accounts - Gestión Contable**:
+  - `lib/firestore/accounts.ts`: Nuevas funciones `recalculateAccountBalance(accountId)` recalcula balance desde transacciones activas (income +, expense -, saving -). `recalculateAllBalances(ownerId)` recalcula todas las cuentas. `wipeAllTransactions(accountId)` elimina todas las transacciones de una cuenta y resetea balance a 0. `wipeTransactionsByTypeWithAdjustment(accountId, type)` elimina transacciones por tipo con ajuste contable automático (eliminar ingresos resta, eliminar gastos/ahorros suma). `wipeTransactionsByDateRange(accountId, start, end)` elimina por rango de fechas. `wipeAllUserTransactions(ownerId)` vacía todo el usuario. `wipeUserTransactionsByType(ownerId, type)` vacía por tipo en todas las cuentas.
+- **Finanzas Page - Modal Contable**:
+  - `app/finanzas/page.tsx`: Nuevo botón "Gestión Contable" en header. Modal con dos secciones: Acciones Globales (vaciar todo, vaciar ingresos/gastos/ahorros, recalcular balances) y Por Cuenta (acciones individuales por cuenta). Cada acción tiene confirmación con descripción del impacto contable. Feedback visual con resumen de ajustes. UI con cards por cuenta, botones con iconos y colores por tipo. Info box explicando lógica contable. Responsive completo.
+- **CSS Fixes**:
+  - `app/globals.css`: Agregada variable `--color-error: #EF4444` (usada en 19 lugares pero no definida). Corregido `.btn-outline` background de `var(--bg-secondary)` a `transparent` para que botones outlined no tengan fondo oscuro.
+- **Build**: `tsc --noEmit` y `npm run build` exitosos sin errores.
+
 ### 04/04/2026 - Cuentas Financieras + Transacciones Vinculadas
 - **Types**:
   - `types/index.ts`: Nuevo tipo `FinancialAccount` con `id`, `ownerId`, `name`, `type`, `balance`, `icon`, `color`, `createdAt`, `updatedAt`. `AccountType` = 'checking' | 'savings' | 'cash' | 'custom'. `Transaction` ahora tiene `accountId?`.
