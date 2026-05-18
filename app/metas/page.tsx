@@ -658,18 +658,18 @@ export default function MetasPage() {
             </div>
           )}
 
-          {/* Modal Nuevo/Editar Plan - Floating Window */}
+          {/* Modal Nuevo/Editar Plan */}
           {showNewModal && (
-            <div className="modal-overlay modal-overlay-floating" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>
-              <div className="modal-content modal-plan-float" onClick={e => e.stopPropagation()}>
-                <div className="modal-float-header">
+            <div className="modal-overlay" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>
+              <div className="modal-content modal-plan" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
                   <div>
-                    <h2 className="modal-float-title">{editingPlan ? 'Editar Plan' : 'Nuevo Plan'}</h2>
-                    <p className="modal-float-subtitle">{editingPlan ? 'Modifica los datos del plan' : 'Elige el tipo de plan financiero'}</p>
+                    <h2 className="modal-title">{editingPlan ? 'Editar Plan' : 'Nuevo Plan'}</h2>
+                    <p className="modal-subtitle">{editingPlan ? 'Modifica los datos del plan' : 'Elige el tipo de plan financiero'}</p>
                   </div>
-                  <button className="modal-float-close" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>✕</button>
+                  <button className="modal-close" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>✕</button>
                 </div>
-                <div className="modal-float-body">
+                <div className="modal-body">
                   {/* Type selector */}
                   <div className="plan-type-selector">
                     {PLAN_TYPES.map(t => (
@@ -730,7 +730,7 @@ export default function MetasPage() {
                     <CustomSelect value={formAccountId} onChange={v => setFormAccountId(v)} options={[{ value: '', label: 'Sin cuenta', icon: '—' }, ...accounts.map(a => ({ value: a.id, label: `${a.icon} ${a.name}`, icon: a.icon }))]} placeholder="Seleccionar..." />
                   </div>
                 </div>
-                <div className="modal-float-footer">
+                <div className="modal-footer">
                   <button className="btn btn-outline" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>Cancelar</button>
                   <button className="btn btn-primary" onClick={editingPlan ? handleEditPlan : handleCreatePlan} disabled={formLoading || !formTitle || !formTarget}>
                     {formLoading ? 'Guardando...' : editingPlan ? 'Guardar Cambios' : 'Crear Plan'}
@@ -956,71 +956,6 @@ export default function MetasPage() {
           .plan-input-wrap { position: relative; }
           .plan-currency { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.875rem; font-weight: 600; color: var(--text-tertiary); pointer-events: none; }
 
-          /* Floating Window Modal */
-          .modal-overlay-floating {
-            justify-content: flex-end;
-            align-items: stretch;
-            padding: 0;
-          }
-          .modal-plan-float {
-            width: 480px;
-            max-width: 90vw;
-            height: 100vh;
-            max-height: 100vh;
-            border-radius: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin: 0;
-            border: none;
-            border-left: 1px solid var(--border-default);
-          }
-          @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-          .modal-float-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--border-default);
-            flex-shrink: 0;
-          }
-          .modal-float-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-          .modal-float-subtitle { font-size: 0.75rem; color: var(--text-tertiary); margin: 4px 0 0 0; }
-          .modal-float-close {
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 1.25rem;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: background 0.15s;
-            flex-shrink: 0;
-          }
-          .modal-float-close:hover { background: var(--bg-input); }
-          .modal-float-body {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 24px;
-          }
-          .modal-float-footer {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            padding: 16px 24px;
-            border-top: 1px solid var(--border-default);
-            flex-shrink: 0;
-            background: var(--bg-card);
-          }
-
           /* Responsive */
           @media (max-width: 1024px) {
             .plans-stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1041,12 +976,6 @@ export default function MetasPage() {
             .modal-footer .btn { width: 100%; justify-content: center; }
             .plans-request-card { flex-direction: column; gap: 10px; align-items: stretch; }
             .plans-request-actions { justify-content: flex-end; }
-            /* Floating window mobile */
-            .modal-plan-float { width: 100vw; max-width: 100vw; }
-            .modal-float-header { padding: 16px; }
-            .modal-float-body { padding: 16px; }
-            .modal-float-footer { padding: 12px 16px; flex-direction: column-reverse; gap: 8px; }
-            .modal-float-footer .btn { width: 100%; justify-content: center; }
           }
           @media (max-width: 480px) {
             .plans-stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
