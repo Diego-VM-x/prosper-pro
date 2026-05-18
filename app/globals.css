@@ -41,6 +41,7 @@
   --color-gold-400:    #FCD34D;
   --color-red-500:     #EF4444;
   --color-blue-500:    #3B82F6;
+  --color-error:       #EF4444;
 
   /* === SEMANTIC - LIGHT MODE (default) === */
   --bg-primary:        var(--color-stone-50);
@@ -898,7 +899,7 @@ ul, ol {
 .btn-primary:active { transform: translateY(0); }
 
 .btn-outline {
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-primary);
   border-color: var(--border-default);
 }
