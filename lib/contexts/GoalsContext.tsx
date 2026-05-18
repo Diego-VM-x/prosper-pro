@@ -4,34 +4,45 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { useAuth } from './AuthContext';
 import { subscribeToGoals, createGoal, updateGoal, deleteGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
 import { subscribeToReminders, createReminder, updateReminder, deleteReminder, getRemindersByOwnerId } from '@/lib/firestore/reminders';
-import type { Goal, Reminder } from '@/types';
+import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId } from '@/lib/firestore/plans';
+import type { Goal, Reminder, FinancialPlan } from '@/types';
 
 interface GoalsContextType {
   userId: string;
   goals: Goal[];
+  plans: FinancialPlan[];
   reminders: Reminder[];
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updateGoalFn: (id: string, updates: Partial<Goal>) => Promise<void>;
   deleteGoalFn: (id: string) => Promise<void>;
+  addPlan: (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
+  updatePlanFn: (id: string, updates: Partial<FinancialPlan>) => Promise<void>;
+  deletePlanFn: (id: string) => Promise<void>;
   addReminder: (reminder: Omit<Reminder, 'id'>) => Promise<string>;
   updateReminderFn: (id: string, updates: Partial<Reminder>) => Promise<void>;
   deleteReminderFn: (id: string) => Promise<void>;
   goalsToday: Goal[];
   remindersToday: Reminder[];
+  refresh: () => void;
 }
 
 const GoalsContext = createContext<GoalsContextType>({
   userId: '',
   goals: [],
+  plans: [],
   reminders: [],
   addGoal: async () => '',
   updateGoalFn: async () => {},
   deleteGoalFn: async () => {},
+  addPlan: async () => '',
+  updatePlanFn: async () => {},
+  deletePlanFn: async () => {},
   addReminder: async () => '',
   updateReminderFn: async () => {},
   deleteReminderFn: async () => {},
   goalsToday: [],
   remindersToday: [],
+  refresh: () => {},
 });
 
 export const useGoals = () => useContext(GoalsContext);
@@ -63,6 +74,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   const authContext = useAuth();
   const { user, loading } = authContext;
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [plans, setPlans] = useState<FinancialPlan[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -83,6 +95,24 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
     loadGoals();
+    return () => { cancelled = true; };
+  }, [user?.uid, loading, refreshKey]);
+
+  // Cargar planes financieros
+  useEffect(() => {
+    if (loading) return;
+    const uid = user?.uid;
+    if (!uid) { setPlans([]); return; }
+    let cancelled = false;
+    async function loadPlans() {
+      try {
+        const data = await getPlansByOwnerId(uid as string);
+        if (!cancelled) setPlans(data);
+      } catch (e) {
+        console.error('[GoalsContext] Error cargando planes:', e);
+      }
+    }
+    loadPlans();
     return () => { cancelled = true; };
   }, [user?.uid, loading, refreshKey]);
 
@@ -122,6 +152,23 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     refresh();
   }, [refresh]);
 
+  const addPlan = useCallback(async (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!plan.ownerId) throw new Error('Usuario no autenticado');
+    const id = await createPlan(plan);
+    refresh();
+    return id;
+  }, [refresh]);
+
+  const updatePlanFn = useCallback(async (id: string, updates: Partial<FinancialPlan>) => {
+    await updatePlan(id, updates);
+    refresh();
+  }, [refresh]);
+
+  const deletePlanFn = useCallback(async (id: string) => {
+    await deletePlan(id);
+    refresh();
+  }, [refresh]);
+
   const addReminder = useCallback(async (reminder: Omit<Reminder, 'id'>) => {
     const id = await createReminder(reminder);
     refresh();
@@ -150,15 +197,20 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     <GoalsContext.Provider value={{
       userId: user?.uid || '',
       goals,
+      plans,
       reminders,
       addGoal,
       updateGoalFn,
       deleteGoalFn,
+      addPlan,
+      updatePlanFn,
+      deletePlanFn,
       addReminder,
       updateReminderFn,
       deleteReminderFn,
       goalsToday,
       remindersToday,
+      refresh,
     }}>
       {children}
     </GoalsContext.Provider>

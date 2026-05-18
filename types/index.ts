@@ -22,6 +22,68 @@ export interface UserProfile {
 export type GoalCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Otro';
 export type GoalStatus = 'pending' | 'progress' | 'completed';
 
+// ============================================================
+// FINANCIAL PLANS (Reemplaza Goal)
+// ============================================================
+export type PlanType = 'savings' | 'expense' | 'recurring';
+export type PlanCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Comida' | 'Tecnología' | 'Vivienda' | 'Transporte' | 'Salud' | 'Entretenimiento' | 'Suscripción' | 'Alquiler' | 'Servicios' | 'Otro';
+export type PlanStatus = 'pending' | 'progress' | 'completed' | 'cancelled';
+export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+export type RequestStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled';
+
+export interface FinancialPlan {
+  id: string;
+  ownerId: string;
+  title: string;
+  description: string;
+  type: PlanType; // 'savings' = plan de ahorro, 'expense' = gasto planificado, 'recurring' = gasto recurrente
+  category: PlanCategory;
+  target: number; // monto objetivo o monto del gasto
+  current: number; // monto ahorrado o pagado acumulado
+  deadline: string; // fecha límite (ISO YYYY-MM-DD)
+  status: PlanStatus;
+  color: string;
+  icon: string;
+  // Campos para gastos compartidos
+  sharedWith: string[]; // uids de usuarios invitados
+  shareAmount: number; // monto que debe pagar cada invitado
+  // Campos para recurrentes
+  frequency?: RecurringFrequency;
+  nextDueDate?: string;
+  lastPaidDate?: string;
+  totalPaid?: number; // total pagado en recurrentes
+  // Metadata
+  accountId?: string; // cuenta vinculada
+  createdAt: number;
+  updatedAt: number;
+  monthlyGrowth?: number;
+  streakDays?: number;
+}
+
+export interface ExpenseRequest {
+  id: string;
+  planId: string;
+  fromOwnerId: string; // quien envía la solicitud
+  toOwnerId: string; // quien recibe la solicitud
+  amount: number; // monto que debe pagar el invitado
+  status: RequestStatus;
+  message: string;
+  createdAt: number;
+  respondedAt?: number;
+}
+
+export interface RecurringPayment {
+  id: string;
+  planId: string;
+  ownerId: string;
+  amount: number;
+  paidDate: string; // ISO YYYY-MM-DD
+  accountId?: string;
+  transactionId?: string;
+  createdAt: number;
+}
+
+// Legacy Goal (para compatibilidad)
 export interface Goal {
   id: string;
   ownerId: string;
