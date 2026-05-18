@@ -1582,12 +1582,12 @@ export default function FinanzasPage() {
           .accounting-section-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
           .accounting-section-desc { font-size: 0.6875rem; color: var(--text-tertiary); margin: 0 0 12px 0; }
 
-          .accounting-actions { display: flex; flex-direction: column; gap: 8px; }
+          .accounting-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
           .accounting-btn {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
+            gap: 10px;
+            padding: 10px 12px;
             border-radius: 10px;
             border: 1px solid var(--border-default);
             background: var(--bg-input);
@@ -1596,12 +1596,12 @@ export default function FinanzasPage() {
             text-align: left;
             width: 100%;
           }
-          .accounting-btn:hover:not(:disabled) { transform: translateX(4px); }
+          .accounting-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
           .accounting-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-          .accounting-btn-icon { font-size: 1.25rem; flex-shrink: 0; }
+          .accounting-btn-icon { font-size: 1.125rem; flex-shrink: 0; }
           .accounting-btn-content { flex: 1; min-width: 0; }
-          .accounting-btn-label { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
-          .accounting-btn-desc { display: block; font-size: 0.6875rem; color: var(--text-tertiary); margin-top: 2px; }
+          .accounting-btn-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); }
+          .accounting-btn-desc { display: block; font-size: 0.625rem; color: var(--text-tertiary); margin-top: 2px; line-height: 1.3; }
 
           .accounting-btn-danger { border-color: var(--color-error); }
           .accounting-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: var(--color-error); }
@@ -1615,30 +1615,31 @@ export default function FinanzasPage() {
           .accounting-btn-info:hover:not(:disabled) { background: rgba(59,130,246,0.1); border-color: var(--color-blue-500); }
           .accounting-btn-info .accounting-btn-label { color: var(--color-blue-500); }
 
-          .accounting-accounts-list { display: flex; flex-direction: column; gap: 8px; }
+          .accounting-accounts-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
           .accounting-account-card {
             background: var(--bg-input);
             border: 1px solid var(--border-default);
             border-left: 4px solid;
             border-radius: 10px;
-            padding: 12px;
+            padding: 10px;
           }
-          .accounting-account-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-          .accounting-account-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-          .accounting-account-info { flex: 1; }
-          .accounting-account-name { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
-          .accounting-account-balance { display: block; font-size: 0.9375rem; font-weight: 800; }
-          .accounting-account-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+          .accounting-account-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+          .accounting-account-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; }
+          .accounting-account-info { flex: 1; min-width: 0; }
+          .accounting-account-name { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .accounting-account-balance { display: block; font-size: 0.8125rem; font-weight: 800; }
+          .accounting-account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
           .accounting-mini-btn {
-            padding: 6px 10px;
+            padding: 5px 6px;
             border-radius: 6px;
             border: 1px solid var(--border-default);
             background: var(--bg-card);
-            font-size: 0.6875rem;
+            font-size: 0.625rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.15s;
             color: var(--text-secondary);
+            text-align: center;
           }
           .accounting-mini-btn:hover:not(:disabled) { transform: translateY(-1px); }
           .accounting-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -1671,8 +1672,9 @@ export default function FinanzasPage() {
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
             .modal-accounting { max-width: none; }
-            .accounting-account-actions { gap: 4px; }
-            .accounting-mini-btn { padding: 5px 8px; font-size: 0.625rem; }
+            .accounting-actions { grid-template-columns: 1fr; }
+            .accounting-accounts-list { grid-template-columns: 1fr; }
+            .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-value { font-size: 1.25rem; }
