@@ -852,6 +852,20 @@ export default function MetasPage() {
         <style>{`
           .plans-page { padding: 0; }
 
+          /* Modal Overlay */
+          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
+          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 520px; padding: 24px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.25s ease; }
+          .modal-plan { max-width: 520px; }
+          .modal-plan-small { max-width: 420px; }
+          @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+          .modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+          .modal-subtitle { font-size: 0.75rem; color: var(--text-tertiary); margin: 2px 0 0 0; }
+          .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; transition: background 0.15s; }
+          .modal-close:hover { background: var(--bg-input); }
+          .modal-body { display: flex; flex-direction: column; gap: 16px; }
+          .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
           /* Stats */
           .plans-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
           .plans-stat-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 14px; position: relative; overflow: hidden; }
@@ -930,10 +944,6 @@ export default function MetasPage() {
           .plans-empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
           .plans-empty h3 { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0; }
           .plans-empty p { font-size: 0.875rem; margin: 0 0 20px 0; }
-
-          /* Modal */
-          .modal-plan { max-width: 520px; }
-          .modal-plan-small { max-width: 420px; }
 
           /* Type selector */
           .plan-type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }

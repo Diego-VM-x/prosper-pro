@@ -89,6 +89,28 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
+    // Plans (Financial Plans): solo el propietario
+    match /plans/{planId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Expense Requests (solicitudes entre usuarios)
+    match /expense_requests/{requestId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.fromOwnerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.fromOwnerId == request.auth.uid || resource.data.toOwnerId == request.auth.uid);
+      allow delete: if request.auth != null && resource.data.fromOwnerId == request.auth.uid;
+    }
+
+    // Recurring Payments: solo el propietario del plan
+    match /recurring_payments/{paymentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+
     // Communities: lectura publica, escritura para autenticados
     match /communities/{communityId} {
       allow read: if request.auth != null;
