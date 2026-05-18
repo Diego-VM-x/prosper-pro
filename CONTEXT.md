@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (18 de Mayo, 2026 - Planes Financieros Completos + Gestión Contable)
+## Estado Actual (18 de Mayo, 2026 - Dashboard Neón + Planes Financieros Completos)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -24,7 +24,8 @@
 
 ## Estructura de Archivos Clave
 - `app/page.tsx` → Dashboard principal (rediseñado con grid system compacto)
-- `app/components/Dashboard.tsx` → Widgets rediseñados (stats-row, dual-grid, bottom-grid)
+- `app/components/Dashboard.tsx` → Dashboard rediseñado: 4 stat pills, efectos neón, bottom-section con flechas scroll responsive
+- `app/globals.css` → Variables glow neón (`--neon-green`, `--glow-sm/md/lg`), sombras/botones actualizados
 - `app/components/DashboardLayout.tsx` → Layout con Sidebar colapsable + Topbar con logo
 - `app/components/Sidebar.tsx` → Navegación lateral colapsable (solo iconos)
 - `app/components/Topbar.tsx` → Barra superior con logo, búsqueda funcional, login/logout
@@ -221,6 +222,13 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 18/05/2026 - Dashboard: Eliminar Balance Total + Efectos Neón + Flechas Scroll
+- **Dashboard.tsx**: Eliminado stat pill "Balance Total" () de la fila de stats superiores. Quedan 4 pills: Ahorro Mensual, Ahorro en Planes, Recurrentes/Mes, Metas Completadas.
+- **Efectos Neón**: Agregados `drop-shadow` y `box-shadow` con glow esmeralda en: welcome banner, stat pills, section headers, content cards, progress ring, deadline badges, account balances. Variables CSS `--neon-green`, `--glow-sm/md/lg` en `globals.css`. Hover effects con glow en cards y pills.
+- **Bottom Section**: Nueva estructura con `bottom-section-wrapper` (wrapper relativo) + `bottom-section` (grid scrollable) + flechas izquierda/derecha posicionadas absoluto. Flechas solo visibles en `<=1024px` con `display: flex`. Grid mantiene 3 columnas en desktop, scroll horizontal en tablet/móvil con `scroll-snap-type`.
+- **Theme Toggle**: Agregado glow esmeralda en hover del botón de tema.
+- **Build**: `tsc --noEmit` exitoso sin errores.
+
 ### 18/05/2026 - Fixes Finales Planes Financieros
 - **Firestore Rules**: Agregadas reglas para `plans` (CRUD propietario), `expense_requests` (crear emisor, actualizar emisor/receptor, eliminar emisor), `recurring_payments` (CRUD propietario).
 - **Modal Overlay CSS**: Agregado `.modal-overlay` con `position: fixed`, `z-index: 1000`, `backdrop-filter: blur` al `<style>` de metas/page.tsx. Modal centrado como transferencia.
