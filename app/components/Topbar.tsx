@@ -138,7 +138,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
 
   // Rutas disponibles para búsqueda
   const searchRoutes = [
-    { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
+    { name: 'Dashboard', route: '/dashboard', icon: '📊', keywords: 'dashboard inicio principal' },
     { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
     { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos' },
@@ -187,7 +187,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     <header className="topbar" id="main-topbar">
       {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
-        <Link href="/" className="topbar-logo-link">
+        <Link href="/dashboard" className="topbar-logo-link">
           <img
             src="/logo-icon.png"
             alt="Prosper Logo"
@@ -570,7 +570,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               </button>
             </div>
             <nav className="mobile-menu-nav">
-              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+              <Link href="/dashboard" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconDashboard /> Dashboard
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
