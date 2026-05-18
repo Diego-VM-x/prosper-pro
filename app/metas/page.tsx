@@ -130,6 +130,7 @@ export default function MetasPage() {
   const [shareAmount, setShareAmount] = useState('');
   const [shareMessage, setShareMessage] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
+  const [shareFoundUser, setShareFoundUser] = useState<{ uid: string; displayName: string | null; email: string | null; photoURL: string | null } | null>(null);
 
   // Received requests
   const [receivedRequests, setReceivedRequests] = useState<ExpenseRequest[]>([]);
@@ -386,17 +387,14 @@ export default function MetasPage() {
       warning('Monto inválido.');
       return;
     }
+    if (!shareFoundUser) {
+      warning('Usuario no encontrado. Verifica el email.');
+      return;
+    }
 
     setShareLoading(true);
     try {
-      // Buscar usuario
-      const userFound = await searchUserByEmail(shareEmail);
-      if (!userFound) {
-        error('Usuario no encontrado.');
-        setShareLoading(false);
-        return;
-      }
-      if (userFound.uid === uid) {
+      if (shareFoundUser.uid === uid) {
         error('No puedes enviarte una solicitud a ti mismo.');
         setShareLoading(false);
         return;
@@ -405,25 +403,45 @@ export default function MetasPage() {
       await sendExpenseRequest({
         planId: plan.id,
         fromOwnerId: uid,
-        toOwnerId: userFound.uid,
+        toOwnerId: shareFoundUser.uid,
         amount,
         status: 'pending',
         message: shareMessage || `Te invito a dividir "${plan.title}"`,
       });
 
       // Actualizar plan con sharedWith
-      const updatedShared = [...(plan.sharedWith || []), userFound.uid];
+      const updatedShared = [...(plan.sharedWith || []), shareFoundUser.uid];
       await updatePlanFn(plan.id, { sharedWith: updatedShared });
 
-      success(`Solicitud enviada a ${shareEmail}`);
+      success(`Solicitud enviada a ${shareFoundUser.displayName || shareFoundUser.email}`);
       setShowShareModal(null);
       setShareEmail('');
       setShareAmount('');
       setShareMessage('');
+      setShareFoundUser(null);
     } catch (e: any) {
       error(`Error: ${e?.message}`);
     } finally {
       setShareLoading(false);
+    }
+  };
+
+  const handleSearchShareUser = async (email: string) => {
+    setShareEmail(email);
+    setShareFoundUser(null);
+    if (!email || !email.includes('@')) return;
+    try {
+      const userFound = await searchUserByEmail(email);
+      if (userFound) {
+        setShareFoundUser({
+          uid: userFound.uid,
+          displayName: userFound.displayName,
+          email: userFound.email,
+          photoURL: userFound.photoURL,
+        });
+      }
+    } catch (e) {
+      console.error('Error buscando usuario:', e);
     }
   };
 
@@ -810,20 +828,39 @@ export default function MetasPage() {
 
           {/* Modal Compartir */}
           {showShareModal && (
-            <div className="modal-overlay" onClick={() => setShowShareModal(null)}>
+            <div className="modal-overlay" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>
               <div className="modal-content modal-plan-small" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
                     <h2 className="modal-title">Compartir Gasto</h2>
                     <p className="modal-subtitle">Invita a alguien a dividir "{showShareModal.title}"</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowShareModal(null)}>✕</button>
+                  <button className="modal-close" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
                     <label className="plan-label">Email del usuario</label>
-                    <input className="plan-input" type="email" placeholder="usuario@email.com" value={shareEmail} onChange={e => setShareEmail(e.target.value)} autoFocus />
+                    <input className="plan-input" type="email" placeholder="usuario@email.com" value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
                   </div>
+
+                  {/* User Profile Card */}
+                  {shareFoundUser && (
+                    <div className="share-user-card">
+                      <div className="share-user-avatar">
+                        {shareFoundUser.photoURL ? (
+                          <img src={shareFoundUser.photoURL} alt="" />
+                        ) : (
+                          <span>{(shareFoundUser.displayName || shareFoundUser.email || '?')[0].toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className="share-user-info">
+                        <span className="share-user-name">{shareFoundUser.displayName || 'Usuario'}</span>
+                        <span className="share-user-email">{shareFoundUser.email}</span>
+                      </div>
+                      <span className="share-user-check">✓</span>
+                    </div>
+                  )}
+
                   <div className="plan-field">
                     <label className="plan-label">Monto a pagar</label>
                     <div className="plan-input-wrap">
@@ -837,8 +874,8 @@ export default function MetasPage() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowShareModal(null)}>Cancelar</button>
-                  <button className="btn btn-primary" onClick={() => handleSharePlan(showShareModal)} disabled={shareLoading || !shareEmail || !shareAmount}>
+                  <button className="btn btn-outline" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={() => handleSharePlan(showShareModal)} disabled={shareLoading || !shareEmail || !shareAmount || !shareFoundUser}>
                     {shareLoading ? 'Enviando...' : 'Enviar Solicitud'}
                   </button>
                 </div>
@@ -938,6 +975,15 @@ export default function MetasPage() {
           .plan-action-primary { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
           .plan-action-primary:hover { filter: brightness(1.1); }
           .plan-action-danger:hover { border-color: var(--color-error); color: var(--color-error); background: rgba(239,68,68,0.1); }
+
+          /* Share User Card */
+          .share-user-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--color-prosper-green); margin-bottom: 12px; }
+          .share-user-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--color-pine-500), var(--color-pine-700)); display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+          .share-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+          .share-user-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+          .share-user-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .share-user-email { font-size: 0.6875rem; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .share-user-check { font-size: 1.25rem; color: var(--color-prosper-green); flex-shrink: 0; }
 
           /* Empty */
           .plans-empty { text-align: center; padding: 48px 24px; color: var(--text-secondary); }

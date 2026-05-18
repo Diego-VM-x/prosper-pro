@@ -104,8 +104,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
           <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? 'Dashboard' : undefined}>
             <IconDashboard /> {!isCollapsed && 'Dashboard'}
           </Link>
-          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? 'Mis Metas' : undefined}>
-            <IconTasks /> {!isCollapsed && <>Mis Metas{activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}</>}
+          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? 'Planes' : undefined}>
+            <IconTasks /> {!isCollapsed && <>Planes Financieros{activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}</>}
             {isCollapsed && activeGoalsCount > 0 && <span className="nav-badge nav-badge-collapsed">{activeGoalsCount}</span>}
           </Link>
           <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar" title={isCollapsed ? 'Calendario' : undefined}>

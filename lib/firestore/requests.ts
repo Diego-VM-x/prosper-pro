@@ -123,11 +123,16 @@ export async function getPendingReceivedRequests(ownerId: string): Promise<Expen
 }
 
 // Buscar usuario por email (para enviar solicitud)
-export async function searchUserByEmail(email: string) {
+export async function searchUserByEmail(email: string): Promise<{ uid: string; displayName: string | null; email: string | null; photoURL: string | null } | null> {
   const usersRef = collection(db, 'users');
   const q = query(usersRef, where('email', '==', email));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const data = snapshot.docs[0].data();
-  return { uid: snapshot.docs[0].id, ...data };
+  return {
+    uid: snapshot.docs[0].id,
+    displayName: data.displayName || null,
+    email: data.email || null,
+    photoURL: data.photoURL || null,
+  };
 }

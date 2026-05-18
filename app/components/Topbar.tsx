@@ -139,7 +139,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
   // Rutas disponibles para búsqueda
   const searchRoutes = [
     { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
-    { name: 'Mis Metas', route: '/metas', icon: '🎯', keywords: 'metas objetivos tareas' },
+    { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
     { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos' },
     { name: 'Cursos', route: '/cursos', icon: '📚', keywords: 'cursos aprendizaje educación' },
@@ -274,11 +274,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               </>
             )}
 
-            {/* Metas */}
+            {/* Planes */}
             {goalResults.length > 0 && (
               <>
                 <div className="search-results-header">
-                  <span>Metas</span>
+                  <span>Planes</span>
                   <span className="search-results-count">{goalResults.length}</span>
                 </div>
                 {goalResults.slice(0, 5).map((goal) => (
@@ -574,7 +574,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 <IconDashboard /> Dashboard
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconTasks /> Mis Metas
+                <IconTasks /> Planes Financieros
               </Link>
               <Link href="/calendario" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconCalendar /> Calendario
