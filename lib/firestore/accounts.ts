@@ -158,3 +158,177 @@ export async function createDefaultAccounts(ownerId: string) {
     await addDoc(collection(db, COLLECTION), acc);
   }
 }
+
+// ============================================================
+// GESTIÓN CONTABLE AVANZADA
+// ============================================================
+
+// Recalcular el balance de una cuenta basado en sus transacciones activas
+// Lógica contable: income (+) expense (-) saving (-)
+export async function recalculateAccountBalance(accountId: string): Promise<number> {
+  const txsQuery = query(
+    collection(db, 'transactions'),
+    where('accountId', '==', accountId)
+  );
+  const txsSnapshot = await getDocs(txsQuery);
+
+  let calculatedBalance = 0;
+  txsSnapshot.forEach((docSnap) => {
+    const tx = docSnap.data();
+    if (tx.archived) return; // Ignorar transacciones archivadas
+
+    if (tx.type === 'income') calculatedBalance += tx.amount;
+    else if (tx.type === 'expense') calculatedBalance -= tx.amount;
+    else if (tx.type === 'saving') calculatedBalance -= tx.amount;
+  });
+
+  await updateDoc(doc(db, COLLECTION, accountId), {
+    balance: calculatedBalance,
+    updatedAt: Date.now(),
+  });
+
+  return calculatedBalance;
+}
+
+// Recalcular TODOS los balances del usuario
+export async function recalculateAllBalances(ownerId: string): Promise<{ accountId: string; balance: number }[]> {
+  const accounts = await getAccountsByOwnerId(ownerId);
+  const results: { accountId: string; balance: number }[] = [];
+
+  for (const acc of accounts) {
+    const newBalance = await recalculateAccountBalance(acc.id);
+    results.push({ accountId: acc.id, balance: newBalance });
+  }
+
+  return results;
+}
+
+// Vaciar TODAS las transacciones de una cuenta y recalcular balance a 0
+// Elimina físicamente las transacciones (no las archiva)
+export async function wipeAllTransactions(accountId: string): Promise<void> {
+  // Primero obtener todas las transacciones para eliminar
+  const txsQuery = query(collection(db, 'transactions'), where('accountId', '==', accountId));
+  const txsSnapshot = await getDocs(txsQuery);
+
+  // Eliminar todas las transacciones
+  const deletePromises = txsSnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+  await Promise.all(deletePromises);
+
+  // Resetear balance a 0
+  await updateDoc(doc(db, COLLECTION, accountId), {
+    balance: 0,
+    updatedAt: Date.now(),
+  });
+}
+
+// Vaciar transacciones de un tipo específico con ajuste contable
+// income: resta del balance (porque se eliminan ingresos)
+// expense: suma al balance (porque se eliminan gastos)
+// saving: suma al balance (porque se eliminan ahorros)
+export async function wipeTransactionsByTypeWithAdjustment(
+  accountId: string,
+  type: 'income' | 'expense' | 'saving'
+): Promise<{ wipedCount: number; balanceAdjustment: number }> {
+  const txsQuery = query(
+    collection(db, 'transactions'),
+    where('accountId', '==', accountId),
+    where('type', '==', type)
+  );
+  const txsSnapshot = await getDocs(txsQuery);
+
+  let totalAmount = 0;
+  const deletePromises = txsSnapshot.docs.map((docSnap) => {
+    const tx = docSnap.data();
+    totalAmount += tx.amount || 0;
+    return deleteDoc(docSnap.ref);
+  });
+
+  await Promise.all(deletePromises);
+
+  // Ajuste contable:
+  // - Si elimino ingresos: el balance baja (se restan)
+  // - Si elimino gastos: el balance sube (se devuelven)
+  // - Si elimino ahorros: el balance sube (se devuelven)
+  const adjustment = type === 'income' ? -totalAmount : totalAmount;
+
+  if (adjustment !== 0) {
+    await updateDoc(doc(db, COLLECTION, accountId), {
+      balance: increment(adjustment),
+      updatedAt: Date.now(),
+    });
+  }
+
+  return { wipedCount: txsSnapshot.docs.length, balanceAdjustment: adjustment };
+}
+
+// Vaciar transacciones de una cuenta por rango de fechas
+export async function wipeTransactionsByDateRange(
+  accountId: string,
+  startDate: number,
+  endDate: number
+): Promise<{ wipedCount: number }> {
+  const txsQuery = query(
+    collection(db, 'transactions'),
+    where('accountId', '==', accountId)
+  );
+  const txsSnapshot = await getDocs(txsQuery);
+
+  let wipedCount = 0;
+  const deletePromises: Promise<void>[] = [];
+
+  txsSnapshot.forEach((docSnap) => {
+    const tx = docSnap.data();
+    if (tx.date >= startDate && tx.date <= endDate) {
+      wipedCount++;
+      deletePromises.push(deleteDoc(docSnap.ref));
+    }
+  });
+
+  await Promise.all(deletePromises);
+
+  // Recalcular balance después de eliminar
+  await recalculateAccountBalance(accountId);
+
+  return { wipedCount };
+}
+
+// Vaciar TODAS las transacciones del usuario (todas las cuentas)
+// Recalcula todos los balances a 0
+export async function wipeAllUserTransactions(ownerId: string): Promise<void> {
+  const accounts = await getAccountsByOwnerId(ownerId);
+
+  // Eliminar todas las transacciones del usuario
+  const txsQuery = query(collection(db, 'transactions'), where('ownerId', '==', ownerId));
+  const txsSnapshot = await getDocs(txsQuery);
+  const deletePromises = txsSnapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+  await Promise.all(deletePromises);
+
+  // Resetear todos los balances a 0
+  const updatePromises = accounts.map((acc) =>
+    updateDoc(doc(db, COLLECTION, acc.id), {
+      balance: 0,
+      updatedAt: Date.now(),
+    })
+  );
+  await Promise.all(updatePromises);
+}
+
+// Vaciar transacciones por tipo para TODAS las cuentas del usuario
+export async function wipeUserTransactionsByType(
+  ownerId: string,
+  type: 'income' | 'expense' | 'saving'
+): Promise<{ totalWiped: number; adjustments: { accountId: string; adjustment: number }[] }> {
+  const accounts = await getAccountsByOwnerId(ownerId);
+  const adjustments: { accountId: string; adjustment: number }[] = [];
+  let totalWiped = 0;
+
+  for (const acc of accounts) {
+    const result = await wipeTransactionsByTypeWithAdjustment(acc.id, type);
+    totalWiped += result.wipedCount;
+    if (result.balanceAdjustment !== 0) {
+      adjustments.push({ accountId: acc.id, adjustment: result.balanceAdjustment });
+    }
+  }
+
+  return { totalWiped, adjustments };
+}

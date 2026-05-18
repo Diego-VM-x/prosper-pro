@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
@@ -78,6 +78,9 @@ export default function FinanzasPage() {
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
   const [vepayOverrides, setVepayOverrides] = useState<Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string; date: string }>>({});
+  const [showAccountingModal, setShowAccountingModal] = useState(false);
+  const [accountingAction, setAccountingAction] = useState<string>('');
+  const [accountingLoading, setAccountingLoading] = useState(false);
 
   const uid = user?.uid;
 
@@ -501,6 +504,144 @@ export default function FinanzasPage() {
     });
   };
 
+  // ============================================================
+  // GESTIÓN CONTABLE AVANZADA
+  // ============================================================
+
+  const handleWipeAllUserTransactions = async () => {
+    setConfirmState({
+      isOpen: true,
+      title: '⚠️ Vaciar TODAS las Transacciones',
+      message: 'Se eliminarán TODAS las transacciones de TODAS las cuentas. Los balances se resetearán a $0. Esta acción NO se puede deshacer.',
+      variant: 'danger',
+      confirmText: 'Vaciar todo',
+      onConfirm: async () => {
+        if (!uid) return;
+        setAccountingLoading(true);
+        try {
+          await wipeAllUserTransactions(uid);
+          await loadTransactions();
+          success('Todas las transacciones eliminadas. Balances reseteados.');
+        } catch (e: any) {
+          error(`Error: ${e?.message || 'Error desconocido'}`);
+        } finally {
+          setAccountingLoading(false);
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  const handleWipeUserTransactionsByType = async (type: 'income' | 'expense' | 'saving') => {
+    const typeLabel = TYPE_LABELS[type];
+    const typeIcon = TYPE_ICONS[type];
+    const actionText = type === 'income' ? 'restará' : 'sumará';
+
+    setConfirmState({
+      isOpen: true,
+      title: `${typeIcon} Vaciar ${typeLabel}s`,
+      message: `Se eliminarán TODOS los ${typeLabel.toLowerCase()}s de TODAS las cuentas. El balance se ${actionText} automáticamente. ¿Continuar?`,
+      variant: type === 'income' ? 'warning' : 'danger',
+      confirmText: `Vaciar ${typeLabel}s`,
+      onConfirm: async () => {
+        if (!uid) return;
+        setAccountingLoading(true);
+        try {
+          const result = await wipeUserTransactionsByType(uid, type);
+          await loadTransactions();
+          const adjustText = result.adjustments.map(a => {
+            const acc = accounts.find(acc => acc.id === a.accountId);
+            const sign = a.adjustment > 0 ? '+' : '';
+            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${sign}$${Math.abs(a.adjustment).toLocaleString()}`;
+          }).join('\n');
+          success(`${result.totalWiped} ${typeLabel.toLowerCase()}s eliminados.${result.adjustments.length > 0 ? '\nAjustes: ' + adjustText : ''}`);
+        } catch (e: any) {
+          error(`Error: ${e?.message || 'Error desconocido'}`);
+        } finally {
+          setAccountingLoading(false);
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  const handleRecalculateAllBalances = async () => {
+    setConfirmState({
+      isOpen: true,
+      title: '🔄 Recalcular Balances',
+      message: 'Se recalcularán los balances de TODAS las cuentas basándose en las transacciones existentes. ¿Continuar?',
+      variant: 'info',
+      confirmText: 'Recalcular',
+      onConfirm: async () => {
+        if (!uid) return;
+        setAccountingLoading(true);
+        try {
+          const results = await recalculateAllBalances(uid);
+          await loadTransactions();
+          const summary = results.map(r => {
+            const acc = accounts.find(a => a.id === r.accountId);
+            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: $${r.balance.toLocaleString()}`;
+          }).join('\n');
+          success('Balances recalculados:\n' + summary);
+        } catch (e: any) {
+          error(`Error: ${e?.message || 'Error desconocido'}`);
+        } finally {
+          setAccountingLoading(false);
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
+  const handleWipeAccountTransactions = async (accountId: string, action: 'all' | 'income' | 'expense' | 'saving') => {
+    const acc = accounts.find(a => a.id === accountId);
+    if (!acc) return;
+
+    let title = '';
+    let message = '';
+    let confirmText = '';
+
+    if (action === 'all') {
+      title = `🗑️ Vaciar "${acc.name}"`;
+      message = `Se eliminarán TODAS las transacciones de "${acc.name}" y el balance se reseteará a $0.`;
+      confirmText = 'Vaciar cuenta';
+    } else {
+      const typeLabel = TYPE_LABELS[action];
+      const typeIcon = TYPE_ICONS[action];
+      const actionText = action === 'income' ? 'restará' : 'sumará';
+      title = `${typeIcon} Vaciar ${typeLabel}s de "${acc.name}"`;
+      message = `Se eliminarán los ${typeLabel.toLowerCase()}s de "${acc.name}". El balance se ${actionText} automáticamente.`;
+      confirmText = `Vaciar ${typeLabel}s`;
+    }
+
+    setConfirmState({
+      isOpen: true,
+      title,
+      message,
+      variant: action === 'all' ? 'danger' : 'warning',
+      confirmText,
+      onConfirm: async () => {
+        setAccountingLoading(true);
+        try {
+          if (action === 'all') {
+            await wipeAllTransactions(accountId);
+            success(`"${acc.name}" vaciada. Balance: $0`);
+          } else {
+            const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
+            const sign = result.balanceAdjustment > 0 ? '+' : '';
+            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}$${Math.abs(result.balanceAdjustment).toLocaleString()}`);
+          }
+          await loadTransactions();
+        } catch (e: any) {
+          error(`Error: ${e?.message || 'Error desconocido'}`);
+        } finally {
+          setAccountingLoading(false);
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+        }
+      },
+    });
+  };
+
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
   const getAccountName = (accountId?: string) => {
     if (!accountId) return 'Sin cuenta';
@@ -527,8 +668,14 @@ export default function FinanzasPage() {
               <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
                 <IconWallet width={14} /> Transferir
               </button>
-              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Borrar todo el historial">
+              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Archivar todo el historial">
                 <IconArchive width={14} /> Borrar Historial
+              </button>
+              <button className="btn btn-outline btn-accounting" onClick={() => setShowAccountingModal(true)} title="Gestión contable avanzada">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                <span className="btn-accounting-label">Gestión Contable</span>
               </button>
               <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1067,6 +1214,113 @@ export default function FinanzasPage() {
             </div>
           )}
 
+          {/* Modal Gestión Contable */}
+          {showAccountingModal && (
+            <div className="modal-overlay" onClick={() => setShowAccountingModal(false)}>
+              <div className="modal-content modal-accounting" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Gestión Contable</h2>
+                    <p className="modal-subtitle">Vaciar transacciones y reajustar balances</p>
+                  </div>
+                  <button className="modal-close" onClick={() => setShowAccountingModal(false)}>✕</button>
+                </div>
+                <div className="modal-body">
+                  {/* Sección: Acciones Globales */}
+                  <div className="accounting-section">
+                    <h3 className="accounting-section-title"> Acciones Globales</h3>
+                    <p className="accounting-section-desc">Afectan a TODAS las cuentas</p>
+                    <div className="accounting-actions">
+                      <button className="accounting-btn accounting-btn-danger" onClick={handleWipeAllUserTransactions} disabled={accountingLoading}>
+                        <span className="accounting-btn-icon">🗑️</span>
+                        <div className="accounting-btn-content">
+                          <span className="accounting-btn-label">Vaciar TODO</span>
+                          <span className="accounting-btn-desc">Elimina todas las transacciones y resetea balances a $0</span>
+                        </div>
+                      </button>
+                      <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('income')} disabled={accountingLoading}>
+                        <span className="accounting-btn-icon">📥</span>
+                        <div className="accounting-btn-content">
+                          <span className="accounting-btn-label">Vaciar Ingresos</span>
+                          <span className="accounting-btn-desc">Elimina ingresos · Balance se ajusta (-)</span>
+                        </div>
+                      </button>
+                      <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('expense')} disabled={accountingLoading}>
+                        <span className="accounting-btn-icon">📤</span>
+                        <div className="accounting-btn-content">
+                          <span className="accounting-btn-label">Vaciar Gastos</span>
+                          <span className="accounting-btn-desc">Elimina gastos · Balance se ajusta (+)</span>
+                        </div>
+                      </button>
+                      <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('saving')} disabled={accountingLoading}>
+                        <span className="accounting-btn-icon">💰</span>
+                        <div className="accounting-btn-content">
+                          <span className="accounting-btn-label">Vaciar Ahorros</span>
+                          <span className="accounting-btn-desc">Elimina ahorros · Balance se ajusta (+)</span>
+                        </div>
+                      </button>
+                      <button className="accounting-btn accounting-btn-info" onClick={handleRecalculateAllBalances} disabled={accountingLoading}>
+                        <span className="accounting-btn-icon">🔄</span>
+                        <div className="accounting-btn-content">
+                          <span className="accounting-btn-label">Recalcular Balances</span>
+                          <span className="accounting-btn-desc">Recalcula desde transacciones existentes</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sección: Por Cuenta */}
+                  {accounts.length > 0 && (
+                    <div className="accounting-section">
+                      <h3 className="accounting-section-title">🏦 Por Cuenta</h3>
+                      <p className="accounting-section-desc">Acciones específicas por cuenta</p>
+                      <div className="accounting-accounts-list">
+                        {accounts.map(acc => (
+                          <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
+                            <div className="accounting-account-header">
+                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</span>
+                              <div className="accounting-account-info">
+                                <span className="accounting-account-name">{acc.name}</span>
+                                <span className="accounting-account-balance" style={{ color: acc.color }}>
+                                  {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="accounting-account-actions">
+                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleWipeAccountTransactions(acc.id, 'all')} disabled={accountingLoading} title="Vaciar toda la cuenta">
+                                🗑️ Vaciar
+                              </button>
+                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'income')} disabled={accountingLoading} title="Vaciar ingresos">
+                                📥 Ingresos
+                              </button>
+                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'expense')} disabled={accountingLoading} title="Vaciar gastos">
+                                📤 Gastos
+                              </button>
+                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'saving')} disabled={accountingLoading} title="Vaciar ahorros">
+                                💰 Ahorros
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Info contable */}
+                  <div className="accounting-info-box">
+                    <span className="accounting-info-icon">💡</span>
+                    <div className="accounting-info-text">
+                      <strong>Lógica contable:</strong> Al eliminar transacciones, el balance se ajusta automáticamente. Eliminar ingresos resta del balance, eliminar gastos/ahorros suma al balance.
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => setShowAccountingModal(false)}>Cerrar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <ConfirmDialog
             isOpen={confirmState.isOpen}
             title={confirmState.title}
@@ -1317,6 +1571,93 @@ export default function FinanzasPage() {
           .vepay-select:focus { border-color: var(--color-prosper-green); }
           .vepay-date-input { cursor: pointer; }
 
+          /* Gestión Contable Modal */
+          .btn-accounting { border-color: var(--color-gold-500); color: var(--color-gold-500); }
+          .btn-accounting:hover { background: var(--color-gold-500); color: white; }
+          .btn-accounting-label { display: none; }
+          .modal-accounting { max-width: 600px; }
+
+          .accounting-section { margin-bottom: 20px; }
+          .accounting-section:last-child { margin-bottom: 0; }
+          .accounting-section-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
+          .accounting-section-desc { font-size: 0.6875rem; color: var(--text-tertiary); margin: 0 0 12px 0; }
+
+          .accounting-actions { display: flex; flex-direction: column; gap: 8px; }
+          .accounting-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-input);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+          }
+          .accounting-btn:hover:not(:disabled) { transform: translateX(4px); }
+          .accounting-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+          .accounting-btn-icon { font-size: 1.25rem; flex-shrink: 0; }
+          .accounting-btn-content { flex: 1; min-width: 0; }
+          .accounting-btn-label { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+          .accounting-btn-desc { display: block; font-size: 0.6875rem; color: var(--text-tertiary); margin-top: 2px; }
+
+          .accounting-btn-danger { border-color: var(--color-error); }
+          .accounting-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: var(--color-error); }
+          .accounting-btn-danger .accounting-btn-label { color: var(--color-error); }
+
+          .accounting-btn-warning { border-color: var(--color-gold-500); }
+          .accounting-btn-warning:hover:not(:disabled) { background: rgba(245,158,11,0.1); border-color: var(--color-gold-500); }
+          .accounting-btn-warning .accounting-btn-label { color: var(--color-gold-500); }
+
+          .accounting-btn-info { border-color: var(--color-blue-500); }
+          .accounting-btn-info:hover:not(:disabled) { background: rgba(59,130,246,0.1); border-color: var(--color-blue-500); }
+          .accounting-btn-info .accounting-btn-label { color: var(--color-blue-500); }
+
+          .accounting-accounts-list { display: flex; flex-direction: column; gap: 8px; }
+          .accounting-account-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border-default);
+            border-left: 4px solid;
+            border-radius: 10px;
+            padding: 12px;
+          }
+          .accounting-account-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+          .accounting-account-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+          .accounting-account-info { flex: 1; }
+          .accounting-account-name { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+          .accounting-account-balance { display: block; font-size: 0.9375rem; font-weight: 800; }
+          .accounting-account-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+          .accounting-mini-btn {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-card);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-secondary);
+          }
+          .accounting-mini-btn:hover:not(:disabled) { transform: translateY(-1px); }
+          .accounting-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+          .accounting-mini-danger:hover:not(:disabled) { border-color: var(--color-error); color: var(--color-error); background: rgba(239,68,68,0.1); }
+          .accounting-mini-warning:hover:not(:disabled) { border-color: var(--color-gold-500); color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
+
+          .accounting-info-box {
+            display: flex;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 10px;
+            background: rgba(61,204,142,0.08);
+            border: 1px solid rgba(61,204,142,0.2);
+            margin-top: 16px;
+          }
+          .accounting-info-icon { font-size: 1.25rem; flex-shrink: 0; }
+          .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
+          .accounting-info-text strong { color: var(--text-primary); }
+
           /* Responsive */
           @media (max-width: 768px) {
             .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
@@ -1328,6 +1669,10 @@ export default function FinanzasPage() {
             .page-header-actions .btn-primary { grid-column: 1 / -1; }
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
+            .btn-accounting-label { display: inline; }
+            .modal-accounting { max-width: none; }
+            .accounting-account-actions { gap: 4px; }
+            .accounting-mini-btn { padding: 5px 8px; font-size: 0.625rem; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-value { font-size: 1.25rem; }
