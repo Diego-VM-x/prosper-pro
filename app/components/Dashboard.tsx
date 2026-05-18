@@ -8,22 +8,26 @@ import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   IconPlus,
-  IconArrowUpRight,
-  IconTrendUp,
-  IconZap,
   IconX,
+  IconTrendUp,
+  IconWallet,
+  IconCalendar,
+  IconTasks,
+  IconClock,
+  IconArrowForward,
 } from './icons';
 import { CustomSelect } from './CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
-import { subscribeToAccounts } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, getTotalBalance } from '@/lib/firestore/accounts';
+import { getPlanSummary } from '@/lib/firestore/plans';
+import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
 
 const FinancialStatusChart = lazy(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
 );
-import type { Goal, GoalCategory, FinancialAccount } from '@/types';
+import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
-const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
 
 function parseDeadlineToISO(deadline: string): string | null {
   if (!deadline) return null;
@@ -46,17 +50,23 @@ function getDaysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
+}
+
 export function Dashboard() {
   const router = useRouter();
   const { query } = useSearch();
-  const { goals, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
+  const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
 
   const [monthlySavings, setMonthlySavings] = useState(0);
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [monthlyRecurring, setMonthlyRecurring] = useState(0);
+  const [dueRecurringCount, setDueRecurringCount] = useState(0);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
   const [customCats, setCustomCats] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
-
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
 
   const [newGoal, setNewGoal] = useState({
@@ -91,7 +101,6 @@ export function Dashboard() {
     return () => { cancelled = true; };
   }, [user?.uid]);
 
-  // Suscribirse a cuentas
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
@@ -113,13 +122,18 @@ export function Dashboard() {
         if (cancelled) return;
 
         const transactionsData = await getTransactionsByOwnerId(uid);
+        const balance = await getTotalBalance(uid);
 
-        if (transactionsData.length) {
-          const savings = transactionsData.filter((t) => t.type === 'saving');
-          const now = new Date();
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-          const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
-          if (monthSavings > 0) setMonthlySavings(monthSavings);
+        if (!cancelled) {
+          setTotalBalance(balance);
+
+          if (transactionsData.length) {
+            const savings = transactionsData.filter((t) => t.type === 'saving');
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+            const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
+            if (monthSavings > 0) setMonthlySavings(monthSavings);
+          }
         }
       } catch (e) {
         console.error('Firestore load error:', e);
@@ -130,13 +144,40 @@ export function Dashboard() {
     return () => { cancelled = true; };
   }, [userId]);
 
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    let cancelled = false;
+
+    async function loadRecurring() {
+      try {
+        const uidStr = uid as string;
+        const [duePlans, summary] = await Promise.all([
+          getDueRecurringPlans(uidStr),
+          getMonthlyRecurringSummary(uidStr),
+        ]);
+        if (!cancelled) {
+          setDueRecurringCount(duePlans.length);
+          setMonthlyRecurring(summary.totalMonthly);
+        }
+      } catch (e) { console.error(e); }
+    }
+    loadRecurring();
+    return () => { cancelled = true; };
+  }, [user?.uid]);
+
   const activeGoals = goals.filter((g) => g.status !== 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
   const completedGoals = goals.filter((g) => g.status === 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
   const totalGoals = goals.length;
   const progressPct = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
   const radius = 54;
-  const circumference = 2 * Math.PI * radius; // 339.292
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progressPct / 100);
+
+  const activePlans = plans.filter((p) => p.status === 'progress' || p.status === 'pending');
+  const savingsPlans = plans.filter((p) => p.type === 'savings' && p.status !== 'completed');
+  const totalSavingsTarget = savingsPlans.reduce((sum, p) => sum + p.target, 0);
+  const totalSavingsCurrent = savingsPlans.reduce((sum, p) => sum + p.current, 0);
 
   const handleCreateGoal = async () => {
     if (!newGoal.title || !newGoal.target) return;
@@ -155,167 +196,298 @@ export function Dashboard() {
     setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
-  // 4 metas más recientemente actualizadas
-  const recentGoals = React.useMemo(() => {
-    return [...goals]
-      .filter((g) => g.status !== 'completed')
-      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-      .slice(0, 4);
-  }, [goals]);
+  const upcomingDeadlines = [...goals, ...plans]
+    .filter((item) => item.status !== 'completed' && item.deadline)
+    .map((item) => ({
+      ...item,
+      iso: parseDeadlineToISO(item.deadline as string),
+    }))
+    .filter((item) => item.iso !== null)
+    .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
+    .slice(0, 5);
+
+  const todayItems = [
+    ...goalsToday.map((g) => ({ ...g, itemType: 'goal' as const })),
+    ...remindersToday.map((r) => ({ ...r, itemType: 'reminder' as const })),
+  ];
+
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+  };
 
   return (
     <DashboardLayout>
       <div className="dashboard-container">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div>
-            <h1 className="dashboard-title">Dashboard</h1>
-            <p className="dashboard-subtitle">Planifica, ahorra y prospera con tus metas financieras.</p>
+        {/* Welcome Banner */}
+        <div className="welcome-banner">
+          <div className="welcome-content">
+            <p className="welcome-greeting">{greeting()},</p>
+            <h1 className="welcome-title">{user?.displayName || 'Usuario'}</h1>
+            <p className="welcome-subtitle">Aquí tienes un resumen de tu situación financiera</p>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowNewGoalModal(true)}>
-            <IconPlus width={14} /> Nueva Meta
-          </button>
-        </div>
-
-        {/* 4 Stat Cards Superiores */}
-        <div className="stats-row">
-          <div className="stat-card stat-card-clickable" onClick={() => router.push('/metas')}>
-            <div className="stat-card-icon">
-              <span className="stat-icon-bg">🎯</span>
-            </div>
-            <p className="stat-card-label">METAS ACTIVAS</p>
-            <p className="stat-card-value">{activeGoals.length}</p>
+          <div className="welcome-actions">
+            <button className="btn btn-primary btn-sm" onClick={() => router.push('/metas')}>
+              <IconPlus width={14} /> Nuevo Plan
+            </button>
           </div>
-          <div className="stat-card stat-card-clickable" onClick={() => router.push('/metas')}>
-            <div className="stat-card-icon">
-              <span className="stat-icon-bg">✓</span>
-            </div>
-            <p className="stat-card-label">COMPLETADAS</p>
-            <p className="stat-card-value">{completedGoals.length}</p>
-          </div>
-          <div className="stat-card featured stat-card-clickable" onClick={() => router.push('/finanzas')}>
-            <div className="stat-card-icon">
-              <span className="stat-icon-bg">💰</span>
-            </div>
-            <p className="stat-card-label">AHORRO MENSUAL</p>
-            <p className="stat-card-value stat-value-green">${monthlySavings.toLocaleString()}</p>
-          </div>
-          <div className="stat-card stat-card-clickable" onClick={() => router.push('/cursos')}>
-            <div className="stat-card-icon">
-              <span className="stat-icon-bg">📖</span>
-            </div>
-            <p className="stat-card-label">LECCIONES</p>
-            <p className="stat-card-value">{goals.filter((g) => g.category === 'Educación' && g.status !== 'completed').length}</p>
+          <div className="welcome-bg-shapes">
+            <div className="welcome-shape welcome-shape-1" />
+            <div className="welcome-shape welcome-shape-2" />
+            <div className="welcome-shape welcome-shape-3" />
           </div>
         </div>
 
-        {/* Sección Principal: Gráfico Financiero + Metas Activas */}
-        <div className="main-grid">
-          {/* Gráfico Financiero Premium con Recharts */}
-          <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
-            <FinancialStatusChart />
-          </Suspense>
-
-          {/* Panel Lateral: Metas Activas */}
-          <div className="dash-card goals-panel">
-            <div className="dash-card-header">
-              <h3 className="dash-card-title">Metas Activas</h3>
-              <button className="dash-card-action" onClick={() => router.push('/metas')}>VER TODO</button>
+        {/* Stats Pills - Horizontal Scroll */}
+        <div className="stats-scroll">
+          <div className="stat-pill" onClick={() => router.push('/finanzas')}>
+            <div className="stat-pill-icon" style={{ background: 'rgba(61,204,142,0.15)' }}>💰</div>
+            <div className="stat-pill-info">
+              <span className="stat-pill-label">Balance Total</span>
+              <span className="stat-pill-value" style={{ color: 'var(--color-prosper-green)' }}>{formatCurrency(totalBalance)}</span>
             </div>
-            <div className="goals-list">
-              {activeGoals.slice(0, 4).map((goal: Goal) => {
-                const pct = Math.min((goal.current / goal.target) * 100, 100);
-                const goalColor = pct >= 75 ? 'var(--color-prosper-green)' : pct >= 50 ? 'var(--color-prosper-green)' : 'var(--color-red-500)';
+          </div>
+          <div className="stat-pill" onClick={() => router.push('/finanzas')}>
+            <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
+            <div className="stat-pill-info">
+              <span className="stat-pill-label">Ahorro Mensual</span>
+              <span className="stat-pill-value">{formatCurrency(monthlySavings)}</span>
+            </div>
+          </div>
+          <div className="stat-pill" onClick={() => router.push('/metas')}>
+            <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
+            <div className="stat-pill-info">
+              <span className="stat-pill-label">Ahorro en Planes</span>
+              <span className="stat-pill-value">{formatCurrency(totalSavingsCurrent)}</span>
+            </div>
+          </div>
+          <div className="stat-pill" onClick={() => router.push('/metas')}>
+            <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}>🔄</div>
+            <div className="stat-pill-info">
+              <span className="stat-pill-label">Recurrentes/Mes</span>
+              <span className="stat-pill-value">{formatCurrency(monthlyRecurring)}</span>
+            </div>
+            {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
+          </div>
+          <div className="stat-pill" onClick={() => router.push('/metas')}>
+            <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}>✓</div>
+            <div className="stat-pill-info">
+              <span className="stat-pill-label">Metas Completadas</span>
+              <span className="stat-pill-value">{completedGoals.length}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Today Section - Avisos */}
+        {todayItems.length > 0 && (
+          <div className="today-section">
+            <div className="section-header">
+              <div className="section-header-left">
+                <IconCalendar width={18} />
+                <h2 className="section-title">Para Hoy</h2>
+              </div>
+              <span className="section-count">{todayItems.length} pendiente{todayItems.length > 1 ? 's' : ''}</span>
+            </div>
+            <div className="today-list">
+              {todayItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="today-item"
+                  onClick={() => router.push(item.itemType === 'goal' ? '/metas' : '/calendario')}
+                >
+                  <div className="today-item-dot" style={{ background: item.itemType === 'goal' ? 'var(--color-prosper-green)' : 'var(--color-gold-500)' }} />
+                  <div className="today-item-content">
+                    <span className="today-item-title">{item.title}</span>
+                    <span className="today-item-desc">
+                      {item.itemType === 'goal'
+                        ? `${formatCurrency((item as Goal).current)} de ${formatCurrency((item as Goal).target)}`
+                        : (item as Reminder).type}
+                    </span>
+                  </div>
+                  <span className="today-item-arrow">›</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Main Content: Chart + Plans */}
+        <div className="main-content-grid">
+          {/* Financial Chart */}
+          <div className="content-card chart-card">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconTrendUp width={18} />
+                <h2 className="content-card-title">Rendimiento Financiero</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                Ver detalles <IconArrowForward width={14} />
+              </button>
+            </div>
+            <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
+              <FinancialStatusChart />
+            </Suspense>
+          </div>
+
+          {/* Active Plans Sidebar */}
+          <div className="content-card plans-card">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconTasks width={18} />
+                <h2 className="content-card-title">Planes Activos</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/metas')}>
+                Ver todo
+              </button>
+            </div>
+            <div className="plans-list">
+              {activePlans.slice(0, 5).map((plan: FinancialPlan) => {
+                const pct = Math.min((plan.current / plan.target) * 100, 100);
+                const typeColors: Record<string, string> = {
+                  savings: 'var(--color-prosper-green)',
+                  expense: 'var(--color-gold-500)',
+                  recurring: 'var(--color-blue-500, #3B82F6)',
+                };
+                const typeIcons: Record<string, string> = {
+                  savings: '🏦',
+                  expense: '📋',
+                  recurring: '🔄',
+                };
                 return (
-                  <div className="goal-card" key={goal.id}>
-                    <div className="goal-card-header">
-                      <span className="goal-card-title">{goal.title}</span>
+                  <div className="plan-item" key={plan.id} onClick={() => router.push('/metas')}>
+                    <div className="plan-item-header">
+                      <div className="plan-item-icon">{plan.icon || typeIcons[plan.type] || '📌'}</div>
+                      <div className="plan-item-info">
+                        <span className="plan-item-title">{plan.title}</span>
+                        <span className="plan-item-meta">{plan.category} · {plan.type === 'savings' ? 'Ahorro' : plan.type === 'expense' ? 'Gasto' : 'Recurrente'}</span>
+                      </div>
                     </div>
-                    <div className="goal-progress-bar">
-                      <div className="goal-progress-fill" style={{ width: `${pct}%`, background: goalColor }} />
+                    <div className="plan-item-progress">
+                      <div className="plan-progress-track">
+                        <div
+                          className="plan-progress-fill"
+                          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${typeColors[plan.type]}, ${typeColors[plan.type]}dd)` }}
+                        />
+                      </div>
+                      <div className="plan-progress-info">
+                        <span className="plan-progress-pct" style={{ color: typeColors[plan.type] }}>{Math.round(pct)}%</span>
+                        <span className="plan-progress-amounts">{formatCurrency(plan.current)} / {formatCurrency(plan.target)}</span>
+                      </div>
                     </div>
                   </div>
                 );
               })}
-              {activeGoals.length === 0 && <p className="empty-msg">No hay metas activas</p>}
+              {activePlans.length === 0 && (
+                <div className="plans-empty">
+                  <p>No hay planes activos</p>
+                  <button className="plans-empty-btn" onClick={() => router.push('/metas')}>Crear primer plan</button>
+                </div>
+              )}
             </div>
-            <button className="btn-add-goal" onClick={() => router.push('/metas')}>
-              + Añadir Nuevo Objetivo
-            </button>
           </div>
         </div>
 
-        {/* Fila Inferior: 3 Cards */}
-        <div className="bottom-grid">
-          {/* Flujo de Actividad */}
-          <div className="dash-card activity-card">
-            <div className="dash-card-header">
-              <h3 className="dash-card-title">FLUJO DE ACTIVIDAD</h3>
+        {/* Bottom Section: Progress + Upcoming + Accounts */}
+        <div className="bottom-section">
+          {/* Progress Ring */}
+          <div className="content-card progress-section">
+            <div className="content-card-header">
+              <h2 className="content-card-title">Progreso General</h2>
             </div>
-            <div className="activity-item">
-              <div className="activity-icon">🚀</div>
-              <div className="activity-info">
-                <p className="activity-text">Bienvenido a Prosper. ¡Empieza a crear tus metas financieras!</p>
-                <span className="activity-time">Hoy</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Progreso Circular */}
-          <div className="dash-card progress-card">
-            <div className="progress-ring-container">
-              <svg className="progress-ring" viewBox="0 0 120 120">
-                <circle className="progress-ring-track" cx="60" cy="60" r="54" />
-                <circle className="progress-ring-fill" cx="60" cy="60" r="54" style={{ strokeDashoffset }} />
-              </svg>
-              <div className="progress-ring-center">
-                <span className="progress-pct">{progressPct}%</span>
-                <span className="progress-label">Completado</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Próximos Hitos */}
-          <div className="dash-card milestones-card">
-            <div className="dash-card-header">
-              <h3 className="dash-card-title">PRÓXIMOS HITOS</h3>
-            </div>
-            {(() => {
-              const upcoming = goals
-                .filter((g: Goal) => g.status !== 'completed' && g.deadline)
-                .map((g: Goal) => ({ ...g, iso: parseDeadlineToISO(g.deadline) }))
-                .filter((g) => g.iso !== null)
-                .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
-                .slice(0, 2);
-              return upcoming.length > 0 ? (
-                <div className="milestones-list">
-                  {upcoming.map((g) => {
-                    const daysLeft = getDaysUntil(g.iso as string);
-                    const urgency = daysLeft <= 0 ? 'var(--color-red-500)' : daysLeft <= 7 ? 'var(--color-gold-500)' : 'var(--text-secondary)';
-                    return (
-                      <div className="milestone-item milestone-item-clickable" key={g.id} onClick={() => router.push('/metas')}>
-                        <div className="milestone-date">
-                          <span className="milestone-month">OCT</span>
-                          <span className="milestone-day">{daysLeft <= 0 ? '!' : daysLeft}</span>
-                        </div>
-                        <div className="milestone-info">
-                          <p className="milestone-title">{g.title}</p>
-                          <p className="milestone-desc">${g.current.toLocaleString()} / ${g.target.toLocaleString()}</p>
-                        </div>
-                        <span className="milestone-arrow" style={{ color: urgency }}>›</span>
-                      </div>
-                    );
-                  })}
+            <div className="progress-ring-wrapper">
+              <div className="progress-ring-container">
+                <svg className="progress-ring" viewBox="0 0 120 120">
+                  <circle className="progress-ring-track" cx="60" cy="60" r="54" />
+                  <circle className="progress-ring-fill" cx="60" cy="60" r="54" style={{ strokeDashoffset }} />
+                </svg>
+                <div className="progress-ring-center">
+                  <span className="progress-pct">{progressPct}%</span>
+                  <span className="progress-label">Completado</span>
                 </div>
-              ) : (
-                <p className="empty-msg">No hay hitos próximos</p>
-              );
-            })()}
+              </div>
+              <div className="progress-stats">
+                <div className="progress-stat">
+                  <span className="progress-stat-value">{activeGoals.length}</span>
+                  <span className="progress-stat-label">Activas</span>
+                </div>
+                <div className="progress-stat">
+                  <span className="progress-stat-value">{completedGoals.length}</span>
+                  <span className="progress-stat-label">Completadas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Upcoming Deadlines */}
+          <div className="content-card deadlines-section">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconClock width={18} />
+                <h2 className="content-card-title">Próximos Vencimientos</h2>
+              </div>
+            </div>
+            <div className="deadlines-list">
+              {upcomingDeadlines.length > 0 ? upcomingDeadlines.map((item) => {
+                const daysLeft = getDaysUntil(item.iso as string);
+                const urgency = daysLeft <= 0 ? 'urgent' : daysLeft <= 7 ? 'warning' : 'normal';
+                return (
+                  <div className="deadline-item" key={item.id} onClick={() => router.push('/metas')}>
+                    <div className={`deadline-badge ${urgency}`}>
+                      <span className="deadline-badge-days">{daysLeft <= 0 ? '!' : daysLeft}</span>
+                      <span className="deadline-badge-label">{daysLeft <= 0 ? 'vencido' : daysLeft === 1 ? 'día' : 'días'}</span>
+                    </div>
+                    <div className="deadline-info">
+                      <span className="deadline-title">{item.title}</span>
+                      <span className="deadline-amount">{formatCurrency(item.current)} / {formatCurrency(item.target)}</span>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <p className="empty-msg">No hay vencimientos próximos</p>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Access Accounts */}
+          <div className="content-card accounts-section">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconWallet width={18} />
+                <h2 className="content-card-title">Mis Cuentas</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                Gestionar
+              </button>
+            </div>
+            <div className="accounts-list">
+              {accounts.slice(0, 4).map((acc) => {
+                const typeIcons: Record<string, string> = { checking: '🏦', savings: '💰', cash: '💵' };
+                return (
+                  <div className="account-item" key={acc.id} onClick={() => router.push('/finanzas')}>
+                    <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
+                      {acc.icon || typeIcons[acc.type] || '💳'}
+                    </div>
+                    <div className="account-item-info">
+                      <span className="account-item-name">{acc.name}</span>
+                      <span className="account-item-type">{acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'}</span>
+                    </div>
+                    <span className="account-item-balance" style={{ color: acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)' }}>
+                      {formatCurrency(acc.balance)}
+                    </span>
+                  </div>
+                );
+              })}
+              {accounts.length === 0 && (
+                <p className="empty-msg">Sin cuentas configuradas</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal Nueva Meta */}
       {showNewGoalModal && (
         <div className="modal-overlay" onClick={() => setShowNewGoalModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -373,117 +545,312 @@ export function Dashboard() {
       )}
 
       <style>{`
-        .dashboard-container { padding: 0; }
-        .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-        .dashboard-title { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-        .dashboard-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0 0; }
-        .btn-sm { padding: 8px 16px; font-size: 0.875rem; }
+        * { box-sizing: border-box; }
 
-        /* Stat Cards */
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 20px; position: relative; transition: all var(--transition-fast); }
-        .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-        .stat-card-clickable { cursor: pointer; transition: all var(--transition-fast); }
-        .stat-card.featured { border-color: var(--color-prosper-green); background: linear-gradient(135deg, rgba(61,204,142,0.1), transparent); }
-        .stat-card-icon { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .stat-icon-bg { width: 40px; height: 40px; border-radius: var(--radius-sm); background: rgba(61,204,142,0.15); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
-        .stat-badge { font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); background: rgba(61,204,142,0.15); padding: 2px 8px; border-radius: var(--radius-full); }
-        .stat-card-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-card-value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); margin: 0; line-height: 1.1; word-break: break-word; overflow-wrap: break-word; }
-        .stat-value-green { color: var(--color-prosper-green) !important; }
+        .dashboard-container {
+          padding: 0;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
 
-        /* Main Grid */
-        .main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; margin-bottom: 24px; }
-        .dash-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 24px; }
-        .dash-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
-        .dash-card-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-        .dash-card-subtitle { font-size: 0.875rem; color: var(--text-secondary); margin: 4px 0 0 0; }
-        .dash-card-action { background: none; border: none; font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
-        .dash-card-action:hover { opacity: 0.8; }
+        /* Welcome Banner */
+        .welcome-banner {
+          position: relative;
+          background: linear-gradient(135deg, var(--color-prosper-navy) 0%, #2A5A4E 50%, var(--color-prosper-green) 100%);
+          border-radius: var(--radius-xl);
+          padding: 32px 40px;
+          margin-bottom: 24px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 140px;
+        }
+        .welcome-content { position: relative; z-index: 1; }
+        .welcome-greeting {
+          font-size: 0.875rem;
+          color: rgba(255,255,255,0.7);
+          margin: 0 0 4px 0;
+          font-weight: 500;
+        }
+        .welcome-title {
+          font-size: 1.75rem;
+          font-weight: 800;
+          color: white;
+          margin: 0 0 8px 0;
+          line-height: 1.2;
+        }
+        .welcome-subtitle {
+          font-size: 0.9375rem;
+          color: rgba(255,255,255,0.6);
+          margin: 0;
+        }
+        .welcome-actions { position: relative; z-index: 1; }
+        .welcome-actions .btn-sm {
+          padding: 10px 20px;
+          font-size: 0.875rem;
+          background: white;
+          color: var(--color-prosper-navy);
+          border: none;
+          border-radius: var(--radius-md);
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all var(--transition-fast);
+        }
+        .welcome-actions .btn-sm:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .welcome-bg-shapes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        .welcome-shape {
+          position: absolute;
+          border-radius: 50%;
+          opacity: 0.1;
+        }
+        .welcome-shape-1 { width: 300px; height: 300px; background: white; top: -100px; right: -50px; }
+        .welcome-shape-2 { width: 200px; height: 200px; background: white; bottom: -80px; left: 10%; }
+        .welcome-shape-3 { width: 150px; height: 150px; background: white; top: 20%; right: 30%; }
 
-        /* Chart View Toggle */
-        .chart-view-toggle { display: flex; gap: 4px; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
-        .toggle-btn { padding: 6px 14px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); }
-        .toggle-btn.active { background: var(--color-prosper-green); color: white; }
-        .toggle-btn:hover:not(.active) { color: var(--text-primary); }
+        /* Stats Scroll */
+        .stats-scroll {
+          display: flex;
+          gap: 12px;
+          overflow-x: auto;
+          padding-bottom: 8px;
+          margin-bottom: 24px;
+          scrollbar-width: none;
+        }
+        .stats-scroll::-webkit-scrollbar { display: none; }
+        .stat-pill {
+          flex: 0 0 auto;
+          min-width: 180px;
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-lg);
+          padding: 16px 20px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+          position: relative;
+        }
+        .stat-pill:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--color-prosper-green); }
+        .stat-pill-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          flex-shrink: 0;
+        }
+        .stat-pill-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .stat-pill-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-pill-value { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
+        .stat-pill-badge {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: var(--color-error);
+          color: white;
+          font-size: 0.625rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
 
-        /* Chart Period Toggle */
-        .chart-period-toggle { display: flex; gap: 2px; background: var(--bg-input); border-radius: var(--radius-md); padding: 3px; }
-        .period-btn { padding: 5px 10px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); text-transform: uppercase; letter-spacing: 0.5px; }
-        .period-btn.active { background: var(--color-prosper-green); color: white; }
-        .period-btn:hover:not(.active) { color: var(--text-primary); }
+        /* Today Section */
+        .today-section {
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-xl);
+          padding: 20px 24px;
+          margin-bottom: 24px;
+        }
+        .section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 16px;
+        }
+        .section-header-left { display: flex; align-items: center; gap: 8px; }
+        .section-header-left svg { color: var(--color-prosper-green); }
+        .section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .section-count { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-input); padding: 4px 10px; border-radius: var(--radius-full); }
+        .today-list { display: flex; flex-direction: column; gap: 8px; }
+        .today-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          background: var(--bg-input);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .today-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
+        .today-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .today-item-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .today-item-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+        .today-item-desc { font-size: 0.75rem; color: var(--text-secondary); }
+        .today-item-arrow { font-size: 1.25rem; color: var(--text-tertiary); flex-shrink: 0; }
 
-        /* Line Chart (Cuentas historial) */
-        .line-chart-container { position: relative; height: 280px; padding-top: 8px; }
-        .line-chart-svg { width: 100%; height: 220px; }
-        .chart-x-axis { display: flex; justify-content: space-between; margin-top: 8px; padding: 0 10px; }
-        .chart-day-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
-        .chart-legend-inline { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
-        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
-        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+        /* Content Cards */
+        .main-content-grid {
+          display: grid;
+          grid-template-columns: 1fr 340px;
+          gap: 20px;
+          margin-bottom: 24px;
+        }
+        .content-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-default);
+          border-radius: var(--radius-xl);
+          padding: 24px;
+        }
+        .content-card-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+        }
+        .content-card-header-left { display: flex; align-items: center; gap: 8px; }
+        .content-card-header-left svg { color: var(--color-prosper-green); }
+        .content-card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .content-card-action {
+          background: none;
+          border: none;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--color-prosper-green);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          transition: opacity var(--transition-fast);
+        }
+        .content-card-action:hover { opacity: 0.8; }
 
-        /* Horizontal Bar Chart (Metas) */
-        .hbar-chart { display: flex; flex-direction: column; gap: 16px; padding: 8px 0; }
-        .hbar-item { background: var(--bg-input); border-radius: var(--radius-sm); padding: 14px 16px; }
-        .hbar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .hbar-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
-        .hbar-pct { font-size: 0.875rem; font-weight: 700; }
-        .hbar-track { width: 100%; height: 8px; background: var(--border-default); border-radius: var(--radius-full); overflow: hidden; margin-bottom: 6px; }
-        .hbar-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.5s ease; }
-        .hbar-amounts { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-tertiary); }
+        /* Plans List */
+        .plans-list { display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto; }
+        .plan-item { cursor: pointer; transition: all var(--transition-fast); }
+        .plan-item:hover { opacity: 0.85; }
+        .plan-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .plan-item-icon { font-size: 1.125rem; }
+        .plan-item-info { flex: 1; min-width: 0; }
+        .plan-item-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .plan-item-meta { font-size: 0.6875rem; color: var(--text-secondary); }
+        .plan-item-progress { display: flex; flex-direction: column; gap: 4px; }
+        .plan-progress-track { width: 100%; height: 6px; background: var(--border-default); border-radius: var(--radius-full); overflow: hidden; }
+        .plan-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.5s ease; }
+        .plan-progress-info { display: flex; justify-content: space-between; align-items: center; }
+        .plan-progress-pct { font-size: 0.75rem; font-weight: 700; }
+        .plan-progress-amounts { font-size: 0.6875rem; color: var(--text-secondary); }
+        .plans-empty { text-align: center; padding: 32px 16px; }
+        .plans-empty p { font-size: 0.875rem; color: var(--text-secondary); margin: 0 0 12px 0; }
+        .plans-empty-btn {
+          padding: 8px 16px;
+          background: var(--color-prosper-green);
+          color: white;
+          border: none;
+          border-radius: var(--radius-md);
+          font-size: 0.8125rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .plans-empty-btn:hover { filter: brightness(1.1); }
 
-        /* Chart Empty State */
-        .chart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--text-secondary); }
-        .chart-empty p { font-size: 0.875rem; margin: 0; }
-        .chart-empty-btn { padding: 8px 20px; border-radius: var(--radius-md); background: var(--color-prosper-green); color: white; border: none; font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
-        .chart-empty-btn:hover { filter: brightness(1.1); }
+        /* Bottom Section */
+        .bottom-section {
+          display: grid;
+          grid-template-columns: 200px 1fr 1fr;
+          gap: 20px;
+        }
 
-        /* Goals Panel */
-        .goals-panel { display: flex; flex-direction: column; }
-        .goals-list { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-        .goal-card { background: var(--bg-input); border-radius: var(--radius-sm); padding: 12px 16px; }
-        .goal-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .goal-card-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; }
-        .goal-card-pct { font-size: 0.875rem; font-weight: 700; }
-        .goal-progress-bar { width: 100%; height: 6px; background: var(--border-default); border-radius: var(--radius-full); overflow: hidden; }
-        .goal-progress-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.5s ease; }
-        .btn-add-goal { width: 100%; padding: 12px; margin-top: 16px; background: transparent; border: 1px dashed var(--border-default); border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 0.875rem; cursor: pointer; transition: all var(--transition-fast); }
-        .btn-add-goal:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
-
-        /* Bottom Grid */
-        .bottom-grid { display: grid; grid-template-columns: 1fr 200px 1fr; gap: 20px; }
-
-        /* Activity Card */
-        .activity-card { }
-        .activity-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border-default); }
-        .activity-item:last-child { border-bottom: none; }
-        .activity-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(61,204,142,0.15); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; flex-shrink: 0; }
-        .activity-info { flex: 1; }
-        .activity-text { font-size: 0.875rem; color: var(--text-primary); margin: 0; line-height: 1.4; }
-        .activity-time { font-size: 0.75rem; color: var(--text-tertiary); }
-
-        /* Progress Card */
-        .progress-card { display: flex; align-items: center; justify-content: center; min-height: 200px; }
-        .progress-ring-container { position: relative; width: 140px; height: 140px; }
+        /* Progress Section */
+        .progress-section { display: flex; flex-direction: column; align-items: center; }
+        .progress-ring-wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+        .progress-ring-container { position: relative; width: 120px; height: 120px; }
         .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
         .progress-ring .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 8; }
         .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.292; transition: stroke-dashoffset 1s ease; }
         .progress-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .progress-pct { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
-        .progress-label { font-size: 0.6875rem; color: var(--text-secondary); margin-top: 2px; }
+        .progress-pct { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+        .progress-label { font-size: 0.625rem; color: var(--text-secondary); margin-top: 2px; }
+        .progress-stats { display: flex; gap: 24px; width: 100%; justify-content: center; }
+        .progress-stat { text-align: center; }
+        .progress-stat-value { display: block; font-size: 1.25rem; font-weight: 800; color: var(--text-primary); }
+        .progress-stat-label { font-size: 0.625rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Milestones Card */
-        .milestones-list { display: flex; flex-direction: column; gap: 12px; }
-        .milestone-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-input); border-radius: var(--radius-sm); }
-        .milestone-item-clickable { cursor: pointer; transition: all var(--transition-fast); }
-        .milestone-item-clickable:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
-        .milestone-date { width: 40px; height: 48px; background: var(--bg-card); border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
-        .milestone-month { font-size: 0.625rem; font-weight: 700; color: var(--color-prosper-green); text-transform: uppercase; }
-        .milestone-day { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
-        .milestone-info { flex: 1; min-width: 0; }
-        .milestone-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .milestone-desc { font-size: 0.75rem; color: var(--text-secondary); margin: 2px 0 0 0; }
-        .milestone-arrow { font-size: 1.25rem; font-weight: 700; flex-shrink: 0; }
+        /* Deadlines Section */
+        .deadlines-list { display: flex; flex-direction: column; gap: 10px; }
+        .deadline-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          background: var(--bg-input);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .deadline-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
+        .deadline-badge {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-md);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .deadline-badge.urgent { background: rgba(239,68,68,0.15); }
+        .deadline-badge.warning { background: rgba(245,158,11,0.15); }
+        .deadline-badge.normal { background: rgba(61,204,142,0.15); }
+        .deadline-badge-days { font-size: 1rem; font-weight: 800; line-height: 1; }
+        .deadline-badge.urgent .deadline-badge-days { color: var(--color-error); }
+        .deadline-badge.warning .deadline-badge-days { color: var(--color-gold-500); }
+        .deadline-badge.normal .deadline-badge-days { color: var(--color-prosper-green); }
+        .deadline-badge-label { font-size: 0.5625rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); }
+        .deadline-info { flex: 1; min-width: 0; }
+        .deadline-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .deadline-amount { font-size: 0.75rem; color: var(--text-secondary); }
+
+        /* Accounts Section */
+        .accounts-list { display: flex; flex-direction: column; gap: 10px; }
+        .account-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 14px;
+          background: var(--bg-input);
+          border-radius: var(--radius-md);
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .account-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
+        .account-item-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.125rem;
+          flex-shrink: 0;
+        }
+        .account-item-info { flex: 1; min-width: 0; }
+        .account-item-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); display: block; }
+        .account-item-type { font-size: 0.6875rem; color: var(--text-secondary); }
+        .account-item-balance { font-size: 0.9375rem; font-weight: 700; flex-shrink: 0; }
 
         .empty-msg { padding: 16px 0; color: var(--text-secondary); font-size: 0.875rem; text-align: center; margin: 0; }
 
@@ -505,54 +872,45 @@ export function Dashboard() {
           to { opacity: 1; transform: translateY(0); }
         }
 
-        @media (max-width: 1024px) {
-          .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-          .main-grid { grid-template-columns: 1fr; gap: 16px; }
-          .bottom-grid { grid-template-columns: 1fr; gap: 16px; }
-          .progress-ring-container { width: 120px; height: 120px; }
-          .progress-pct { font-size: 1.5rem; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
-        @media (max-width: 640px) {
-          .stats-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-          .stat-card { padding: 14px; }
-          .stat-card-value { font-size: 1.25rem; }
-          .stat-card-label { font-size: 0.625rem; }
-          .stat-icon-bg { width: 32px; height: 32px; font-size: 1rem; }
-          .dashboard-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-          .main-grid { gap: 12px; }
-          .bottom-grid { gap: 12px; }
-          .dash-card { padding: 16px; }
-          .progress-ring-container { width: 100px; height: 100px; }
-          .progress-pct { font-size: 1.25rem; }
-          .progress-label { font-size: 0.625rem; }
-          .progress-card { min-height: 140px; }
+
+        @media (max-width: 1024px) {
+          .welcome-banner { padding: 24px; }
+          .welcome-title { font-size: 1.5rem; }
+          .main-content-grid { grid-template-columns: 1fr; }
+          .bottom-section { grid-template-columns: 1fr 1fr; }
+          .progress-section { grid-column: 1 / -1; }
+        }
+        @media (max-width: 768px) {
+          .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+          .welcome-actions { width: 100%; }
+          .welcome-actions .btn-sm { width: 100%; justify-content: center; }
+          .bottom-section { grid-template-columns: 1fr; }
+          .stat-pill { min-width: 160px; }
         }
         @media (max-width: 480px) {
-          .stats-row { grid-template-columns: 1fr 1fr; gap: 6px; }
-          .stat-card { padding: 10px; }
-          .stat-card-value { font-size: 1.125rem; }
-          .stat-card-label { font-size: 0.5625rem; margin-bottom: 4px; }
-          .stat-icon-bg { width: 28px; height: 28px; font-size: 0.875rem; }
-          .stat-badge { font-size: 0.625rem; padding: 1px 6px; }
+          .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }
+          .welcome-title { font-size: 1.25rem; }
+          .welcome-subtitle { font-size: 0.8125rem; }
+          .welcome-shape-1 { width: 150px; height: 150px; }
+          .welcome-shape-2 { width: 100px; height: 100px; }
+          .welcome-shape-3 { display: none; }
+          .stat-pill { min-width: 140px; padding: 12px 14px; }
+          .stat-pill-icon { width: 36px; height: 36px; font-size: 1rem; }
+          .stat-pill-value { font-size: 1rem; }
+          .content-card { padding: 16px; border-radius: var(--radius-lg); }
+          .content-card-title { font-size: 0.9375rem; }
+          .progress-ring-container { width: 100px; height: 100px; }
+          .progress-pct { font-size: 1.25rem; }
+          .deadline-badge { width: 38px; height: 38px; }
+          .deadline-badge-days { font-size: 0.875rem; }
+          .account-item-icon { width: 36px; height: 36px; font-size: 1rem; }
           .modal-content { width: 95%; padding: 16px; }
           .modal-footer { flex-direction: column-reverse; }
           .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
-          .dashboard-title { font-size: 1.25rem; }
-          .dashboard-subtitle { font-size: 0.75rem; }
-          .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
-          .progress-ring-container { width: 90px; height: 90px; }
-          .progress-pct { font-size: 1.125rem; }
-          .progress-label { font-size: 0.5625rem; }
-          .progress-card { min-height: 120px; }
-          .dash-card-title { font-size: 1rem; }
-          .dash-card-subtitle { font-size: 0.75rem; }
-          .goal-card { padding: 10px 12px; }
-          .goal-card-title { font-size: 0.8125rem; }
-          .milestone-item { padding: 10px; }
-          .milestone-date { width: 36px; height: 42px; }
-          .milestone-day { font-size: 1rem; }
-          .activity-icon { width: 28px; height: 28px; font-size: 0.75rem; }
-          .activity-text { font-size: 0.8125rem; }
         }
       `}</style>
     </DashboardLayout>
