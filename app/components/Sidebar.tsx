@@ -18,13 +18,10 @@ import {
   IconTasks,
   IconCalendar,
   IconAnalytics,
-  IconTeam,
   IconSettings,
   IconHelp,
   IconLogout,
   IconProsperLeaf,
-  IconBook,
-  IconTrophy,
   IconX,
 } from './icons';
 
@@ -115,11 +112,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
             <IconAnalytics /> {!isCollapsed && 'Finanzas'}
           </Link>
 
-          {!isCollapsed && <p className="sidebar-label">Aprendizaje</p>}
-          <Link href="/cursos" className={`nav-item ${isActive('/cursos') ? 'active' : ''}`} id="nav-courses" title={isCollapsed ? 'Cursos' : undefined}>
-            <IconBook /> {!isCollapsed && 'Cursos'}
-          </Link>
-
           {!isCollapsed && <p className="sidebar-label">General</p>}
           <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings" title={isCollapsed ? 'Configuración' : undefined}>
             <IconSettings /> {!isCollapsed && 'Configuración'}
@@ -135,17 +127,17 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         {/* Footer / Promo Card */}
         <div className="sidebar-footer">
           {isCollapsed ? (
-            <div className="sidebar-promo-card sidebar-promo-card-collapsed" title="Academia Prosper">
-              <IconBook />
+            <div className="sidebar-promo-card sidebar-promo-card-collapsed" title="Prosper">
+              <IconProsperLeaf />
             </div>
           ) : (
             <div className="sidebar-promo-card">
-              <p className="promo-title">Academia Prosper</p>
+              <p className="promo-title">Prosper.</p>
               <p className="promo-sub">
-                Aprende educación financiera con lecciones gamificadas.
+                Tu camino hacia la libertad financiera.
               </p>
-              <button className="promo-btn" id="promo-cta">
-                Comenzar Curso
+              <button className="promo-btn" id="promo-cta" onClick={() => window.open('https://prosper-pro.vercel.app', '_blank')}>
+                Visitar Web
               </button>
             </div>
           )}

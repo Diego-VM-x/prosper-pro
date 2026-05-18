@@ -27,10 +27,9 @@ import {
   IconTasks,
   IconCalendar,
   IconAnalytics,
-  IconBook,
   IconHelp,
 } from './icons';
-import type { Notification, Course, Transaction } from '@/types';
+import type { Notification, Transaction } from '@/types';
 import Link from 'next/link';
 
 interface TopbarProps {
@@ -59,7 +58,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifPermissioned, setNotifPermissioned] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
@@ -95,16 +93,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     let cancelled = false;
     async function loadData() {
       try {
-        const [{ getCourses }, { getTransactionsByOwnerId }] = await Promise.all([
-          import('@/lib/firestore/courses'),
+        const [{ getTransactionsByOwnerId }] = await Promise.all([
           import('@/lib/firestore/transactions'),
         ]);
-        const [coursesData, txData] = await Promise.all([
-          getCourses(),
-          getTransactionsByOwnerId(uid),
-        ]);
+        const txData = await getTransactionsByOwnerId(uid);
         if (!cancelled) {
-          setCourses(coursesData);
           setTransactions(txData.slice(0, 50));
         }
       } catch (e) {
@@ -141,8 +134,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     { name: 'Dashboard', route: '/dashboard', icon: '📊', keywords: 'dashboard inicio principal' },
     { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
-    { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos' },
-    { name: 'Cursos', route: '/cursos', icon: '📚', keywords: 'cursos aprendizaje educación' },
+    { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
     { name: 'Configuración', route: '/configuracion', icon: '⚙️', keywords: 'configuración ajustes preferencias' },
     { name: 'Ayuda', route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
   ];
@@ -163,15 +155,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       )
     : [];
 
-  // Filtrar cursos según query
-  const courseResults = searchQuery.trim()
-    ? courses.filter(c =>
-        c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.category.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
-
   // Filtrar transacciones según query
   const txResults = searchQuery.trim()
     ? transactions.filter(t =>
@@ -180,8 +163,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       ).slice(0, 10)
     : [];
 
-  const hasResults = searchResults.length > 0 || goalResults.length > 0 || courseResults.length > 0 || txResults.length > 0;
-  const noData = goals.length === 0 && courses.length === 0 && transactions.length === 0;
+  const hasResults = searchResults.length > 0 || goalResults.length > 0 || txResults.length > 0;
+  const noData = goals.length === 0 && transactions.length === 0;
 
   return (
     <header className="topbar" id="main-topbar">
@@ -299,31 +282,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               </>
             )}
 
-            {/* Cursos */}
-            {courseResults.length > 0 && (
-              <>
-                <div className="search-results-header">
-                  <span>Cursos</span>
-                  <span className="search-results-count">{courseResults.length}</span>
-                </div>
-                {courseResults.slice(0, 5).map((course) => (
-                  <Link
-                    key={course.id || course.title}
-                    href={`/cursos`}
-                    className="search-result-item"
-                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
-                  >
-                    <span className="search-result-icon">📚</span>
-                    <div className="search-result-content">
-                      <span className="search-result-name">{course.title}</span>
-                      <span className="search-result-desc">{course.category} · {course.modulesCount} módulos</span>
-                    </div>
-                    <span className="search-result-arrow">→</span>
-                  </Link>
-                ))}
-              </>
-            )}
-
             {/* Transacciones */}
             {txResults.length > 0 && (
               <>
@@ -362,7 +320,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         {showSearch && searchQuery.trim() && noData && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>Crea metas, transacciones o cursos para buscar</p>
+              <p>Crea metas o transacciones para buscar</p>
             </div>
           </div>
         )}
@@ -581,9 +539,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               </Link>
               <Link href="/finanzas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconAnalytics /> Finanzas
-              </Link>
-              <Link href="/cursos" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconBook /> Cursos
               </Link>
               <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconSettings /> Configuración
