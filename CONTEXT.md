@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (17 de Mayo, 2026 - Planes Financieros + Gestión Contable)
+## Estado Actual (18 de Mayo, 2026 - Planes Financieros Completos + Gestión Contable)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -221,6 +221,15 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 18/05/2026 - Fixes Finales Planes Financieros
+- **Firestore Rules**: Agregadas reglas para `plans` (CRUD propietario), `expense_requests` (crear emisor, actualizar emisor/receptor, eliminar emisor), `recurring_payments` (CRUD propietario).
+- **Modal Overlay CSS**: Agregado `.modal-overlay` con `position: fixed`, `z-index: 1000`, `backdrop-filter: blur` al `<style>` de metas/page.tsx. Modal centrado como transferencia.
+- **Firestore undefined fix**: Campos `frequency`, `nextDueDate`, `accountId` solo se incluyen cuando tienen valor real (no undefined).
+- **Renombrado UI**: "Mis Metas" → "Planes Financieros" en Sidebar, Topbar (búsqueda y menú móvil).
+- **Perfil usuario en compartir**: Al escribir email en modal compartir, se busca usuario y muestra tarjeta con avatar (foto o inicial), nombre, email y check verde. Botón enviar se habilita solo con usuario válido.
+- **searchUserByEmail**: Tipo de retorno explícito con `displayName`, `email`, `photoURL` nullable.
+- **Build**: `tsc --noEmit` y `npm run build` exitosos sin errores.
+
 ### 17/05/2026 - Planes Financieros (Reestructuración Metas)
 - **Types**:
   - `types/index.ts`: Nuevos tipos `FinancialPlan` (reemplaza Goal como entidad principal), `ExpenseRequest`, `RecurringPayment`. `PlanType` = 'savings' | 'expense' | 'recurring'. `PlanCategory` con 13 categorías (Ahorro, Inversión, Comida, Tecnología, Vivienda, etc.). `RecurringFrequency` = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'. `RequestStatus` = 'pending' | 'accepted' | 'rejected' | 'cancelled'. Goal mantenido para compatibilidad.
