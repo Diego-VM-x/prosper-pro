@@ -791,6 +791,10 @@ export function Dashboard() {
           gap: 8px;
         }
         .bottom-scroll-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
           width: 36px;
           height: 36px;
           border-radius: 50%;
@@ -805,6 +809,8 @@ export function Dashboard() {
           transition: all var(--transition-fast);
           box-shadow: var(--shadow-sm);
         }
+        .bottom-scroll-arrow-left { left: -10px; }
+        .bottom-scroll-arrow-right { right: -10px; }
         .bottom-scroll-arrow:hover {
           background: var(--color-prosper-green);
           color: white;
@@ -812,6 +818,7 @@ export function Dashboard() {
           box-shadow: 0 0 16px rgba(61,204,142,0.4);
         }
         .bottom-section {
+          width: 100%;
           display: grid;
           grid-template-columns: 200px 1fr 1fr;
           gap: 20px;
