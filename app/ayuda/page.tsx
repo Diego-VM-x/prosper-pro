@@ -11,7 +11,7 @@ import {
   IconArrowForward,
   IconX,
 } from '@/app/components/icons';
-import { submitFeedback } from '@/lib/firestore/feedback';
+import { submitFeedback, getFeedbackByOwner } from '@/lib/firestore/feedback';
 
 const faqs = [
   { category: 'Primeros Pasos', q: '¿Cómo creo mi cuenta en Prosper Pro?', a: 'Ve a la página de registro, ingresa tu email y contraseña, o usa tu cuenta de Google. Una vez registrado, accederás al dashboard en /dashboard.' },
@@ -95,11 +95,33 @@ export default function AyudaPage() {
   const [chatType, setChatType] = useState<'suggestion' | 'bug'>('bug');
   const [chatMessages, setChatMessages] = useState<{ type: 'user' | 'system'; text: string; time: string }[]>([]);
   const [sendingFeedback, setSendingFeedback] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  useEffect(() => {
+    if (showChat && user?.uid && chatMessages.length === 0) {
+      setLoadingHistory(true);
+      getFeedbackByOwner(user.uid).then(history => {
+        const messages: { type: 'user' | 'system'; text: string; time: string }[] = [];
+        [...history].reverse().forEach(item => {
+          const date = new Date(item.createdAt);
+          const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+          messages.push({ type: 'user', text: item.message, time });
+          const label = item.type === 'bug' ? '🐛 Bug reportado' : '💡 Sugerencia enviada';
+          messages.push({ type: 'system', text: `${label}. Gracias por tu feedback. Lo revisaremos pronto.`, time });
+        });
+        setChatMessages(messages);
+      }).catch(err => {
+        console.error('Error loading feedback history:', err);
+      }).finally(() => {
+        setLoadingHistory(false);
+      });
+    }
+  }, [showChat, user?.uid, chatMessages.length]);
 
   const allCategories = ['Todas', ...Array.from(new Set(faqs.map(f => f.category)))];
   const searchLower = searchQuery.toLowerCase().trim();
@@ -407,21 +429,26 @@ export default function AyudaPage() {
                 <button className={`chat-type-btn ${chatType === 'suggestion' ? 'active active-suggestion' : ''}`} onClick={() => setChatType('suggestion')}>💡 Sugerencia</button>
               </div>
               <div className="chat-messages">
-                {chatMessages.length === 0 && (
+                {loadingHistory ? (
+                  <div className="chat-empty">
+                    <p>Cargando historial...</p>
+                  </div>
+                ) : chatMessages.length === 0 ? (
                   <div className="chat-empty">
                     <span className="chat-empty-icon">{chatType === 'bug' ? '🐛' : '💡'}</span>
                     <p>{chatType === 'bug' ? 'Describe el bug que encontraste' : 'Comparte tu idea o sugerencia'}</p>
                     <p className="chat-empty-hint">Sé detallado para que podamos ayudarte mejor.</p>
                   </div>
-                )}
-                {chatMessages.map((msg, i) => (
-                  <div key={i} className={`chat-msg ${msg.type === 'user' ? 'chat-msg-user' : 'chat-msg-system'}`}>
-                    <div className={`chat-msg-bubble ${msg.type === 'user' ? 'chat-msg-bubble-user' : 'chat-msg-bubble-system'}`}>
-                      <p>{msg.text}</p>
+                ) : (
+                  chatMessages.map((msg, i) => (
+                    <div key={i} className={`chat-msg ${msg.type === 'user' ? 'chat-msg-user' : 'chat-msg-system'}`}>
+                      <div className={`chat-msg-bubble ${msg.type === 'user' ? 'chat-msg-bubble-user' : 'chat-msg-bubble-system'}`}>
+                        <p>{msg.text}</p>
+                      </div>
+                      <span className="chat-msg-time">{msg.time}</span>
                     </div>
-                    <span className="chat-msg-time">{msg.time}</span>
-                  </div>
-                ))}
+                  ))
+                )}
                 <div ref={chatEndRef} />
               </div>
               <div className="chat-input-area">

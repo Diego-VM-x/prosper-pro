@@ -30,12 +30,12 @@ export async function submitFeedback(feedback: Omit<FeedbackReport, 'id' | 'crea
 export async function getFeedbackByOwner(ownerId: string): Promise<FeedbackReport[]> {
   const q = query(
     collection(db, COLLECTION),
-    where('ownerId', '==', ownerId),
-    orderBy('createdAt', 'desc'),
+    where('ownerId', '==', ownerId)
   );
   try {
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FeedbackReport));
+    const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FeedbackReport));
+    return docs.sort((a, b) => b.createdAt - a.createdAt);
   } catch (err) {
     console.error('getFeedbackByOwner error:', err);
     return [];
