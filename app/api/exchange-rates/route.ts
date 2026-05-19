@@ -6,7 +6,7 @@ export async function GET() {
   try {
     // 1. Fetch data from ve.dolarapi.com
     const response = await fetch('https://ve.dolarapi.com/v1/dolares', {
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      cache: 'no-store',
     });
 
     if (!response.ok) {
@@ -37,12 +37,12 @@ export async function GET() {
       }
     }
 
-    // Default return structure for CurrencyContext
+    // Default return structure for CurrencyContext - Now using BCV Official Rate
     return NextResponse.json({
       base: 'BS',
       rates: {
         BS: 1.0,
-        USD: paraleloRate, // By default we provide the parallel rate to the app context
+        USD: oficialRate, // Enforce Official BCV rate as the default rate
       },
       sources: {
         oficial: oficialRate,

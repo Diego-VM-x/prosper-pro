@@ -346,7 +346,7 @@ export default function ConfiguracionPage() {
                         </div>
                         {rates.source === 'api' && (
                           <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--color-prosper-green)' }}>
-                            ✓ Usando tasa en vivo de DolarAPI: 1 USD = {rates.rates.USD} Bs
+                            ✓ Usando tasa oficial BCV en vivo: 1 USD = {rates.rates.USD} Bs
                           </div>
                         )}
                         {rates.source === 'manual' && (

@@ -70,6 +70,12 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [displayCurrency, setDisplayCurrencyState] = useState<CurrencyCode>('USD');
   const [rates, setRates] = useState<ExchangeRates>(DEFAULT_RATES);
   const [loading, setLoading] = useState(true);
+  const [apiRates, setApiRates] = useState<ExchangeRates | null>(null);
+  const apiRatesRef = React.useRef<ExchangeRates | null>(null);
+
+  useEffect(() => {
+    apiRatesRef.current = apiRates;
+  }, [apiRates]);
 
   // Load display currency from localStorage on mount
   useEffect(() => {
@@ -104,6 +110,17 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             },
             source: 'manual',
           }));
+        } else {
+          // If custom rates were removed or don't exist, restore API rates if available
+          setRates((prev) => {
+            if (apiRatesRef.current) {
+              return apiRatesRef.current;
+            }
+            return {
+              ...prev,
+              source: 'api',
+            };
+          });
         }
 
         // If no saved display currency, default to user's base currency
@@ -127,16 +144,18 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch('/api/exchange-rates');
         if (res.ok) {
           const data = await res.json();
+          const fetched: ExchangeRates = {
+            rates: data.rates,
+            updatedAt: data.updatedAt,
+            source: 'api',
+          };
+          setApiRates(fetched);
           setRates((prev) => {
             // Only update if user is not using manual override for USD
             if (prev.source === 'manual') {
               return prev;
             }
-            return {
-              rates: data.rates,
-              updatedAt: data.updatedAt,
-              source: 'api',
-            };
+            return fetched;
           });
         }
       } catch (err) {

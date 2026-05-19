@@ -31,10 +31,10 @@ export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS'];
 export const DEFAULT_RATES: ExchangeRates = {
   rates: {
     BS: 1.0,
-    USD: 92.50,   // 1 USD = 92.50 BS (approximate)
+    USD: 45.00,   // 1 USD = 45.00 BS (fallback)
   },
   updatedAt: Date.now(),
-  source: 'manual',
+  source: 'api',
 };
 
 // ============================================================
