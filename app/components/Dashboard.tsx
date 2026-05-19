@@ -262,7 +262,7 @@ export function Dashboard() {
             <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro Mensual</span>
-              <span className="stat-pill-value">{formatAmount(monthlySavings)}</span>
+              <span className="stat-pill-value">{formatInCurrency(monthlySavings, displayCurrency)}</span>
             </div>
           </div>
           <div className="stat-pill" onClick={() => router.push('/metas')}>

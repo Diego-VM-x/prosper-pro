@@ -23,7 +23,6 @@ export default function ConfiguracionPage() {
   const [bio, setBio] = useState('');
   const [language, setLanguage] = useState('es');
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
-  const [rateUSD, setRateUSD] = useState('');
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,11 +63,6 @@ export default function ConfiguracionPage() {
         setCurrency(((p as any).currency || 'USD') as CurrencyCode);
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
-        // Load custom rates
-        const cr = (p as any).customRates;
-        if (cr) {
-          if (cr['USD']) setRateUSD(String(cr['USD']));
-        }
       }
     });
 
@@ -86,7 +80,7 @@ export default function ConfiguracionPage() {
         bio: bio.trim(),
         language,
         currency,
-        customRates: rateUSD ? { USD: parseFloat(rateUSD) } : null,
+        customRates: null,
         notifications: {
           priceAlerts,
           budgetAlerts,
@@ -326,36 +320,15 @@ export default function ConfiguracionPage() {
                       </div>
                     </div>
 
-                    <div className="pref-section">
-                      <label className="pref-label">Tasas de Cambio (1 unidad = X Bs.)</label>
-                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', margin: '0 0 12px' }}>
-                        Ingresa las tasas manualmente. Ejemplo: si 1 USD = 92.50 Bs, escribe 92.50
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ width: '60px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>🇺🇸 USD</span>
-                          <input
-                            className="field-input"
-                            type="number"
-                            step="0.01"
-                            value={rateUSD}
-                            onChange={(e) => setRateUSD(e.target.value)}
-                            style={{ flex: 1 }}
-                          />
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
+                    {rates.source === 'api' && (
+                      <div className="pref-section">
+                        <label className="pref-label">Tasa de Cambio Oficial (BCV)</label>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>✓ Tasa oficial BCV activa:</span>
+                          <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD} Bs.</strong>
                         </div>
-                        {rates.source === 'api' && (
-                          <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--color-prosper-green)' }}>
-                            ✓ Usando tasa oficial BCV en vivo: 1 USD = {rates.rates.USD} Bs
-                          </div>
-                        )}
-                        {rates.source === 'manual' && (
-                          <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                            ℹ️ Usando tasa manual. Deja el campo vacío y guarda para volver a la tasa automática.
-                          </div>
-                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="panel-card">

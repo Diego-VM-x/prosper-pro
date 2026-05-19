@@ -430,16 +430,28 @@ export default function FinanzasPage() {
       await updateAccountBalance(transfer.fromAccountId, -amount);
       await updateAccountBalance(transfer.toAccountId, convertedAmount);
 
-      const txData: any = {
+      const txDataOut: any = {
         ownerId: uid || 'local',
         amount,
         type: 'saving',
         category: 'Transferencia',
-        description: `Transferencia: ${fromAcc.name} → ${toAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(convertedAmount, toCurrency)})` : ''}`,
+        description: `Transferencia a: ${toAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(convertedAmount, toCurrency)})` : ''}`,
         date: Date.now(),
         accountId: transfer.fromAccountId,
       };
-      await createTransaction(txData);
+      await createTransaction(txDataOut);
+
+      const txDataIn: any = {
+        ownerId: uid || 'local',
+        amount: convertedAmount,
+        type: 'income',
+        category: 'Transferencia',
+        description: `Transferencia recibida de: ${fromAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(amount, fromCurrency)})` : ''}`,
+        date: Date.now(),
+        accountId: transfer.toAccountId,
+      };
+      await createTransaction(txDataIn);
+
       await loadTransactions();
 
       success(`Transferencia exitosa: ${fromAcc.name} → ${toAcc.name}`);
@@ -1040,7 +1052,19 @@ export default function FinanzasPage() {
                     <label className="tx-label">De</label>
                     <CustomSelect
                       value={transfer.fromAccountId}
-                      onChange={(val) => setTransfer({ ...transfer, fromAccountId: val })}
+                      onChange={(val) => {
+                        const oldAcc = accounts.find(a => a.id === transfer.fromAccountId);
+                        const newAcc = accounts.find(a => a.id === val);
+                        let newAmount = transfer.amount;
+                        if (oldAcc && newAcc && transfer.amount) {
+                          const amountNum = Number(transfer.amount);
+                          if (!isNaN(amountNum) && amountNum > 0) {
+                            newAmount = convertBetween(amountNum, oldAcc.currency, newAcc.currency).toFixed(2);
+                          }
+                        }
+                        const nextToId = val === transfer.toAccountId ? '' : transfer.toAccountId;
+                        setTransfer({ ...transfer, fromAccountId: val, toAccountId: nextToId, amount: newAmount });
+                      }}
                       options={accounts.map((a) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency)})`, icon: a.icon }))}
                       placeholder="Cuenta origen..."
                     />
@@ -1054,29 +1078,91 @@ export default function FinanzasPage() {
                       placeholder="Cuenta destino..."
                     />
                   </div>
-                  <div className="tx-field">
-                    <label className="tx-label">Monto</label>
-                    <div className="tx-input-wrap">
-                      <span className="tx-currency">
-                        {currencyMap[accounts.find(a => a.id === transfer.fromAccountId)?.currency || displayCurrency].symbol}
-                      </span>
-                      <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
-                    </div>
-                    {(() => {
-                      const fromAcc = accounts.find(a => a.id === transfer.fromAccountId);
-                      const toAcc = accounts.find(a => a.id === transfer.toAccountId);
-                      if (fromAcc && toAcc && fromAcc.currency !== toAcc.currency) {
-                        const amountNum = Number(transfer.amount) || 0;
-                        const converted = convertBetween(amountNum, fromAcc.currency, toAcc.currency);
-                        return (
-                          <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--neon-green)', fontWeight: 500 }}>
-                            Destino recibe: ~ {formatInCurrency(converted, toAcc.currency)}
+                  {(() => {
+                    const fromAcc = accounts.find(a => a.id === transfer.fromAccountId);
+                    const toAcc = accounts.find(a => a.id === transfer.toAccountId);
+
+                    if (fromAcc && toAcc && fromAcc.currency !== toAcc.currency) {
+                      return (
+                        <>
+                          <div className="tx-field">
+                            <label className="tx-label">Monto a debitar ({fromAcc.name})</label>
+                            <div className="tx-input-wrap">
+                              <span className="tx-currency">{currencyMap[fromAcc.currency].symbol}</span>
+                              <input
+                                className="tx-input tx-input-amount"
+                                type="number"
+                                min="0"
+                                step="any"
+                                placeholder="0.00"
+                                value={transfer.amount}
+                                onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })}
+                              />
+                            </div>
+                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                              Saldo disponible: {formatInCurrency(fromAcc.balance, fromAcc.currency)}
+                            </span>
                           </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                  </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0' }}>
+                            <span style={{ fontSize: '18px', color: 'var(--neon-green)', filter: 'drop-shadow(0 0 4px var(--neon-green))' }}>↓</span>
+                          </div>
+
+                          <div className="tx-field">
+                            <label className="tx-label">Monto a acreditar ({toAcc.name})</label>
+                            <div className="tx-input-wrap" style={{ border: '1px solid var(--neon-green)', boxShadow: '0 0 8px rgba(61, 204, 142, 0.2)' }}>
+                              <span className="tx-currency">{currencyMap[toAcc.currency].symbol}</span>
+                              <input
+                                className="tx-input tx-input-amount"
+                                type="number"
+                                min="0"
+                                step="any"
+                                placeholder="0.00"
+                                value={transfer.amount ? convertBetween(Number(transfer.amount) || 0, fromAcc.currency, toAcc.currency).toFixed(2) : ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (!val) {
+                                    setTransfer({ ...transfer, amount: '' });
+                                  } else {
+                                    const srcVal = convertBetween(Number(val) || 0, toAcc.currency, fromAcc.currency);
+                                    setTransfer({ ...transfer, amount: srcVal.toFixed(2) });
+                                  }
+                                }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '11px', color: 'var(--neon-green)', fontWeight: 500 }}>
+                              Tasa BCV en vivo aplicada
+                            </span>
+                          </div>
+                        </>
+                      );
+                    }
+
+                    return (
+                      <div className="tx-field">
+                        <label className="tx-label">Monto</label>
+                        <div className="tx-input-wrap">
+                          <span className="tx-currency">
+                            {currencyMap[fromAcc?.currency || displayCurrency].symbol}
+                          </span>
+                          <input
+                            className="tx-input tx-input-amount"
+                            type="number"
+                            min="0"
+                            step="any"
+                            placeholder="0.00"
+                            value={transfer.amount}
+                            onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })}
+                          />
+                        </div>
+                        {fromAcc && (
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            Saldo disponible: {formatInCurrency(fromAcc.balance, fromAcc.currency)}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={() => setShowTransferModal(false)}>Cancelar</button>
