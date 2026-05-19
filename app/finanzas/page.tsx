@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
@@ -50,6 +51,7 @@ function isoToTimestamp(iso: string): number {
 export default function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
+  const { formatAmount, currencyMap, displayCurrency } = useCurrency();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
@@ -169,7 +171,7 @@ export default function FinanzasPage() {
     if (newTx.type === 'expense' && newTx.accountId) {
       const acc = accounts.find(a => a.id === newTx.accountId);
       if (acc && acc.balance < amount) {
-        error(`Fondos insuficientes en "${acc.name}". Balance: $${acc.balance.toLocaleString()}`);
+        error(`Fondos insuficientes en "${acc.name}". Balance: ${formatAmount(acc.balance)}`);
         return;
       }
     }
@@ -200,7 +202,7 @@ export default function FinanzasPage() {
       await loadTransactions();
 
       const typeLabel = TYPE_LABELS[newTx.type];
-      success(`${typeLabel} de $${amount.toLocaleString()} registrado`);
+      success(`${typeLabel} de ${formatAmount(amount)} registrado`);
       setShowModal(false);
       setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO() });
     } catch (e: any) {
@@ -218,7 +220,7 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: 'Eliminar Transacción',
-      message: `¿Eliminar "${tx.description || tx.category}" por $${tx.amount.toLocaleString()}? El balance de la cuenta se ajustará.`,
+      message: `¿Eliminar "${tx.description || tx.category}" por ${formatAmount(tx.amount)}? El balance de la cuenta se ajustará.`,
       variant: 'danger',
       confirmText: 'Eliminar',
       onConfirm: async () => {
@@ -324,7 +326,7 @@ export default function FinanzasPage() {
       await loadTransactions();
 
       const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
-      success(`${typeLabel} de $${tx.amount.toLocaleString()} registrado desde captura`);
+      success(`${typeLabel} de ${formatAmount(tx.amount)} registrado desde captura`);
 
       setVepayReceipts(prev => prev.filter(r => r.transaction_key !== receipt.transaction_key));
       if (vepayReceipts.length <= 1) {
@@ -373,7 +375,7 @@ export default function FinanzasPage() {
       return;
     }
     if (fromAcc.balance < amount) {
-      error(`Fondos insuficientes en "${fromAcc.name}". Balance: $${fromAcc.balance.toLocaleString()}`);
+      error(`Fondos insuficientes en "${fromAcc.name}". Balance: ${formatAmount(fromAcc.balance)}`);
       return;
     }
 
@@ -476,7 +478,7 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: 'Resetear Balance',
-      message: `¿Resetear el balance de "${acc?.name}" a $0? Se perderá el saldo actual de $${acc?.balance.toLocaleString()}.`,
+      message: `¿Resetear el balance de "${acc?.name}" a $0? Se perderá el saldo actual de ${formatAmount(acc?.balance || 0)}.`,
       variant: 'danger',
       confirmText: 'Resetear balance',
       onConfirm: async () => {
@@ -552,7 +554,7 @@ export default function FinanzasPage() {
           const adjustText = result.adjustments.map(a => {
             const acc = accounts.find(acc => acc.id === a.accountId);
             const sign = a.adjustment > 0 ? '+' : '';
-            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${sign}$${Math.abs(a.adjustment).toLocaleString()}`;
+            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${sign}${formatAmount(Math.abs(a.adjustment))}`;
           }).join('\n');
           success(`${result.totalWiped} ${typeLabel.toLowerCase()}s eliminados.${result.adjustments.length > 0 ? '\nAjustes: ' + adjustText : ''}`);
         } catch (e: any) {
@@ -580,7 +582,7 @@ export default function FinanzasPage() {
           await loadTransactions();
           const summary = results.map(r => {
             const acc = accounts.find(a => a.id === r.accountId);
-            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: $${r.balance.toLocaleString()}`;
+            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${formatAmount(r.balance)}`;
           }).join('\n');
           success('Balances recalculados:\n' + summary);
         } catch (e: any) {
@@ -629,7 +631,7 @@ export default function FinanzasPage() {
           } else {
             const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
             const sign = result.balanceAdjustment > 0 ? '+' : '';
-            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}$${Math.abs(result.balanceAdjustment).toLocaleString()}`);
+            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}${formatAmount(Math.abs(result.balanceAdjustment))}`);
           }
           await loadTransactions();
         } catch (e: any) {
@@ -734,7 +736,7 @@ export default function FinanzasPage() {
                   </div>
                 </div>
                 <div className="account-balance" style={{ color: acc.color }}>
-                  {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
+                  {showAmounts ? `${formatAmount(acc.balance)}` : '••••••'}
                 </div>
               </div>
             ))}
@@ -749,19 +751,19 @@ export default function FinanzasPage() {
           <div className="summary-grid">
             <div className="summary-card summary-income">
               <span className="summary-label">Ingresos</span>
-              <span className="summary-value">{showAmounts ? `$${summary.income.toLocaleString()}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatAmount(summary.income)}` : '••••••'}</span>
             </div>
             <div className="summary-card summary-expense">
               <span className="summary-label">Gastos</span>
-              <span className="summary-value">{showAmounts ? `$${summary.expenses.toLocaleString()}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatAmount(summary.expenses)}` : '••••••'}</span>
             </div>
             <div className="summary-card summary-saving">
               <span className="summary-label">Ahorro</span>
-              <span className="summary-value">{showAmounts ? `$${summary.saving.toLocaleString()}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatAmount(summary.saving)}` : '••••••'}</span>
             </div>
             <div className="summary-card summary-balance">
               <span className="summary-label">Balance Total</span>
-              <span className="summary-value">{showAmounts ? `$${totalBalance.toLocaleString()}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatAmount(totalBalance)}` : '••••••'}</span>
             </div>
           </div>
 
@@ -818,7 +820,7 @@ export default function FinanzasPage() {
                     <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
                     <td>{formatDate(tx.date)}</td>
                     <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                      {showAmounts ? `${tx.type === 'expense' ? '-' : '+'}$${tx.amount.toLocaleString()}` : '••••••'}
+                      {showAmounts ? `${tx.type === 'expense' ? '-' : '+'}${formatAmount(tx.amount)}` : '••••••'}
                     </td>
                     <td>
                       <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
@@ -866,7 +868,7 @@ export default function FinanzasPage() {
                   <div className="tx-field">
                     <label className="tx-label">Monto *</label>
                     <div className="tx-input-wrap">
-                      <span className="tx-currency">$</span>
+                      <span className="tx-currency">{currencyMap[displayCurrency].symbol}</span>
                       <input
                         className="tx-input tx-input-amount"
                         type="number"
@@ -965,7 +967,7 @@ export default function FinanzasPage() {
                     <CustomSelect
                       value={transfer.fromAccountId}
                       onChange={(val) => setTransfer({ ...transfer, fromAccountId: val })}
-                      options={accounts.map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                      options={accounts.map((a) => ({ value: a.id, label: `${a.name} (${formatAmount(a.balance)})`, icon: a.icon }))}
                       placeholder="Cuenta origen..."
                     />
                   </div>
@@ -974,14 +976,14 @@ export default function FinanzasPage() {
                     <CustomSelect
                       value={transfer.toAccountId}
                       onChange={(val) => setTransfer({ ...transfer, toAccountId: val })}
-                      options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} ($${a.balance.toLocaleString()})`, icon: a.icon }))}
+                      options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} (${formatAmount(a.balance)})`, icon: a.icon }))}
                       placeholder="Cuenta destino..."
                     />
                   </div>
                   <div className="tx-field">
                     <label className="tx-label">Monto</label>
                     <div className="tx-input-wrap">
-                      <span className="tx-currency">$</span>
+                      <span className="tx-currency">{currencyMap[displayCurrency].symbol}</span>
                       <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
                     </div>
                   </div>
@@ -1026,7 +1028,7 @@ export default function FinanzasPage() {
                   <div className="tx-field">
                     <label className="tx-label">Balance Inicial</label>
                     <div className="tx-input-wrap">
-                      <span className="tx-currency">$</span>
+                      <span className="tx-currency">{currencyMap[displayCurrency].symbol}</span>
                       <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
                     </div>
                   </div>
@@ -1169,7 +1171,7 @@ export default function FinanzasPage() {
                             <span className="vepay-type-badge" style={{ background: typeColor + '20', color: typeColor }}>{flowIcon} {typeLabel}</span>
                           </div>
                           <div className="vepay-receipt-amount" style={{ color: typeColor }}>
-                            {tx.type === 'expense' ? '-' : '+'}${tx.amount.toLocaleString('es', { minimumFractionDigits: 2 })}
+                            {tx.type === 'expense' ? '-' : '+'}${formatAmount(tx.amount)}
                           </div>
                           <p className="vepay-receipt-concept">{tx.description}</p>
                           <div className="vepay-receipt-details">
@@ -1282,7 +1284,7 @@ export default function FinanzasPage() {
                               <div className="accounting-account-info">
                                 <span className="accounting-account-name">{acc.name}</span>
                                 <span className="accounting-account-balance" style={{ color: acc.color }}>
-                                  {showAmounts ? `$${acc.balance.toLocaleString()}` : '••••••'}
+                                  {showAmounts ? `${formatAmount(acc.balance)}` : '••••••'}
                                 </span>
                               </div>
                             </div>

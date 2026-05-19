@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { subscribeToTransactions } from '@/lib/firestore/transactions';
 import type { Transaction } from '@/types';
 import {
@@ -31,16 +32,10 @@ const TIME_RANGES: { key: TimeRange; label: string }[] = [
   { key: 'year', label: 'Año' },
 ];
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string }) {
+
+function CustomTooltip({ active, payload, label, formatter }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string }) {
+  const fmt = formatter || ((v: number) => `$${v}`);
   if (active && payload && payload.length) {
     return (
       <div style={{
@@ -53,7 +48,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
         <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</p>
         {payload.map((p) => (
           <p key={p.dataKey} style={{ margin: '2px 0', fontSize: '12px', color: p.color }}>
-            {p.dataKey === 'income' ? '📥 Ingresos' : p.dataKey === 'expense' ? '📤 Gastos' : '💰 Ahorro'}: {formatCurrency(p.value)}
+            {p.dataKey === 'income' ? '📥 Ingresos' : p.dataKey === 'expense' ? '📤 Gastos' : '💰 Ahorro'}: {fmt(p.value)}
           </p>
         ))}
       </div>
@@ -76,6 +71,7 @@ function SkeletonChart() {
 
 export function FinancialStatusChart() {
   const { user } = useAuth();
+  const { formatAmount, displayCurrency, setDisplayCurrency, currencies, currencyMap } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('week');
@@ -196,6 +192,35 @@ export function FinancialStatusChart() {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {/* Currency Selector */}
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            background: 'var(--bg-input)',
+            borderRadius: 'var(--radius-full)',
+            padding: '3px',
+          }}>
+            {currencies.map((code) => (
+              <button
+                key={code}
+                onClick={() => setDisplayCurrency(code)}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: displayCurrency === code ? 600 : 400,
+                  color: displayCurrency === code ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                  background: displayCurrency === code ? 'var(--bg-accent)' : 'transparent',
+                  border: 'none',
+                  borderRadius: 'var(--radius-full)',
+                  cursor: 'pointer',
+                  transition: 'var(--transition-fast)',
+                }}
+              >
+                {currencyMap[code].flag} {code}
+              </button>
+            ))}
+          </div>
+
           {/* Toggle Amounts */}
           <button
             onClick={() => setShowAmounts(!showAmounts)}
@@ -261,7 +286,7 @@ export function FinancialStatusChart() {
             Ingresos
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-prosper-green)' }}>
-            {showAmounts ? formatCurrency(totals.income) : '••••••'}
+            {showAmounts ? formatAmount(totals.income) : '••••••'}
           </p>
         </div>
         <div>
@@ -269,7 +294,7 @@ export function FinancialStatusChart() {
             Gastos
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-error)' }}>
-            {showAmounts ? formatCurrency(totals.expense) : '••••••'}
+            {showAmounts ? formatAmount(totals.expense) : '••••••'}
           </p>
         </div>
         <div>
@@ -277,7 +302,7 @@ export function FinancialStatusChart() {
             Ahorro
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-pine-500)' }}>
-            {showAmounts ? formatCurrency(totals.saving) : '••••••'}
+            {showAmounts ? formatAmount(totals.saving) : '••••••'}
           </p>
         </div>
         <div>
@@ -290,7 +315,7 @@ export function FinancialStatusChart() {
             fontWeight: 700,
             color: showAmounts ? (totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)',
           }}>
-            {showAmounts ? formatCurrency(totals.balance) : '••••••'}
+            {showAmounts ? formatAmount(totals.balance) : '••••••'}
           </p>
         </div>
       </div>
@@ -326,7 +351,7 @@ export function FinancialStatusChart() {
               tickFormatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip formatter={formatAmount} />} />
             <Legend
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
               formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}

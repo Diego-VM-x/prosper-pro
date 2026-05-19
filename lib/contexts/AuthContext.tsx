@@ -16,13 +16,14 @@ import {
 import { auth } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 import { seedUserData } from '@/lib/seed';
+import type { CurrencyCode } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
   enableNotifications: () => Promise<boolean>;
@@ -65,6 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 photoURL: firebaseUser.photoURL,
                 createdAt: Date.now(),
                 isSeeded: false,
+                currency: 'USD' as CurrencyCode,
               });
               try {
                 await seedUserData(firebaseUser.uid);
@@ -103,10 +105,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
-  const registerWithEmail = async (email: string, pass: string, name: string) => {
+  const registerWithEmail = async (email: string, pass: string, name: string, currency?: CurrencyCode) => {
     if (!auth) return;
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(userCredential.user, { displayName: name });
+    // Create profile with selected currency
+    await createUserProfile({
+      uid: userCredential.user.uid,
+      displayName: name,
+      email: email,
+      photoURL: null,
+      createdAt: Date.now(),
+      isSeeded: false,
+      currency: currency || 'USD',
+    });
   };
 
   const logout = async () => {

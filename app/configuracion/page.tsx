@@ -6,7 +6,9 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
 import { useTheme } from '@/app/components/ThemeProvider';
-import type { UserProfile } from '@/types';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
+import { CURRENCY_LIST, CURRENCY_MAP, DEFAULT_RATES } from '@/lib/currency';
+import type { UserProfile, CurrencyCode } from '@/types';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
@@ -15,11 +17,15 @@ export default function ConfiguracionPage() {
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { setDisplayCurrency, rates } = useCurrency();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [language, setLanguage] = useState('es');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState<CurrencyCode>('USD');
+  const [rateUSD, setRateUSD] = useState(String(DEFAULT_RATES.rates.USD));
+  const [rateEUR, setRateEUR] = useState(String(DEFAULT_RATES.rates.EUR));
+  const [rateUSDT, setRateUSDT] = useState(String(DEFAULT_RATES.rates.USDT));
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -57,9 +63,16 @@ export default function ConfiguracionPage() {
         setDisplayName(p.displayName || '');
         setBio((p as any).bio || '');
         setLanguage((p as any).language || 'es');
-        setCurrency((p as any).currency || 'USD');
+        setCurrency(((p as any).currency || 'USD') as CurrencyCode);
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
+        // Load custom rates
+        const cr = (p as any).customRates;
+        if (cr) {
+          if (cr['USD']) setRateUSD(String(cr['USD']));
+          if (cr['EUR']) setRateEUR(String(cr['EUR']));
+          if (cr['USDT']) setRateUSDT(String(cr['USDT']));
+        }
       }
     });
 
@@ -77,11 +90,18 @@ export default function ConfiguracionPage() {
         bio: bio.trim(),
         language,
         currency,
+        customRates: {
+          USD: parseFloat(rateUSD) || DEFAULT_RATES.rates.USD,
+          EUR: parseFloat(rateEUR) || DEFAULT_RATES.rates.EUR,
+          USDT: parseFloat(rateUSDT) || DEFAULT_RATES.rates.USDT,
+        },
         notifications: {
           priceAlerts,
           budgetAlerts,
         },
       } as any);
+      // Also update display currency in context
+      setDisplayCurrency(currency);
       setSuccessMsg('Perfil actualizado correctamente');
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (e) {
@@ -296,24 +316,66 @@ export default function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Moneda</label>
+                      <label className="pref-label">Moneda Base</label>
                       <div className="option-grid currency-grid">
-                        {[
-                          { value: 'USD', label: 'Dólar', symbol: '$', flag: '🇺🇸' },
-                          { value: 'EUR', label: 'Euro', symbol: '€', flag: '🇪🇺' },
-                          { value: 'VES', label: 'Bolívar', symbol: 'Bs.', flag: '🇻🇪' },
-                          { value: 'COP', label: 'Peso CO', symbol: '$', flag: '🇨🇴' },
-                          { value: 'MXN', label: 'Peso MX', symbol: '$', flag: '🇲🇽' },
-                        ].map(opt => (
-                          <button
-                            key={opt.value}
-                            className={`option-btn ${currency === opt.value ? 'active' : ''}`}
-                            onClick={() => setCurrency(opt.value)}
-                          >
-                            <span className="option-flag">{opt.flag}</span>
-                            <span className="option-text">{opt.symbol} {opt.label}</span>
-                          </button>
-                        ))}
+                        {CURRENCY_LIST.map(code => {
+                          const cfg = CURRENCY_MAP[code];
+                          return (
+                            <button
+                              key={code}
+                              className={`option-btn ${currency === code ? 'active' : ''}`}
+                              onClick={() => setCurrency(code)}
+                            >
+                              <span className="option-flag">{cfg.flag}</span>
+                              <span className="option-text">{cfg.symbol} {cfg.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="pref-section">
+                      <label className="pref-label">Tasas de Cambio (1 unidad = X Bs.)</label>
+                      <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', margin: '0 0 12px' }}>
+                        Ingresa las tasas manualmente. Ejemplo: si 1 USD = 92.50 Bs, escribe 92.50
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ width: '60px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>🇺🇸 USD</span>
+                          <input
+                            className="field-input"
+                            type="number"
+                            step="0.01"
+                            value={rateUSD}
+                            onChange={(e) => setRateUSD(e.target.value)}
+                            style={{ flex: 1 }}
+                          />
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ width: '60px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>🇪🇺 EUR</span>
+                          <input
+                            className="field-input"
+                            type="number"
+                            step="0.01"
+                            value={rateEUR}
+                            onChange={(e) => setRateEUR(e.target.value)}
+                            style={{ flex: 1 }}
+                          />
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ width: '60px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>💲 USDT</span>
+                          <input
+                            className="field-input"
+                            type="number"
+                            step="0.01"
+                            value={rateUSDT}
+                            onChange={(e) => setRateUSDT(e.target.value)}
+                            style={{ flex: 1 }}
+                          />
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
+                        </div>
                       </div>
                     </div>
                   </div>

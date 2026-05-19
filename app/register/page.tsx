@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
+import type { CurrencyCode } from '@/types';
 import '../login/auth.css';
 
 export default function RegisterPage() {
@@ -11,6 +13,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currency, setCurrency] = useState<CurrencyCode>('USD');
   const { loginWithGoogle, registerWithEmail } = useAuth();
 
   const handleGoogleLogin = async () => {
@@ -34,7 +37,7 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      await registerWithEmail(email, password, name);
+      await registerWithEmail(email, password, name, currency);
     } catch (err: any) {
       switch (err.code) {
         case 'auth/email-already-in-use':
@@ -94,6 +97,44 @@ export default function RegisterPage() {
             <div className="form-group">
               <label>Contraseña</label>
               <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
+            </div>
+            <div className="form-group">
+              <label>Moneda Base</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {CURRENCY_LIST.map((code) => {
+                  const cfg = CURRENCY_MAP[code];
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setCurrency(code)}
+                      disabled={loading}
+                      style={{
+                        flex: '1 1 calc(50% - 3px)',
+                        padding: '10px 8px',
+                        borderRadius: '10px',
+                        border: currency === code ? '2px solid #3DCC8E' : '1px solid var(--border-default, #e5e7eb)',
+                        background: currency === code ? 'rgba(61,204,142,0.08)' : 'var(--bg-input, #f9fafb)',
+                        color: currency === code ? '#3DCC8E' : 'var(--text-secondary, #666)',
+                        cursor: 'pointer',
+                        fontSize: '0.8125rem',
+                        fontWeight: currency === code ? 700 : 500,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      <span>{cfg.flag}</span>
+                      <span>{cfg.symbol} {cfg.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary, #999)', margin: '4px 0 0', lineHeight: 1.4 }}>
+                Esta será tu moneda principal. Podrás cambiarla después.
+              </p>
             </div>
             <button type="submit" className="login-btn" disabled={loading}>
               {loading ? 'Creando...' : 'Crear Cuenta'}

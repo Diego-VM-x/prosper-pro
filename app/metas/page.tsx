@@ -5,6 +5,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { CustomSelect } from '../components/CustomSelect';
@@ -69,9 +70,7 @@ function nextMonthISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function formatCurrency(n: number): string {
-  return `$${n.toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+
 
 function getDaysRemaining(deadline: string): string {
   if (!deadline) return 'Sin fecha';
@@ -90,6 +89,7 @@ export default function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
+  const { formatAmount, currencyMap, displayCurrency } = useCurrency();
   const uid = user?.uid || '';
 
   const [filter, setFilter] = useState<PlanType | 'all'>('all');
@@ -310,7 +310,7 @@ export default function MetasPage() {
         await updateAccountBalance(addAccountId, -amount);
       }
 
-      success(`$${amount.toLocaleString()} añadido a "${plan.title}"`);
+      success(`${formatAmount(amount)} añadido a "${plan.title}"`);
       setShowAddFundsModal(null);
       setAddAmount('');
       setAddAccountId('');
@@ -366,7 +366,7 @@ export default function MetasPage() {
         await updateAccountBalance(payAccountId, -amount);
       }
 
-      success(`Pago de $${amount.toLocaleString()} registrado`);
+      success(`Pago de ${formatAmount(amount)} registrado`);
       setShowRecordPaymentModal(null);
       setPayAmount('');
       setPayAccountId('');
@@ -496,7 +496,7 @@ export default function MetasPage() {
               <span className="plans-stat-icon">💰</span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">Planes de Ahorro</span>
-                <span className="plans-stat-value">{formatCurrency(totalSavingsCurrent)} <small>/ {formatCurrency(totalSavingsTarget)}</small></span>
+                <span className="plans-stat-value">{formatAmount(totalSavingsCurrent)} <small>/ {formatAmount(totalSavingsTarget)}</small></span>
                 <span className="plans-stat-count">{stats.savings.length} planes</span>
               </div>
               {totalSavingsTarget > 0 && (
@@ -509,7 +509,7 @@ export default function MetasPage() {
               <span className="plans-stat-icon">🛒</span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">Gastos Planificados</span>
-                <span className="plans-stat-value">{formatCurrency(totalExpenseCurrent)} <small>/ {formatCurrency(totalExpenseTarget)}</small></span>
+                <span className="plans-stat-value">{formatAmount(totalExpenseCurrent)} <small>/ {formatAmount(totalExpenseTarget)}</small></span>
                 <span className="plans-stat-count">{stats.expenses.length} planes</span>
               </div>
               {totalExpenseTarget > 0 && (
@@ -522,7 +522,7 @@ export default function MetasPage() {
               <span className="plans-stat-icon">🔄</span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">Gastos Recurrentes</span>
-                <span className="plans-stat-value">{formatCurrency(totalRecurringMonthly)}<small>/mes</small></span>
+                <span className="plans-stat-value">{formatAmount(totalRecurringMonthly)}<small>/mes</small></span>
                 <span className="plans-stat-count">{stats.recurring.length} planes</span>
               </div>
             </div>
@@ -564,7 +564,7 @@ export default function MetasPage() {
                 {receivedRequests.filter(r => r.status === 'pending').map(req => (
                   <div key={req.id} className="plans-request-card">
                     <div className="plans-request-info">
-                      <span className="plans-request-amount">{formatCurrency(req.amount)}</span>
+                      <span className="plans-request-amount">{formatAmount(req.amount)}</span>
                       <span className="plans-request-msg">{req.message}</span>
                     </div>
                     <div className="plans-request-actions">
@@ -604,9 +604,9 @@ export default function MetasPage() {
                       {plan.description && <p className="plan-card-desc">{plan.description}</p>}
 
                       <div className="plan-card-amounts">
-                        <span className="plan-card-current">{formatCurrency(plan.current)}</span>
+                        <span className="plan-card-current">{formatAmount(plan.current)}</span>
                         <span className="plan-card-separator">/</span>
-                        <span className="plan-card-target">{formatCurrency(plan.target)}</span>
+                        <span className="plan-card-target">{formatAmount(plan.target)}</span>
                       </div>
 
                       <div className="plan-card-progress">
@@ -717,7 +717,7 @@ export default function MetasPage() {
                     <div className="plan-field">
                       <label className="plan-label">Monto *</label>
                       <div className="plan-input-wrap">
-                        <span className="plan-currency">$</span>
+                        <span className="plan-currency">{currencyMap[displayCurrency].symbol}</span>
                         <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder="0.00" value={formTarget} onChange={e => setFormTarget(e.target.value)} />
                       </div>
                     </div>
@@ -765,7 +765,7 @@ export default function MetasPage() {
                 <div className="modal-header">
                   <div>
                     <h2 className="modal-title">Añadir a "{showAddFundsModal.title}"</h2>
-                    <p className="modal-subtitle">Actual: {formatCurrency(showAddFundsModal.current)} / {formatCurrency(showAddFundsModal.target)}</p>
+                    <p className="modal-subtitle">Actual: {formatAmount(showAddFundsModal.current)} / {formatAmount(showAddFundsModal.target)}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowAddFundsModal(null)}>✕</button>
                 </div>
@@ -773,7 +773,7 @@ export default function MetasPage() {
                   <div className="plan-field">
                     <label className="plan-label">Monto</label>
                     <div className="plan-input-wrap">
-                      <span className="plan-currency">$</span>
+                      <span className="plan-currency">{currencyMap[displayCurrency].symbol}</span>
                       <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder="0.00" value={addAmount} onChange={e => setAddAmount(e.target.value)} autoFocus />
                     </div>
                   </div>
@@ -799,7 +799,7 @@ export default function MetasPage() {
                 <div className="modal-header">
                   <div>
                     <h2 className="modal-title">Registrar Pago</h2>
-                    <p className="modal-subtitle">{showRecordPaymentModal.title} · {formatCurrency(showRecordPaymentModal.target)}/{RECURRENCES.find(r => r.value === showRecordPaymentModal.frequency)?.label}</p>
+                    <p className="modal-subtitle">{showRecordPaymentModal.title} · {formatAmount(showRecordPaymentModal.target)}/{RECURRENCES.find(r => r.value === showRecordPaymentModal.frequency)?.label}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowRecordPaymentModal(null)}>✕</button>
                 </div>

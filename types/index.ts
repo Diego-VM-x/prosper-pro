@@ -1,3 +1,15 @@
+// ============================================================
+// CURRENCY TYPES
+// ============================================================
+export type CurrencyCode = 'BS' | 'USDT' | 'USD' | 'EUR';
+
+export interface ExchangeRates {
+  /** Rates expressed as: 1 unit of CurrencyX = rates[X] BS */
+  rates: Record<CurrencyCode, number>;
+  updatedAt: number;
+  source: 'manual' | 'api';
+}
+
 export interface UserProfile {
   uid: string;
   displayName: string | null;
@@ -11,7 +23,9 @@ export interface UserProfile {
   online?: boolean;
   bio?: string;
   language?: string;
-  currency?: string;
+  currency?: CurrencyCode;
+  /** User-defined exchange rates (manual input) */
+  customRates?: Record<string, number>;
   darkModeSync?: boolean;
   notifications?: {
     priceAlerts?: boolean;

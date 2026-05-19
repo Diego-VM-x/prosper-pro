@@ -12,6 +12,7 @@ const inter = Inter({
 });
 import { SearchProvider } from '@/lib/contexts/SearchContext';
 import { GoalsProvider } from '@/lib/contexts/GoalsContext';
+import { CurrencyProvider } from '@/lib/contexts/CurrencyContext';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ToastProvider } from './components/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -132,6 +133,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ThemeProvider>
             <AuthProvider>
+              <CurrencyProvider>
               <GoalsProvider>
                 <SearchProvider>
                   <ToastProvider>
@@ -141,6 +143,7 @@ export default function RootLayout({
                   </ToastProvider>
                 </SearchProvider>
               </GoalsProvider>
+              </CurrencyProvider>
             </AuthProvider>
           </ThemeProvider>
         </ErrorBoundary>

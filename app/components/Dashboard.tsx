@@ -21,6 +21,7 @@ import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts, getTotalBalance } from '@/lib/firestore/accounts';
 import { getPlanSummary } from '@/lib/firestore/plans';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
+import { useCurrency } from '@/lib/contexts/CurrencyContext';
 
 const FinancialStatusChart = lazy(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
@@ -50,15 +51,14 @@ function getDaysUntil(dateStr: string): number {
   return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount);
-}
+
 
 export function Dashboard() {
   const router = useRouter();
   const { query } = useSearch();
   const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
+  const { formatAmount, currencyMap, displayCurrency } = useCurrency();
 
   const [monthlySavings, setMonthlySavings] = useState(0);
   const [totalBalance, setTotalBalance] = useState(0);
@@ -253,21 +253,21 @@ export function Dashboard() {
             <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro Mensual</span>
-              <span className="stat-pill-value">{formatCurrency(monthlySavings)}</span>
+              <span className="stat-pill-value">{formatAmount(monthlySavings)}</span>
             </div>
           </div>
           <div className="stat-pill" onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro en Planes</span>
-              <span className="stat-pill-value">{formatCurrency(totalSavingsCurrent)}</span>
+              <span className="stat-pill-value">{formatAmount(totalSavingsCurrent)}</span>
             </div>
           </div>
           <div className="stat-pill" onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}>🔄</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Recurrentes/Mes</span>
-              <span className="stat-pill-value">{formatCurrency(monthlyRecurring)}</span>
+              <span className="stat-pill-value">{formatAmount(monthlyRecurring)}</span>
             </div>
             {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
           </div>
@@ -302,7 +302,7 @@ export function Dashboard() {
                     <span className="today-item-title">{item.title}</span>
                     <span className="today-item-desc">
                       {item.itemType === 'goal'
-                        ? `${formatCurrency((item as Goal).current)} de ${formatCurrency((item as Goal).target)}`
+                        ? `${formatAmount((item as Goal).current)} de ${formatAmount((item as Goal).target)}`
                         : (item as Reminder).type}
                     </span>
                   </div>
@@ -373,7 +373,7 @@ export function Dashboard() {
                       </div>
                       <div className="plan-progress-info">
                         <span className="plan-progress-pct" style={{ color: typeColors[plan.type] }}>{Math.round(pct)}%</span>
-                        <span className="plan-progress-amounts">{formatCurrency(plan.current)} / {formatCurrency(plan.target)}</span>
+                        <span className="plan-progress-amounts">{formatAmount(plan.current)} / {formatAmount(plan.target)}</span>
                       </div>
                     </div>
                   </div>
@@ -444,7 +444,7 @@ export function Dashboard() {
                     </div>
                     <div className="deadline-info">
                       <span className="deadline-title">{item.title}</span>
-                      <span className="deadline-amount">{formatCurrency(item.current)} / {formatCurrency(item.target)}</span>
+                      <span className="deadline-amount">{formatAmount(item.current)} / {formatAmount(item.target)}</span>
                     </div>
                   </div>
                 );
@@ -478,7 +478,7 @@ export function Dashboard() {
                       <span className="account-item-type">{acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'}</span>
                     </div>
                     <span className="account-item-balance" style={{ color: acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)' }}>
-                      {formatCurrency(acc.balance)}
+                      {formatAmount(acc.balance)}
                     </span>
                   </div>
                 );
@@ -526,8 +526,8 @@ export function Dashboard() {
                 customPlaceholder="Nombre de la categoría..."
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label className="form-label">Monto Actual ($)</label><input className="form-input" type="number" placeholder="0" value={newGoal.current || ''} onChange={(e) => setNewGoal({ ...newGoal, current: Number(e.target.value) })} /></div>
-                <div><label className="form-label">Meta ($)</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>
+                <div><label className="form-label">{`Monto Actual (${currencyMap[displayCurrency].symbol})`}</label><input className="form-input" type="number" placeholder="0" value={newGoal.current || ''} onChange={(e) => setNewGoal({ ...newGoal, current: Number(e.target.value) })} /></div>
+                <div><label className="form-label">{`Meta (${currencyMap[displayCurrency].symbol})`}</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>
               </div>
               <label className="form-label">Fecha Límite</label>
               <input className="form-input" type="date" value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
