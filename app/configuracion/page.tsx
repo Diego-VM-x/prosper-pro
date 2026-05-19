@@ -23,9 +23,7 @@ export default function ConfiguracionPage() {
   const [bio, setBio] = useState('');
   const [language, setLanguage] = useState('es');
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
-  const [rateUSD, setRateUSD] = useState(String(DEFAULT_RATES.rates.USD));
-  const [rateEUR, setRateEUR] = useState(String(DEFAULT_RATES.rates.EUR));
-  const [rateUSDT, setRateUSDT] = useState(String(DEFAULT_RATES.rates.USDT));
+  const [rateUSD, setRateUSD] = useState('');
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -70,8 +68,6 @@ export default function ConfiguracionPage() {
         const cr = (p as any).customRates;
         if (cr) {
           if (cr['USD']) setRateUSD(String(cr['USD']));
-          if (cr['EUR']) setRateEUR(String(cr['EUR']));
-          if (cr['USDT']) setRateUSDT(String(cr['USDT']));
         }
       }
     });
@@ -90,11 +86,7 @@ export default function ConfiguracionPage() {
         bio: bio.trim(),
         language,
         currency,
-        customRates: {
-          USD: parseFloat(rateUSD) || DEFAULT_RATES.rates.USD,
-          EUR: parseFloat(rateEUR) || DEFAULT_RATES.rates.EUR,
-          USDT: parseFloat(rateUSDT) || DEFAULT_RATES.rates.USDT,
-        },
+        customRates: rateUSD ? { USD: parseFloat(rateUSD) } : null,
         notifications: {
           priceAlerts,
           budgetAlerts,
@@ -352,30 +344,16 @@ export default function ConfiguracionPage() {
                           />
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ width: '60px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>🇪🇺 EUR</span>
-                          <input
-                            className="field-input"
-                            type="number"
-                            step="0.01"
-                            value={rateEUR}
-                            onChange={(e) => setRateEUR(e.target.value)}
-                            style={{ flex: 1 }}
-                          />
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ width: '60px', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>💲 USDT</span>
-                          <input
-                            className="field-input"
-                            type="number"
-                            step="0.01"
-                            value={rateUSDT}
-                            onChange={(e) => setRateUSDT(e.target.value)}
-                            style={{ flex: 1 }}
-                          />
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Bs.</span>
-                        </div>
+                        {rates.source === 'api' && (
+                          <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--color-prosper-green)' }}>
+                            ✓ Usando tasa en vivo de DolarAPI: 1 USD = {rates.rates.USD} Bs
+                          </div>
+                        )}
+                        {rates.source === 'manual' && (
+                          <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                            ℹ️ Usando tasa manual. Deja el campo vacío y guarda para volver a la tasa automática.
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

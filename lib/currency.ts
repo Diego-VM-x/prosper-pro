@@ -18,11 +18,9 @@ export interface CurrencyConfig {
 export const CURRENCY_MAP: Record<CurrencyCode, CurrencyConfig> = {
   BS: { code: 'BS', symbol: 'Bs.', name: 'Bolívar', flag: '🇻🇪', locale: 'es-VE', decimals: 2 },
   USD: { code: 'USD', symbol: '$', name: 'Dólar', flag: '🇺🇸', locale: 'en-US', decimals: 2 },
-  EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', locale: 'es-ES', decimals: 2 },
-  USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💲', locale: 'en-US', decimals: 4 },
 };
 
-export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT'];
+export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS'];
 
 // ============================================================
 // DEFAULT EXCHANGE RATES (fallback / initial values)
@@ -34,8 +32,6 @@ export const DEFAULT_RATES: ExchangeRates = {
   rates: {
     BS: 1.0,
     USD: 92.50,   // 1 USD = 92.50 BS (approximate)
-    EUR: 103.00,  // 1 EUR = 103.00 BS (approximate)
-    USDT: 92.00,  // 1 USDT = 92.00 BS (approximate)
   },
   updatedAt: Date.now(),
   source: 'manual',
@@ -98,16 +94,7 @@ export function formatCurrencyValue(
     return `$${amount.toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
-  // For USDT, use custom formatting (no Intl currency code for Tether)
-  if (currencyCode === 'USDT') {
-    const formatted = compact && Math.abs(amount) >= 1000
-      ? `${(amount / 1000).toFixed(1)}k`
-      : amount.toLocaleString('en-US', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: config.decimals,
-        });
-    return `${config.symbol}${formatted}`;
-  }
+
 
   // For BS, use custom formatting (VES Intl is buggy in some browsers)
   if (currencyCode === 'BS') {

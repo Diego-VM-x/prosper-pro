@@ -93,19 +93,17 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         const userCurrency = (profile.currency as CurrencyCode) || 'USD';
         setBaseCurrency(userCurrency);
 
-        // If user has custom rates, merge them with defaults
+        // If user has custom rates, use them instead of defaults
         const customRates = (profile as any).customRates as Record<string, number> | undefined;
         if (customRates && Object.keys(customRates).length > 0) {
-          setRates({
+          setRates((prev) => ({
+            ...prev,
             rates: {
               BS: 1.0,
-              USD: customRates['USD'] ?? DEFAULT_RATES.rates.USD,
-              EUR: customRates['EUR'] ?? DEFAULT_RATES.rates.EUR,
-              USDT: customRates['USDT'] ?? DEFAULT_RATES.rates.USDT,
+              USD: customRates['USD'] ?? prev.rates.USD,
             },
-            updatedAt: Date.now(),
             source: 'manual',
-          });
+          }));
         }
 
         // If no saved display currency, default to user's base currency
@@ -121,6 +119,32 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
     return () => unsub();
   }, [user?.uid]);
+
+  // Fetch API rates
+  useEffect(() => {
+    async function fetchRates() {
+      try {
+        const res = await fetch('/api/exchange-rates');
+        if (res.ok) {
+          const data = await res.json();
+          setRates((prev) => {
+            // Only update if user is not using manual override for USD
+            if (prev.source === 'manual') {
+              return prev;
+            }
+            return {
+              rates: data.rates,
+              updatedAt: data.updatedAt,
+              source: 'api',
+            };
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch exchange rates:', err);
+      }
+    }
+    fetchRates();
+  }, []);
 
   // Set display currency (persist to localStorage)
   const setDisplayCurrency = useCallback((code: CurrencyCode) => {

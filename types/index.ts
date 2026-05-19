@@ -1,7 +1,7 @@
 // ============================================================
 // CURRENCY TYPES
 // ============================================================
-export type CurrencyCode = 'BS' | 'USDT' | 'USD' | 'EUR';
+export type CurrencyCode = 'BS' | 'USD';
 
 export interface ExchangeRates {
   /** Rates expressed as: 1 unit of CurrencyX = rates[X] BS */
