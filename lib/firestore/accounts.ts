@@ -24,7 +24,12 @@ export function subscribeToAccounts(ownerId: string, callback: (accounts: Financ
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
     const accounts: FinancialAccount[] = [];
     snapshot.forEach((docSnap) => {
-      accounts.push({ id: docSnap.id, ...docSnap.data() } as FinancialAccount);
+      const data = docSnap.data();
+      accounts.push({
+        id: docSnap.id,
+        ...data,
+        currency: data.currency || 'USD',
+      } as FinancialAccount);
     });
     accounts.sort((a, b) => b.createdAt - a.createdAt);
     callback(accounts);
@@ -40,7 +45,12 @@ export async function getAccountsByOwnerId(ownerId: string): Promise<FinancialAc
   const snapshot = await getDocs(q);
   const accounts: FinancialAccount[] = [];
   snapshot.forEach((docSnap) => {
-    accounts.push({ id: docSnap.id, ...docSnap.data() } as FinancialAccount);
+    const data = docSnap.data();
+    accounts.push({
+      id: docSnap.id,
+      ...data,
+      currency: data.currency || 'USD',
+    } as FinancialAccount);
   });
   accounts.sort((a, b) => b.createdAt - a.createdAt);
   return accounts;
@@ -127,6 +137,7 @@ export async function createDefaultAccounts(ownerId: string) {
       name: 'Cuenta Corriente',
       type: 'checking',
       balance: 0,
+      currency: 'BS',
       icon: '🏦',
       color: '#3B82F6',
       createdAt: Date.now(),
@@ -137,6 +148,7 @@ export async function createDefaultAccounts(ownerId: string) {
       name: 'Cuenta de Ahorro',
       type: 'savings',
       balance: 0,
+      currency: 'USD',
       icon: '💰',
       color: '#3DCC8E',
       createdAt: Date.now(),
@@ -147,6 +159,7 @@ export async function createDefaultAccounts(ownerId: string) {
       name: 'Efectivo',
       type: 'cash',
       balance: 0,
+      currency: 'BS',
       icon: '💵',
       color: '#F59E0B',
       createdAt: Date.now(),

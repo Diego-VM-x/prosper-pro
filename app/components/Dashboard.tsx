@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense, useRef } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -26,7 +26,7 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 const FinancialStatusChart = lazy(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
 );
-import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder } from '@/types';
+import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
 
@@ -58,10 +58,9 @@ export function Dashboard() {
   const { query } = useSearch();
   const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
-  const { formatAmount, currencyMap, displayCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency } = useCurrency();
 
-  const [monthlySavings, setMonthlySavings] = useState(0);
-  const [totalBalance, setTotalBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthlyRecurring, setMonthlyRecurring] = useState(0);
   const [dueRecurringCount, setDueRecurringCount] = useState(0);
   const [allCategories, setAllCategories] = useState<Record<string, string>>({ ...DEFAULT_CATEGORIES });
@@ -69,6 +68,25 @@ export function Dashboard() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const bottomScrollRef = useRef<HTMLDivElement>(null);
+
+  const totalBalance = useMemo(() => {
+    return accounts.reduce((sum, acc) => {
+      return sum + convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+    }, 0);
+  }, [accounts, displayCurrency, convertBetween]);
+
+  const monthlySavings = useMemo(() => {
+    const savings = transactions.filter((t) => t.type === 'saving');
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return savings
+      .filter((t) => t.date >= startOfMonth)
+      .reduce((sum, t) => {
+        const account = accounts.find((a) => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return sum + convertBetween(t.amount, txCurrency, displayCurrency);
+      }, 0);
+  }, [transactions, accounts, displayCurrency, convertBetween]);
 
   const scrollBottom = (dir: 'left' | 'right') => {
     if (!bottomScrollRef.current) return;
@@ -129,18 +147,9 @@ export function Dashboard() {
         if (cancelled) return;
 
         const transactionsData = await getTransactionsByOwnerId(uid);
-        const balance = await getTotalBalance(uid);
 
         if (!cancelled) {
-          setTotalBalance(balance);
-
-          if (transactionsData.length) {
-            const savings = transactionsData.filter((t) => t.type === 'saving');
-            const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-            const monthSavings = savings.filter((t) => t.date >= startOfMonth).reduce((sum, t) => sum + t.amount, 0);
-            if (monthSavings > 0) setMonthlySavings(monthSavings);
-          }
+          setTransactions(transactionsData);
         }
       } catch (e) {
         console.error('Firestore load error:', e);
@@ -475,11 +484,20 @@ export function Dashboard() {
                     </div>
                     <div className="account-item-info">
                       <span className="account-item-name">{acc.name}</span>
-                      <span className="account-item-type">{acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'}</span>
+                      <span className="account-item-type">
+                        {acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'} • {acc.currency || 'BS'}
+                      </span>
                     </div>
-                    <span className="account-item-balance" style={{ color: acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)' }}>
-                      {formatAmount(acc.balance)}
-                    </span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <span className="account-item-balance" style={{ color: acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)', fontWeight: 600 }}>
+                        {formatInCurrency(acc.balance, acc.currency)}
+                      </span>
+                      {acc.currency !== displayCurrency && (
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
+                          ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}

@@ -1,20 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
-import { getTransactionsByOwnerId, getMonthlySummary, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
 import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPayBankApp, getBankDisplayName, VEPAY_BANKS } from '@/lib/vepay';
-import type { Transaction, FinancialAccount, AccountType } from '@/types';
+import type { Transaction, FinancialAccount, AccountType, CurrencyCode } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
   income: ['💰 Salario', '💼 Freelance', '📊 Inversiones', '🏢 Negocio', '📌 Otro'],
@@ -51,23 +51,62 @@ function isoToTimestamp(iso: string): number {
 export default function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency } = useCurrency();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
-  const [totalBalance, setTotalBalance] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [summary, setSummary] = useState({ income: 0, expenses: 0, saving: 0, balance: 0 });
   const [filterType, setFilterType] = useState<string>('Todos');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
-  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0 });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0, currency: 'BS' as CurrencyCode });
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
+
+  // Calcular balance total reactivamente
+  const totalBalance = useMemo(() => {
+    return accounts.reduce((sum, acc) => {
+      const converted = convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+      return sum + converted;
+    }, 0);
+  }, [accounts, displayCurrency, convertBetween]);
+
+  // Calcular resumen mensual reactivamente
+  const summary = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    
+    let income = 0;
+    let expenses = 0;
+    let saving = 0;
+    
+    transactions.forEach((t) => {
+      if (t.date >= startOfMonth) {
+        const account = accounts.find((a) => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        const convertedAmount = convertBetween(t.amount, txCurrency, displayCurrency);
+        
+        if (t.type === 'income') {
+          income += convertedAmount;
+        } else if (t.type === 'expense') {
+          expenses += convertedAmount;
+        } else if (t.type === 'saving') {
+          saving += convertedAmount;
+        }
+      }
+    });
+    
+    return {
+      income,
+      expenses,
+      saving,
+      balance: income - expenses - saving
+    };
+  }, [transactions, accounts, displayCurrency, convertBetween]);
   const [showAmounts, setShowAmounts] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('finanzas-show-amounts') === 'true';
@@ -98,12 +137,6 @@ export default function FinanzasPage() {
     return () => unsub();
   }, [uid]);
 
-  // Calcular balance total
-  useEffect(() => {
-    if (!uid) return;
-    getTotalBalance(uid).then(setTotalBalance);
-  }, [accounts, uid]);
-
   // Cargar preferencias
   useEffect(() => {
     if (!uid) return;
@@ -130,12 +163,8 @@ export default function FinanzasPage() {
   const loadTransactions = useCallback(async () => {
     if (!uid) return;
     try {
-      const [txs, summaryData] = await Promise.all([
-        getTransactionsByOwnerId(uid),
-        getMonthlySummary(uid),
-      ]);
+      const txs = await getTransactionsByOwnerId(uid);
       setTransactions(txs);
-      setSummary(summaryData);
     } catch (e) { console.error(e); }
   }, [uid]);
 
@@ -171,7 +200,7 @@ export default function FinanzasPage() {
     if (newTx.type === 'expense' && newTx.accountId) {
       const acc = accounts.find(a => a.id === newTx.accountId);
       if (acc && acc.balance < amount) {
-        error(`Fondos insuficientes en "${acc.name}". Balance: ${formatAmount(acc.balance)}`);
+        error(`Fondos insuficientes en "${acc.name}". Balance: ${formatInCurrency(acc.balance, acc.currency || 'USD')}`);
         return;
       }
     }
@@ -202,7 +231,9 @@ export default function FinanzasPage() {
       await loadTransactions();
 
       const typeLabel = TYPE_LABELS[newTx.type];
-      success(`${typeLabel} de ${formatAmount(amount)} registrado`);
+      const account = accounts.find(a => a.id === newTx.accountId);
+      const txCurrency = account?.currency || 'USD';
+      success(`${typeLabel} de ${formatInCurrency(amount, txCurrency)} registrado`);
       setShowModal(false);
       setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO() });
     } catch (e: any) {
@@ -212,15 +243,17 @@ export default function FinanzasPage() {
       setTxLoading(false);
     }
   };
-
   const handleDeleteTransaction = async (txId: string) => {
     const tx = transactions.find(t => t.id === txId);
     if (!tx) return;
 
+    const txAccount = accounts.find((a) => a.id === tx.accountId);
+    const txCurrency = txAccount?.currency || 'USD';
+
     setConfirmState({
       isOpen: true,
       title: 'Eliminar Transacción',
-      message: `¿Eliminar "${tx.description || tx.category}" por ${formatAmount(tx.amount)}? El balance de la cuenta se ajustará.`,
+      message: `¿Eliminar "${tx.description || tx.category}" por ${formatInCurrency(tx.amount, txCurrency)}? El balance de la cuenta se ajustará.`,
       variant: 'danger',
       confirmText: 'Eliminar',
       onConfirm: async () => {
@@ -304,12 +337,22 @@ export default function FinanzasPage() {
       const override = vepayOverrides[key];
       const tx = mapReceiptToTransaction(receipt, override);
 
+      const account = accounts.find(a => a.id === tx.accountId);
+      const accCurrency = account?.currency || 'USD';
+
+      let finalAmount = tx.amount;
+      if (accCurrency === 'USD') {
+        finalAmount = Number(convertBetween(tx.amount, 'BS', 'USD').toFixed(2));
+      }
+
       const txData: any = {
         ownerId: uid,
-        amount: tx.amount,
+        amount: finalAmount,
         type: tx.type,
         category: tx.category,
-        description: tx.description,
+        description: accCurrency === 'USD'
+          ? `${tx.description} (Original: Bs. ${tx.amount.toLocaleString('es')})`
+          : tx.description,
         date: tx.date,
       };
       if (tx.accountId) {
@@ -319,14 +362,14 @@ export default function FinanzasPage() {
       await createTransaction(txData);
 
       if (tx.accountId) {
-        const delta = tx.type === 'expense' ? -tx.amount : tx.amount;
+        const delta = tx.type === 'expense' ? -finalAmount : finalAmount;
         await updateAccountBalance(tx.accountId, delta);
       }
 
       await loadTransactions();
 
       const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
-      success(`${typeLabel} de ${formatAmount(tx.amount)} registrado desde captura`);
+      success(`${typeLabel} de ${formatInCurrency(finalAmount, accCurrency)} registrado desde captura`);
 
       setVepayReceipts(prev => prev.filter(r => r.transaction_key !== receipt.transaction_key));
       if (vepayReceipts.length <= 1) {
@@ -375,20 +418,24 @@ export default function FinanzasPage() {
       return;
     }
     if (fromAcc.balance < amount) {
-      error(`Fondos insuficientes en "${fromAcc.name}". Balance: ${formatAmount(fromAcc.balance)}`);
+      error(`Fondos insuficientes en "${fromAcc.name}". Balance: ${formatInCurrency(fromAcc.balance, fromAcc.currency)}`);
       return;
     }
 
     try {
+      const fromCurrency = fromAcc.currency || 'USD';
+      const toCurrency = toAcc.currency || 'USD';
+      const convertedAmount = convertBetween(amount, fromCurrency, toCurrency);
+
       await updateAccountBalance(transfer.fromAccountId, -amount);
-      await updateAccountBalance(transfer.toAccountId, amount);
+      await updateAccountBalance(transfer.toAccountId, convertedAmount);
 
       const txData: any = {
         ownerId: uid || 'local',
         amount,
         type: 'saving',
         category: 'Transferencia',
-        description: `Transferencia: ${fromAcc.name} → ${toAcc.name}`,
+        description: `Transferencia: ${fromAcc.name} → ${toAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(convertedAmount, toCurrency)})` : ''}`,
         date: Date.now(),
         accountId: transfer.fromAccountId,
       };
@@ -410,6 +457,7 @@ export default function FinanzasPage() {
       name: newAccount.name,
       type: newAccount.type,
       balance: newAccount.balance,
+      currency: newAccount.currency || 'BS',
       icon: newAccount.type === 'checking' ? '🏦' : newAccount.type === 'savings' ? '💰' : '💵',
       color: ACCOUNT_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
@@ -418,7 +466,7 @@ export default function FinanzasPage() {
     await createAccount(acc);
     success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
-    setNewAccount({ name: '', type: 'checking', balance: 0 });
+    setNewAccount({ name: '', type: 'checking', balance: 0, currency: 'BS' });
   };
 
   const handleDeleteAccount = async (id: string) => {
@@ -478,7 +526,7 @@ export default function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: 'Resetear Balance',
-      message: `¿Resetear el balance de "${acc?.name}" a $0? Se perderá el saldo actual de ${formatAmount(acc?.balance || 0)}.`,
+      message: `¿Resetear el balance de "${acc?.name}" a ${formatInCurrency(0, acc?.currency || 'BS')}? Se perderá el saldo actual de ${formatInCurrency(acc?.balance || 0, acc?.currency || 'BS')}.`,
       variant: 'danger',
       confirmText: 'Resetear balance',
       onConfirm: async () => {
@@ -605,7 +653,7 @@ export default function FinanzasPage() {
 
     if (action === 'all') {
       title = `🗑️ Vaciar "${acc.name}"`;
-      message = `Se eliminarán TODAS las transacciones de "${acc.name}" y el balance se reseteará a $0.`;
+      message = `Se eliminarán TODAS las transacciones de "${acc.name}" y el balance se reseteará a ${formatInCurrency(0, acc.currency)}.`;
       confirmText = 'Vaciar cuenta';
     } else {
       const typeLabel = TYPE_LABELS[action];
@@ -627,11 +675,11 @@ export default function FinanzasPage() {
         try {
           if (action === 'all') {
             await wipeAllTransactions(accountId);
-            success(`"${acc.name}" vaciada. Balance: $0`);
+            success(`"${acc.name}" vaciada. Balance: ${formatInCurrency(0, acc.currency)}`);
           } else {
             const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
             const sign = result.balanceAdjustment > 0 ? '+' : '';
-            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}${formatAmount(Math.abs(result.balanceAdjustment))}`);
+            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}${formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency)}`);
           }
           await loadTransactions();
         } catch (e: any) {
@@ -718,7 +766,9 @@ export default function FinanzasPage() {
                   <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
                   <div className="account-info">
                     <span className="account-name">{acc.name}</span>
-                    <span className="account-type">{acc.type}</span>
+                    <span className="account-type">
+                      {acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'} • {acc.currency || 'BS'}
+                    </span>
                   </div>
                   <div className="account-actions-group">
                     <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
@@ -735,8 +785,15 @@ export default function FinanzasPage() {
                     </div>
                   </div>
                 </div>
-                <div className="account-balance" style={{ color: acc.color }}>
-                  {showAmounts ? `${formatAmount(acc.balance)}` : '••••••'}
+                <div className="account-balance-group">
+                  <div className="account-balance" style={{ color: acc.color }}>
+                    {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                  </div>
+                  {showAmounts && acc.currency !== displayCurrency && (
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                      ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -820,7 +877,22 @@ export default function FinanzasPage() {
                     <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
                     <td>{formatDate(tx.date)}</td>
                     <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                      {showAmounts ? `${tx.type === 'expense' ? '-' : '+'}${formatAmount(tx.amount)}` : '••••••'}
+                      {showAmounts ? (
+                        <>
+                          <div>
+                            {tx.type === 'expense' ? '-' : '+'}
+                            {formatInCurrency(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD')}
+                          </div>
+                          {(accounts.find(a => a.id === tx.accountId)?.currency || 'USD') !== displayCurrency && (
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                              ≈ {tx.type === 'expense' ? '-' : '+'}
+                              {formatInCurrency(convertBetween(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD', displayCurrency), displayCurrency)}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        '••••••'
+                      )}
                     </td>
                     <td>
                       <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
@@ -868,7 +940,9 @@ export default function FinanzasPage() {
                   <div className="tx-field">
                     <label className="tx-label">Monto *</label>
                     <div className="tx-input-wrap">
-                      <span className="tx-currency">{currencyMap[displayCurrency].symbol}</span>
+                      <span className="tx-currency">
+                        {currencyMap[accounts.find(a => a.id === newTx.accountId)?.currency || displayCurrency].symbol}
+                      </span>
                       <input
                         className="tx-input tx-input-amount"
                         type="number"
@@ -967,7 +1041,7 @@ export default function FinanzasPage() {
                     <CustomSelect
                       value={transfer.fromAccountId}
                       onChange={(val) => setTransfer({ ...transfer, fromAccountId: val })}
-                      options={accounts.map((a) => ({ value: a.id, label: `${a.name} (${formatAmount(a.balance)})`, icon: a.icon }))}
+                      options={accounts.map((a) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency)})`, icon: a.icon }))}
                       placeholder="Cuenta origen..."
                     />
                   </div>
@@ -976,16 +1050,32 @@ export default function FinanzasPage() {
                     <CustomSelect
                       value={transfer.toAccountId}
                       onChange={(val) => setTransfer({ ...transfer, toAccountId: val })}
-                      options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} (${formatAmount(a.balance)})`, icon: a.icon }))}
+                      options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency)})`, icon: a.icon }))}
                       placeholder="Cuenta destino..."
                     />
                   </div>
                   <div className="tx-field">
                     <label className="tx-label">Monto</label>
                     <div className="tx-input-wrap">
-                      <span className="tx-currency">{currencyMap[displayCurrency].symbol}</span>
+                      <span className="tx-currency">
+                        {currencyMap[accounts.find(a => a.id === transfer.fromAccountId)?.currency || displayCurrency].symbol}
+                      </span>
                       <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={transfer.amount} onChange={(e) => setTransfer({ ...transfer, amount: e.target.value })} />
                     </div>
+                    {(() => {
+                      const fromAcc = accounts.find(a => a.id === transfer.fromAccountId);
+                      const toAcc = accounts.find(a => a.id === transfer.toAccountId);
+                      if (fromAcc && toAcc && fromAcc.currency !== toAcc.currency) {
+                        const amountNum = Number(transfer.amount) || 0;
+                        const converted = convertBetween(amountNum, fromAcc.currency, toAcc.currency);
+                        return (
+                          <div style={{ marginTop: '6px', fontSize: '12px', color: 'var(--neon-green)', fontWeight: 500 }}>
+                            Destino recibe: ~ {formatInCurrency(converted, toAcc.currency)}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
                 <div className="modal-footer">
@@ -1026,9 +1116,21 @@ export default function FinanzasPage() {
                     />
                   </div>
                   <div className="tx-field">
+                    <label className="tx-label">Moneda</label>
+                    <CustomSelect
+                      value={newAccount.currency || 'BS'}
+                      onChange={(val) => setNewAccount({ ...newAccount, currency: val as CurrencyCode })}
+                      options={[
+                        { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
+                        { value: 'USD', label: 'Dólares (USD)', icon: '🇺🇸' },
+                      ]}
+                      placeholder="Seleccionar moneda..."
+                    />
+                  </div>
+                  <div className="tx-field">
                     <label className="tx-label">Balance Inicial</label>
                     <div className="tx-input-wrap">
-                      <span className="tx-currency">{currencyMap[displayCurrency].symbol}</span>
+                      <span className="tx-currency">{currencyMap[newAccount.currency || 'BS'].symbol}</span>
                       <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
                     </div>
                   </div>
@@ -1284,7 +1386,7 @@ export default function FinanzasPage() {
                               <div className="accounting-account-info">
                                 <span className="accounting-account-name">{acc.name}</span>
                                 <span className="accounting-account-balance" style={{ color: acc.color }}>
-                                  {showAmounts ? `${formatAmount(acc.balance)}` : '••••••'}
+                                  {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
                                 </span>
                               </div>
                             </div>

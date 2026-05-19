@@ -214,6 +214,7 @@ export interface FinancialAccount {
   name: string;
   type: AccountType;
   balance: number;
+  currency: CurrencyCode;
   icon: string;
   color: string;
   createdAt: number;
