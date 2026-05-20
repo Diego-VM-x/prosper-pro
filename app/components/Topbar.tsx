@@ -131,6 +131,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
 
   // Rutas disponibles para búsqueda
   const searchRoutes = [
+    { name: 'Inicio', route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
     { name: 'Dashboard', route: '/dashboard', icon: '📊', keywords: 'dashboard inicio principal' },
     { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
@@ -530,6 +531,10 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
             <nav className="mobile-menu-nav">
               <Link href="/dashboard" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconDashboard /> Dashboard
+              </Link>
+              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Inicio
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconTasks /> Planes Financieros

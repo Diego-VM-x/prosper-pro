@@ -101,6 +101,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
           <Link href="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? 'Dashboard' : undefined}>
             <IconDashboard /> {!isCollapsed && 'Dashboard'}
           </Link>
+          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-landing" title={isCollapsed ? 'Inicio' : undefined}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            {!isCollapsed && 'Inicio'}
+          </Link>
           <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? 'Planes' : undefined}>
             <IconTasks /> {!isCollapsed && <>Planes Financieros{activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}</>}
             {isCollapsed && activeGoalsCount > 0 && <span className="nav-badge nav-badge-collapsed">{activeGoalsCount}</span>}
