@@ -184,7 +184,16 @@ export async function createDefaultAccounts(ownerId: string) {
 
 // Recalcular el balance de una cuenta basado en sus transacciones activas
 // Lógica contable: income (+) expense (-) saving (-)
+// IMPORTANTE: El balance se mantiene en la moneda NATIVA de la cuenta
 export async function recalculateAccountBalance(accountId: string): Promise<number> {
+  // Primero obtener la cuenta para saber su moneda
+  const accountDoc = await getDocs(query(collection(db, COLLECTION), where('__name__', '==', accountId)));
+  let accountCurrency = 'BS'; // default
+  if (!accountDoc.empty) {
+    const accountData = accountDoc.docs[0].data();
+    accountCurrency = accountData.currency || 'BS';
+  }
+
   const txsQuery = query(
     collection(db, 'transactions'),
     where('accountId', '==', accountId)
@@ -196,6 +205,8 @@ export async function recalculateAccountBalance(accountId: string): Promise<numb
     const tx = docSnap.data();
     if (tx.archived) return; // Ignorar transacciones archivadas
 
+    // Las transacciones ya están en la moneda de la cuenta (se guardan así al crearlas)
+    // Simplemente sumamos/restamos los montos directamente
     if (tx.type === 'income') calculatedBalance += tx.amount;
     else if (tx.type === 'expense') calculatedBalance -= tx.amount;
     else if (tx.type === 'saving') calculatedBalance -= tx.amount;

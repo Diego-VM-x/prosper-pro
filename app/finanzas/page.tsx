@@ -68,36 +68,64 @@ export default function FinanzasPage() {
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
 
   // Calcular balance total reactivamente
+  // ESTRATEGIA: Sumar en moneda nativa de cada cuenta primero, luego convertir totales
   const totalBalance = useMemo(() => {
-    return accounts.reduce((sum, acc) => {
-      const converted = convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
-      return sum + converted;
-    }, 0);
+    const totalsByCurrency: Record<string, number> = {};
+    
+    accounts.forEach((acc) => {
+      const currency = acc.currency || 'USD';
+      if (!totalsByCurrency[currency]) {
+        totalsByCurrency[currency] = 0;
+      }
+      totalsByCurrency[currency] += acc.balance;
+    });
+    
+    // Convertir totales agregados a la moneda de display
+    let total = 0;
+    Object.entries(totalsByCurrency).forEach(([currency, balance]) => {
+      total += convertBetween(balance, currency as CurrencyCode, displayCurrency);
+    });
+    
+    return total;
   }, [accounts, displayCurrency, convertBetween]);
 
   // Calcular resumen mensual reactivamente
+  // ESTRATEGIA: Sumar en moneda nativa de cada cuenta primero, luego convertir totales
   const summary = useMemo(() => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     
-    let income = 0;
-    let expenses = 0;
-    let saving = 0;
+    // Acumuladores por moneda nativa
+    const totalsByCurrency: Record<string, { income: number; expenses: number; saving: number }> = {};
     
     transactions.forEach((t) => {
       if (t.date >= startOfMonth) {
         const account = accounts.find((a) => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
-        const convertedAmount = convertBetween(t.amount, txCurrency, displayCurrency);
+        
+        if (!totalsByCurrency[txCurrency]) {
+          totalsByCurrency[txCurrency] = { income: 0, expenses: 0, saving: 0 };
+        }
         
         if (t.type === 'income') {
-          income += convertedAmount;
+          totalsByCurrency[txCurrency].income += t.amount;
         } else if (t.type === 'expense') {
-          expenses += convertedAmount;
+          totalsByCurrency[txCurrency].expenses += t.amount;
         } else if (t.type === 'saving') {
-          saving += convertedAmount;
+          totalsByCurrency[txCurrency].saving += t.amount;
         }
       }
+    });
+    
+    // Convertir totales agregados a la moneda de display
+    let income = 0;
+    let expenses = 0;
+    let saving = 0;
+    
+    Object.entries(totalsByCurrency).forEach(([currency, totals]) => {
+      income += convertBetween(totals.income, currency as CurrencyCode, displayCurrency);
+      expenses += convertBetween(totals.expenses, currency as CurrencyCode, displayCurrency);
+      saving += convertBetween(totals.saving, currency as CurrencyCode, displayCurrency);
     });
     
     return {

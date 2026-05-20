@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (20 de Mayo, 2026 - Fix Crítico de Balances Exagerados)
+## Estado Actual (19 de Mayo, 2026 - Fix Multi-Moneda y Balances)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -9,7 +9,7 @@
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore (transactions, accounts, goals, plans, reminders, notifications, expense_requests, recurring_payments, feedback, user_course_progress, users).
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
-- **Bug Fix Crítico (20/05/2026)**: Corregida lógica de actualización de balances. Las transacciones de tipo `saving` (ahorro) se estaban **sumando** al balance en lugar de **restar**, causando valores exageradísimos en todas las cuentas. Fix aplicado en 3 handlers de `finanzas/page.tsx`. Para corregir balances existentes: Finanzas → "Gestión Contable" → "Recalcular Balances".
+- **Bug Fix Crítico (19/05/2026)**: Corregidos 2 errores de multi-moneda: (1) El balance total y la gráfica ahora convierten correctamente transacciones de diferentes monedas (BS/USD) usando la moneda nativa de cada cuenta antes de sumar. (2) El balance en la gráfica ahora resta correctamente el saving (`income - expense - saving`). También se eliminó código duplicado en `accounts.ts` donde `recalculateAccountBalance` estaba repetida 6 veces.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -239,6 +239,17 @@
   - `handleVepayConfirm` (línea 365): `expense ? -finalAmount : finalAmount` → `income ? finalAmount : -finalAmount`
 - **Lógica correcta**: income suma (+), expense resta (-), saving resta (-).
 - **Para corregir balances existentes**: Usar "Gestión Contable" → "Recalcular Balances" en Finanzas. La función `recalculateAccountBalance` en `accounts.ts:187` ya tiene la lógica correcta.
+
+### 19/05/2026 - Fix Multi-Moneda: Conversión de Balances y Gráfica
+- **Bug 1**: El balance total en Finanzas convertía cada cuenta individualmente a `displayCurrency` en lugar de sumar en moneda nativa primero. Causaba valores incorrectos cuando había cuentas en BS y USD.
+- **Bug 2**: La gráfica `FinancialStatusChart` sumaba transacciones de diferentes monedas sin convertirlas, y el balance no restaba el `saving`.
+- **finanzas/page.tsx**: Corregido `totalBalance` (línea 72-90) para agrupar por moneda nativa primero, luego convertir totales agregados a `displayCurrency`.
+- **FinancialStatusChart.tsx**: 
+  - Agregado `useEffect` para cargar cuentas y obtener la moneda de cada transacción.
+  - Corregidos `chartData` y `totals` para convertir cada transacción a `displayCurrency` usando `convertBetween(t.amount, txCurrency, displayCurrency)` donde `txCurrency` es la moneda nativa de la cuenta de la transacción.
+  - Corregida fórmula del balance: `income - expense - saving` (antes era `income - expense`).
+- **accounts.ts**: Eliminado código duplicado - la función `recalculateAccountBalance` estaba repetida 6 veces (líneas 222-377). Ahora solo existe una vez correctamente.
+- **next.config.ts**: Agregado `turbopack.root: __dirname` para fix de build.
 
 ### 18/05/2026 - Dashboard: Eliminar Balance Total + Efectos Neón + Flechas Scroll
 - **Dashboard.tsx**: Eliminado stat pill "Balance Total" () de la fila de stats superiores. Quedan 4 pills: Ahorro Mensual, Ahorro en Planes, Recurrentes/Mes, Metas Completadas.

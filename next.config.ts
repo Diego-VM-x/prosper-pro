@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  turbopack: {
+    root: __dirname,
+  },
   headers: async () => [
     {
       source: '/(.*)',

@@ -71,8 +71,9 @@ function SkeletonChart() {
 
 export function FinancialStatusChart() {
   const { user } = useAuth();
-  const { formatAmount, displayCurrency, setDisplayCurrency, currencies, currencyMap } = useCurrency();
+  const { formatAmount, displayCurrency, setDisplayCurrency, currencies, currencyMap, convertBetween } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('week');
   const [showAmounts, setShowAmounts] = useState(true);
@@ -85,6 +86,23 @@ export function FinancialStatusChart() {
       setLoading(false);
     });
     return () => unsubscribe();
+  }, [user?.uid]);
+
+  // Cargar cuentas para obtener la moneda de cada transacción
+  useEffect(() => {
+    if (!user?.uid) return;
+    
+    let unsub: (() => void) | undefined;
+    
+    import('@/lib/firestore/accounts').then(({ subscribeToAccounts }) => {
+      unsub = subscribeToAccounts(user.uid, (accs) => {
+        setAccounts(accs);
+      });
+    });
+    
+    return () => {
+      if (unsub) unsub();
+    };
   }, [user?.uid]);
 
   const chartData = useMemo((): ChartDataPoint[] => {
@@ -150,21 +168,68 @@ export function FinancialStatusChart() {
         return txDate >= period.start && txDate <= period.end;
       });
 
+      // Convertir cada transacción a displayCurrency antes de sumar
+      const income = periodTxs
+        .filter(t => t.type === 'income')
+        .reduce((s, t) => {
+          const account = accounts.find(a => a.id === t.accountId);
+          const txCurrency = account?.currency || 'USD';
+          return s + convertBetween(t.amount, txCurrency, displayCurrency);
+        }, 0);
+      
+      const expense = periodTxs
+        .filter(t => t.type === 'expense')
+        .reduce((s, t) => {
+          const account = accounts.find(a => a.id === t.accountId);
+          const txCurrency = account?.currency || 'USD';
+          return s + convertBetween(t.amount, txCurrency, displayCurrency);
+        }, 0);
+      
+      const saving = periodTxs
+        .filter(t => t.type === 'saving')
+        .reduce((s, t) => {
+          const account = accounts.find(a => a.id === t.accountId);
+          const txCurrency = account?.currency || 'USD';
+          return s + convertBetween(t.amount, txCurrency, displayCurrency);
+        }, 0);
+
       return {
         label: period.label,
-        income: periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-        expense: periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-        saving: periodTxs.filter(t => t.type === 'saving').reduce((s, t) => s + t.amount, 0),
+        income,
+        expense,
+        saving,
       };
     });
-  }, [transactions, selectedRange]);
+  }, [transactions, selectedRange, accounts, displayCurrency, convertBetween]);
 
   const totals = useMemo(() => {
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const saving = transactions.filter(t => t.type === 'saving').reduce((s, t) => s + t.amount, 0);
-    return { income, expense, saving, balance: income - expense };
-  }, [transactions]);
+    // Convertir cada transacción a displayCurrency antes de sumar
+    const income = transactions
+      .filter(t => t.type === 'income')
+      .reduce((s, t) => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return s + convertBetween(t.amount, txCurrency, displayCurrency);
+      }, 0);
+    
+    const expense = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((s, t) => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return s + convertBetween(t.amount, txCurrency, displayCurrency);
+      }, 0);
+    
+    const saving = transactions
+      .filter(t => t.type === 'saving')
+      .reduce((s, t) => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return s + convertBetween(t.amount, txCurrency, displayCurrency);
+      }, 0);
+    
+    return { income, expense, saving, balance: income - expense - saving };
+  }, [transactions, accounts, displayCurrency, convertBetween]);
 
   return (
     <div style={{
