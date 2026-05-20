@@ -85,7 +85,7 @@ function SummaryCard({ label, value, color, showAmounts, altValue, showConversio
   return (
     <div>
       <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-        {label}
+        {label} {showConversion && showAmounts && <span style={{ fontSize: '10px', opacity: 0.7 }}>({altCurrency})</span>}
       </span>
       <p style={{
         margin: '4px 0 0',
@@ -94,7 +94,11 @@ function SummaryCard({ label, value, color, showAmounts, altValue, showConversio
         color: showAmounts ? color : 'var(--text-tertiary)',
         lineHeight: 1.2,
       }}>
-        {showAmounts ? formatInCurrency(value, displayCurrency) : '••••••'}
+        {showAmounts
+          ? showConversion
+            ? formatInCurrency(altValue, altCurrency)
+            : formatInCurrency(value, displayCurrency)
+          : '••••••'}
       </p>
       {showConversion && showAmounts && (
         <p style={{
@@ -104,7 +108,7 @@ function SummaryCard({ label, value, color, showAmounts, altValue, showConversio
           color: 'var(--text-secondary)',
           opacity: 0.8,
         }}>
-          ≈ {formatInCurrency(altValue, altCurrency)} {altCurrency}
+          ≈ {formatInCurrency(value, displayCurrency)} {displayCurrency}
         </p>
       )}
     </div>

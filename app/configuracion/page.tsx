@@ -324,7 +324,7 @@ export default function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Moneda Base</label>
+                      <label className="pref-label">Moneda de Visualización</label>
                       <div className="option-grid currency-grid">
                         {CURRENCY_LIST.map(code => {
                           const cfg = CURRENCY_MAP[code];
@@ -332,7 +332,10 @@ export default function ConfiguracionPage() {
                             <button
                               key={code}
                               className={`option-btn ${currency === code ? 'active' : ''}`}
-                              onClick={() => setCurrency(code)}
+                              onClick={() => {
+                                setCurrency(code);
+                                setDisplayCurrency(code);
+                              }}
                             >
                               <span className="option-flag">{cfg.flag}</span>
                               <span className="option-text">{cfg.symbol} {cfg.name}</span>

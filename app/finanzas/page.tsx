@@ -63,13 +63,19 @@ interface SummaryWidgetProps {
 function SummaryWidget({ label, value, altValue, color, showAmounts, showConversion, altCurrency, formatInCurrency, displayCurrency }: SummaryWidgetProps) {
   return (
     <div className="summary-card">
-      <span className="summary-label">{label}</span>
+      <span className="summary-label">
+        {label} {showConversion && showAmounts && <span style={{ fontSize: '10px', opacity: 0.7 }}>({altCurrency})</span>}
+      </span>
       <span className="summary-value" style={{ color: showAmounts ? color : undefined }}>
-        {showAmounts ? formatInCurrency(value, displayCurrency) : '••••••'}
+        {showAmounts
+          ? showConversion
+            ? formatInCurrency(altValue, altCurrency)
+            : formatInCurrency(value, displayCurrency)
+          : '••••••'}
       </span>
       {showConversion && showAmounts && (
         <span className="summary-alt">
-          ≈ {formatInCurrency(altValue, altCurrency)} {altCurrency}
+          ≈ {formatInCurrency(value, displayCurrency)} {displayCurrency}
         </span>
       )}
     </div>
