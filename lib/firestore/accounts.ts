@@ -130,7 +130,11 @@ export async function getTotalBalance(ownerId: string): Promise<number> {
 }
 
 // Crear cuentas por defecto para un usuario
+// Solo crea las que no existen (evita duplicados)
 export async function createDefaultAccounts(ownerId: string) {
+  const existingAccounts = await getAccountsByOwnerId(ownerId);
+  const existingTypes = new Set(existingAccounts.map(a => a.type));
+
   const defaultAccounts: Omit<FinancialAccount, 'id'>[] = [
     {
       ownerId,
@@ -168,7 +172,9 @@ export async function createDefaultAccounts(ownerId: string) {
   ];
 
   for (const acc of defaultAccounts) {
-    await addDoc(collection(db, COLLECTION), acc);
+    if (!existingTypes.has(acc.type)) {
+      await addDoc(collection(db, COLLECTION), acc);
+    }
   }
 }
 
@@ -351,6 +357,7 @@ export async function wipeUserTransactionsByType(
 // ============================================================
 
 // Borra TODOS los datos del usuario en Firestore (todas las colecciones)
+// Maneja tanto ownerId como userId (legacy) para evitar datos huérfanos
 export async function wipeAllUserData(ownerId: string): Promise<{ wiped: string[]; errors: string[] }> {
   const wiped: string[] = [];
   const errors: string[] = [];
@@ -370,12 +377,22 @@ export async function wipeAllUserData(ownerId: string): Promise<{ wiped: string[
 
   for (const colName of collectionsToWipe) {
     try {
-      const q = query(collection(db, colName), where('ownerId', '==', ownerId));
-      const snapshot = await getDocs(q);
-      if (snapshot.size > 0) {
-        const deletePromises = snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+      // Borrar por ownerId
+      const qOwner = query(collection(db, colName), where('ownerId', '==', ownerId));
+      const snapOwner = await getDocs(qOwner);
+      if (snapOwner.size > 0) {
+        const deletePromises = snapOwner.docs.map((docSnap) => deleteDoc(docSnap.ref));
         await Promise.all(deletePromises);
-        wiped.push(`${colName} (${snapshot.size} docs)`);
+        wiped.push(`${colName} (${snapOwner.size} docs por ownerId)`);
+      }
+
+      // Borrar por userId (legacy)
+      const qUser = query(collection(db, colName), where('userId', '==', ownerId));
+      const snapUser = await getDocs(qUser);
+      if (snapUser.size > 0) {
+        const deletePromises = snapUser.docs.map((docSnap) => deleteDoc(docSnap.ref));
+        await Promise.all(deletePromises);
+        wiped.push(`${colName} (${snapUser.size} docs por userId legacy)`);
       }
     } catch (err) {
       errors.push(`${colName}: ${err}`);
