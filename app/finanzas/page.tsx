@@ -68,25 +68,12 @@ export default function FinanzasPage() {
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
 
   // Calcular balance total reactivamente
-  // ESTRATEGIA: Sumar en moneda nativa de cada cuenta primero, luego convertir totales
+  // Suma los balances de todas las cuentas y convierte a displayCurrency
   const totalBalance = useMemo(() => {
-    const totalsByCurrency: Record<string, number> = {};
-    
-    accounts.forEach((acc) => {
-      const currency = acc.currency || 'USD';
-      if (!totalsByCurrency[currency]) {
-        totalsByCurrency[currency] = 0;
-      }
-      totalsByCurrency[currency] += acc.balance;
-    });
-    
-    // Convertir totales agregados a la moneda de display
-    let total = 0;
-    Object.entries(totalsByCurrency).forEach(([currency, balance]) => {
-      total += convertBetween(balance, currency as CurrencyCode, displayCurrency);
-    });
-    
-    return total;
+    return accounts.reduce((sum, acc) => {
+      const converted = convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+      return sum + converted;
+    }, 0);
   }, [accounts, displayCurrency, convertBetween]);
 
   // Calcular resumen mensual reactivamente
