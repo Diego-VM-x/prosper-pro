@@ -8,7 +8,7 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
@@ -95,8 +95,10 @@ export default function FinanzasPage() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
-  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0, currency: 'BS' as CurrencyCode });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
+  const [showEditAccountModal, setShowEditAccountModal] = useState(false);
+  const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; color: string } | null>(null);
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
@@ -532,14 +534,27 @@ export default function FinanzasPage() {
       balance: newAccount.balance,
       currency: newAccount.currency || 'BS',
       icon: newAccount.type === 'checking' ? '🏦' : newAccount.type === 'savings' ? '💰' : '💵',
-      color: ACCOUNT_TYPE_COLORS[newAccount.type],
+      color: newAccount.color || ACCOUNT_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
     await createAccount(acc);
     success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
-    setNewAccount({ name: '', type: 'checking', balance: 0, currency: 'BS' });
+    setNewAccount({ name: '', type: 'checking', balance: 0, currency: 'BS', color: '' });
+  };
+
+  const handleEditAccount = async () => {
+    if (!editingAccount || !uid) return;
+    await updateAccount(editingAccount.id, { name: editingAccount.name, color: editingAccount.color, updatedAt: Date.now() });
+    success('Cuenta actualizada');
+    setShowEditAccountModal(false);
+    setEditingAccount(null);
+  };
+
+  const openEditAccount = (acc: FinancialAccount) => {
+    setEditingAccount({ id: acc.id, name: acc.name, color: acc.color });
+    setShowEditAccountModal(true);
   };
 
   const handleDeleteAccount = async (id: string) => {
@@ -849,6 +864,7 @@ export default function FinanzasPage() {
                     <div className="account-dropdown-wrapper">
                       <button className="account-action account-action-more" title="Más opciones">⋮</button>
                       <div className="account-dropdown">
+                        <button className="account-dropdown-item" onClick={() => openEditAccount(acc)}>✏️ Editar Nombre/Color</button>
                         <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'income')}>📥 Eliminar Ingresos</button>
                         <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'expense')}>📤 Eliminar Gastos</button>
                         <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'saving')}>💰 Eliminar Ahorros</button>
@@ -873,8 +889,47 @@ export default function FinanzasPage() {
             {accounts.length === 0 && (
               <div className="empty-accounts">
                 <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
+            </div>
+          )}
+
+          {/* Modal Editar Cuenta */}
+          {showEditAccountModal && editingAccount && (
+            <div className="modal-overlay" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Editar Cuenta</h2>
+                    <p className="modal-subtitle">Nombre y color</p>
+                  </div>
+                  <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="tx-field">
+                    <label className="tx-label">Nombre</label>
+                    <input className="tx-input" type="text" placeholder="Nombre de la cuenta" value={editingAccount.name} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Color</label>
+                    <div className="color-picker-row">
+                      {['#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'].map((c) => (
+                        <button
+                          key={c}
+                          className={`color-dot ${editingAccount.color === c ? 'active' : ''}`}
+                          style={{ background: c }}
+                          onClick={() => setEditingAccount({ ...editingAccount, color: c })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleEditAccount}>Guardar</button>
+                </div>
               </div>
-            )}
+            </div>
+          )}
+
           </div>
 
           {/* Resumen mensual */}
@@ -1278,6 +1333,19 @@ export default function FinanzasPage() {
                       <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
                     </div>
                   </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Color (opcional)</label>
+                    <div className="color-picker-row">
+                      {['#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'].map((c) => (
+                        <button
+                          key={c}
+                          className={`color-dot ${newAccount.color === c ? 'active' : ''}`}
+                          style={{ background: c }}
+                          onClick={() => setNewAccount({ ...newAccount, color: c })}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={() => setShowAccountModal(false)}>Cancelar</button>
@@ -1613,6 +1681,10 @@ export default function FinanzasPage() {
           .tx-field { display: flex; flex-direction: column; gap: 6px; }
           .tx-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
           .tx-label { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
+          .color-picker-row { display: flex; gap: 8px; flex-wrap: wrap; }
+          .color-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: all var(--transition-fast); }
+          .color-dot:hover { transform: scale(1.15); }
+          .color-dot.active { border-color: var(--text-primary); box-shadow: 0 0 8px rgba(255,255,255,0.3); }
           .tx-input {
             width: 100%;
             padding: 10px 14px;
