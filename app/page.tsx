@@ -78,8 +78,17 @@ export default function Home() {
           <nav className="landing-nav">
             <a href="#features" className="nav-link">Funciones</a>
             <a href="#how-it-works" className="nav-link">Cómo Funciona</a>
-            <button className="btn btn-ghost" onClick={() => router.push(user ? '/dashboard' : '/login')}>{user ? 'Ir al Dashboard' : 'Iniciar Sesión'}</button>
-            <button className="btn btn-primary" onClick={() => router.push(user ? '/dashboard' : '/register')}>{user ? 'Ir al Dashboard' : 'Comenzar Gratis'}</button>
+            {user ? (
+              <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+                Ir al Dashboard
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            ) : (
+              <>
+                <button className="btn btn-ghost" onClick={() => router.push('/login')}>Iniciar Sesión</button>
+                <button className="btn btn-primary" onClick={() => router.push('/register')}>Comenzar Gratis</button>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -112,13 +121,22 @@ export default function Home() {
 
             <AnimatedSection delay={300}>
               <div className="landing-hero-cta">
-                <button className="btn btn-primary btn-xl" onClick={() => router.push(user ? '/dashboard' : '/register')}>
-                  {user ? 'Ir al Dashboard' : 'Crear Cuenta Gratis'}
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </button>
-                <button className="btn btn-outline btn-xl" onClick={() => router.push(user ? '/dashboard' : '/login')}>
-                  {user ? 'Ir al Dashboard' : 'Ya tengo cuenta'}
-                </button>
+                {user ? (
+                  <button className="btn btn-primary btn-xl" onClick={() => router.push('/dashboard')}>
+                    Ir al Dashboard
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                  </button>
+                ) : (
+                  <>
+                    <button className="btn btn-primary btn-xl" onClick={() => router.push('/register')}>
+                      Crear Cuenta Gratis
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                    <button className="btn btn-outline btn-xl" onClick={() => router.push('/login')}>
+                      Ya tengo cuenta
+                    </button>
+                  </>
+                )}
               </div>
             </AnimatedSection>
 
@@ -356,10 +374,17 @@ export default function Home() {
                 <h2>¿Listo para tomar el control?</h2>
                 <p>Únete a Prosper Pro y comienza a construir tu libertad financiera hoy mismo.</p>
                 <div className="cta-buttons">
-                  <button className="btn btn-white btn-xl" onClick={() => router.push(user ? '/dashboard' : '/register')}>
-                    {user ? 'Ir al Dashboard' : 'Comenzar Gratis'}
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                  </button>
+                  {user ? (
+                    <button className="btn btn-white btn-xl" onClick={() => router.push('/dashboard')}>
+                      Ir al Dashboard
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                  ) : (
+                    <button className="btn btn-white btn-xl" onClick={() => router.push('/register')}>
+                      Comenzar Gratis
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    </button>
+                  )}
                 </div>
                 <p className="cta-note">{user ? 'Ya tienes una cuenta activa' : 'Sin tarjeta de crédito · Sin compromisos · 100% gratis'}</p>
               </div>
@@ -386,8 +411,14 @@ export default function Home() {
             </div>
             <div className="footer-col">
               <h4>Cuenta</h4>
-              <button onClick={() => router.push(user ? '/dashboard' : '/login')}>{user ? 'Dashboard' : 'Iniciar Sesión'}</button>
-              <button onClick={() => router.push(user ? '/dashboard' : '/register')}>{user ? 'Dashboard' : 'Registrarse'}</button>
+              {user ? (
+                <button onClick={() => router.push('/dashboard')}>Dashboard</button>
+              ) : (
+                <>
+                  <button onClick={() => router.push('/login')}>Iniciar Sesión</button>
+                  <button onClick={() => router.push('/register')}>Registrarse</button>
+                </>
+              )}
             </div>
           </div>
         </div>
