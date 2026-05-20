@@ -959,6 +959,7 @@ export function Dashboard() {
           .progress-section { grid-column: auto; }
           .bottom-scroll-arrow { display: flex; }
           .bottom-section-wrapper { gap: 4px; }
+          .chart-card { min-height: auto; }
         }
         @media (max-width: 768px) {
           .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
@@ -967,6 +968,8 @@ export function Dashboard() {
           .bottom-section { grid-template-columns: repeat(3, minmax(260px, 1fr)); gap: 14px; }
           .stat-pill { min-width: 160px; }
           .bottom-scroll-arrow { display: flex; }
+          .content-card { padding: 16px; }
+          .main-content-grid { gap: 16px; }
         }
         @media (max-width: 480px) {
           .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }

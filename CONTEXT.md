@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (19 de Mayo, 2026 - Fix Doble Conversión Multi-Moneda)
+## Estado Actual (20 de Mayo, 2026 - Fix Gráfica Financiera Multi-Moneda + Responsividad)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -231,6 +231,14 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 20/05/2026 - Fix Gráfica Financiera: Cálculos Multi-Moneda + Responsividad
+- **Bug Cálculos**: `FinancialStatusChart.tsx` sumaba `t.amount` directamente sin conversión de moneda. Si el usuario tenía transacciones en USD y BS, se mezclaban sin convertir a la moneda de visualización.
+- **Fix chartData**: Cada transacción ahora usa `convertBetween(t.amount, txCurrency, displayCurrency)` donde `txCurrency` viene de la cuenta vinculada (`account.currency || 'USD'`). Aplica a income, expense y saving.
+- **Fix totals**: Igual que chartData, todos los totales convierten usando la moneda de la cuenta. Balance corregido: `income - expense - saving` (antes no restaba ahorro).
+- **Responsividad**: Altura dinámica del gráfico según viewport: 200px (<480px), 240px (<768px), 280px (desktop). Listener `resize` para ajuste en tiempo real. Summary usa `grid` con `auto-fit` en lugar de `flex`. Eliminado selector de moneda redundante del header (ya existe en contexto global).
+- **Dashboard.tsx**: Media queries ajustados para `chart-card` en 1024px y 768px.
+- **Imports nuevos**: `subscribeToAccounts`, tipo `FinancialAccount` añadidos al componente.
+
 ### 20/05/2026 - Fix Crítico: Balances Exagerados en Todas las Cuentas
 - **Bug**: Transacciones de tipo `saving` (ahorro) se **sumaban** al balance en lugar de **restar**, causando valores exageradísimos en todas las cuentas para todos los usuarios.
 - **finanzas/page.tsx**: Corregida lógica de deltas en 3 handlers:

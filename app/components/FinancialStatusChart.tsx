@@ -4,7 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { subscribeToTransactions } from '@/lib/firestore/transactions';
-import type { Transaction } from '@/types';
+import { subscribeToAccounts } from '@/lib/firestore/accounts';
+import type { Transaction, FinancialAccount } from '@/types';
 import {
   BarChart,
   Bar,
@@ -31,8 +32,6 @@ const TIME_RANGES: { key: TimeRange; label: string }[] = [
   { key: 'month', label: 'Mes' },
   { key: 'year', label: 'Año' },
 ];
-
-
 
 function CustomTooltip({ active, payload, label, formatter }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string }) {
   const fmt = formatter || ((v: number) => `$${v}`);
@@ -71,11 +70,13 @@ function SkeletonChart() {
 
 export function FinancialStatusChart() {
   const { user } = useAuth();
-  const { formatAmount, displayCurrency, setDisplayCurrency, currencies, currencyMap } = useCurrency();
+  const { formatAmount, displayCurrency, convertBetween } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('week');
   const [showAmounts, setShowAmounts] = useState(true);
+  const [chartHeight, setChartHeight] = useState(280);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -86,6 +87,23 @@ export function FinancialStatusChart() {
     });
     return () => unsubscribe();
   }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = subscribeToAccounts(user.uid, (accs) => setAccounts(accs));
+    return () => unsub();
+  }, [user?.uid]);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      if (typeof window !== 'undefined') {
+        setChartHeight(window.innerWidth < 480 ? 200 : window.innerWidth < 768 ? 240 : 280);
+      }
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   const chartData = useMemo((): ChartDataPoint[] => {
     if (transactions.length === 0) return [];
@@ -98,7 +116,6 @@ export function FinancialStatusChart() {
 
     switch (selectedRange) {
       case 'day': {
-        // Últimas 24 horas por hora
         for (let i = 23; i >= 0; i--) {
           const d = new Date(now);
           d.setHours(d.getHours() - i, 0, 0, 0);
@@ -109,7 +126,6 @@ export function FinancialStatusChart() {
         break;
       }
       case 'week': {
-        // Últimos 7 días
         for (let i = 6; i >= 0; i--) {
           const d = new Date(now);
           d.setDate(d.getDate() - i);
@@ -121,7 +137,6 @@ export function FinancialStatusChart() {
         break;
       }
       case 'month': {
-        // Últimas 4 semanas
         for (let i = 3; i >= 0; i--) {
           const end = new Date(now);
           end.setDate(end.getDate() - i * 7);
@@ -134,7 +149,6 @@ export function FinancialStatusChart() {
         break;
       }
       case 'year': {
-        // Últimos 12 meses
         for (let i = 11; i >= 0; i--) {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
@@ -150,21 +164,32 @@ export function FinancialStatusChart() {
         return txDate >= period.start && txDate <= period.end;
       });
 
+      const convertTx = (t: Transaction) => {
+        const account = accounts.find((a) => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return convertBetween(t.amount, txCurrency, displayCurrency);
+      };
+
       return {
         label: period.label,
-        income: periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
-        expense: periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0),
-        saving: periodTxs.filter(t => t.type === 'saving').reduce((s, t) => s + t.amount, 0),
+        income: periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0),
+        expense: periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0),
+        saving: periodTxs.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0),
       };
     });
-  }, [transactions, selectedRange]);
+  }, [transactions, selectedRange, accounts, displayCurrency, convertBetween]);
 
   const totals = useMemo(() => {
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-    const saving = transactions.filter(t => t.type === 'saving').reduce((s, t) => s + t.amount, 0);
-    return { income, expense, saving, balance: income - expense };
-  }, [transactions]);
+    const convertTx = (t: Transaction) => {
+      const account = accounts.find((a) => a.id === t.accountId);
+      const txCurrency = account?.currency || 'USD';
+      return convertBetween(t.amount, txCurrency, displayCurrency);
+    };
+    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0);
+    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0);
+    const saving = transactions.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0);
+    return { income, expense, saving, balance: income - expense - saving };
+  }, [transactions, accounts, displayCurrency, convertBetween]);
 
   return (
     <div style={{
@@ -191,36 +216,7 @@ export function FinancialStatusChart() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {/* Currency Selector */}
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            background: 'var(--bg-input)',
-            borderRadius: 'var(--radius-full)',
-            padding: '3px',
-          }}>
-            {currencies.map((code) => (
-              <button
-                key={code}
-                onClick={() => setDisplayCurrency(code)}
-                style={{
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: displayCurrency === code ? 600 : 400,
-                  color: displayCurrency === code ? 'var(--text-on-accent)' : 'var(--text-secondary)',
-                  background: displayCurrency === code ? 'var(--bg-accent)' : 'transparent',
-                  border: 'none',
-                  borderRadius: 'var(--radius-full)',
-                  cursor: 'pointer',
-                  transition: 'var(--transition-fast)',
-                }}
-              >
-                {currencyMap[code].flag} {code}
-              </button>
-            ))}
-          </div>
-
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Toggle Amounts */}
           <button
             onClick={() => setShowAmounts(!showAmounts)}
@@ -276,10 +272,10 @@ export function FinancialStatusChart() {
 
       {/* Summary */}
       <div style={{
-        display: 'flex',
-        gap: '24px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+        gap: '16px',
         marginBottom: '16px',
-        flexWrap: 'wrap',
       }}>
         <div>
           <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -325,7 +321,7 @@ export function FinancialStatusChart() {
         <SkeletonChart />
       ) : chartData.length === 0 ? (
         <div style={{
-          height: '280px',
+          height: `${chartHeight}px`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -335,7 +331,7 @@ export function FinancialStatusChart() {
           No hay datos para el período seleccionado
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-default)" vertical={false} />
             <XAxis
