@@ -532,10 +532,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               <Link href="/dashboard" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconDashboard /> Dashboard
               </Link>
-              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                Inicio
-              </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconTasks /> Planes Financieros
               </Link>
@@ -554,6 +550,10 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
             </nav>
 
             <div className="mobile-menu-footer">
+              <Link href="/" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Ir al Inicio
+              </Link>
               <button className="mobile-menu-theme" onClick={() => { toggleTheme(); setShowMobileMenu(false); }}>
                 {theme === 'light' ? <IconMoon /> : <IconSun />}
                 {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
@@ -650,6 +650,21 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           flex-direction: column;
           gap: 8px;
         }
+        .mobile-menu-footer-link {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px;
+          border-radius: var(--radius-md);
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: var(--color-prosper-green);
+          text-decoration: none;
+          transition: all var(--transition-fast);
+        }
+        .mobile-menu-footer-link:hover { background: rgba(61,204,142,0.1); }
+        .mobile-menu-footer-link svg { width: 18px; height: 18px; }
         .mobile-menu-theme,
         .mobile-menu-logout {
           display: flex;
