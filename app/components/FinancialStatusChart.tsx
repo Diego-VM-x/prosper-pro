@@ -68,6 +68,49 @@ function SkeletonChart() {
   );
 }
 
+interface SummaryCardProps {
+  label: string;
+  value: number;
+  color: string;
+  showAmounts: boolean;
+  altValue: number;
+  showConversion: boolean;
+  altCurrency: string;
+  formatInCurrency: (amount: number, code: string) => string;
+  displayCurrency: string;
+  isBalance?: boolean;
+}
+
+function SummaryCard({ label, value, color, showAmounts, altValue, showConversion, altCurrency, formatInCurrency, displayCurrency, isBalance }: SummaryCardProps) {
+  return (
+    <div>
+      <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        {label}
+      </span>
+      <p style={{
+        margin: '4px 0 0',
+        fontSize: '18px',
+        fontWeight: 700,
+        color: showAmounts ? color : 'var(--text-tertiary)',
+        lineHeight: 1.2,
+      }}>
+        {showAmounts ? formatInCurrency(value, displayCurrency) : '••••••'}
+      </p>
+      {showConversion && showAmounts && (
+        <p style={{
+          margin: '2px 0 0',
+          fontSize: '11px',
+          fontWeight: 500,
+          color: 'var(--text-secondary)',
+          opacity: 0.8,
+        }}>
+          ≈ {formatInCurrency(altValue, altCurrency)} {altCurrency}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function FinancialStatusChart() {
   const { user } = useAuth();
   const { formatAmount, formatInCurrency, displayCurrency, convertBetween } = useCurrency();
@@ -76,6 +119,7 @@ export function FinancialStatusChart() {
   const [loading, setLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState<TimeRange>('week');
   const [showAmounts, setShowAmounts] = useState(true);
+  const [showConversion, setShowConversion] = useState(false);
   const [chartHeight, setChartHeight] = useState(280);
 
   useEffect(() => {
@@ -191,6 +235,14 @@ export function FinancialStatusChart() {
     return { income, expense, saving, balance: income - expense - saving };
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
+  const altCurrency = displayCurrency === 'USD' ? 'BS' : 'USD';
+  const altTotals = useMemo(() => ({
+    income: convertBetween(totals.income, displayCurrency, altCurrency),
+    expense: convertBetween(totals.expense, displayCurrency, altCurrency),
+    saving: convertBetween(totals.saving, displayCurrency, altCurrency),
+    balance: convertBetween(totals.balance, displayCurrency, altCurrency),
+  }), [totals, displayCurrency, altCurrency, convertBetween]);
+
   return (
     <div style={{
       background: 'var(--bg-card)',
@@ -272,48 +324,47 @@ export function FinancialStatusChart() {
 
       {/* Summary */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-        gap: '16px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
         marginBottom: '16px',
+        gap: '12px',
+        flexWrap: 'wrap',
       }}>
-        <div>
-          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Ingresos
-          </span>
-          <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-prosper-green)' }}>
-            {showAmounts ? formatInCurrency(totals.income, displayCurrency) : '••••••'}
-          </p>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: '16px',
+          flex: 1,
+        }}>
+          <SummaryCard label="Ingresos" value={totals.income} color="var(--color-prosper-green)" showAmounts={showAmounts} altValue={altTotals.income} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+          <SummaryCard label="Gastos" value={totals.expense} color="var(--color-error)" showAmounts={showAmounts} altValue={altTotals.expense} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+          <SummaryCard label="Ahorro" value={totals.saving} color="var(--color-pine-500)" showAmounts={showAmounts} altValue={altTotals.saving} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+          <SummaryCard label="Balance" value={totals.balance} color={totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} altValue={altTotals.balance} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} isBalance />
         </div>
-        <div>
-          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Gastos
-          </span>
-          <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-error)' }}>
-            {showAmounts ? formatInCurrency(totals.expense, displayCurrency) : '••••••'}
-          </p>
-        </div>
-        <div>
-          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Ahorro
-          </span>
-          <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-pine-500)' }}>
-            {showAmounts ? formatInCurrency(totals.saving, displayCurrency) : '••••••'}
-          </p>
-        </div>
-        <div>
-          <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Balance
-          </span>
-          <p style={{
-            margin: '4px 0 0',
-            fontSize: '18px',
-            fontWeight: 700,
-            color: showAmounts ? (totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)',
-          }}>
-            {showAmounts ? formatInCurrency(totals.balance, displayCurrency) : '••••••'}
-          </p>
-        </div>
+
+        <button
+          onClick={() => setShowConversion(!showConversion)}
+          style={{
+            padding: '6px 12px',
+            fontSize: '11px',
+            fontWeight: 500,
+            color: showConversion ? 'var(--color-prosper-green)' : 'var(--text-secondary)',
+            background: showConversion ? 'rgba(61,204,142,0.1)' : 'var(--bg-input)',
+            border: `1px solid ${showConversion ? 'var(--color-prosper-green)' : 'var(--border-default)'}`,
+            borderRadius: 'var(--radius-md)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'var(--transition-fast)',
+            whiteSpace: 'nowrap',
+            flexShrink: 0,
+          }}
+          title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
+        >
+          ⇄ {showConversion ? 'BS/USD' : 'Convertir'}
+        </button>
       </div>
 
       {/* Chart */}
