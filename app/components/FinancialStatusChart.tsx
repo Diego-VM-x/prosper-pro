@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { subscribeToTransactions } from '@/lib/firestore/transactions';
 import { subscribeToAccounts } from '@/lib/firestore/accounts';
-import type { Transaction, FinancialAccount } from '@/types';
+import type { Transaction, FinancialAccount, CurrencyCode } from '@/types';
 import {
   BarChart,
   Bar,
@@ -75,9 +75,9 @@ interface SummaryCardProps {
   showAmounts: boolean;
   altValue: number;
   showConversion: boolean;
-  altCurrency: string;
-  formatInCurrency: (amount: number, code: string) => string;
-  displayCurrency: string;
+  altCurrency: CurrencyCode;
+  formatInCurrency: (amount: number, code: CurrencyCode) => string;
+  displayCurrency: CurrencyCode;
   isBalance?: boolean;
 }
 
@@ -235,7 +235,7 @@ export function FinancialStatusChart() {
     return { income, expense, saving, balance: income - expense - saving };
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
-  const altCurrency = displayCurrency === 'USD' ? 'BS' : 'USD';
+  const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altTotals = useMemo(() => ({
     income: convertBetween(totals.income, displayCurrency, altCurrency),
     expense: convertBetween(totals.expense, displayCurrency, altCurrency),

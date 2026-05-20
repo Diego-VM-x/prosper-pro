@@ -55,9 +55,9 @@ interface SummaryWidgetProps {
   color: string;
   showAmounts: boolean;
   showConversion: boolean;
-  altCurrency: string;
-  formatInCurrency: (amount: number, code: string) => string;
-  displayCurrency: string;
+  altCurrency: CurrencyCode;
+  formatInCurrency: (amount: number, code: CurrencyCode) => string;
+  displayCurrency: CurrencyCode;
 }
 
 function SummaryWidget({ label, value, altValue, color, showAmounts, showConversion, altCurrency, formatInCurrency, displayCurrency }: SummaryWidgetProps) {
@@ -157,7 +157,7 @@ export default function FinanzasPage() {
     return false;
   });
   const [showConversion, setShowConversion] = useState(false);
-  const altCurrency = displayCurrency === 'USD' ? 'BS' : 'USD';
+  const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altSummary = useMemo(() => ({
     income: convertBetween(summary.income, displayCurrency, altCurrency),
     expenses: convertBetween(summary.expenses, displayCurrency, altCurrency),
