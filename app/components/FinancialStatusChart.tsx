@@ -70,7 +70,7 @@ function SkeletonChart() {
 
 export function FinancialStatusChart() {
   const { user } = useAuth();
-  const { formatAmount, displayCurrency, convertBetween } = useCurrency();
+  const { formatAmount, formatInCurrency, displayCurrency, convertBetween } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -282,7 +282,7 @@ export function FinancialStatusChart() {
             Ingresos
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-prosper-green)' }}>
-            {showAmounts ? formatAmount(totals.income) : '••••••'}
+            {showAmounts ? formatInCurrency(totals.income, displayCurrency) : '••••••'}
           </p>
         </div>
         <div>
@@ -290,7 +290,7 @@ export function FinancialStatusChart() {
             Gastos
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-error)' }}>
-            {showAmounts ? formatAmount(totals.expense) : '••••••'}
+            {showAmounts ? formatInCurrency(totals.expense, displayCurrency) : '••••••'}
           </p>
         </div>
         <div>
@@ -298,7 +298,7 @@ export function FinancialStatusChart() {
             Ahorro
           </span>
           <p style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 700, color: 'var(--color-pine-500)' }}>
-            {showAmounts ? formatAmount(totals.saving) : '••••••'}
+            {showAmounts ? formatInCurrency(totals.saving, displayCurrency) : '••••••'}
           </p>
         </div>
         <div>
@@ -311,7 +311,7 @@ export function FinancialStatusChart() {
             fontWeight: 700,
             color: showAmounts ? (totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)',
           }}>
-            {showAmounts ? formatAmount(totals.balance) : '••••••'}
+            {showAmounts ? formatInCurrency(totals.balance, displayCurrency) : '••••••'}
           </p>
         </div>
       </div>
@@ -347,7 +347,7 @@ export function FinancialStatusChart() {
               tickFormatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip formatter={formatAmount} />} />
+            <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} />} />
             <Legend
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
               formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}
