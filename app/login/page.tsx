@@ -14,12 +14,6 @@ export default function LoginPage() {
   const { loginWithGoogle, loginWithEmail, user } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user) {
-      router.replace('/');
-    }
-  }, [user, router]);
-
   const handleGoogleLogin = async () => {
     try {
       setError(null);
