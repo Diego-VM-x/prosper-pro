@@ -13,7 +13,7 @@ import type { UserProfile, CurrencyCode } from '@/types';
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
 export default function ConfiguracionPage() {
-  const { user, logout, deleteAccount, enableNotifications } = useAuth();
+  const { user, logout, deleteAccount, wipeAllData, enableNotifications } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -31,6 +31,9 @@ export default function ConfiguracionPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [wipingData, setWipingData] = useState(false);
+  const [showWipeConfirm, setShowWipeConfirm] = useState(false);
+  const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
 
   useEffect(() => {
@@ -113,6 +116,25 @@ export default function ConfiguracionPage() {
       setErrorMsg('Error al eliminar la cuenta. Intenta de nuevo.');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleWipeAllData = async () => {
+    if (wipeConfirmText !== 'BORRAR') return;
+    setErrorMsg('');
+    setWipingData(true);
+    try {
+      const result = await wipeAllData();
+      if (result.success) {
+        setSuccessMsg('Todos tus datos han sido eliminados. La página se recargará.');
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        setErrorMsg(result.error || 'Error al borrar los datos');
+      }
+    } catch {
+      setErrorMsg('Error al borrar los datos. Intenta de nuevo.');
+    } finally {
+      setWipingData(false);
     }
   };
 
@@ -474,6 +496,55 @@ export default function ConfiguracionPage() {
                             disabled={deleteConfirmText !== 'ELIMINAR' || deleting}
                           >
                             {deleting ? 'Eliminando...' : 'Confirmar Eliminación'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="panel-card warning-card">
+                    <div className="panel-header">
+                      <div className="warning-header">
+                        <div className="warning-icon-wrap">🗑️</div>
+                        <div>
+                          <h2 className="warning-title">Borrar Todos Mis Datos</h2>
+                          <p className="warning-desc">Elimina todas tus metas, transacciones, cuentas y configuraciones. Tu cuenta se mantendrá activa con cuentas por defecto.</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!showWipeConfirm ? (
+                      <button
+                        className="btn-warning"
+                        onClick={() => setShowWipeConfirm(true)}
+                      >
+                        Borrar todos mis datos
+                      </button>
+                    ) : (
+                      <div className="delete-confirm">
+                        <p className="delete-confirm-label">
+                          Escribe <strong>BORRAR</strong> para confirmar:
+                        </p>
+                        <input
+                          className="delete-confirm-input"
+                          type="text"
+                          value={wipeConfirmText}
+                          onChange={(e) => setWipeConfirmText(e.target.value.toUpperCase())}
+                          placeholder="BORRAR"
+                        />
+                        <div className="delete-confirm-actions">
+                          <button
+                            className="btn-cancel"
+                            onClick={() => { setShowWipeConfirm(false); setWipeConfirmText(''); }}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            className="btn-warning-confirm"
+                            onClick={handleWipeAllData}
+                            disabled={wipeConfirmText !== 'BORRAR' || wipingData}
+                          >
+                            {wipingData ? 'Borrando...' : 'Confirmar Borrado'}
                           </button>
                         </div>
                       </div>
@@ -1092,6 +1163,76 @@ export default function ConfiguracionPage() {
               background: rgba(127,29,29,0.08);
               border-color: rgba(239,68,68,0.2);
             }
+
+            /* Warning */
+            .warning-card {
+              border-color: rgba(245,158,11,0.15);
+              background: rgba(245,158,11,0.03);
+            }
+            [data-theme="dark"] .warning-card {
+              background: rgba(120,53,15,0.08);
+              border-color: rgba(245,158,11,0.2);
+            }
+            .warning-header {
+              display: flex;
+              align-items: flex-start;
+              gap: 14px;
+            }
+            .warning-icon-wrap {
+              width: 44px;
+              height: 44px;
+              border-radius: 10px;
+              background: rgba(245,158,11,0.1);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 1.25rem;
+              flex-shrink: 0;
+            }
+            .warning-title {
+              font-size: 1rem;
+              font-weight: 700;
+              color: #78350F;
+              margin: 0 0 4px 0;
+            }
+            [data-theme="dark"] .warning-title { color: #FCD34D; }
+            .warning-desc {
+              font-size: 0.75rem;
+              color: #92400E;
+              margin: 0;
+              line-height: 1.5;
+            }
+            [data-theme="dark"] .warning-desc { color: #FDE68A; }
+
+            .btn-warning {
+              width: 100%;
+              padding: 12px;
+              background: #F59E0B;
+              color: white;
+              border: none;
+              border-radius: 10px;
+              font-size: 0.8125rem;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+            }
+            .btn-warning:hover { background: #D97706; }
+
+            .btn-warning-confirm {
+              flex: 1;
+              padding: 10px;
+              border-radius: 10px;
+              border: none;
+              background: #F59E0B;
+              color: white;
+              font-size: 0.8125rem;
+              font-weight: 700;
+              cursor: pointer;
+              transition: all 0.2s;
+              font-family: inherit;
+            }
+            .btn-warning-confirm:hover:not(:disabled) { background: #D97706; }
+            .btn-warning-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
             .danger-header {
               display: flex;
               align-items: flex-start;
@@ -1269,6 +1410,10 @@ export default function ConfiguracionPage() {
               .danger-icon-wrap { width: 36px; height: 36px; font-size: 1rem; }
               .danger-title { font-size: 0.875rem; }
               .danger-desc { font-size: 0.6875rem; }
+              .warning-header { flex-direction: column; gap: 10px; }
+              .warning-icon-wrap { width: 36px; height: 36px; font-size: 1rem; }
+              .warning-title { font-size: 0.875rem; }
+              .warning-desc { font-size: 0.6875rem; }
               .delete-confirm-actions { flex-direction: column; }
               .plan-features { flex-direction: column; }
               .plan-feature { padding: 6px 10px; font-size: 0.6875rem; }

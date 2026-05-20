@@ -345,3 +345,63 @@ export async function wipeUserTransactionsByType(
 
   return { totalWiped, adjustments };
 }
+
+// ============================================================
+// ELIMINACIÓN TOTAL DE DATOS DEL USUARIO
+// ============================================================
+
+// Borra TODOS los datos del usuario en Firestore (todas las colecciones)
+export async function wipeAllUserData(ownerId: string): Promise<{ wiped: string[]; errors: string[] }> {
+  const wiped: string[] = [];
+  const errors: string[] = [];
+
+  const collectionsToWipe = [
+    'transactions',
+    'accounts',
+    'goals',
+    'plans',
+    'reminders',
+    'notifications',
+    'expense_requests',
+    'recurring_payments',
+    'feedback',
+    'user_course_progress',
+  ];
+
+  for (const colName of collectionsToWipe) {
+    try {
+      const q = query(collection(db, colName), where('ownerId', '==', ownerId));
+      const snapshot = await getDocs(q);
+      if (snapshot.size > 0) {
+        const deletePromises = snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref));
+        await Promise.all(deletePromises);
+        wiped.push(`${colName} (${snapshot.size} docs)`);
+      }
+    } catch (err) {
+      errors.push(`${colName}: ${err}`);
+    }
+  }
+
+  // También borrar solicitudes donde el usuario es receptor (toOwnerId)
+  try {
+    const receivedQ = query(collection(db, 'expense_requests'), where('toOwnerId', '==', ownerId));
+    const receivedSnap = await getDocs(receivedQ);
+    if (receivedSnap.size > 0) {
+      const deletePromises = receivedSnap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+      await Promise.all(deletePromises);
+      wiped.push(`expense_requests received (${receivedSnap.size} docs)`);
+    }
+  } catch (err) {
+    errors.push(`expense_requests (received): ${err}`);
+  }
+
+  // Borrar perfil de usuario
+  try {
+    await deleteDoc(doc(db, 'users', ownerId));
+    wiped.push('users (profile)');
+  } catch (err) {
+    errors.push(`users: ${err}`);
+  }
+
+  return { wiped, errors };
+}

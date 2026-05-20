@@ -1,12 +1,13 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (18 de Mayo, 2026 - Dashboard Neón + Planes Financieros Completos)
+## Estado Actual (19 de Mayo, 2026 - Borrado Total de Datos en BD + Configuración Mejorada)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
 - **Modo**: App inicia en BLANCO - sin datos de ejemplo. Todo dato viene de Firebase.
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
+- **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore (transactions, accounts, goals, plans, reminders, notifications, expense_requests, recurring_payments, feedback, user_course_progress, users).
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
@@ -477,3 +478,10 @@
 ### Error: "404 en /logros, /ayuda, /comunidad"
 - **Causa**: Esas páginas no existen aún en el proyecto.
 - **Solución**: Ignorar los errores o crear esas páginas cuando sea necesario.
+
+### 19/05/2026 - Borrado Total de Datos en Firestore
+- **Nueva función `wipeAllUserData`** en `lib/firestore/accounts.ts`: Elimina TODAS las colecciones del usuario en Firestore (transactions, accounts, goals, plans, reminders, notifications, expense_requests, recurring_payments, feedback, user_course_progress, users). También borra solicitudes recibidas donde el usuario es `toOwnerId`.
+- **`deleteAccount` refactorizado** en `lib/contexts/AuthContext.tsx`: Reemplazada lógica antigua (que usaba `userId` y solo borraba 4 colecciones) por llamada a `wipeAllUserData`. Ahora borra todo consistentemente.
+- **Nueva función `wipeAllData`** en `AuthContext.tsx`: Permite borrar todos los datos del usuario **sin eliminar la cuenta**. Recrea cuentas por defecto después del borrado.
+- **Configuración mejorada** en `app/configuracion/page.tsx`: Nueva tarjeta amarilla "Borrar Todos Mis Datos" en tab Seguridad. Requiere escribir "BORRAR" para confirmar. Recarga la página tras borrar.
+- **Build**: `tsc --noEmit` exitoso sin errores.
