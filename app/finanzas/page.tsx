@@ -835,19 +835,19 @@ export default function FinanzasPage() {
           <div className="summary-grid">
             <div className="summary-card summary-income">
               <span className="summary-label">Ingresos</span>
-              <span className="summary-value">{showAmounts ? `${formatAmount(summary.income)}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatInCurrency(summary.income, displayCurrency)}` : '••••••'}</span>
             </div>
             <div className="summary-card summary-expense">
               <span className="summary-label">Gastos</span>
-              <span className="summary-value">{showAmounts ? `${formatAmount(summary.expenses)}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatInCurrency(summary.expenses, displayCurrency)}` : '••••••'}</span>
             </div>
             <div className="summary-card summary-saving">
               <span className="summary-label">Ahorro</span>
-              <span className="summary-value">{showAmounts ? `${formatAmount(summary.saving)}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatInCurrency(summary.saving, displayCurrency)}` : '••••••'}</span>
             </div>
             <div className="summary-card summary-balance">
               <span className="summary-label">Balance Total</span>
-              <span className="summary-value">{showAmounts ? `${formatAmount(totalBalance)}` : '••••••'}</span>
+              <span className="summary-value">{showAmounts ? `${formatInCurrency(totalBalance, displayCurrency)}` : '••••••'}</span>
             </div>
           </div>
 
