@@ -573,7 +573,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .mobile-menu-overlay {
           position: fixed;
           inset: 0;
-          background: rgba(0,0,0,0.5);
+          background: rgba(0,0,0,0.6);
+          backdrop-filter: blur(4px);
           z-index: 1000;
           display: flex;
           justify-content: flex-start;
@@ -587,6 +588,12 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           display: flex;
           flex-direction: column;
           animation: slideInLeft 0.3s ease;
+          box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
+        }
+        [data-theme="dark"] .mobile-menu {
+          background: rgba(10, 22, 40, 0.95);
+          backdrop-filter: blur(24px) saturate(180%);
+          border-right: 1px solid rgba(255, 255, 255, 0.06);
         }
         .mobile-menu-header {
           display: flex;
@@ -643,6 +650,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         .mobile-menu-item:hover { background: var(--bg-input); }
         .mobile-menu-item svg { width: 20px; height: 20px; color: var(--text-secondary); }
+        [data-theme="dark"] .mobile-menu-item:hover {
+          background: rgba(61, 204, 142, 0.1);
+          color: #3DCC8E;
+        }
+        [data-theme="dark"] .mobile-menu-item:hover svg { color: #3DCC8E; }
         .mobile-menu-footer {
           padding: 16px;
           border-top: 1px solid var(--border-default);
