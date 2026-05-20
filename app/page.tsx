@@ -78,8 +78,8 @@ export default function Home() {
           <nav className="landing-nav">
             <a href="#features" className="nav-link">Funciones</a>
             <a href="#how-it-works" className="nav-link">Cómo Funciona</a>
-            <button className="btn btn-ghost" onClick={() => router.push('/login')}>Iniciar Sesión</button>
-            <button className="btn btn-primary" onClick={() => router.push('/register')}>Comenzar Gratis</button>
+            <button className="btn btn-ghost" onClick={() => router.push(user ? '/dashboard' : '/login')}>{user ? 'Ir al Dashboard' : 'Iniciar Sesión'}</button>
+            <button className="btn btn-primary" onClick={() => router.push(user ? '/dashboard' : '/register')}>{user ? 'Ir al Dashboard' : 'Comenzar Gratis'}</button>
           </nav>
         </div>
       </header>
@@ -91,7 +91,7 @@ export default function Home() {
             <AnimatedSection>
               <div className="landing-badge">
                 <span className="landing-badge-dot" />
-                100% Gratis · Sin anuncios
+                {user ? 'Ya estás registrado' : '100% Gratis · Sin anuncios'}
               </div>
             </AnimatedSection>
 
@@ -104,18 +104,20 @@ export default function Home() {
 
             <AnimatedSection delay={200}>
               <p className="landing-hero-subtitle">
-                Gestiona cuentas, crea planes de ahorro, analiza tus gastos y aprende finanzas personales. Todo en un solo lugar, sin complicaciones.
+                {user
+                  ? 'Bienvenido de vuelta. Explora las novedades de Prosper o vuelve a tu dashboard.'
+                  : 'Gestiona cuentas, crea planes de ahorro, analiza tus gastos y aprende finanzas personales. Todo en un solo lugar, sin complicaciones.'}
               </p>
             </AnimatedSection>
 
             <AnimatedSection delay={300}>
               <div className="landing-hero-cta">
-                <button className="btn btn-primary btn-xl" onClick={() => router.push('/register')}>
-                  Crear Cuenta Gratis
+                <button className="btn btn-primary btn-xl" onClick={() => router.push(user ? '/dashboard' : '/register')}>
+                  {user ? 'Ir al Dashboard' : 'Crear Cuenta Gratis'}
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
-                <button className="btn btn-outline btn-xl" onClick={() => router.push('/login')}>
-                  Ya tengo cuenta
+                <button className="btn btn-outline btn-xl" onClick={() => router.push(user ? '/dashboard' : '/login')}>
+                  {user ? 'Ir al Dashboard' : 'Ya tengo cuenta'}
                 </button>
               </div>
             </AnimatedSection>
@@ -354,12 +356,12 @@ export default function Home() {
                 <h2>¿Listo para tomar el control?</h2>
                 <p>Únete a Prosper Pro y comienza a construir tu libertad financiera hoy mismo.</p>
                 <div className="cta-buttons">
-                  <button className="btn btn-white btn-xl" onClick={() => router.push('/register')}>
-                    Comenzar Gratis
+                  <button className="btn btn-white btn-xl" onClick={() => router.push(user ? '/dashboard' : '/register')}>
+                    {user ? 'Ir al Dashboard' : 'Comenzar Gratis'}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </button>
                 </div>
-                <p className="cta-note">Sin tarjeta de crédito · Sin compromisos · 100% gratis</p>
+                <p className="cta-note">{user ? 'Ya tienes una cuenta activa' : 'Sin tarjeta de crédito · Sin compromisos · 100% gratis'}</p>
               </div>
             </div>
           </AnimatedSection>
@@ -384,8 +386,8 @@ export default function Home() {
             </div>
             <div className="footer-col">
               <h4>Cuenta</h4>
-              <button onClick={() => router.push('/login')}>Iniciar Sesión</button>
-              <button onClick={() => router.push('/register')}>Registrarse</button>
+              <button onClick={() => router.push(user ? '/dashboard' : '/login')}>{user ? 'Dashboard' : 'Iniciar Sesión'}</button>
+              <button onClick={() => router.push(user ? '/dashboard' : '/register')}>{user ? 'Dashboard' : 'Registrarse'}</button>
             </div>
           </div>
         </div>
