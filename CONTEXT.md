@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (20 de Mayo, 2026 - Fix Gráfica Financiera Multi-Moneda + Responsividad)
+## Estado Actual (20 de Mayo, 2026 - Conversión USD/BS con cambio de valor principal + moneda persistente)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -231,6 +231,12 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 20/05/2026 - Conversión USD/BS con Cambio de Valor Principal + Moneda Persistente
+- **Gráfica/Dashboard**: Botón ⇄ Convertir en resumen financiero. Al activarlo, el valor principal cambia a la moneda alternativa (BS↔USD) y el valor original queda como ≈ debajo. Componente `SummaryCard` reutilizable.
+- **Finanzas**: Mismo botón ⇄ Convertir en resumen mensual. Convierte ingresos, gastos, ahorro y balance total. Cuentas mantienen moneda nativa. Componente `SummaryWidget` reutilizable.
+- **Configuración**: "Moneda de Visualización" cambia inmediatamente al hacer clic (sin necesidad de guardar). Persiste en localStorage vía `setDisplayCurrency`. Se mantiene al recargar página.
+- **Vercel fixes**: Eliminado `turbopack.root` de `next.config.ts` (incompatible con ESM de Vercel). Corregidos tipos `CurrencyCode` en interfaces de SummaryCard/SummaryWidget.
+
 ### 20/05/2026 - Fix Gráfica Financiera: Cálculos Multi-Moneda + Responsividad
 - **Bug Cálculos**: `FinancialStatusChart.tsx` sumaba `t.amount` directamente sin conversión de moneda. Si el usuario tenía transacciones en USD y BS, se mezclaban sin convertir a la moneda de visualización.
 - **Fix chartData**: Cada transacción ahora usa `convertBetween(t.amount, txCurrency, displayCurrency)` donde `txCurrency` viene de la cuenta vinculada (`account.currency || 'USD'`). Aplica a income, expense y saving.
