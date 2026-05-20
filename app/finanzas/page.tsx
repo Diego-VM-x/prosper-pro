@@ -223,7 +223,7 @@ export default function FinanzasPage() {
 
       // Actualizar balance de la cuenta
       if (newTx.accountId) {
-        const delta = newTx.type === 'expense' ? -amount : amount;
+        const delta = newTx.type === 'income' ? amount : -amount;
         await updateAccountBalance(newTx.accountId, delta);
       }
 
@@ -262,7 +262,7 @@ export default function FinanzasPage() {
 
           // Revertir balance si tenía cuenta
           if (tx.accountId) {
-            const delta = tx.type === 'expense' ? tx.amount : -tx.amount;
+            const delta = tx.type === 'income' ? -tx.amount : tx.amount;
             await updateAccountBalance(tx.accountId, delta);
           }
 
@@ -362,7 +362,7 @@ export default function FinanzasPage() {
       await createTransaction(txData);
 
       if (tx.accountId) {
-        const delta = tx.type === 'expense' ? -finalAmount : finalAmount;
+        const delta = tx.type === 'income' ? finalAmount : -finalAmount;
         await updateAccountBalance(tx.accountId, delta);
       }
 

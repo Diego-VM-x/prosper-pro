@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (19 de Mayo, 2026 - Borrado Total de Datos en BD + Configuración Mejorada)
+## Estado Actual (20 de Mayo, 2026 - Fix Crítico de Balances Exagerados)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -9,6 +9,7 @@
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore (transactions, accounts, goals, plans, reminders, notifications, expense_requests, recurring_payments, feedback, user_course_progress, users).
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
+- **Bug Fix Crítico (20/05/2026)**: Corregida lógica de actualización de balances. Las transacciones de tipo `saving` (ahorro) se estaban **sumando** al balance en lugar de **restar**, causando valores exageradísimos en todas las cuentas. Fix aplicado en 3 handlers de `finanzas/page.tsx`. Para corregir balances existentes: Finanzas → "Gestión Contable" → "Recalcular Balances".
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -230,6 +231,15 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 20/05/2026 - Fix Crítico: Balances Exagerados en Todas las Cuentas
+- **Bug**: Transacciones de tipo `saving` (ahorro) se **sumaban** al balance en lugar de **restar**, causando valores exageradísimos en todas las cuentas para todos los usuarios.
+- **finanzas/page.tsx**: Corregida lógica de deltas en 3 handlers:
+  - `handleAddTransaction` (línea 226): `expense ? -amount : amount` → `income ? amount : -amount`
+  - `handleDeleteTransaction` (línea 265): `expense ? amount : -amount` → `income ? -amount : amount`
+  - `handleVepayConfirm` (línea 365): `expense ? -finalAmount : finalAmount` → `income ? finalAmount : -finalAmount`
+- **Lógica correcta**: income suma (+), expense resta (-), saving resta (-).
+- **Para corregir balances existentes**: Usar "Gestión Contable" → "Recalcular Balances" en Finanzas. La función `recalculateAccountBalance` en `accounts.ts:187` ya tiene la lógica correcta.
+
 ### 18/05/2026 - Dashboard: Eliminar Balance Total + Efectos Neón + Flechas Scroll
 - **Dashboard.tsx**: Eliminado stat pill "Balance Total" () de la fila de stats superiores. Quedan 4 pills: Ahorro Mensual, Ahorro en Planes, Recurrentes/Mes, Metas Completadas.
 - **Efectos Neón**: Agregados `drop-shadow` y `box-shadow` con glow esmeralda en: welcome banner, stat pills, section headers, content cards, progress ring, deadline badges, account balances. Variables CSS `--neon-green`, `--glow-sm/md/lg` en `globals.css`. Hover effects con glow en cards y pills.
