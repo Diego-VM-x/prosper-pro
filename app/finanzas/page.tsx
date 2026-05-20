@@ -48,6 +48,34 @@ function isoToTimestamp(iso: string): number {
   return new Date(iso + 'T12:00:00').getTime();
 }
 
+interface SummaryWidgetProps {
+  label: string;
+  value: number;
+  altValue: number;
+  color: string;
+  showAmounts: boolean;
+  showConversion: boolean;
+  altCurrency: string;
+  formatInCurrency: (amount: number, code: string) => string;
+  displayCurrency: string;
+}
+
+function SummaryWidget({ label, value, altValue, color, showAmounts, showConversion, altCurrency, formatInCurrency, displayCurrency }: SummaryWidgetProps) {
+  return (
+    <div className="summary-card">
+      <span className="summary-label">{label}</span>
+      <span className="summary-value" style={{ color: showAmounts ? color : undefined }}>
+        {showAmounts ? formatInCurrency(value, displayCurrency) : '••••••'}
+      </span>
+      {showConversion && showAmounts && (
+        <span className="summary-alt">
+          ≈ {formatInCurrency(altValue, altCurrency)} {altCurrency}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
@@ -128,6 +156,18 @@ export default function FinanzasPage() {
     }
     return false;
   });
+  const [showConversion, setShowConversion] = useState(false);
+  const altCurrency = displayCurrency === 'USD' ? 'BS' : 'USD';
+  const altSummary = useMemo(() => ({
+    income: convertBetween(summary.income, displayCurrency, altCurrency),
+    expenses: convertBetween(summary.expenses, displayCurrency, altCurrency),
+    saving: convertBetween(summary.saving, displayCurrency, altCurrency),
+    balance: convertBetween(summary.balance, displayCurrency, altCurrency),
+  }), [summary, displayCurrency, altCurrency, convertBetween]);
+  const altTotalBalance = useMemo(() => {
+    return convertBetween(totalBalance, displayCurrency, altCurrency);
+  }, [totalBalance, displayCurrency, altCurrency, convertBetween]);
+
   const [txLoading, setTxLoading] = useState(false);
   const [showVepayModal, setShowVepayModal] = useState(false);
   const [vepayProcessing, setVepayProcessing] = useState(false);
@@ -832,23 +872,20 @@ export default function FinanzasPage() {
           </div>
 
           {/* Resumen mensual */}
-          <div className="summary-grid">
-            <div className="summary-card summary-income">
-              <span className="summary-label">Ingresos</span>
-              <span className="summary-value">{showAmounts ? `${formatInCurrency(summary.income, displayCurrency)}` : '••••••'}</span>
+          <div className="summary-section">
+            <div className="summary-grid">
+              <SummaryWidget label="Ingresos" value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Gastos" value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Ahorro" value={summary.saving} altValue={altSummary.saving} color="var(--color-pine-500)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
             </div>
-            <div className="summary-card summary-expense">
-              <span className="summary-label">Gastos</span>
-              <span className="summary-value">{showAmounts ? `${formatInCurrency(summary.expenses, displayCurrency)}` : '••••••'}</span>
-            </div>
-            <div className="summary-card summary-saving">
-              <span className="summary-label">Ahorro</span>
-              <span className="summary-value">{showAmounts ? `${formatInCurrency(summary.saving, displayCurrency)}` : '••••••'}</span>
-            </div>
-            <div className="summary-card summary-balance">
-              <span className="summary-label">Balance Total</span>
-              <span className="summary-value">{showAmounts ? `${formatInCurrency(totalBalance, displayCurrency)}` : '••••••'}</span>
-            </div>
+            <button
+              onClick={() => setShowConversion(!showConversion)}
+              className={`conversion-toggle ${showConversion ? 'active' : ''}`}
+              title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
+            >
+              ⇄ {showConversion ? `${displayCurrency}/${altCurrency}` : 'Convertir'}
+            </button>
           </div>
 
           {/* Gráfico */}
@@ -1636,10 +1673,14 @@ export default function FinanzasPage() {
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
 
           /* Summary */
-          .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+          .summary-section { position: relative; margin-bottom: 24px; }
+          .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
           .summary-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
           .summary-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
           .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+          .summary-alt { font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; margin-top: 2px; }
+          .conversion-toggle { position: absolute; top: 0; right: 0; padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--text-secondary); background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all var(--transition-fast); }
+          .conversion-toggle.active { color: var(--color-prosper-green); background: rgba(61,204,142,0.1); border-color: var(--color-prosper-green); }
           .summary-income { border-left: 4px solid var(--color-prosper-green); }
           .summary-expense { border-left: 4px solid var(--color-error); }
           .summary-saving { border-left: 4px solid var(--color-pine-500); }
@@ -1889,6 +1930,8 @@ export default function FinanzasPage() {
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-value { font-size: 1.25rem; }
+            .summary-alt { font-size: 0.6875rem; }
+            .conversion-toggle { font-size: 10px; padding: 4px 8px; }
             .accounts-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
             .account-card { padding: 12px; }
             .account-balance { font-size: 1.125rem; }
@@ -1917,6 +1960,8 @@ export default function FinanzasPage() {
             .summary-card { padding: 10px 8px; }
             .summary-label { font-size: 0.625rem; }
             .summary-value { font-size: 1.125rem; }
+            .summary-alt { font-size: 0.625rem; }
+            .conversion-toggle { font-size: 9px; padding: 4px 6px; }
             .accounts-grid { grid-template-columns: 1fr; gap: 8px; }
             .account-card { padding: 10px; }
             .account-icon { width: 32px; height: 32px; font-size: 1rem; }
