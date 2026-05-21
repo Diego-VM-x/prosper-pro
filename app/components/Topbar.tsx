@@ -14,7 +14,6 @@ import { useGoals } from '@/lib/contexts/GoalsContext';
 import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
 import {
   IconSearch,
-  IconMail,
   IconBell,
   IconSun,
   IconMoon,
@@ -333,16 +332,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         <button
           className="theme-toggle"
           onClick={toggleTheme}
-          aria-label={theme === 'light' ? 'Activar modo oscuro' : 'Activar modo claro'}
+          aria-label={`Cambiar a modo ${theme === 'light' ? 'oscuro' : theme === 'dark' ? 'AMOLED' : 'claro'}`}
           id="theme-toggle-btn"
-          title={theme === 'light' ? 'Modo oscuro' : 'Modo claro'}
+          title={theme === 'light' ? 'Cambiar a Oscuro' : theme === 'dark' ? 'Cambiar a AMOLED' : 'Cambiar a Claro'}
         >
-          {theme === 'light' ? <IconMoon /> : <IconSun />}
-        </button>
-
-        {/* Mail */}
-        <button className="topbar-icon-btn" aria-label="Mensajes" id="btn-mail">
-          <IconMail />
+          {theme === 'light' ? <IconMoon /> : theme === 'dark' ? <IconSun /> : <IconSun />}
         </button>
 
         {/* Notificaciones */}
