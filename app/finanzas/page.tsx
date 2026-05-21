@@ -1639,7 +1639,7 @@ export default function FinanzasPage() {
                                 ✏️ Editar
                               </button>
                               <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleDeleteAccount(acc.id)} title="Eliminar cuenta">
-                                ️ Eliminar
+                                Eliminar
                               </button>
                             </div>
                           </div>

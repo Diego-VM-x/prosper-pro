@@ -67,6 +67,7 @@ export function Dashboard() {
   const [customCats, setCustomCats] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
+  const [showBalances, setShowBalances] = useState(true);
   const bottomScrollRef = useRef<HTMLDivElement>(null);
 
   const totalBalance = useMemo(() => {
@@ -470,9 +471,14 @@ export function Dashboard() {
                 <IconWallet width={18} />
                 <h2 className="content-card-title">Mis Cuentas</h2>
               </div>
-              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                Gestionar
-              </button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button className="content-card-action" onClick={() => setShowBalances(!showBalances)} title={showBalances ? 'Ocultar saldos' : 'Mostrar saldos'} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                  {showBalances ? ' Ocultar' : '👁️ Mostrar'}
+                </button>
+                <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                  Gestionar
+                </button>
+              </div>
             </div>
             <div className="accounts-list">
               {accounts.slice(0, 4).map((acc) => {
@@ -489,10 +495,10 @@ export function Dashboard() {
                       </span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <span className="account-item-balance" style={{ color: acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)', fontWeight: 600 }}>
-                        {formatInCurrency(acc.balance, acc.currency)}
+                      <span className="account-item-balance" style={{ color: showBalances ? (acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)', fontWeight: 600 }}>
+                        {showBalances ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
                       </span>
-                      {acc.currency !== displayCurrency && (
+                      {showBalances && acc.currency !== displayCurrency && (
                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
                           ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
                         </span>
