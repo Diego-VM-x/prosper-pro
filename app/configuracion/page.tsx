@@ -16,7 +16,7 @@ export default function ConfiguracionPage() {
   const { user, logout, deleteAccount, wipeAllData, enableNotifications } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { setDisplayCurrency, rates } = useCurrency();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -365,7 +365,7 @@ export default function ConfiguracionPage() {
                     <div className="theme-selector">
                       <button
                         className={`theme-option ${theme === 'light' ? 'active' : ''}`}
-                        onClick={() => { if (theme === 'dark') toggleTheme(); }}
+                        onClick={() => setTheme('light')}
                       >
                         <div className="theme-preview theme-preview-light">
                           <div className="theme-preview-bar" />
@@ -378,7 +378,7 @@ export default function ConfiguracionPage() {
                       </button>
                       <button
                         className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
-                        onClick={() => { if (theme === 'light') toggleTheme(); }}
+                        onClick={() => setTheme('dark')}
                       >
                         <div className="theme-preview theme-preview-dark">
                           <div className="theme-preview-bar" />
@@ -388,6 +388,19 @@ export default function ConfiguracionPage() {
                           </div>
                         </div>
                         <span className="theme-label">Oscuro</span>
+                      </button>
+                      <button
+                        className={`theme-option ${theme === 'amoled' ? 'active' : ''}`}
+                        onClick={() => setTheme('amoled')}
+                      >
+                        <div className="theme-preview theme-preview-amoled">
+                          <div className="theme-preview-bar" />
+                          <div className="theme-preview-blocks">
+                            <div className="theme-preview-block" />
+                            <div className="theme-preview-block" />
+                          </div>
+                        </div>
+                        <span className="theme-label">AMOLED</span>
                       </button>
                     </div>
                   </div>
@@ -1031,6 +1044,10 @@ export default function ConfiguracionPage() {
               background: #1a1a2e;
               border: 1px solid #2d2d44;
             }
+            .theme-preview-amoled {
+              background: #000000;
+              border: 1px solid #333333;
+            }
             .theme-preview-bar {
               height: 8px;
               border-radius: 4px;
@@ -1038,6 +1055,7 @@ export default function ConfiguracionPage() {
             }
             .theme-preview-light .theme-preview-bar { background: #d1d5db; }
             .theme-preview-dark .theme-preview-bar { background: #3d3d5c; }
+            .theme-preview-amoled .theme-preview-bar { background: #555555; }
             .theme-preview-blocks {
               display: flex;
               gap: 6px;
@@ -1049,6 +1067,7 @@ export default function ConfiguracionPage() {
             }
             .theme-preview-light .theme-preview-block { background: #e5e7eb; }
             .theme-preview-dark .theme-preview-block { background: #2d2d44; }
+            .theme-preview-amoled .theme-preview-block { background: #333333; }
             .theme-label {
               font-size: 0.8125rem;
               font-weight: 600;

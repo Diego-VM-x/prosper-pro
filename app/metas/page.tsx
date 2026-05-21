@@ -890,8 +890,10 @@ export default function MetasPage() {
           .plans-page { padding: 0; }
 
           /* Modal */
-          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-start; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding: 40px 0; overflow-y: auto; }
-          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 520px; padding: 24px; animation: modalIn 0.25s ease; position: relative; margin: auto; }
+          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-start; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding: 40px 0; overflow-y: auto; }
+          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 520px; padding: 24px; animation: modalIn 0.25s ease; position: relative; margin: auto; backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); }
+          [data-theme="dark"] .modal-content { background: rgba(10, 22, 40, 0.98); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+          [data-theme="amoled"] .modal-content { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); backdrop-filter: none; }
           .modal-plan { max-width: 520px; }
           .modal-plan-small { max-width: 420px; }
           @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }

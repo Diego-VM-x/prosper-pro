@@ -1,23 +1,19 @@
 'use client';
 
-/**
- * @file ThemeProvider.tsx
- * @description Wrapper de next-themes para evitar flicker al cargar.
- * Mantiene la API existente (theme, toggleTheme) para compatibilidad.
- */
-
 import { useTheme as useNextTheme, ThemeProvider as NextThemesProvider } from 'next-themes';
 import React, { createContext, useContext, useCallback } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'amoled';
 
 interface ThemeContextType {
   theme: Theme;
+  setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
   theme: 'light',
+  setTheme: () => {},
   toggleTheme: () => {},
 });
 
@@ -26,14 +22,22 @@ export function useTheme(): ThemeContextType {
 }
 
 function ThemeProviderInner({ children }: { children: React.ReactNode }) {
-  const { theme: nextTheme, setTheme } = useNextTheme();
+  const { theme: nextTheme, setTheme: nextSetTheme } = useNextTheme();
+
+  const setTheme = useCallback((t: Theme) => {
+    nextSetTheme(t);
+  }, [nextSetTheme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme(nextTheme === 'dark' ? 'light' : 'dark');
-  }, [nextTheme, setTheme]);
+    const themes: Theme[] = ['light', 'dark', 'amoled'];
+    const current = (nextTheme as Theme) || 'light';
+    const idx = themes.indexOf(current);
+    const next = themes[(idx + 1) % themes.length];
+    nextSetTheme(next);
+  }, [nextTheme, nextSetTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme: (nextTheme as Theme) || 'light', toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: (nextTheme as Theme) || 'light', setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

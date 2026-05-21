@@ -5,7 +5,11 @@
    Paleta: Verde Pino + Gris Piedra (Referencia Donezo)
    ============================================================ */
 
-:root {
+/* ============================================================
+   🌞 MODO CLARO (LIGHT MODE) - Default
+   ============================================================ */
+:root,
+[data-theme="light"] {
   /* === BRAND COLORS (CORE) === */
   --color-pine-900:    #0D2B1E;
   --color-pine-800:    #14442F;
@@ -21,7 +25,6 @@
   /* === NEW LOGO BRAND COLORS === */
   --color-prosper-green: #3DCC8E;  /* Emerald from Logo */
   --color-prosper-navy:  #1E3A6E;  /* Navy from Logo Text */
-
 
   /* === STONE / NEUTRAL === */
   --color-stone-950:   #0C0A09;
@@ -43,7 +46,7 @@
   --color-blue-500:    #3B82F6;
   --color-error:       #EF4444;
 
-  /* === NEON GLOW === */
+  /* === NEON GLOW (LIGHT) === */
   --neon-green:        rgba(61,204,142,0.4);
   --neon-navy:         rgba(30,58,110,0.3);
   --neon-gold:         rgba(245,158,11,0.3);
@@ -53,7 +56,7 @@
   --glow-md:           0 0 16px var(--neon-green);
   --glow-lg:           0 0 24px var(--neon-green), 0 0 48px rgba(61,204,142,0.15);
 
-  /* === SEMANTIC - LIGHT MODE (default) === */
+  /* === SEMANTIC - LIGHT MODE === */
   --bg-primary:        var(--color-stone-50);
   --bg-secondary:      #FFFFFF;
   --bg-sidebar:        #FFFFFF;
@@ -95,7 +98,9 @@
   --transition-slow:   400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* === DARK MODE OVERRIDES - FUTURISTIC === */
+/* ============================================================
+   🌙 MODO OSCURO (DARK MODE) - Futuristic Navy
+   ============================================================ */
 [data-theme="dark"] {
   --bg-primary:        #0a1628;
   --bg-secondary:      rgba(15, 25, 50, 0.8);
@@ -130,8 +135,66 @@
   --glow-lg:           0 0 28px var(--neon-green), 0 0 56px rgba(61,204,142,0.2);
 }
 
-/* === COMUNIDAD - Chat Variables === */
-:root {
+/* ============================================================
+   ⚫ MODO AMOLED - Pure Black for OLED Screens
+   ============================================================ */
+[data-theme="amoled"] {
+  --bg-primary:        #000000;
+  --bg-secondary:      #000000;
+  --bg-sidebar:        #000000;
+  --bg-card:           #0a0a0a;
+  --bg-card-hover:     #111111;
+  --bg-input:          #0a0a0a;
+  --bg-accent:         var(--color-prosper-green);
+  --bg-accent-soft:    rgba(61, 204, 142, 0.1);
+  --bg-accent-active:  rgba(61, 204, 142, 0.15);
+
+  --text-primary:      #ffffff;
+  --text-secondary:    rgba(255, 255, 255, 0.7);
+  --text-tertiary:     rgba(255, 255, 255, 0.4);
+  --text-on-accent:    #FFFFFF;
+  --text-link:         var(--color-prosper-green);
+
+  --border-default:    rgba(255, 255, 255, 0.08);
+  --border-strong:     rgba(255, 255, 255, 0.15);
+  --border-accent:     rgba(61, 204, 142, 0.4);
+
+  --shadow-sm:         0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md:         0 4px 16px rgba(0,0,0,0.6);
+  --shadow-lg:         0 10px 40px rgba(0,0,0,0.8);
+  --shadow-accent:     0 4px 20px rgba(61,204,142,0.4);
+
+  /* === NEON GLOW (AMOLED) === */
+  --neon-green:        rgba(61,204,142,0.6);
+  --neon-navy:         rgba(30,58,110,0.5);
+  --glow-sm:           0 0 16px var(--neon-green);
+  --glow-md:           0 0 24px var(--neon-green);
+  --glow-lg:           0 0 32px var(--neon-green), 0 0 64px rgba(61,204,142,0.25);
+}
+
+/* ============================================================
+   🌞 MODO CLARO (LIGHT MODE) - Comunidad Chat
+   ============================================================ */
+[data-theme="light"] {
+  --comm-bg-primary: #f5f7f6;
+  --comm-bg-secondary: #ffffff;
+  --comm-bg-tertiary: #eef2f0;
+  --comm-bg-card: #e8ede9;
+  --comm-text-primary: #1a2e23;
+  --comm-text-secondary: #2d6a4f;
+  --comm-text-muted: #8a9d92;
+  --comm-border: rgba(45,106,79,0.12);
+  --comm-gradient-bg: linear-gradient(135deg, #e8ede9 0%, #eef2f0 100%);
+  --comm-gradient-header: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(245,247,246,0.9) 100%);
+  --comm-shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --comm-shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --comm-shadow-accent: 0 4px 16px rgba(78,222,163,0.15);
+}
+
+/* ============================================================
+   🌙 MODO OSCURO (DARK MODE) - Comunidad Chat
+   ============================================================ */
+[data-theme="dark"] {
   --comm-bg-primary: #0e1511;
   --comm-bg-secondary: #161d19;
   --comm-bg-tertiary: #1a211d;
@@ -149,20 +212,27 @@
   --comm-shadow-md: 0 4px 16px rgba(0,0,0,0.2);
   --comm-shadow-accent: 0 4px 16px rgba(78,222,163,0.2);
 }
-[data-theme="light"] {
-  --comm-bg-primary: #f5f7f6;
-  --comm-bg-secondary: #ffffff;
-  --comm-bg-tertiary: #eef2f0;
-  --comm-bg-card: #e8ede9;
-  --comm-text-primary: #1a2e23;
-  --comm-text-secondary: #2d6a4f;
-  --comm-text-muted: #8a9d92;
-  --comm-border: rgba(45,106,79,0.12);
-  --comm-gradient-bg: linear-gradient(135deg, #e8ede9 0%, #eef2f0 100%);
-  --comm-gradient-header: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(245,247,246,0.9) 100%);
-  --comm-shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
-  --comm-shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-  --comm-shadow-accent: 0 4px 16px rgba(78,222,163,0.15);
+
+/* ============================================================
+   ⚫ MODO AMOLED - Comunidad Chat
+   ============================================================ */
+[data-theme="amoled"] {
+  --comm-bg-primary: #000000;
+  --comm-bg-secondary: #0a0a0a;
+  --comm-bg-tertiary: #111111;
+  --comm-bg-card: #1a1a1a;
+  --comm-text-primary: #ffffff;
+  --comm-text-secondary: #a0a0a0;
+  --comm-text-muted: #666666;
+  --comm-accent: #4edea3;
+  --comm-accent-dark: #000000;
+  --comm-border: rgba(255,255,255,0.08);
+  --comm-gradient-accent: linear-gradient(135deg, #4edea3 0%, #10b981 100%);
+  --comm-gradient-bg: linear-gradient(135deg, #1a1a1a 0%, #111111 100%);
+  --comm-gradient-header: linear-gradient(180deg, rgba(10,10,10,0.95) 0%, rgba(0,0,0,0.9) 100%);
+  --comm-shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
+  --comm-shadow-md: 0 4px 16px rgba(0,0,0,0.6);
+  --comm-shadow-accent: 0 4px 16px rgba(78,222,163,0.3);
 }
 
 /* ============================================================
@@ -212,7 +282,7 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 110;
+  z-index: 9990;
   margin-left: 0 !important;
 }
 
@@ -321,6 +391,12 @@ ul, ol {
   animation: blobFloat2 30s ease-in-out infinite;
 }
 
+/* AMOLED: No blobs (pure black, no gradients) */
+[data-theme="amoled"] .app-shell::before,
+[data-theme="amoled"] .app-shell::after {
+  display: none;
+}
+
 @keyframes blobFloat1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(40px, -40px) scale(1.1); }
@@ -349,6 +425,7 @@ ul, ol {
   z-index: 100;
   transition: width var(--transition-base), background var(--transition-base), border-color var(--transition-base), transform var(--transition-base);
   box-shadow: none;
+  overflow: visible;
 }
 
 [data-theme="dark"] .sidebar {
@@ -360,6 +437,13 @@ ul, ol {
     4px 0 24px rgba(0, 0, 0, 0.4),
     0 0 40px rgba(61, 204, 142, 0.05),
     inset -1px 0 0 rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="amoled"] .sidebar {
+  backdrop-filter: none;
+  background: #000000;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.8);
 }
 
 /* Sidebar header - solo en móvil */
@@ -732,7 +816,7 @@ ul, ol {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 110;
+  z-index: 9990;
   transition: background var(--transition-base), border-color var(--transition-base);
   box-shadow: var(--shadow-sm);
 }
@@ -746,6 +830,13 @@ ul, ol {
     0 4px 24px rgba(0, 0, 0, 0.4),
     0 0 40px rgba(61, 204, 142, 0.05),
     inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="amoled"] .topbar {
+  backdrop-filter: none;
+  background: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
 }
 
 /* Topbar left section (logo + collapse + title) */
@@ -1187,6 +1278,34 @@ ul, ol {
   animation: borderGlow 2s ease-in-out infinite;
 }
 
+/* AMOLED Stat Cards */
+[data-theme="amoled"] .stat-card {
+  backdrop-filter: none;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="amoled"] .stat-card:hover {
+  background: #111111;
+  border-color: rgba(61, 204, 142, 0.5);
+  box-shadow: 0 0 24px rgba(61, 204, 142, 0.3), 0 8px 32px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="amoled"] .stat-card:hover::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-md);
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(61, 204, 142, 0.7), transparent 50%, rgba(61, 204, 142, 0.4));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: borderGlow 2s ease-in-out infinite;
+}
+
 @keyframes borderGlow {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
@@ -1344,6 +1463,19 @@ ul, ol {
 
 [data-theme="dark"] .card:hover::before {
   opacity: 1;
+}
+
+/* AMOLED Cards */
+[data-theme="amoled"] .card {
+  backdrop-filter: none;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="amoled"] .card:hover {
+  background: #111111;
+  border-color: rgba(61, 204, 142, 0.4);
+  box-shadow: 0 0 24px rgba(61, 204, 142, 0.2), 0 8px 32px rgba(0, 0, 0, 0.8);
 }
 
 .card-header {

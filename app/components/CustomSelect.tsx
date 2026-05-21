@@ -192,7 +192,7 @@ export function CustomSelect({
           top: calc(100% + 4px);
           left: 0;
           right: 0;
-          z-index: 100;
+          z-index: 10000;
           background: var(--bg-card);
           border: 1px solid var(--border-default);
           border-radius: var(--radius-md);
@@ -200,6 +200,19 @@ export function CustomSelect({
           max-height: 240px;
           overflow-y: auto;
           animation: dropdownFadeIn 0.15s ease;
+          backdrop-filter: blur(24px) saturate(180%);
+          -webkit-backdrop-filter: blur(24px) saturate(180%);
+        }
+        [data-theme="dark"] .custom-select-dropdown {
+          background: rgba(10, 22, 40, 0.98);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        }
+        [data-theme="amoled"] .custom-select-dropdown {
+          background: #0a0a0a;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
+          backdrop-filter: none;
         }
         @media (max-width: 768px) {
           .custom-select-dropdown { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 60vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }

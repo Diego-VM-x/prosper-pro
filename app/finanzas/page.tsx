@@ -1442,31 +1442,29 @@ export default function FinanzasPage() {
                           {/* Account selector */}
                           <div className="vepay-field">
                             <label className="vepay-field-label">Cuenta Prosper</label>
-                            <select
-                              className="vepay-select"
+                            <CustomSelect
                               value={override.accountId}
-                              onChange={(e) => updateOverride({ accountId: e.target.value })}
-                            >
-                              <option value="">Seleccionar cuenta...</option>
-                              {accounts.map(acc => (
-                                <option key={acc.id} value={acc.id}>{acc.icon} {acc.name} (${acc.balance.toLocaleString()})</option>
-                              ))}
-                            </select>
+                              onChange={(val) => updateOverride({ accountId: val })}
+                              options={[
+                                { value: '', label: 'Seleccionar cuenta...' },
+                                ...accounts.map(acc => ({ value: acc.id, label: `${acc.icon} ${acc.name} ($${acc.balance.toLocaleString()})` })),
+                              ]}
+                              placeholder="Seleccionar cuenta..."
+                            />
                           </div>
 
                           {/* Bank selector */}
                           <div className="vepay-field">
                             <label className="vepay-field-label">Banco del pago</label>
-                            <select
-                              className="vepay-select"
+                            <CustomSelect
                               value={override.bank || tx.bank}
-                              onChange={(e) => updateOverride({ bank: e.target.value })}
-                            >
-                              <option value="">Detectado automáticamente</option>
-                              {VEPAY_BANKS.map(b => (
-                                <option key={b.value} value={b.value}>{b.label}</option>
-                              ))}
-                            </select>
+                              onChange={(val) => updateOverride({ bank: val })}
+                              options={[
+                                { value: '', label: 'Detectado automáticamente' },
+                                ...VEPAY_BANKS.map(b => ({ value: b.value, label: b.label })),
+                              ]}
+                              placeholder="Seleccionar banco..."
+                            />
                           </div>
 
                           {/* Date selector */}
@@ -1739,11 +1737,14 @@ export default function FinanzasPage() {
           .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; transition: all var(--transition-fast); }
           .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
           .account-action-more { font-size: 22px; line-height: 1; padding: 6px; }
-          .account-dropdown-wrapper { position: relative; }
-          .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; min-width: 180px; overflow: hidden; }
+          .account-dropdown-wrapper { position: relative; z-index: 10000; }
+          .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 10000; min-width: 180px; overflow: hidden; backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); }
+          [data-theme="dark"] .account-dropdown { background: rgba(10, 22, 40, 0.98); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
+          [data-theme="amoled"] .account-dropdown { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9); backdrop-filter: none; }
           .account-dropdown-wrapper:hover .account-dropdown { display: block; }
           .account-dropdown-item { display: block; width: 100%; padding: 10px 14px; border: none; background: none; text-align: left; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; transition: background var(--transition-fast); }
           .account-dropdown-item:hover { background: var(--bg-input); }
+          [data-theme="dark"] .account-dropdown-item:hover { background: rgba(61, 204, 142, 0.1); }
           .account-dropdown-divider { height: 1px; background: var(--border-default); margin: 4px 0; }
           .account-dropdown-danger { color: var(--color-error) !important; }
           .account-dropdown-danger:hover { background: rgba(239,68,68,0.1) !important; }
@@ -1786,8 +1787,10 @@ export default function FinanzasPage() {
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
 
           /* Modal */
-          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
-          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.25s ease; }
+          .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
+          .modal-content { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: 90vh; overflow-y: auto; animation: modalIn 0.25s ease; backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); }
+          [data-theme="dark"] .modal-content { background: rgba(10, 22, 40, 0.98); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+          [data-theme="amoled"] .modal-content { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); backdrop-filter: none; }
           .modal-tx { max-width: 480px; }
           @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
           .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
