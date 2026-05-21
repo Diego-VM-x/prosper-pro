@@ -1057,30 +1057,35 @@ ul, ol {
 
 /* === THEME TOGGLE === */
 .theme-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
   background: var(--bg-input);
   border: 1px solid var(--border-default);
-  color: var(--text-secondary);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .theme-toggle:hover {
   background: var(--bg-accent-soft);
-  color: var(--color-pine-600);
-  border-color: var(--border-accent);
+  color: var(--color-prosper-green);
+  border-color: var(--color-prosper-green);
   box-shadow: 0 0 12px rgba(61,204,142,0.2);
 }
+
+.theme-toggle-icon { font-size: 1rem; line-height: 1; }
+.theme-toggle-label { font-size: 0.75rem; font-weight: 600; }
 
 [data-theme="dark"] .theme-toggle {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.6);
+  color: #ffffff;
 }
 
 [data-theme="dark"] .theme-toggle:hover {
@@ -1090,7 +1095,18 @@ ul, ol {
   box-shadow: 0 0 16px rgba(61, 204, 142, 0.3);
 }
 
-.theme-toggle svg { width: 18px; height: 18px; }
+[data-theme="amoled"] .theme-toggle {
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+[data-theme="amoled"] .theme-toggle:hover {
+  background: rgba(61, 204, 142, 0.2);
+  border-color: rgba(61, 204, 142, 0.5);
+  color: #3DCC8E;
+  box-shadow: 0 0 20px rgba(61, 204, 142, 0.4);
+}
 
 /* ============================================================
    PAGE CONTENT

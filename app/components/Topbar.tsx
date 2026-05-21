@@ -336,7 +336,12 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           id="theme-toggle-btn"
           title={theme === 'light' ? 'Cambiar a Oscuro' : theme === 'dark' ? 'Cambiar a AMOLED' : 'Cambiar a Claro'}
         >
-          {theme === 'light' ? <IconMoon /> : theme === 'dark' ? <IconSun /> : <IconSun />}
+          <span className="theme-toggle-icon">
+            {theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '☀️'}
+          </span>
+          <span className="theme-toggle-label">
+            {theme === 'light' ? 'Oscuro' : theme === 'dark' ? 'AMOLED' : 'Claro'}
+          </span>
         </button>
 
         {/* Notificaciones */}
