@@ -494,8 +494,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 <IconSettings /> Configuración
               </Link>
               <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); toggleTheme(); }}>
-                {theme === 'light' ? <IconMoon /> : <IconSun />}
-                {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
+                <span className="mobile-theme-icon">{theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '️'}</span>
+                <span>{theme === 'light' ? 'Oscuro' : theme === 'dark' ? 'AMOLED' : 'Claro'}</span>
               </button>
               <div className="user-dropdown-divider" />
               <button
@@ -554,8 +554,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 Ir al Inicio
               </Link>
               <button className="mobile-menu-theme" onClick={() => { toggleTheme(); setShowMobileMenu(false); }}>
-                {theme === 'light' ? <IconMoon /> : <IconSun />}
-                {theme === 'light' ? 'Modo Oscuro' : 'Modo Claro'}
+                <span className="mobile-theme-icon">{theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '️'}</span>
+                <span>{theme === 'light' ? 'Oscuro' : theme === 'dark' ? 'AMOLED' : 'Claro'}</span>
               </button>
               <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
                 <IconLogout /> Cerrar Sesión
@@ -695,19 +695,43 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           font-size: 0.875rem;
           font-weight: 600;
           cursor: pointer;
-          border: none;
+          border: 1px solid var(--border-default);
           transition: all var(--transition-fast);
         }
         .mobile-menu-theme {
           background: var(--bg-input);
           color: var(--text-primary);
         }
+        .mobile-menu-theme:hover {
+          background: var(--bg-accent-soft);
+          color: var(--color-prosper-green);
+          border-color: var(--color-prosper-green);
+        }
+        .mobile-theme-icon { font-size: 1.125rem; line-height: 1; }
+        [data-theme="dark"] .mobile-menu-theme {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+          color: #ffffff;
+        }
+        [data-theme="dark"] .mobile-menu-theme:hover {
+          background: rgba(61, 204, 142, 0.15);
+          border-color: rgba(61, 204, 142, 0.4);
+          color: #3DCC8E;
+        }
+        [data-theme="amoled"] .mobile-menu-theme {
+          background: #111111;
+          border-color: rgba(255, 255, 255, 0.15);
+          color: #ffffff;
+        }
+        [data-theme="amoled"] .mobile-menu-theme:hover {
+          background: rgba(61, 204, 142, 0.2);
+          border-color: rgba(61, 204, 142, 0.5);
+          color: #3DCC8E;
+        }
         .mobile-menu-logout {
           background: rgba(239,68,68,0.1);
           color: var(--color-red-500);
         }
-        .mobile-menu-theme svg,
-        .mobile-menu-logout svg { width: 18px; height: 18px; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .topbar-left {
