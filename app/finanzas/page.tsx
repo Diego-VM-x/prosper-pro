@@ -1738,13 +1738,14 @@ export default function FinanzasPage() {
           .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
           .account-action-more { font-size: 22px; line-height: 1; padding: 6px; }
           .account-dropdown-wrapper { position: relative; z-index: 10000; }
-          .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 10000; min-width: 180px; overflow: hidden; backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); }
-          [data-theme="dark"] .account-dropdown { background: rgba(10, 22, 40, 0.98); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
-          [data-theme="amoled"] .account-dropdown { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9); backdrop-filter: none; }
+          .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); z-index: 10000; min-width: 180px; overflow: hidden; }
+          [data-theme="dark"] .account-dropdown { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
+          [data-theme="amoled"] .account-dropdown { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9); }
           .account-dropdown-wrapper:hover .account-dropdown { display: block; }
           .account-dropdown-item { display: block; width: 100%; padding: 10px 14px; border: none; background: none; text-align: left; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; transition: background var(--transition-fast); }
           .account-dropdown-item:hover { background: var(--bg-input); }
           [data-theme="dark"] .account-dropdown-item:hover { background: rgba(61, 204, 142, 0.1); }
+          [data-theme="amoled"] .account-dropdown-item:hover { background: rgba(61, 204, 142, 0.15); }
           .account-dropdown-divider { height: 1px; background: var(--border-default); margin: 4px 0; }
           .account-dropdown-danger { color: var(--color-error) !important; }
           .account-dropdown-danger:hover { background: rgba(239,68,68,0.1) !important; }
