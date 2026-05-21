@@ -861,17 +861,6 @@ export default function FinanzasPage() {
                   <div className="account-actions-group">
                     <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
                     <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
-                    <div className="account-dropdown-wrapper">
-                      <button className="account-action account-action-more" title="Más opciones">⋮</button>
-                      <div className="account-dropdown">
-                        <button className="account-dropdown-item" onClick={() => openEditAccount(acc)}>✏️ Editar Nombre/Color</button>
-                        <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'income')}>📥 Eliminar Ingresos</button>
-                        <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'expense')}>📤 Eliminar Gastos</button>
-                        <button className="account-dropdown-item" onClick={() => handleDeleteByType(acc.id, 'saving')}>💰 Eliminar Ahorros</button>
-                        <div className="account-dropdown-divider" />
-                        <button className="account-dropdown-item account-dropdown-danger" onClick={() => handleDeleteAccount(acc.id)}>🗑️ Eliminar Cuenta</button>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <div className="account-balance-group">
@@ -1627,6 +1616,37 @@ export default function FinanzasPage() {
                       <strong>Lógica contable:</strong> Al eliminar transacciones, el balance se ajusta automáticamente. Eliminar ingresos resta del balance, eliminar gastos/ahorros suma al balance.
                     </div>
                   </div>
+
+                  {/* Sección: Editar Cuentas */}
+                  {accounts.length > 0 && (
+                    <div className="accounting-section">
+                      <h3 className="accounting-section-title">️ Editar Cuentas</h3>
+                      <p className="accounting-section-desc">Cambiar nombre, color, moneda o eliminar</p>
+                      <div className="accounting-accounts-list">
+                        {accounts.map(acc => (
+                          <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
+                            <div className="accounting-account-header">
+                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</span>
+                              <div className="accounting-account-info">
+                                <span className="accounting-account-name">{acc.name}</span>
+                                <span className="accounting-account-balance" style={{ color: acc.color }}>
+                                  {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="accounting-account-actions">
+                              <button className="accounting-mini-btn accounting-mini-info" onClick={() => { openEditAccount(acc); setShowAccountingModal(false); }} title="Editar nombre/color">
+                                ✏️ Editar
+                              </button>
+                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleDeleteAccount(acc.id)} title="Eliminar cuenta">
+                                ️ Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={() => setShowAccountingModal(false)}>Cerrar</button>
@@ -1736,19 +1756,6 @@ export default function FinanzasPage() {
           .account-actions-group { display: flex; gap: 2px; align-items: center; }
           .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; transition: all var(--transition-fast); }
           .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
-          .account-action-more { font-size: 22px; line-height: 1; padding: 6px; }
-          .account-dropdown-wrapper { position: relative; z-index: 10000; }
-          .account-dropdown { display: none; position: absolute; right: 0; top: 100%; background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-md); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); z-index: 10000; min-width: 180px; overflow: hidden; }
-          [data-theme="dark"] .account-dropdown { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); }
-          [data-theme="amoled"] .account-dropdown { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9); }
-          .account-dropdown-wrapper:hover .account-dropdown { display: block; }
-          .account-dropdown-item { display: block; width: 100%; padding: 10px 14px; border: none; background: none; text-align: left; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; transition: background var(--transition-fast); }
-          .account-dropdown-item:hover { background: var(--bg-input); }
-          [data-theme="dark"] .account-dropdown-item:hover { background: rgba(61, 204, 142, 0.1); }
-          [data-theme="amoled"] .account-dropdown-item:hover { background: rgba(61, 204, 142, 0.15); }
-          .account-dropdown-divider { height: 1px; background: var(--border-default); margin: 4px 0; }
-          .account-dropdown-danger { color: var(--color-error) !important; }
-          .account-dropdown-danger:hover { background: rgba(239,68,68,0.1) !important; }
           .account-balance { font-size: 1.375rem; font-weight: 800; }
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
 
@@ -1973,6 +1980,7 @@ export default function FinanzasPage() {
           .accounting-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
           .accounting-mini-danger:hover:not(:disabled) { border-color: var(--color-error); color: var(--color-error); background: rgba(239,68,68,0.1); }
           .accounting-mini-warning:hover:not(:disabled) { border-color: var(--color-gold-500); color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
+          .accounting-mini-info:hover:not(:disabled) { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: rgba(61,204,142,0.1); }
 
           .accounting-info-box {
             display: flex;
