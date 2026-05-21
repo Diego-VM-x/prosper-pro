@@ -49,10 +49,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   };
 
   const typeColors: Record<ToastType, { bg: string; border: string; icon: string }> = {
-    success: { bg: 'rgba(61,204,142,0.1)', border: 'var(--color-prosper-green)', icon: 'var(--color-prosper-green)' },
-    error: { bg: 'rgba(239,68,68,0.1)', border: 'var(--color-error)', icon: 'var(--color-error)' },
-    warning: { bg: 'rgba(245,158,11,0.1)', border: 'var(--color-warning, #F59E0B)', icon: 'var(--color-warning, #F59E0B)' },
-    info: { bg: 'rgba(59,130,246,0.1)', border: 'var(--color-blue-500, #3B82F6)', icon: 'var(--color-blue-500, #3B82F6)' },
+    success: { bg: '#EEF8F3', border: 'var(--color-prosper-green)', icon: 'var(--color-prosper-green)' },
+    error: { bg: '#FEF2F2', border: 'var(--color-error)', icon: 'var(--color-error)' },
+    warning: { bg: '#FFFBEB', border: 'var(--color-warning, #F59E0B)', icon: 'var(--color-warning, #F59E0B)' },
+    info: { bg: '#EFF6FF', border: 'var(--color-blue-500, #3B82F6)', icon: 'var(--color-blue-500, #3B82F6)' },
   };
 
   return (
@@ -70,7 +70,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((t) => {
           const colors = typeColors[t.type];
           return (
-            <div key={t.id} className="toast-item" style={{ background: colors.bg, borderLeftColor: colors.border }}>
+            <div key={t.id} className="toast-item" data-type={t.type} style={{ background: colors.bg, borderLeftColor: colors.border }}>
               <span className="toast-icon" style={{ color: colors.icon }}>{typeIcons[t.type]}</span>
               <span className="toast-message">{t.message}</span>
               <button className="toast-close" onClick={() => removeToast(t.id)}>✕</button>
@@ -100,7 +100,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           border-left: 4px solid;
           box-shadow: var(--shadow-lg);
           animation: toastSlideIn 0.3s ease;
-          backdrop-filter: blur(8px);
         }
         .toast-item.removing { animation: toastSlideOut 0.3s ease; }
         .toast-icon { font-size: 1.125rem; font-weight: 700; flex-shrink: 0; }
@@ -127,6 +126,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           from { opacity: 1; transform: translateX(0); }
           to { opacity: 0; transform: translateX(100%); }
         }
+        [data-theme="dark"] .toast-item[data-type="success"] { background: rgba(61,204,142,0.15) !important; }
+        [data-theme="dark"] .toast-item[data-type="error"] { background: rgba(239,68,68,0.15) !important; }
+        [data-theme="dark"] .toast-item[data-type="warning"] { background: rgba(245,158,11,0.15) !important; }
+        [data-theme="dark"] .toast-item[data-type="info"] { background: rgba(59,130,246,0.15) !important; }
+        [data-theme="amoled"] .toast-item[data-type="success"] { background: rgba(61,204,142,0.2) !important; }
+        [data-theme="amoled"] .toast-item[data-type="error"] { background: rgba(239,68,68,0.2) !important; }
+        [data-theme="amoled"] .toast-item[data-type="warning"] { background: rgba(245,158,11,0.2) !important; }
+        [data-theme="amoled"] .toast-item[data-type="info"] { background: rgba(59,130,246,0.2) !important; }
         @media (max-width: 480px) {
           .toast-container { top: 10px; right: 10px; left: 10px; max-width: none; }
           .toast-item { padding: 10px 12px; }
@@ -199,11 +206,13 @@ export function ConfirmDialog({
           -webkit-tap-highlight-color: transparent;
         }
         .confirm-dialog {
-          background: var(--bg-card); border: 1px solid var(--border-default);
+          background: #ffffff; border: 1px solid var(--border-default);
           border-radius: var(--radius-xl); width: 90%; max-width: 400px;
           padding: 24px; animation: fadeInUp 0.3s ease;
           max-height: 90vh; overflow-y: auto;
         }
+        [data-theme="dark"] .confirm-dialog { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+        [data-theme="amoled"] .confirm-dialog { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
         .confirm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
         .confirm-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .confirm-close {

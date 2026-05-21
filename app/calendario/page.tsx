@@ -521,8 +521,10 @@ export default function CalendarioPage() {
           .cal-empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
           
           /* === MODAL === */
-          .cal-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); animation: calFadeIn 0.2s ease; }
-          .cal-modal { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-xl); border: 1px solid var(--border-default); display: flex; flex-direction: column; }
+          .cal-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); animation: calFadeIn 0.2s ease; }
+          .cal-modal { background: #ffffff; width: 100%; max-width: 400px; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-xl); border: 1px solid var(--border-default); display: flex; flex-direction: column; }
+          [data-theme="dark"] .cal-modal { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+          [data-theme="amoled"] .cal-modal { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
           .cal-modal-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-default); }
           .cal-modal-title { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); margin: 0; }
           .cal-modal-close { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; display: flex; transition: color var(--transition-fast); }

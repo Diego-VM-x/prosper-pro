@@ -1583,6 +1583,8 @@ ul, ol {
   pointer-events: none;
   transition: opacity var(--transition-fast);
 }
+[data-theme="dark"] .chart-tooltip { background: #ffffff; color: #0a1628; }
+[data-theme="amoled"] .chart-tooltip { background: #ffffff; color: #000000; }
 
 .chart-bar:hover .chart-tooltip { opacity: 1; }
 

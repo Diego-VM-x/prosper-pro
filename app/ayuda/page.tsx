@@ -588,9 +588,11 @@ export default function AyudaPage() {
           .ayuda-footer-links a:hover { color: var(--color-prosper-green); }
 
           /* Chat */
-          .chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; justify-content: flex-end; padding: 16px; animation: chatFadeIn 0.2s ease; }
+          .chat-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: flex-end; justify-content: flex-end; padding: 16px; animation: chatFadeIn 0.2s ease; }
           @keyframes chatFadeIn { from { opacity: 0; } to { opacity: 1; } }
-          .chat-window { width: 340px; max-width: calc(100vw - 32px); height: 460px; max-height: calc(100vh - 32px); background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-xl, 20px); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: chatSlideUp 0.3s ease; }
+          .chat-window { width: 340px; max-width: calc(100vw - 32px); height: 460px; max-height: calc(100vh - 32px); background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl, 20px); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: chatSlideUp 0.3s ease; }
+          [data-theme="dark"] .chat-window { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
+          [data-theme="amoled"] .chat-window { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
           @keyframes chatSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
           .chat-header { padding: 16px 18px; background: linear-gradient(135deg, var(--color-prosper-navy), #2A5A4E); display: flex; align-items: center; justify-content: space-between; }
           .chat-header-info { display: flex; align-items: center; gap: 10px; }

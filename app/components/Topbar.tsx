@@ -584,20 +584,18 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           width: 300px;
           max-width: 85vw;
           height: 100%;
-          background: var(--bg-card);
+          background: #ffffff;
           display: flex;
           flex-direction: column;
           animation: slideInLeft 0.3s ease;
           box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
         }
         [data-theme="dark"] .mobile-menu {
-          background: rgba(10, 22, 40, 0.95);
-          backdrop-filter: blur(24px) saturate(180%);
+          background: #0a1628;
           border-right: 1px solid rgba(255, 255, 255, 0.06);
         }
         [data-theme="amoled"] .mobile-menu {
           background: #000000;
-          backdrop-filter: none;
           border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
         .mobile-menu-header {
@@ -784,7 +782,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           top: calc(100% + 8px);
           left: 0;
           right: 0;
-          background: var(--bg-card);
+          background: #ffffff;
           border: 1px solid var(--border-default);
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-lg);
@@ -794,14 +792,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           animation: fadeInUp 0.2s ease;
         }
         [data-theme="dark"] .search-results-dropdown {
-          backdrop-filter: blur(24px) saturate(180%);
-          -webkit-backdrop-filter: blur(24px) saturate(180%);
-          background: rgba(10, 22, 40, 0.9);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #0a1628;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(61, 204, 142, 0.08);
         }
         [data-theme="amoled"] .search-results-dropdown {
-          backdrop-filter: none;
           background: #0a0a0a;
           border: 1px solid rgba(255, 255, 255, 0.12);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
@@ -886,7 +881,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           top: calc(100% + 8px);
           right: 0;
           width: 320px;
-          background: var(--bg-card);
+          background: #ffffff;
           border: 1px solid var(--border-default);
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-lg);
@@ -896,14 +891,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           animation: fadeInUp 0.2s ease;
         }
         [data-theme="dark"] .notifications-dropdown {
-          backdrop-filter: blur(24px) saturate(180%);
-          -webkit-backdrop-filter: blur(24px) saturate(180%);
-          background: rgba(10, 22, 40, 0.9);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #0a1628;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(61, 204, 142, 0.08);
         }
         [data-theme="amoled"] .notifications-dropdown {
-          backdrop-filter: none;
           background: #0a0a0a;
           border: 1px solid rgba(255, 255, 255, 0.12);
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
@@ -1010,24 +1002,20 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           top: calc(100% + 12px);
           right: 0;
           width: 260px;
-          background: var(--bg-card);
+          background: #ffffff;
           border: 1px solid var(--border-default);
           border-radius: var(--radius-xl);
           box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
           z-index: 10000;
           overflow: hidden;
           animation: fadeInUp 0.2s ease;
-          backdrop-filter: blur(12px);
         }
         [data-theme="dark"] .user-dropdown {
-          backdrop-filter: blur(24px) saturate(180%);
-          -webkit-backdrop-filter: blur(24px) saturate(180%);
-          background: rgba(10, 22, 40, 0.9);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          background: #0a1628;
+          border: 1px solid rgba(255, 255, 255, 0.1);
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(61, 204, 142, 0.08);
         }
         [data-theme="amoled"] .user-dropdown {
-          backdrop-filter: none;
           background: #0a0a0a;
           border: 1px solid rgba(255, 255, 255, 0.12);
           box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9);
