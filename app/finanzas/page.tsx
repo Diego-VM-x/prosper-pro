@@ -164,7 +164,13 @@ export default function FinanzasPage() {
     }
     return false;
   });
-  const [showConversion, setShowConversion] = useState(false);
+  const [showConversion, setShowConversion] = useState(() => {
+    try {
+      return localStorage.getItem('finanzas-show-conversion') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altSummary = useMemo(() => ({
     income: convertBetween(summary.income, displayCurrency, altCurrency),
@@ -930,7 +936,7 @@ export default function FinanzasPage() {
               <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
             </div>
             <button
-              onClick={() => setShowConversion(!showConversion)}
+              onClick={() => { const next = !showConversion; setShowConversion(next); try { localStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
               className={`conversion-toggle ${showConversion ? 'active' : ''}`}
               title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
             >
@@ -1431,15 +1437,15 @@ export default function FinanzasPage() {
                           {/* Account selector */}
                           <div className="vepay-field">
                             <label className="vepay-field-label">Cuenta Prosper</label>
-                            <CustomSelect
-                              value={override.accountId}
-                              onChange={(val) => updateOverride({ accountId: val })}
-                              options={[
-                                { value: '', label: 'Seleccionar cuenta...' },
-                                ...accounts.map(acc => ({ value: acc.id, label: `${acc.icon} ${acc.name} ($${acc.balance.toLocaleString()})` })),
-                              ]}
-                              placeholder="Seleccionar cuenta..."
-                            />
+                             <CustomSelect
+                               value={override.accountId}
+                               onChange={(val) => updateOverride({ accountId: val })}
+                               options={[
+                                 { value: '', label: 'Seleccionar cuenta...' },
+                                 ...accounts.map(acc => ({ value: acc.id, label: `${acc.name} ($${acc.balance.toLocaleString()})`, icon: acc.icon })),
+                               ]}
+                               placeholder="Seleccionar cuenta..."
+                             />
                           </div>
 
                           {/* Bank selector */}

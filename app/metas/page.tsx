@@ -712,7 +712,7 @@ export default function MetasPage() {
                   <div className="plan-field-row">
                     <div className="plan-field">
                       <label className="plan-label">Categoría</label>
-                      <CustomSelect value={formCategory} onChange={v => setFormCategory(v as PlanCategory)} options={PLAN_CATEGORIES.map(c => ({ value: c.value, label: `${c.icon} ${c.value}`, icon: c.icon }))} placeholder="Seleccionar..." />
+                      <CustomSelect value={formCategory} onChange={v => setFormCategory(v as PlanCategory)} options={PLAN_CATEGORIES.map(c => ({ value: c.value, label: c.value, icon: c.icon }))} placeholder="Seleccionar..." />
                     </div>
                     <div className="plan-field">
                       <label className="plan-label">Monto *</label>
@@ -745,7 +745,7 @@ export default function MetasPage() {
 
                   <div className="plan-field">
                     <label className="plan-label">Cuenta vinculada</label>
-                    <CustomSelect value={formAccountId} onChange={v => setFormAccountId(v)} options={[{ value: '', label: 'Sin cuenta', icon: '—' }, ...accounts.map(a => ({ value: a.id, label: `${a.icon} ${a.name}`, icon: a.icon }))]} placeholder="Seleccionar..." />
+                    <CustomSelect value={formAccountId} onChange={v => setFormAccountId(v)} options={[{ value: '', label: 'Sin cuenta' }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder="Seleccionar..." />
                   </div>
                 </div>
                 <div className="modal-footer">
@@ -779,7 +779,7 @@ export default function MetasPage() {
                   </div>
                   <div className="plan-field">
                     <label className="plan-label">Cuenta (opcional)</label>
-                    <CustomSelect value={addAccountId} onChange={v => setAddAccountId(v)} options={[{ value: '', label: 'Sin cuenta', icon: '—' }, ...accounts.map(a => ({ value: a.id, label: `${a.icon} ${a.name}`, icon: a.icon }))]} placeholder="Seleccionar..." />
+                    <CustomSelect value={addAccountId} onChange={v => setAddAccountId(v)} options={[{ value: '', label: 'Sin cuenta' }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder="Seleccionar..." />
                   </div>
                 </div>
                 <div className="modal-footer">
@@ -813,7 +813,7 @@ export default function MetasPage() {
                   </div>
                   <div className="plan-field">
                     <label className="plan-label">Cuenta</label>
-                    <CustomSelect value={payAccountId} onChange={v => setPayAccountId(v)} options={[{ value: '', label: 'Sin cuenta', icon: '—' }, ...accounts.map(a => ({ value: a.id, label: `${a.icon} ${a.name}`, icon: a.icon }))]} placeholder="Seleccionar..." />
+                    <CustomSelect value={payAccountId} onChange={v => setPayAccountId(v)} options={[{ value: '', label: 'Sin cuenta' }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder="Seleccionar..." />
                   </div>
                 </div>
                 <div className="modal-footer">

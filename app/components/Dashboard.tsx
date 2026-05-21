@@ -67,7 +67,14 @@ export function Dashboard() {
   const [customCats, setCustomCats] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
-  const [showBalances, setShowBalances] = useState(true);
+  const [showBalances, setShowBalances] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dashboard-show-balances');
+      return saved !== 'false';
+    } catch {
+      return true;
+    }
+  });
   const bottomScrollRef = useRef<HTMLDivElement>(null);
 
   const totalBalance = useMemo(() => {
@@ -472,7 +479,7 @@ export function Dashboard() {
                 <h2 className="content-card-title">Mis Cuentas</h2>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button className="content-card-action" onClick={() => setShowBalances(!showBalances)} title={showBalances ? 'Ocultar saldos' : 'Mostrar saldos'} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { localStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? 'Ocultar saldos' : 'Mostrar saldos'} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
                   {showBalances ? ' Ocultar' : '👁️ Mostrar'}
                 </button>
                 <button className="content-card-action" onClick={() => router.push('/finanzas')}>
