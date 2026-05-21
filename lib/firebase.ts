@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -37,7 +37,7 @@ if (typeof window !== 'undefined') {
 }
 
 let app: FirebaseApp;
-let db: Firestore;
+let db: ReturnType<typeof getFirestore>;
 let auth: Auth | null = null;
 
 try {
@@ -70,7 +70,7 @@ try {
     console.error('[Firebase] Fallback también falló:', fallbackErr);
     // Último recurso: usar valores undefined (las páginas deben manejar auth/db null)
     app = {} as FirebaseApp;
-    db = {} as Firestore;
+    db = {} as ReturnType<typeof getFirestore>;
   }
 }
 
