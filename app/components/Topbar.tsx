@@ -313,7 +313,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         {showSearch && searchQuery.trim() && !hasResults && !noData && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>No se encontraron resultados para "{searchQuery}"</p>
+              <p>No se encontraron resultados para &quot;{searchQuery}&quot;</p>
             </div>
           </div>
         )}
@@ -493,8 +493,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
                 <IconSettings /> Configuración
               </Link>
-               <div className="theme-buttons" style={{ display: 'flex', gap: '8px' }}>
-                  <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+               <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
+                  <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Claro" aria-label="Tema Claro">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5"></circle>
                       <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -507,14 +507,13 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                   </button>
-                   </svg>
-                 </button>
-                 <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+
+                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Oscuro" aria-label="Tema Oscuro">
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                    </svg>
                  </button>
-                 <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema AMOLED" aria-label="Tema AMOLED">
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                      <circle cx="12" cy="12" r="10"></circle>
                    </svg>
@@ -577,7 +576,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                  Ir al Inicio
                </Link>
                 <div className="mobile-menu-theme-buttons" style={{ display: 'flex', gap: '8px' }}>
-                  <button className="mobile-menu-theme" onClick={() => { setTheme('light'); setShowMobileMenu(false); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                  <button className="mobile-menu-theme" onClick={() => { setTheme('light'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Claro" aria-label="Tema Claro">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5"></circle>
                       <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -590,12 +589,12 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                   </button>
-                  <button className="mobile-menu-theme" onClick={() => { setTheme('dark'); setShowMobileMenu(false); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                  <button className="mobile-menu-theme" onClick={() => { setTheme('dark'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Oscuro" aria-label="Tema Oscuro">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                   </button>
-                  <button className="mobile-menu-theme" onClick={() => { setTheme('amoled'); setShowMobileMenu(false); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                  <button className="mobile-menu-theme" onClick={() => { setTheme('amoled'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title="Tema AMOLED" aria-label="Tema AMOLED">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
                     </svg>
@@ -605,7 +604,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
                 <IconLogout /> Cerrar Sesión
               </button>
-            </div>
           </div>
         </div>
       )}

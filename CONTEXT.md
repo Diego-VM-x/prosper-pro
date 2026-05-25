@@ -231,6 +231,10 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 25/05/2026 - Fix Vercel Build & Theme Buttons Layout
+- **Vercel Build Fix**: Solucionado error crítico de sintaxis en `app/components/Topbar.tsx` (etiquetas `</svg>` y `</button>` duplicadas y un `</div>` sobrante) que provocaba un fallo "Unterminated regexp literal" en Turbopack durante el despliegue en Vercel. Adicionalmente, se corrigieron caracteres no escapados en JSX para superar las reglas estrictas de eslint (`react/no-unescaped-entities`).
+- **UI Móvil**: Rediseño de los botones selectores de tema (Claro, Oscuro, AMOLED) en los menús desplegables de la versión móvil (el del avatar del usuario y el del footer general). Se cambiaron de ítems de lista completa a un layout flexbox de 3 botones horizontales de igual tamaño con iconos centrados, mejorando la usabilidad táctil.
+
 ### 20/05/2026 - Conversión USD/BS con Cambio de Valor Principal + Moneda Persistente
 - **Gráfica/Dashboard**: Botón ⇄ Convertir en resumen financiero. Al activarlo, el valor principal cambia a la moneda alternativa (BS↔USD) y el valor original queda como ≈ debajo. Componente `SummaryCard` reutilizable.
 - **Finanzas**: Mismo botón ⇄ Convertir en resumen mensual. Convierte ingresos, gastos, ahorro y balance total. Cuentas mantienen moneda nativa. Componente `SummaryWidget` reutilizable.
