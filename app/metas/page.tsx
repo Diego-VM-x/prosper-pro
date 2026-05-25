@@ -710,10 +710,20 @@ export default function MetasPage() {
                   </div>
 
                   <div className="plan-field-row">
-                    <div className="plan-field">
-                      <label className="plan-label">Categoría</label>
-                      <CustomSelect value={formCategory} onChange={v => setFormCategory(v as PlanCategory)} options={PLAN_CATEGORIES.map(c => ({ value: c.value, label: c.value, icon: c.icon }))} placeholder="Seleccionar..." />
-                    </div>
+<div className="plan-field">
+  <label className="plan-label">Categoría</label>
+  <div className="plan-category-group">
+    {PLAN_CATEGORIES.map(category => (
+      <button
+        key={category.value}
+        className={`plan-category-btn ${formCategory === category.value ? 'active' : ''}`}
+        onClick={() => setFormCategory(category.value)}
+      >
+        {category.icon} {category.value}
+      </button>
+    ))}
+  </div>
+</div>
                     <div className="plan-field">
                       <label className="plan-label">Monto *</label>
                       <div className="plan-input-wrap">
@@ -948,8 +958,43 @@ export default function MetasPage() {
           .plans-req-reject { background: rgba(239,68,68,0.1); color: var(--color-error); }
           .plans-req-reject:hover { background: var(--color-error); color: white; }
 
-          /* Plans Grid */
-          .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+           /* Plans Grid */
+           .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+           
+           /* Category Buttons */
+           .plan-category-group {
+             display: flex;
+             flex-wrap: wrap;
+             gap: 6px;
+             margin-top: 4px;
+           }
+           
+           .plan-category-btn {
+             padding: 6px 10px;
+             border-radius: var(--radius-sm);
+             border: 1px solid var(--border-default);
+             background: var(--bg-input);
+             color: var(--text-primary);
+             font-size: 0.75rem;
+             cursor: pointer;
+             transition: all 0.15s ease;
+             display: flex;
+             align-items: center;
+             gap: 4px;
+             white-space: nowrap;
+           }
+           
+           .plan-category-btn:hover {
+             border-color: var(--color-prosper-green);
+             color: var(--color-prosper-green);
+             background: var(--bg-input);
+           }
+           
+           .plan-category-btn.active {
+             background: var(--color-prosper-green);
+             color: white;
+             border-color: var(--color-prosper-green);
+           }
           .plan-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; }
           .plan-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
           .plan-card-header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }

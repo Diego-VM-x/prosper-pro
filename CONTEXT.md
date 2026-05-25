@@ -559,3 +559,9 @@
 - **CustomSelect.tsx**: Añadidas animaciones de entrada y salida suaves al abrir/cerrar el menú desplegable usando max-height, opacity y transform.
 - **Fix de corte de menús**: Eliminado overflow-y: auto del modal-overlay y restructurado el modal-content para usar display: flex con flex-direction: column y .modal-body con flex: 1 y overflow-y: auto, permitiendo que los menús desplegables se extiendan completamente sin ser cortados por el contenedor modal.
 - **Animaciones al abrir vistas**: Los menús ahora animan suavemente tanto al abrir como al cerrar, mejorando la experiencia de usuario.
+
+### 25/05/2026 - Conversión de menú desplegable a botones agrupados en Metas
+- **metas/page.tsx**: Cambiado el CustomSelect de categoría por un grupo de botones que permite selección única sin problemas de corte.
+- **Beneficios**: Eliminado por completo el riesgo de corte de menús, mejor accesibilidad táctil, selección visual clara del estado activo.
+- **Implementación**: Grupo de botones flexibles con estilos hover y estado activo que se comportan como opciones de selección única.
+- **Estilos**: Incluye hover states, active states, spacing adecuado y respuesta táctil optimizada.
