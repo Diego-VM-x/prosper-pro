@@ -535,6 +535,7 @@
 
 ### 25/05/2026 - Animaciones fluidas en toda la web (test)
 - **AnimatedSection.tsx**: Nuevo componente reutilizable que anima elementos al entrar en viewport con tipos: fade-up, fade-down, fade-left, fade-right, scale, pulse, float. Soporta retrasos escalonados.
-- **globals.css**: Añadidas keyframes y clases utilities para animaciones suaves y consistentes en todos los dispositivos, inspiradas en la landing page.
+- **globals.css**: Añadidas keyframes y clases utilities para animaciones suaves y consistentes en todos los dispositivos, inspiradas en la landing page. Se corrigió el transform inicial de .animate-on-scroll para asegurar que las animaciones se activen correctamente.
 - **Uso**: Reemplazar usos de AnimatedSection en app/page.tsx y cualquier otro componente por el nuevo componente con prop `animationType`.
 - **Objetivo**: Mejorar la experiencia de usuario con transiciones fluidas sin afectar rendimiento.
+- **Fix 25/05/2026**: Corregido error de importación en app/page.tsx (ruta incorrecta '@/components/AnimatedSection' → './components/AnimatedSection') que causaba fallo en el build de Turbopack.
