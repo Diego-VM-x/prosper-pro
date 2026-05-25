@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { AnimatedSection } from '@/components/AnimatedSection';
+import { AnimatedSection } from './components/AnimatedSection';
 import './landing.css';
 
 function useInView(threshold = 0.1) {
