@@ -554,3 +554,8 @@
 - **Micro-interacciones premium mantenidas**: elevación con glow neón en hover, shimmer sweep en botones CTA, entradas elásticas para modales y toasts.
 - **Optimizadas para 60 FPS** usando solo propiedades aceleradas por hardware (transform, opacity, filter, will-change).
 - **Eliminada regla prefers-reduced-motion** que causaba animaciones instantáneas en Windows con animaciones del sistema desactivadas.
+
+### 25/05/2026 - Mejora de animaciones en menús desplegables (CustomSelect)
+- **CustomSelect.tsx**: Añadidas animaciones de entrada y salida suaves al abrir/cerrar el menú desplegable usando max-height, opacity y transform.
+- **Fix de corte de menús**: Eliminado overflow-y: auto del modal-overlay y restructurado el modal-content para usar display: flex con flex-direction: column y .modal-body con flex: 1 y overflow-y: auto, permitiendo que los menús desplegables se extiendan completamente sin ser cortados por el contenedor modal.
+- **Animaciones al abrir vistas**: Los menús ahora animan suavemente tanto al abrir como al cerrar, mejorando la experiencia de usuario.

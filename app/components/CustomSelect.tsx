@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 
 interface CustomSelectOption {
   value: string;
@@ -30,6 +30,7 @@ export function CustomSelect({
   className = '',
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [exitAnimation, setExitAnimation] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -40,9 +41,14 @@ export function CustomSelect({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setShowCustomInput(false);
-        setCustomValue('');
+        setExitAnimation(true);
+        // Wait for the exit animation to finish before closing
+        setTimeout(() => {
+          setIsOpen(false);
+          setShowCustomInput(false);
+          setCustomValue('');
+          setExitAnimation(false);
+        }, 150); // Should match the animation duration
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -59,30 +65,52 @@ export function CustomSelect({
     if (optionValue === '__custom__') {
       setShowCustomInput(true);
     } else {
-      onChange(optionValue);
-      setIsOpen(false);
-      setShowCustomInput(false);
-      setCustomValue('');
+      setExitAnimation(true);
+      // Wait for the exit animation to finish before closing
+      setTimeout(() => {
+        onChange(optionValue);
+        setIsOpen(false);
+        setShowCustomInput(false);
+        setCustomValue('');
+        setExitAnimation(false);
+      }, 150); // Should match the animation duration
     }
   };
 
   const handleAddCustom = () => {
     if (!customValue.trim()) return;
-    const normalizedValue = customValue.trim().toLowerCase().replace(/\s+/g, '-');
-    if (onAddCustom) {
-      onAddCustom(normalizedValue, customValue.trim());
-    }
-    onChange(normalizedValue);
-    setShowCustomInput(false);
-    setCustomValue('');
-    setIsOpen(false);
+    setExitAnimation(true);
+    // Wait for the exit animation to finish before closing
+    setTimeout(() => {
+      const normalizedValue = customValue.trim().toLowerCase().replace(/\s+/g, '-');
+      if (onAddCustom) {
+        onAddCustom(normalizedValue, customValue.trim());
+      }
+      onChange(normalizedValue);
+      setShowCustomInput(false);
+      setCustomValue('');
+      setIsOpen(false);
+      setExitAnimation(false);
+    }, 150); // Should match the animation duration
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleAddCustom();
     if (e.key === 'Escape') {
-      setShowCustomInput(false);
-      setCustomValue('');
+      setExitAnimation(true);
+      // Wait for the exit animation to finish before closing
+      setTimeout(() => {
+        setShowCustomInput(false);
+        setCustomValue('');
+        setIsOpen(false);
+        setExitAnimation(false);
+      }, 150); // Should match the animation duration
+    }
+  };
+
+  const handleAnimationEnd = (e: AnimationEvent) => {
+    if (e.animationName === 'dropdownFadeOut' && !isOpen) {
+      setExitAnimation(false);
     }
   };
 
@@ -108,54 +136,64 @@ export function CustomSelect({
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="custom-select-dropdown">
-          {showCustomInput ? (
-            <div className="custom-select-custom-input">
-              <input
-                ref={customInputRef}
-                type="text"
-                className="custom-input-field"
-                placeholder={customPlaceholder}
-                value={customValue}
-                onChange={(e) => setCustomValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <div className="custom-input-actions">
-                <button className="custom-btn-cancel" onClick={() => { setShowCustomInput(false); setCustomValue(''); }}>
-                  ✕
-                </button>
-                <button className={`custom-btn-add ${!customValue.trim() ? 'disabled' : ''}`} onClick={handleAddCustom} disabled={!customValue.trim()}>
-                  ✓ Añadir
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {options.map((option) => (
-                <button
-                  key={option.value}
-                  className={`custom-select-option ${value === option.value ? 'selected' : ''}`}
-                  onClick={() => handleSelect(option.value)}
-                >
-                  {option.icon && <span className="custom-select-icon">{option.icon}</span>}
-                  {option.label}
-                  {value === option.value && <span className="custom-select-check">✓</span>}
-                </button>
-              ))}
-              {allowCustom && (
-                <button
-                  className="custom-select-option custom-select-add-new"
-                  onClick={() => handleSelect('__custom__')}
-                >
-                  <span className="custom-select-icon">+</span>
-                  Añadir personalizado...
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
+        {(isOpen || exitAnimation) && dropdownRef.current ? (
+         <div 
+           className="custom-select-dropdown"
+           style={{
+             maxHeight: isOpen ? 'none' : '0px',
+             opacity: isOpen || exitAnimation ? (exitAnimation ? 0 : 1) : 0,
+             transform: exitAnimation ? 'translateY(-8px)' : 'translateY(0)',
+             transition: isOpen ? 
+               'max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease' : 
+               'max-height 0.2s ease, opacity 0.15s ease, transform 0.15s ease'
+           }}
+         >
+           {showCustomInput ? (
+             <div className="custom-select-custom-input">
+               <input
+                 ref={customInputRef}
+                 type="text"
+                 className="custom-input-field"
+                 placeholder={customPlaceholder}
+                 value={customValue}
+                 onChange={(e) => setCustomValue(e.target.value)}
+                 onKeyDown={handleKeyDown}
+               />
+               <div className="custom-input-actions">
+                 <button className="custom-btn-cancel" onClick={() => { setShowCustomInput(false); setCustomValue(''); setIsOpen(false); }}>
+                   ✕
+                 </button>
+                 <button className={`custom-btn-add ${!customValue.trim() ? 'disabled' : ''}`} onClick={handleAddCustom} disabled={!customValue.trim()}>
+                   ✓ Añadir
+                 </button>
+               </div>
+             </div>
+           ) : (
+             <>
+               {options.map((option) => (
+                 <button
+                   key={option.value}
+                   className={`custom-select-option ${value === option.value ? 'selected' : ''}`}
+                   onClick={() => handleSelect(option.value)}
+                 >
+                   {option.icon && <span className="custom-select-icon">{option.icon}</span>}
+                   {option.label}
+                   {value === option.value && <span className="custom-select-check">✓</span>}
+                 </button>
+               ))}
+               {allowCustom && (
+                 <button
+                   className="custom-select-option custom-select-add-new"
+                   onClick={() => handleSelect('__custom__')}
+                 >
+                   <span className="custom-select-icon">+</span>
+                   Añadir personalizado...
+                 </button>
+               )}
+             </>
+           )}
+         </div>
+       ) : null}
 
       <style>{`
         .custom-select-wrapper { position: relative; }
@@ -187,20 +225,27 @@ export function CustomSelect({
         }
         .custom-select-arrow.rotated { transform: rotate(180deg); }
 
-        .custom-select-dropdown {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          z-index: 10000;
-          background: #ffffff;
-          border: 1px solid var(--border-default);
-          border-radius: var(--radius-md);
-          box-shadow: var(--shadow-lg);
-          max-height: 240px;
-          overflow-y: auto;
-          animation: dropdownFadeIn 0.15s ease;
-        }
+         .custom-select-dropdown {
+           position: absolute;
+           top: calc(100% + 4px);
+           left: 0;
+           right: 0;
+           z-index: 10000;
+           background: #ffffff;
+           border: 1px solid var(--border-default);
+           border-radius: var(--radius-md);
+           box-shadow: var(--shadow-lg);
+           max-height: 240px;
+           overflow-y: auto;
+         }
+         
+         .custom-select-dropdown.entering {
+           animation: dropdownFadeIn 0.15s ease forwards;
+         }
+         
+         .custom-select-dropdown.exiting {
+           animation: dropdownFadeOut 0.15s ease forwards;
+         }
         [data-theme="dark"] .custom-select-dropdown {
           background: #0a1628;
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -283,10 +328,15 @@ export function CustomSelect({
         .custom-btn-add:hover { filter: brightness(1.1); }
         .custom-btn-add.disabled { opacity: 0.5; cursor: not-allowed; }
 
-        @keyframes dropdownFadeIn {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+         @keyframes dropdownFadeIn {
+           from { opacity: 0; transform: translateY(-8px); }
+           to { opacity: 1; transform: translateY(0); }
+         }
+         
+         @keyframes dropdownFadeOut {
+           from { opacity: 1; transform: translateY(0); }
+           to { opacity: 0; transform: translateY(-8px); }
+         }
       `}</style>
     </div>
   );
