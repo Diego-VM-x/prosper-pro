@@ -46,7 +46,7 @@ interface TopbarProps {
  * toggle de modo oscuro/claro y el perfil del usuario.
  */
 export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
   const { goals } = useGoals();
@@ -493,10 +493,30 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
                 <IconSettings /> Configuración
               </Link>
-              <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); toggleTheme(); }}>
-                <span className="mobile-theme-icon">{theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '️'}</span>
-                <span>{theme === 'light' ? 'Oscuro' : theme === 'dark' ? 'AMOLED' : 'Claro'}</span>
-              </button>
+               <div className="theme-buttons" style={{ display: 'flex', gap: '8px' }}>
+                 <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <circle cx="12" cy="12" r="5"></circle>
+                     <line x1="12" y1="1" x2="12" y2="3"></line>
+                     <line x1="12" y1="21" x2="12" y2="23"></line>
+                     <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                     <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                     <line x1="1" y1="12" x2="3" y2="12"></line>
+                     <line x1="21" y1="12" x2="23" y2="12"></line>
+                     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                   </svg>
+                 </button>
+                 <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                   </svg>
+                 </button>
+                 <button className="user-dropdown-item" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <circle cx="12" cy="12" r="10"></svg>
+                 </button>
+               </div>
               <div className="user-dropdown-divider" />
               <button
                 className="user-dropdown-item user-dropdown-logout"
@@ -553,10 +573,31 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 Ir al Inicio
               </Link>
-              <button className="mobile-menu-theme" onClick={() => { toggleTheme(); setShowMobileMenu(false); }}>
-                <span className="mobile-theme-icon">{theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '️'}</span>
-                <span>{theme === 'light' ? 'Oscuro' : theme === 'dark' ? 'AMOLED' : 'Claro'}</span>
-              </button>
+               <div className="mobile-menu-theme-buttons" style={{ display: 'flex', gap: '8px' }}>
+                 <button className="mobile-menu-theme" onClick={() => { setTheme('light'); setShowMobileMenu(false); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <circle cx="12" cy="12" r="5"></circle>
+                     <line x1="12" y1="1" x2="12" y2="3"></line>
+                     <line x1="12" y1="21" x2="12" y2="23"></line>
+                     <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                     <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                     <line x1="1" y1="12" x2="3" y2="12"></line>
+                     <line x1="21" y1="12" x2="23" y2="12"></line>
+                     <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                     <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                   </svg>
+                 </button>
+                 <button className="mobile-menu-theme" onClick={() => { setTheme('dark'); setShowMobileMenu(false); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                   </svg>
+                 </button>
+                 <button className="mobile-menu-theme" onClick={() => { setTheme('amoled'); setShowMobileMenu(false); }} style={{ padding: '0', background: 'none', border: 'none' }}>
+                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                     <circle cx="12" cy="12" r="10"></circle>
+                   </svg>
+                 </button>
+               </div>
               <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
                 <IconLogout /> Cerrar Sesión
               </button>
