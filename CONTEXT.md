@@ -516,3 +516,8 @@
 - **Nueva función `wipeAllData`** en `AuthContext.tsx`: Permite borrar todos los datos del usuario **sin eliminar la cuenta**. Recrea cuentas por defecto después del borrado.
 - **Configuración mejorada** en `app/configuracion/page.tsx`: Nueva tarjeta amarilla "Borrar Todos Mis Datos" en tab Seguridad. Requiere escribir "BORRAR" para confirmar. Recarga la página tras borrar.
 - **Build**: `tsc --noEmit` exitoso sin errores.
+
+### 25/05/2026 - Rollback a Commit 71514a7
+- **Acción**: Se realizó un rollback del repositorio al commit `71514a705c19b7926236a51d038384c8f52f648d` para restaurar el estado del proyecto.
+- **Archivos afectados**: Todos los archivos locales y remotos fueron revertidos a este commit.
+- **Push forzado**: Se ejecutó `git push --force origin master` para actualizar el repositorio remoto.
