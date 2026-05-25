@@ -43,7 +43,7 @@ html, body {
   animation: slideUp var(--transition-medium) var(--ease-out-back) forwards;
   opacity: 0;
 }
-@keyframes slideUp {
+@keyframes slideUpModal {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
@@ -106,18 +106,18 @@ html, body {
 
 /* Modals, Dropdowns & Toast Alerts */
 .modal-slide-up {
-  animation: slideUp var(--transition-medium) var(--ease-out-back) forwards;
+  animation: slideUpModal var(--transition-medium) var(--ease-out-back) forwards;
 }
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+@keyframes slideUpToast {
+  from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .toast-slide-in {
   animation: toastIn 0.3s var(--ease-out-cubic) forwards;
-  transform: translateY(-10px);
 }
 @keyframes toastIn {
-  to { transform: translateY(0); }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .toast {
   position: fixed;
