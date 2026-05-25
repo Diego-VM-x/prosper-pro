@@ -532,3 +532,9 @@
 - **Acción**: Se realizó un rollback del repositorio al commit `71514a705c19b7926236a51d038384c8f52f648d` para restaurar el estado del proyecto.
 - **Archivos afectados**: Todos los archivos locales y remotos fueron revertidos a este commit.
 - **Push forzado**: Se ejecutó `git push --force origin master` para actualizar el repositorio remoto.
+
+### 25/05/2026 - Animaciones fluidas en toda la web (test)
+- **AnimatedSection.tsx**: Nuevo componente reutilizable que anima elementos al entrar en viewport con tipos: fade-up, fade-down, fade-left, fade-right, scale, pulse, float. Soporta retrasos escalonados.
+- **globals.css**: Añadidas keyframes y clases utilities para animaciones suaves y consistentes en todos los dispositivos, inspiradas en la landing page.
+- **Uso**: Reemplazar usos de AnimatedSection en app/page.tsx y cualquier otro componente por el nuevo componente con prop `animationType`.
+- **Objetivo**: Mejorar la experiencia de usuario con transiciones fluidas sin afectar rendimiento.
