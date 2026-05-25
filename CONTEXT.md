@@ -231,6 +231,8 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 25/05/2026 - Mejora del botón de cerrar sesión
+- **Topbar.tsx**: Mejorado el alineado y dimensiones del botón "Cerrar Sesión" en los menús desplegables (desktop y móvil) aplicando estilos flexbox y dimensionando el icono a 20x20 para una apariencia más profesional y consistente.
 ### 25/05/2026 - Fix Vercel Build & Theme Buttons Layout
 - **Vercel Build Fix**: Solucionado error crítico de sintaxis en `app/components/Topbar.tsx` (etiquetas `</svg>` y `</button>` duplicadas y un `</div>` sobrante) que provocaba un fallo "Unterminated regexp literal" en Turbopack durante el despliegue en Vercel. Adicionalmente, se corrigieron caracteres no escapados en JSX para superar las reglas estrictas de eslint (`react/no-unescaped-entities`).
 - **UI Móvil**: Rediseño de los botones selectores de tema (Claro, Oscuro, AMOLED) en los menús desplegables de la versión móvil (el del avatar del usuario y el del footer general). Se cambiaron de ítems de lista completa a un layout flexbox de 3 botones horizontales de igual tamaño con iconos centrados, mejorando la usabilidad táctil.

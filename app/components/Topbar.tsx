@@ -407,24 +407,25 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                 <span className="topbar-user-email">{user?.email}</span>
               </div>
 
-              {showUserMenu && (
-                <div className="user-dropdown">
-                  <div className="user-dropdown-header">
-                    <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                    <p className="user-dropdown-email">{user?.email}</p>
-                  </div>
-                  <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
-                    <IconSettings /> Configuración
-                  </Link>
-                  <div className="user-dropdown-divider" />
-                  <button
-                    className="user-dropdown-item user-dropdown-logout"
-                    onClick={() => { setShowUserMenu(false); logout(); }}
-                  >
-                    <IconLogout /> Cerrar Sesión
-                  </button>
-                </div>
-              )}
+           {showUserMenu && (
+             <div className="user-dropdown mobile-user-dropdown">
+               <div className="user-dropdown-header">
+                 <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
+                 <p className="user-dropdown-email">{user?.email}</p>
+               </div>
+               <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+                 <IconSettings /> Configuración
+               </Link>
+               <div className="user-dropdown-divider" />
+               <button
+                 className="user-dropdown-item user-dropdown-logout"
+                 onClick={() => { setShowUserMenu(false); logout(); }}
+                 style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
+               >
+                 <IconLogout width={20} height={20} /> Cerrar Sesión
+               </button>
+             </div>
+           )}
             </>
           ) : (
             <Link href="/login" className="topbar-login-btn" onClick={() => setShowUserMenu(false)}>
@@ -519,13 +520,14 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                    </svg>
                  </button>
                </div>
-              <div className="user-dropdown-divider" />
-              <button
-                className="user-dropdown-item user-dropdown-logout"
-                onClick={() => { setShowUserMenu(false); logout(); }}
-              >
-                <IconLogout /> Cerrar Sesión
-              </button>
+               <div className="user-dropdown-divider" />
+               <button
+                 className="user-dropdown-item user-dropdown-logout"
+                 onClick={() => { setShowUserMenu(false); logout(); }}
+                 style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
+               >
+                 <IconLogout width={20} height={20} /> Cerrar Sesión
+               </button>
             </div>
           )}
         </div>
@@ -601,9 +603,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                   </button>
                 </div>
                </div>
-              <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
-                <IconLogout /> Cerrar Sesión
-              </button>
+               <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
+                 <IconLogout width={20} height={20} /> Cerrar Sesión
+               </button>
           </div>
         </div>
       )}
