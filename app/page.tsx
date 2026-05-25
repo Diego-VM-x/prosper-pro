@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { AnimatedSection } from '@/components/AnimatedSection';
 import './landing.css';
 
 function useInView(threshold = 0.1) {
@@ -23,19 +24,6 @@ function useInView(threshold = 0.1) {
   }, [threshold]);
 
   return { ref, isInView };
-}
-
-function AnimatedSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
-  const { ref, isInView } = useInView(0.1);
-  return (
-    <div
-      ref={ref}
-      className={`animate-on-scroll ${isInView ? 'animate-visible' : ''} ${className}`}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  );
 }
 
 export default function Home() {
@@ -97,21 +85,21 @@ export default function Home() {
         {/* Hero Section */}
         <section className="landing-hero">
           <div className="landing-hero-content">
-            <AnimatedSection>
+            <AnimatedSection animationType="fade-up" delay={0}>
               <div className="landing-badge">
                 <span className="landing-badge-dot" />
                 {user ? 'Ya estás registrado' : '100% Gratis · Sin anuncios'}
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={100}>
+            <AnimatedSection animationType="fade-up" delay={100}>
               <h1 className="landing-hero-title">
                 Toma el control de tu
                 <span className="landing-gradient-text"> futuro financiero</span>
               </h1>
             </AnimatedSection>
 
-            <AnimatedSection delay={200}>
+            <AnimatedSection animationType="fade-up" delay={200}>
               <p className="landing-hero-subtitle">
                 {user
                   ? 'Bienvenido de vuelta. Explora las novedades de Prosper o vuelve a tu dashboard.'
@@ -119,7 +107,7 @@ export default function Home() {
               </p>
             </AnimatedSection>
 
-            <AnimatedSection delay={300}>
+            <AnimatedSection animationType="fade-up" delay={300}>
               <div className="landing-hero-cta">
                 {user ? (
                   <button className="btn btn-primary btn-xl" onClick={() => router.push('/dashboard')}>
@@ -140,7 +128,7 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={400}>
+            <AnimatedSection animationType="fade-up" delay={400}>
               <div className="landing-hero-stats">
                 <div className="hero-stat">
                   <span className="hero-stat-value">Multi-moneda</span>
@@ -161,7 +149,7 @@ export default function Home() {
           </div>
 
           {/* Hero Visual */}
-          <AnimatedSection delay={500} className="landing-hero-visual">
+          <AnimatedSection animationType="fade-up" delay={500} className="landing-hero-visual">
             <div className="hero-mockup">
               <div className="mockup-header">
                 <div className="mockup-dots">
@@ -210,7 +198,7 @@ export default function Home() {
 
         {/* Features Section */}
         <section id="features" className="landing-features-section">
-          <AnimatedSection>
+          <AnimatedSection animationType="fade-up" delay={0}>
             <div className="section-header">
               <span className="section-tag">Funciones</span>
               <h2 className="section-title">Todo lo que necesitas para crecer financieramente</h2>
@@ -219,7 +207,7 @@ export default function Home() {
           </AnimatedSection>
 
           <div className="features-grid">
-            <AnimatedSection delay={0}>
+            <AnimatedSection animationType="fade-up" delay={0}>
               <div className="feature-card feature-card-large">
                 <div className="feature-card-visual">
                   <div className="feature-visual-accounts">
@@ -250,7 +238,7 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={100}>
+            <AnimatedSection animationType="fade-up" delay={100}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">🎯</span>
@@ -265,7 +253,7 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={200}>
+            <AnimatedSection animationType="fade-up" delay={200}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">📈</span>
@@ -280,7 +268,7 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={300}>
+            <AnimatedSection animationType="fade-up" delay={300}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">🎓</span>
@@ -295,7 +283,7 @@ export default function Home() {
               </div>
             </AnimatedSection>
 
-            <AnimatedSection delay={400}>
+            <AnimatedSection animationType="fade-up" delay={400}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">📅</span>
@@ -314,7 +302,7 @@ export default function Home() {
 
         {/* How It Works */}
         <section id="how-it-works" className="landing-how-section">
-          <AnimatedSection>
+          <AnimatedSection animationType="fade-up" delay={0}>
             <div className="section-header">
               <span className="section-tag">Cómo Funciona</span>
               <h2 className="section-title">Empieza en 3 simples pasos</h2>
@@ -323,7 +311,7 @@ export default function Home() {
           </AnimatedSection>
 
           <div className="steps-container">
-            <AnimatedSection delay={0}>
+            <AnimatedSection animationType="fade-up" delay={0}>
               <div className="step-card">
                 <div className="step-number">1</div>
                 <h3>Crea tu cuenta</h3>
@@ -336,7 +324,7 @@ export default function Home() {
 
             <div className="step-connector" />
 
-            <AnimatedSection delay={200}>
+            <AnimatedSection animationType="fade-up" delay={200}>
               <div className="step-card">
                 <div className="step-number">2</div>
                 <h3>Agrega tus cuentas</h3>
@@ -349,7 +337,7 @@ export default function Home() {
 
             <div className="step-connector" />
 
-            <AnimatedSection delay={400}>
+            <AnimatedSection animationType="fade-up" delay={400}>
               <div className="step-card">
                 <div className="step-number">3</div>
                 <h3>Alcanza tus metas</h3>
@@ -364,7 +352,7 @@ export default function Home() {
 
         {/* CTA Section */}
         <section className="landing-cta-section">
-          <AnimatedSection>
+          <AnimatedSection animationType="fade-up" delay={0}>
             <div className="cta-card">
               <div className="cta-bg-shapes">
                 <div className="cta-shape cta-shape-1" />
@@ -421,9 +409,9 @@ export default function Home() {
               )}
             </div>
           </div>
-        </div>
-        <div className="footer-bottom">
-          <p>© 2026 Prosper Pro. Todos los derechos reservados.</p>
+          <div className="footer-bottom">
+            <p>© 2026 Prosper Pro. Todos los derechos reservados.</p>
+          </div>
         </div>
       </footer>
     </div>
