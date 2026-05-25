@@ -546,3 +546,11 @@
 - **Uso**: Reemplazar usos de AnimatedSection en app/page.tsx y cualquier otro componente por el nuevo componente con prop `animationType`.
 - **Objetivo**: Mejorar la experiencia de usuario con transiciones fluidas sin afectar rendimiento.
 - **Fix 25/05/2026**: Corregido error de importación en app/page.tsx (ruta incorrecta '@/components/AnimatedSection' → './components/AnimatedSection') que causaba fallo en el build de Turbopack.
+
+### 25/05/2026 - Mejora de animaciones globales en app/animations.css
+- **animations.css**: Reescrito completamente con tiempos de animación más generosos y visibles (0.8s-1.0s en lugar de 0.3s-0.5s) para que las animaciones sean perceptibles pero no lentas.
+- **Animaciones automáticas aplicadas** a todos los elementos de la UI mediante selectores nativos: títulos, textos, cards, botones, inputs, tablas, gráficos, etc., sin necesidad de modificar componentes individuales.
+- **Delays escalonados mejorados** para crear efecto de entrada en cascada más natural en grids y listas.
+- **Micro-interacciones premium mantenidas**: elevación con glow neón en hover, shimmer sweep en botones CTA, entradas elásticas para modales y toasts.
+- **Optimizadas para 60 FPS** usando solo propiedades aceleradas por hardware (transform, opacity, filter, will-change).
+- **Eliminada regla prefers-reduced-motion** que causaba animaciones instantáneas en Windows con animaciones del sistema desactivadas.
