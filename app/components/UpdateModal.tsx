@@ -1,17 +1,13 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
-
 interface UpdateNote {
   emoji: string;
   text: string;
 }
-
 interface UpdateModalProps {
   version?: string;
   notes?: UpdateNote[];
 }
-
 export function UpdateModal({
   version = "v1.1.0",
   notes = [
@@ -22,6 +18,15 @@ export function UpdateModal({
     { emoji: "🐛", text: "Corrección de errores reportados por la comunidad." },
   ],
 }: UpdateModalProps) {
+  // Define handleClose first
+  const handleClose = () => {
+    setClosing(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      setClosing(false);
+    }, 300);
+  };
+
   const [isOpen, setIsOpen] = useState(false);
   const [closing, setClosing] = useState(false);
 
@@ -32,7 +37,7 @@ export function UpdateModal({
     }
   }, [version]);
 
-// added function
+  // added function
   const handleNeverShow = () => {
     localStorage.setItem('prosper_show_update_modal', 'false');
     setIsOpen(false);
@@ -56,8 +61,7 @@ export function UpdateModal({
           to   { transform: translateY(0)    scale(1);    opacity: 1; }
         }
         @keyframes um-slideDown {
-          from { transform: translateY(0)    scale(1);    opacity: 1; }
-          to   { transform: translateY(40px) scale(0.96); opacity: 0; }
+          from { transform: translateY(0)    scale(1);    opacity: 0; }
         }
         @keyframes um-shimmer {
           0%   { background-position: -200% center; }
@@ -117,7 +121,7 @@ export function UpdateModal({
             transparent 100%
           );
           background-size: 200% 100%;
-          animation: um-shimmer 3s linear infinite;
+          animation: ${closing ? 'um-fadeOut' : 'um-fadeIn'} 0.35s ease forwards;
         }
         .um-header-dots {
           position: absolute;
@@ -148,7 +152,6 @@ export function UpdateModal({
           font-weight: 800;
           color: #fff;
           line-height: 1.2;
-          position: relative;
         }
         .um-subtitle {
           margin: 0.4rem 0 0;
@@ -233,7 +236,6 @@ export function UpdateModal({
           align-items: center;
           justify-content: space-between;
           gap: 1rem;
-          border-top: 1px solid var(--border-default, rgba(255,255,255,0.07));
         }
         .um-footer-hint {
           font-size: 0.75rem;
@@ -263,10 +265,8 @@ export function UpdateModal({
           transform: translateY(0);
         }
       `}</style>
-
       <div className="um-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
         <div className="um-card" role="dialog" aria-modal="true" aria-label="Novedades de la versión">
-
           {/* HEADER */}
           <div className="um-header">
             <div className="um-header-dots" />
@@ -275,7 +275,6 @@ export function UpdateModal({
             <h2 className="um-title">¡Hay novedades! 🎉</h2>
             <p className="um-subtitle">Actualización {version} — ya disponible para ti</p>
           </div>
-
           {/* BODY */}
           <div className="um-body">
             {notes.map((note, i) => (
@@ -285,13 +284,11 @@ export function UpdateModal({
               </div>
             ))}
           </div>
-
           {/* FOOTER */}
           <div className="um-footer">
             <button className="um-btn" onClick={handleNeverShow}>No volver a mostrar</button>
             <button className="um-btn" onClick={handleClose}>¡Vamos! 🚀</button>
           </div>
-
         </div>
       </div>
     </>
