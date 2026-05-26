@@ -36,7 +36,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </main>
         </div>
-        <UpdateModal />
       </div>
     </ThemeProvider>
   );

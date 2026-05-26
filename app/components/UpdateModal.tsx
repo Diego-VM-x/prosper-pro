@@ -30,12 +30,25 @@ export function UpdateModal({
   const [isOpen, setIsOpen] = useState(false);
   const [closing, setClosing] = useState(false);
 
+  // Session-based tracking: show once per session unless forced
   useEffect(() => {
-    const seenVersion = localStorage.getItem('prosper_update_seen');
-    if (seenVersion !== version) {
-      setTimeout(() => setIsOpen(true), 600);
+    const seenInSession = sessionStorage.getItem('prosper_update_seen_session');
+    const shouldShow = !seenInSession && localStorage.getItem('prosper_show_update_modal') !== 'false';
+    
+    if (shouldShow) {
+      const seenVersion = localStorage.getItem('prosper_update_seen');
+      if (seenVersion !== version) {
+        setTimeout(() => setIsOpen(true), 600);
+      }
     }
   }, [version]);
+
+  // Mark as seen in session when opened
+  useEffect(() => {
+    if (isOpen) {
+      sessionStorage.setItem('prosper_update_seen_session', 'true');
+    }
+  }, [isOpen]);
 
   // added function
   const handleNeverShow = () => {
@@ -43,7 +56,8 @@ export function UpdateModal({
     setIsOpen(false);
   };
 
-  if (!isOpen || localStorage.getItem('prosper_show_update_modal') === 'false') return null;
+  // Check session flag or localStorage preference
+  if (!isOpen || sessionStorage.getItem('prosper_update_seen_session') === 'true' && localStorage.getItem('prosper_show_update_modal') === 'false') return null;
 
   return (
     <>
