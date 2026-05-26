@@ -94,7 +94,7 @@ export default function FinanzasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
-   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO(), showCustomInput: false, customValue: '' });
+  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
   const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
@@ -849,1279 +849,153 @@ export default function FinanzasPage() {
               <button className="btn btn-primary" onClick={() => setShowModal(true)}>
                 <IconPlus width={14} /> Nueva Transacción
               </button>
-      isOpen: true,
-      title: '⚠️ Vaciar TODAS las Transacciones',
-      message: 'Se eliminarán TODAS las transacciones de TODAS las cuentas. Los balances se resetearán a $0. Esta acción NO se puede deshacer.',
-      variant: 'danger',
-      confirmText: 'Vaciar todo',
-      onConfirm: async () => {
-        if (!uid) return;
-        setAccountingLoading(true);
-        try {
-          await wipeAllUserTransactions(uid);
-          await loadTransactions();
-          success('Todas las transacciones eliminadas. Balances reseteados.');
-        } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const handleWipeUserTransactionsByType = async (type: 'income' | 'expense' | 'saving') => {
-    const typeLabel = TYPE_LABELS[type];
-    const typeIcon = TYPE_ICONS[type];
-    const actionText = type === 'income' ? 'restará' : 'sumará';
-
-    setConfirmState({
-      isOpen: true,
-      title: `${typeIcon} Vaciar ${typeLabel}s`,
-      message: `Se eliminarán TODOS los ${typeLabel.toLowerCase()}s de TODAS las cuentas. El balance se ${actionText} automáticamente. ¿Continuar?`,
-      variant: type === 'income' ? 'warning' : 'danger',
-      confirmText: `Vaciar ${typeLabel}s`,
-      onConfirm: async () => {
-        if (!uid) return;
-        setAccountingLoading(true);
-        try {
-          const result = await wipeUserTransactionsByType(uid, type);
-          await loadTransactions();
-          const adjustText = result.adjustments.map(a => {
-            const acc = accounts.find(acc => acc.id === a.accountId);
-            const sign = a.adjustment > 0 ? '+' : '';
-            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${sign}${formatAmount(Math.abs(a.adjustment))}`;
-          }).join('\n');
-          success(`${result.totalWiped} ${typeLabel.toLowerCase()}s eliminados.${result.adjustments.length > 0 ? '\nAjustes: ' + adjustText : ''}`);
-        } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const handleRecalculateAllBalances = async () => {
-    setConfirmState({
-      isOpen: true,
-      title: '🔄 Recalcular Balances',
-      message: 'Se recalcularán los balances de TODAS las cuentas basándose en las transacciones existentes. ¿Continuar?',
-      variant: 'info',
-      confirmText: 'Recalcular',
-      onConfirm: async () => {
-        if (!uid) return;
-        setAccountingLoading(true);
-        try {
-          const results = await recalculateAllBalances(uid);
-          await loadTransactions();
-          const summary = results.map(r => {
-            const acc = accounts.find(a => a.id === r.accountId);
-            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${formatAmount(r.balance)}`;
-          }).join('\n');
-          success('Balances recalculados:\n' + summary);
-        } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const handleWipeAccountTransactions = async (accountId: string, action: 'all' | 'income' | 'expense' | 'saving') => {
-    const acc = accounts.find(a => a.id === accountId);
-    if (!acc) return;
-
-    let title = '';
-    let message = '';
-    let confirmText = '';
-
-    if (action === 'all') {
-      title = `🗑️ Vaciar "${acc.name}"`;
-      message = `Se eliminarán TODAS las transacciones de "${acc.name}" y el balance se reseteará a ${formatInCurrency(0, acc.currency)}.`;
-      confirmText = 'Vaciar cuenta';
-    } else {
-      const typeLabel = TYPE_LABELS[action];
-      const typeIcon = TYPE_ICONS[action];
-      const actionText = action === 'income' ? 'restará' : 'sumará';
-      title = `${typeIcon} Vaciar ${typeLabel}s de "${acc.name}"`;
-      message = `Se eliminarán los ${typeLabel.toLowerCase()}s de "${acc.name}". El balance se ${actionText} automáticamente.`;
-      confirmText = `Vaciar ${typeLabel}s`;
-    }
-
-    setConfirmState({
-      isOpen: true,
-      title,
-      message,
-      variant: action === 'all' ? 'danger' : 'warning',
-      confirmText,
-      onConfirm: async () => {
-        setAccountingLoading(true);
-        try {
-          if (action === 'all') {
-            await wipeAllTransactions(accountId);
-            success(`"${acc.name}" vaciada. Balance: ${formatInCurrency(0, acc.currency)}`);
-          } else {
-            const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
-            const sign = result.balanceAdjustment > 0 ? '+' : '';
-            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}${formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency)}`);
-          }
-          await loadTransactions();
-        } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
-  const getAccountName = (accountId?: string) => {
-    if (!accountId) return 'Sin cuenta';
-    const acc = accounts.find((a) => a.id === accountId);
-    return acc ? `${acc.icon} ${acc.name}` : 'Sin cuenta';
-  };
-
-  const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
-
-  return (
-    <ProtectedRoute>
-      <DashboardLayout>
-        <div className="finanzas-page">
-          {/* Header */}
-          <div className="page-header">
-            <div className="page-header-left">
-              <h1 className="page-title">Finanzas</h1>
-              <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
-            </div>
-            <div className="page-header-actions">
-              <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
-                <IconPlus width={14} /> Nueva Cuenta
-              </button>
-              <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
-                <IconWallet width={14} /> Transferir
-              </button>
-              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Archivar todo el historial">
-                <IconArchive width={14} /> Borrar Historial
-              </button>
-              <button className="btn btn-outline btn-accounting" onClick={() => setShowAccountingModal(true)} title="Gestión contable avanzada">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                </svg>
-                <span className="btn-accounting-label">Gestión Contable</span>
-              </button>
-              <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  {showAmounts ? (
-                    <>
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </>
-                  ) : (
-                    <>
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </>
-                  )}
-                </svg>
-                <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
-              </button>
-              <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span className="btn-vepay-label">Importar Captura</span>
-              </button>
-              <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                <IconPlus width={14} /> Nueva Transacción
-              </button>
             </div>
           </div>
 
-           {/* Cuentas */}
-           <div className="accounts-grid">
-             {accounts.map((acc, index) => (
+          {/* Cuentas */}
+          <div className="accounts-grid">
+            {accounts.map((acc, index) => (
               <div key={acc.id} className="account-card stagger-item" style={{ borderLeftColor: acc.color, animationDelay: `${index * 0.05}s` }}>
-                 <div className="account-card-header">
-                   <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
-                   <div className="account-info">
-                     <span className="account-name">{acc.name}</span>
-                     <span className="account-type">
-                       {acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'} • {acc.currency || 'BS'}
-                     </span>
-                   </div>
-                   <div className="account-actions-group">
-                     <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
-                     <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
-</div>
+                <div className="account-card-header">
+                  <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
+                  <div className="account-info">
+                    <span className="account-name">{acc.name}</span>
+                    <span className="account-type">
+                      {acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'} • {acc.currency || 'BS'}
+                    </span>
                   </div>
-                  <div className="account-balance-group">
-                    <div className="account-balance" style={{ color: acc.color }}>
-                      {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                    </div>
-                    {(showAmounts && acc.currency !== displayCurrency) && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                        ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
-                      </div>
-                    )}
+                  <div className="account-actions-group">
+                    <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
+                    <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
                   </div>
                 </div>
-              ))}
+                <div className="account-balance-group">
+                  <div className="account-balance" style={{ color: acc.color }}>
+                    {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                  </div>
+                  {showAmounts && acc.currency !== displayCurrency && (
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                      ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {accounts.length === 0 && (
+              <div className="empty-accounts">
+                <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
             </div>
+          )}
+
+          {/* Modal Editar Cuenta */}
+          {showEditAccountModal && editingAccount && (
+            <div className="modal-overlay" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Editar Cuenta</h2>
+                    <p className="modal-subtitle">Nombre y color</p>
+                  </div>
+                  <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="tx-field">
+                    <label className="tx-label">Nombre</label>
+                    <input className="tx-input" type="text" placeholder="Nombre de la cuenta" value={editingAccount.name} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Color</label>
+                    <div className="color-picker-row">
+                      {['#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'].map((c) => (
+                        <button
+                          key={c}
+                          className={`color-dot ${editingAccount.color === c ? 'active' : ''}`}
+                          style={{ background: c }}
+                          onClick={() => setEditingAccount({ ...editingAccount, color: c })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleEditAccount}>Guardar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div
-             ))}
+
+          {/* Resumen mensual */}
+          <div className="summary-section">
+            <div className="summary-grid">
+              <SummaryWidget label="Ingresos" value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Gastos" value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Ahorro" value={summary.saving} altValue={altSummary.saving} color="var(--color-pine-500)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+            </div>
+            <button
+              onClick={() => { const next = !showConversion; setShowConversion(next); try { localStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
+              className={`conversion-toggle ${showConversion ? 'active' : ''}`}
+              title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
+            >
+              ⇄ {showConversion ? `${displayCurrency}/${altCurrency}` : 'Convertir'}
+            </button>
+          </div>
+
+          {/* Gráfico */}
+          <FinancialStatusChart />
+
+          {/* Filtros */}
+          <div className="filter-bar">
+            <CustomSelect
+              value={selectedAccount}
+              onChange={(val) => setSelectedAccount(val)}
+              options={[
+                { value: 'all', label: 'Todas las cuentas', icon: '📊' },
+                ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+              ]}
+              placeholder="Seleccionar cuenta..."
+            />
+            {['Todos', 'income', 'expense', 'saving'].map((t) => (
+              <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
+                {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
+              </button>
+            ))}
+            <CustomSelect
+              value={filterCategory}
+              onChange={(val) => setFilterCategory(val)}
+              options={[
+                { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
+                ...categories.map((c) => ({ value: c, label: c })),
+              ]}
+              placeholder="Seleccionar categoría..."
+            />
+          </div>
+
+          {/* Tabla de transacciones */}
+          <div className="transactions-table-wrapper">
+            <table className="transactions-table">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Cuenta</th>
+                  <th>Categoría</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTx.length > 0 ? filteredTx.map((tx, index) => (
+                  <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <td>{tx.description || '—'}</td>
+                    <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
+                    <td>{tx.category}</td>
+                    <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
+                    <td>{formatDate(tx.date)}</td>
                     <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
                       {showAmounts ? (
                         <>
@@ -2226,95 +1100,24 @@ export default function FinanzasPage() {
                     </div>
                   </div>
 
-                    <div className="tx-field">
-                      <label className="tx-label">Categoría</label>
-                      <div className="tx-category-group">
-                        {currentTypeCats.map((category) => (
-                          <button
-                            key={category}
-                            className={`tx-category-btn ${newTx.category === category ? 'active' : ''}`}
-                            onClick={() => setNewTx({ ...newTx, category })}
-                          >
-                            {category}
-                          </button>
-                        ))}
-                        {/* Custom category input */}
-                        <div className="tx-category-custom">
-                          <button
-                            className={`tx-category-btn ${newTx.showCustomInput ? 'active' : ''}`}
-                            onClick={() => setNewTx(prev => ({ ...prev, showCustomInput: !prev.showCustomInput, customValue: '' }))}
-                          >
-                            + Añadir
-                          </button>
-                          {newTx.showCustomInput && (
-                            <div className="tx-category-input-wrapper">
-                              <input
-                                className="tx-category-input"
-                                type="text"
-                                value={newTx.customValue}
-                                onChange={(e) => setNewTx(prev => ({ ...prev, customValue: e.target.value }))}
-                                placeholder="Nombre de la categoría..."
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    const value = newTx.customValue.trim();
-                                    if (value && uid) {
-                                      setNewTx(prev => ({
-                                        ...prev,
-                                        showCustomInput: false,
-                                        customValue: '',
-                                        category: value
-                                      }));
-                                      addCustomTransactionCategory(uid, value);
-                                      setCustomTxCategories(prev => [...prev, value]);
-                                      setAllCategories(prev => ({ 
-                                        ...prev, 
-                                        [newTx.type]: [...(prev[newTx.type] || []), value] 
-                                      }));
-                                    }
-                                  } else if (e.key === 'Escape') {
-                                    setNewTx(prev => ({ ...prev, showCustomInput: false, customValue: '' }));
-                                  }
-                                }}
-                              />
-                               <div className="tx-category-input-actions">
-                                 <button
-                                   className="tx-category-btn-cancel"
-                                   onClick={() => setNewTx(prev => ({ ...prev, showCustomInput: false, customValue: '' }))}
-                                 >
-                                   ✕
-                                 </button>
-                                 <button
-                                   className={`tx-category-btn-add ${!newTx.customValue.trim() ? 'disabled' : ''}`}
-                                   onClick={() => {
-                                     const value = newTx.customValue.trim();
-                                     if (value && uid) {
-                                       setNewTx(prev => ({
-                                         ...prev,
-                                         showCustomInput: false,
-                                         customValue: '',
-                                         category: value
-                                       }));
-                                       addCustomTransactionCategory(uid, value);
-                                       setCustomTxCategories(prev => [...prev, value]);
-                                       setAllCategories(prev => ({ 
-                                         ...prev, 
-                                         [newTx.type]: [...(prev[newTx.type] || []), value] 
-                                       }));
-                                     }
-                                   }}
-                                   disabled={!newTx.customValue.trim()}
-                                 >
-                                   ✓ Añadir
-                                 </button>
-                               </div>
-                            </div>
-                           )}
-                         </div>
-                       </div>
-                     </div>
-                   </div>
-                     </div>
-                   </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Categoría</label>
+                    <CustomSelect
+                      value={newTx.category}
+                      onChange={(val) => setNewTx({ ...newTx, category: val })}
+                      options={currentTypeCats.map((c) => ({ value: c, label: c }))}
+                      placeholder="Seleccionar..."
+                      allowCustom
+                      onAddCustom={async (value) => {
+                        if (uid) {
+                          await addCustomTransactionCategory(uid, value);
+                          setCustomTxCategories(prev => [...prev, value]);
+                          setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
+                        }
+                      }}
+                      customPlaceholder="Nombre de la categoría..."
+                    />
+                  </div>
 
                   <div className="tx-field">
                     <label className="tx-label">Descripción (opcional)</label>
@@ -2493,46 +1296,19 @@ export default function FinanzasPage() {
                     <label className="tx-label">Nombre</label>
                     <input className="tx-input" type="text" placeholder="Ej: Cuenta Principal" value={newAccount.name} onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
                   </div>
-           <div className="tx-field">
-             <label className="tx-label">Tipo</label>
-             <div className="tx-filter-group">
-               {[
-                 { value: 'Todos', label: 'Todos', icon: '📋' },
-                 { value: 'income', label: 'Ingreso', icon: '💰' },
-                 { value: 'expense', label: 'Gasto', icon: '🛒' },
-                 { value: 'saving', label: 'Ahorro', icon: '🏦' },
-               ].map(t => (
-                 <button
-                   key={t.value}
-                   className={`tx-filter-btn ${filterType === t.value ? 'active' : ''}`}
-                   onClick={() => { setFilterType(t.value); setFilterCategory('Todas'); }}
-                 >
-                   {t.icon} {t.label}
-                 </button>
-               ))}
-             </div>
-           </div>
-           <div className="tx-field">
-             <label className="tx-label">Categoría</label>
-             <div className="tx-filter-group">
-               <button
-                 key="Todas"
-                 className={`tx-filter-btn ${filterCategory === 'Todas' ? 'active' : ''}`}
-                 onClick={() => setFilterCategory('Todas')}
-               >
-                 📋 Todas las categorías
-               </button>
-               {categories.map((c) => (
-                 <button
-                   key={c}
-                   className={`tx-filter-btn ${filterCategory === c ? 'active' : ''}`}
-                   onClick={() => setFilterCategory(c)}
-                 >
-                   {c}
-                 </button>
-               ))}
-             </div>
-           </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Tipo</label>
+                    <CustomSelect
+                      value={newAccount.type}
+                      onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
+                      options={[
+                        { value: 'checking', label: 'Corriente', icon: '🏦' },
+                        { value: 'savings', label: 'Ahorro', icon: '💰' },
+                        { value: 'cash', label: 'Efectivo', icon: '💵' },
+                      ]}
+                      placeholder="Seleccionar tipo..."
+                    />
+                  </div>
                   <div className="tx-field">
                     <label className="tx-label">Moneda</label>
                     <CustomSelect
@@ -3003,17 +1779,11 @@ export default function FinanzasPage() {
           .summary-saving { border-left: 4px solid var(--color-pine-500); }
           .summary-balance { border-left: 4px solid var(--color-gold-500); }
 
-           /* Filters */
-           .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-           .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
-           .filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
-           .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
-           
-           /* Transaction Filters */
-           .tx-filter-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
-           .tx-filter-btn { padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-primary); font-size: 0.75rem; cursor: pointer; transition: all 0.15s ease; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
-           .tx-filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: var(--bg-input); }
-           .tx-filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
+          /* Filters */
+          .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+          .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
+          .filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
+          .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
 
           /* Table */
           .transactions-table-wrapper { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
