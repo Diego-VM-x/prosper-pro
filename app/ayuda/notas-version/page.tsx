@@ -4,6 +4,7 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'] },
     { version: '1.4.2', date: '2024-09-15', notes: ['Mejoras en el rendimiento del dashboard.', 'Corrección de bugs menores en VEPay.'] },
     { version: '1.4.0', date: '2024-08-30', notes: ['Nuevo modal de actualización persistente.', 'Sección "Notas de Versión" añadida.'] },
     { version: '1.3.5', date: '2024-07-20', notes: ['Actualización de la librería de íconos.', 'Mejoras UI en la sección de ayuda.'] },

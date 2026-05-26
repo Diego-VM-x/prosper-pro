@@ -308,7 +308,7 @@ export default function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Idioma de Interfaz</label>
+                      <label className="pref-label">Idioma de Interfaz <span style={{fontSize:'0.7rem',marginLeft:'4px',color:'var(--text-secondary)'}}>(estado: BETA)</span></label>
                       <div className="option-grid">
                         {[
                           { value: 'es', label: 'Español', flag: '🇪🇸' },
