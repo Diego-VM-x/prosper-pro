@@ -46,7 +46,6 @@ export default function ConfiguracionPage() {
     // Load update modal preference
     const stored = localStorage.getItem('prosper_show_update_modal');
     setShowUpdateModalPref(stored !== 'false');
-  }, [user?.uid]);
 
     async function loadProfile() {
       try {
