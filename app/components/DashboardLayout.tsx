@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './ThemeProvider';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { UpdateModal } from './UpdateModal';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,6 +36,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
           </main>
         </div>
+        <UpdateModal />
       </div>
     </ThemeProvider>
   );

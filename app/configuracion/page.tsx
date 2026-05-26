@@ -19,6 +19,7 @@ export default function ConfiguracionPage() {
   const { theme, setTheme } = useTheme();
   const { setDisplayCurrency, rates } = useCurrency();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showUpdateModalPref, setShowUpdateModalPref] = useState<boolean>(true);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [language, setLanguage] = useState('es');
@@ -42,6 +43,10 @@ export default function ConfiguracionPage() {
     }
     const uid = user?.uid as string;
     if (!uid) return;
+    // Load update modal preference
+    const stored = localStorage.getItem('prosper_show_update_modal');
+    setShowUpdateModalPref(stored !== 'false');
+  }, [user?.uid]);
 
     async function loadProfile() {
       try {
@@ -401,6 +406,19 @@ export default function ConfiguracionPage() {
                           </div>
                         </div>
                         <span className="theme-label">AMOLED</span>
+                      </button>
+                    </div>
+                    <div className="pref-section" style={{ marginTop: '1rem' }}>
+                      <label className="pref-label">Mostrar notas de actualización</label>
+                      <button
+                        className={`theme-option ${showUpdateModalPref ? 'active' : ''}`}
+                        onClick={() => {
+                          const newVal = !showUpdateModalPref;
+                          setShowUpdateModalPref(newVal);
+                          localStorage.setItem('prosper_show_update_modal', newVal ? 'true' : 'false');
+                        }}
+                      >
+                        {showUpdateModalPref ? '✅ Sí' : '❌ No'}
                       </button>
                     </div>
                   </div>
