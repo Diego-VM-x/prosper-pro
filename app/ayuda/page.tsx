@@ -404,7 +404,7 @@ export default function AyudaPage() {
 
           <footer className="ayuda-footer">
             <p className="ayuda-footer-label">PROSPER PRO SUPPORT</p>
-            <div className="ayuda-footer-links"><a href="#">Estado del Sistema</a><a href="#">Notas de Versión</a><a href="#">Términos</a></div>
+            <div className="ayuda-footer-links"><a href="#">Estado del Sistema</a><a href="/ayuda/notas-version">Notas de Versión</a><a href="#">Términos</a></div>
           </footer>
         </div>
 

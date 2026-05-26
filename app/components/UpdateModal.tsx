@@ -32,13 +32,10 @@ export function UpdateModal({
     }
   }, [version]);
 
-  const handleClose = () => {
-    setClosing(true);
-    setTimeout(() => {
-      localStorage.setItem('prosper_update_seen', version);
-      setIsOpen(false);
-      setClosing(false);
-    }, 350);
+// added function
+  const handleNeverShow = () => {
+    localStorage.setItem('prosper_show_update_modal', 'false');
+    setIsOpen(false);
   };
 
   if (!isOpen || localStorage.getItem('prosper_show_update_modal') === 'false') return null;
@@ -291,10 +288,8 @@ export function UpdateModal({
 
           {/* FOOTER */}
           <div className="um-footer">
-            <span className="um-footer-hint">🔔 Siempre al tanto de lo nuevo</span>
-            <button className="um-btn" onClick={handleClose}>
-              ¡Vamos! 🚀
-            </button>
+            <button className="um-btn" onClick={handleNeverShow}>No volver a mostrar</button>
+            <button className="um-btn" onClick={handleClose}>¡Vamos! 🚀</button>
           </div>
 
         </div>
