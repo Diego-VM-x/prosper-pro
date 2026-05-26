@@ -580,13 +580,13 @@ export default function MetasPage() {
           {/* Plans Grid */}
           {filteredPlans.length > 0 ? (
             <div className="plans-grid">
-              {filteredPlans.map(plan => {
+              {filteredPlans.map((plan, index) => {
                 const pct = plan.target > 0 ? Math.min(100, Math.round((plan.current / plan.target) * 100)) : 0;
                 const typeInfo = PLAN_TYPES.find(t => t.value === plan.type);
                 const catInfo = PLAN_CATEGORIES.find(c => c.value === plan.category);
 
                 return (
-                  <div key={plan.id} className="plan-card" style={{ borderLeftColor: typeInfo?.color }}>
+                  <div key={plan.id} className="plan-card stagger-item" style={{ borderLeftColor: typeInfo?.color, animationDelay: `${index * 0.05}s` }}>
                     <div className="plan-card-header">
                       <div className="plan-card-icon" style={{ background: `${typeInfo?.color}20` }}>
                         {catInfo?.icon || '📌'}
@@ -906,7 +906,7 @@ export default function MetasPage() {
           [data-theme="amoled"] .modal-content { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
           .modal-plan { max-width: 520px; }
           .modal-plan-small { max-width: 420px; }
-          @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+          @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: none; } }
           .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
           .modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
           .modal-subtitle { font-size: 0.75rem; color: var(--text-tertiary); margin: 2px 0 0 0; }

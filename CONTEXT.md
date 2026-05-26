@@ -63,6 +63,7 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Fix Dropdowns y Animaciones Fluidas (25/05/2026)**: Corregido el bug del componente CustomSelect (listas desplegables cortadas) dentro de Modales eliminando el transform residual de la animacion de entrada del modal en finanzas y metas. Se añadió una animación de salida suave (opacidad) al CustomSelect usando transition y pointerEvents. Además, se implementó stagger-item con animationDelay para un renderizado secuencial suave de cuentas, transacciones y planes financieros.
 - ✅ **Sistema de Animaciones y Micro-interacciones Premium (25/05/2026)**: Creado el archivo de animaciones en `app/animations.css` e importado de forma nativa en `app/layout.tsx` para garantizar la resolución del compilador de Next.js. El archivo reúne keyframes e interactividades premium a 60 FPS aceleradas por hardware (`transform`, `opacity`, `filter`, `will-change`) evitando Layout Shifts. Cuenta con transiciones de página elásticas, micro-pulsaciones en hover/active de botones, esqueletos loaders shimmer adaptables a temas (Claro/Oscuro/AMOLED), modales elásticos, toasts y dropdowns fluidos, efectos de elevación con glow neón en tarjetas financieras, y retardos secuenciales (stagger). Se ajustó la regla de accesibilidad `prefers-reduced-motion` a un formato sutil no destructivo para evitar que apague los transforms y delays de la landing page y el dashboard en sistemas con esa opción activa. Además, se optimizó la animación de transición global `.animate-page-entrance` para que use únicamente opacidad (fade-in), solucionando de raíz el bug de "containing block" en CSS que descentraba y cortaba los modales flotantes fixed de la app (como "Transferir" o "Nueva Meta").
 - ✅ **Entrada Fluida Global en DashboardLayout (25/05/2026)**: Integrada la clase `.animate-page-entrance` de forma global en el Root Layout (`layout.tsx`) e implementada en el contenedor de contenido principal en `DashboardLayout.tsx`. Esto garantiza que todas las vistas de la aplicación bajo el dashboard realicen una transición de entrada suave, elástica y premium al navegar, libre de bugs visuales o de redibujado.
 - ✅ **Conversión Automática Dinámica y Bidireccional en Transferencias (19/05/2026)**: El modal de "Transferir" ahora detecta automáticamente si las cuentas de origen y destino difieren en moneda (USD vs BS). Despliega inputs responsivos e interactivos para "Monto a debitar" y "Monto a acreditar". Al modificar cualquiera de ellos, convierte bidireccionalmente y en tiempo real usando la Tasa BCV Oficial actual. Al confirmar la transacción, la lógica contable se protege al crear dos registros en Firestore: una transacción de retiro ("saving" debitada de origen) y una contraparte automática ("income" acreditada en destino) con su valor convertido para garantizar saldos contables precisos y rastreables a través de recálculos de saldo.
@@ -233,6 +234,9 @@
 - **Build verificado**: `tsc --noEmit` exitoso sin errores.
 
 ## Historial de Instrucciones
+### 25/05/2026 - Fix Dropdowns y Animaciones Fluidas
+- **finanzas/page.tsx y metas/page.tsx**: Se eliminó el 	ransform: scale(1) translateY(0) final del keyframe modalIn para evitar la creación de un nuevo containing block que cortaba el dropdown con position absolute. Se agregaron clases stagger-item con delay progresivo en bucles map.
+- **CustomSelect.tsx**: Se refactorizó la lógica inline-style de salida para hacer fade-out suave cambiando opacidades e inhabilitando clics con pointerEvents: none sin afectar el max-height.
 ### 25/05/2026 - Sistema de Animaciones Premium y Micro-interacciones
 - **animations.css**: Creación y estructuración de la hoja de estilos de animación con aceleración de hardware a 60 FPS (transiciones de página, botones con shimmer sweep, skeletos shimmer adaptativos, modales con entrada elástica y rebote, card-hover-premium con neón glow, retardo stagger y sparklines SVGs dinámicos).
 - **layout.tsx**: Importación global del archivo de animaciones (`animations.css`).
@@ -557,6 +561,7 @@
 
 ### 25/05/2026 - Mejora de animaciones en menús desplegables (CustomSelect)
 - **CustomSelect.tsx**: Añadidas animaciones de entrada y salida suaves al abrir/cerrar el menú desplegable usando max-height, opacity y transform.
+- **Animaciones de desplazamiento en cascada**: Añadido efecto stagger a las opciones del menú con delays progresivos para efecto de entrada en secuencia.
 - **Fix de corte de menús**: Eliminado overflow-y: auto del modal-overlay y restructurado el modal-content para usar display: flex con flex-direction: column y .modal-body con flex: 1 y overflow-y: auto, permitiendo que los menús desplegables se extiendan completamente sin ser cortados por el contenedor modal.
 - **Animaciones al abrir vistas**: Los menús ahora animan suavemente tanto al abrir como al cerrar, mejorando la experiencia de usuario.
 
@@ -565,3 +570,8 @@
 - **Beneficios**: Eliminado por completo el riesgo de corte de menús, mejor accesibilidad táctil, selección visual clara del estado activo.
 - **Implementación**: Grupo de botones flexibles con estilos hover y estado activo que se comportan como opciones de selección única.
 - **Estilos**: Incluye hover states, active states, spacing adecuado y respuesta táctil optimizada.
+
+### 25/05/2026 - Conversión de menús desplegables a botones en Finanzas
+- **finanzas/page.tsx**: Convertido los menús desplegables de tipo y categoría a grupos de botones en filtros y formularios.
+- **Beneficios**: Eliminado riesgo de corte en modales, mejor experiencia de usuario táctil, selección clara y rápida.
+- **Implementación**: Grupos de botones con estilos hover/active y inputs personalizados para categorías con funcionalidad de añadir nuevo.

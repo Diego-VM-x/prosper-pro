@@ -140,12 +140,11 @@ export function CustomSelect({
          <div 
            className="custom-select-dropdown"
            style={{
-             maxHeight: isOpen ? 'none' : '0px',
-             opacity: isOpen || exitAnimation ? (exitAnimation ? 0 : 1) : 0,
+             maxHeight: isOpen || exitAnimation ? '300px' : '0px',
+             opacity: isOpen && !exitAnimation ? 1 : 0,
              transform: exitAnimation ? 'translateY(-8px)' : 'translateY(0)',
-             transition: isOpen ? 
-               'max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease' : 
-               'max-height 0.2s ease, opacity 0.15s ease, transform 0.15s ease'
+             pointerEvents: exitAnimation ? 'none' : 'auto',
+             transition: 'max-height 0.3s ease, opacity 0.15s ease, transform 0.15s ease'
            }}
          >
            {showCustomInput ? (
