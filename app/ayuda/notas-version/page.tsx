@@ -5,9 +5,6 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 export default function NotasVersionPage() {
   const versions = [
     { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'] },
-    { version: '1.4.2', date: '2024-09-15', notes: ['Mejoras en el rendimiento del dashboard.', 'Corrección de bugs menores en VEPay.'] },
-    { version: '1.4.0', date: '2024-08-30', notes: ['Nuevo modal de actualización persistente.', 'Sección "Notas de Versión" añadida.'] },
-    { version: '1.3.5', date: '2024-07-20', notes: ['Actualización de la librería de íconos.', 'Mejoras UI en la sección de ayuda.'] },
   ];
 
   const upcoming = [
@@ -17,26 +14,26 @@ export default function NotasVersionPage() {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="notas-page" style={{ maxWidth: '800px', margin: '0 auto', padding: '24px' }}>
-          <h1 className="notas-title" style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '16px' }}>Notas de Versión</h1>
-          <section className="notas-history" style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '12px' }}>Historial</h2>
+        <div className="notas-page" style={{ maxWidth: '900px', margin: '0 auto', padding: '32px', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
+          <h1 className="notas-title" style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '24px', textAlign: 'center', color: 'var(--color-prosper-green)' }}>📜 Notas de Versión</h1>
+          <section className="notas-history" style={{ marginBottom: '40px' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px', borderBottom: '2px solid var(--color-prosper-green)', paddingBottom: '4px' }}>Historial</h2>
             {versions.map((v, i) => (
-              <div key={i} className="notas-item" style={{ marginBottom: '12px' }}>
-                <strong>{v.version}</strong> – {v.date}
-                <ul style={{ marginTop: '4px', paddingLeft: '20px' }}>
-                  {v.notes.map((note, j) => (<li key={j}>{note}</li>))}
+              <div key={i} className="notas-item" style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-prosper-green)' }}>
+                <strong style={{ color: 'var(--color-prosper-green)' }}>{v.version}</strong> – <span style={{ color: 'var(--text-secondary)' }}>{v.date}</span>
+                <ul style={{ marginTop: '8px', paddingLeft: '24px' }}>
+                  {v.notes.map((note, j) => (<li key={j} style={{ color: 'var(--text-primary)' }}>{note}</li>))}
                 </ul>
               </div>
             ))}
           </section>
           <section className="notas-upcoming">
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '12px' }}>Próximas Actualizaciones</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px', borderBottom: '2px solid var(--color-prosper-green)', paddingBottom: '4px' }}>Próximas Actualizaciones</h2>
             {upcoming.map((u, i) => (
-              <div key={i} className="notas-item" style={{ marginBottom: '12px' }}>
-                <strong>{u.version}</strong> – estimado {u.expected}
-                <ul style={{ marginTop: '4px', paddingLeft: '20px' }}>
-                  {u.notes.map((note, j) => (<li key={j}>{note}</li>))}
+              <div key={i} className="notas-item" style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-prosper-green)' }}>
+                <strong style={{ color: 'var(--color-prosper-green)' }}>{u.version}</strong> – estimado <span style={{ color: 'var(--text-secondary)' }}>{u.expected}</span>
+                <ul style={{ marginTop: '8px', paddingLeft: '24px' }}>
+                  {u.notes.map((note, j) => (<li key={j} style={{ color: 'var(--text-primary)' }}>{note}</li>))}
                 </ul>
               </div>
             ))}
