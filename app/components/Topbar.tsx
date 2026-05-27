@@ -629,12 +629,15 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           max-height: 80vh; /* Permite scroll vertical */
           overflow-y: auto;
           max-width: 85vw;
-          height: 100%;
+          height: auto;
           background: #ffffff;
           display: flex;
           flex-direction: column;
           animation: slideInLeft 0.3s ease;
           box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
+          position: absolute;
+          top: 0;
+          left: 0;
         }
         [data-theme="dark"] .mobile-menu {
           background: #0a1628;
