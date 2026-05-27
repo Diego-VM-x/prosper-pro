@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
