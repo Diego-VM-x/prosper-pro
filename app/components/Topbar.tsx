@@ -624,17 +624,16 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           justify-content: flex-start;
         }
         .mobile-menu {
-          width: 400px; /* Extendido en ancho */
-          max-height: 80vh; /* Permite scroll vertical */
+          width: 100vw;
+          height: 100vh;
+          max-height: none;
           overflow-y: auto;
-          max-width: 85vw;
-          height: auto;
           background: #ffffff;
           display: flex;
           flex-direction: column;
-          box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
-          position: absolute;
-          bottom: 0;
+          box-shadow: none;
+          position: fixed;
+          top: 0;
           left: 0;
         }
         [data-theme="dark"] .mobile-menu {
