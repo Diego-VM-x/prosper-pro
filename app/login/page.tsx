@@ -148,6 +148,9 @@ export default function LoginPage() {
             <div className="auth-footer">
               ¿No tienes una cuenta? <Link href="/register">Regístrate gratis</Link>
             </div>
+            <div className="auth-footer">
+              <Link href="/" className="home-btn">Ir al inicio</Link>
+            </div>
           </div>
         </div>
       </div>
