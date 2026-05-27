@@ -256,7 +256,7 @@ export function CustomSelect({
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
         }
         @media (max-width: 768px) {
-          .custom-select-dropdown { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 60vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+          .custom-select-dropdown { position: fixed; bottom: 0; left: 0; right: 0; max-height: 60vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
         }
 
         .custom-select-option {
@@ -327,15 +327,9 @@ export function CustomSelect({
         .custom-btn-add:hover { filter: brightness(1.1); }
         .custom-btn-add.disabled { opacity: 0.5; cursor: not-allowed; }
 
-         @keyframes dropdownFadeIn {
-           from { opacity: 0; transform: translateY(-8px); }
-           to { opacity: 1; transform: translateY(0); }
-         }
+         /* dropdownFadeIn animation removed */
          
-         @keyframes dropdownFadeOut {
-           from { opacity: 1; transform: translateY(0); }
-           to { opacity: 0; transform: translateY(-8px); }
-         }
+         /* dropdownFadeOut animation removed */
       `}</style>
     </div>
   );

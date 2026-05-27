@@ -622,7 +622,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           z-index: 1000;
           display: flex;
           justify-content: flex-start;
-          animation: fadeIn 0.2s ease;
         }
         .mobile-menu {
           width: 400px; /* Extendido en ancho */
@@ -633,10 +632,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           background: #ffffff;
           display: flex;
           flex-direction: column;
-          animation: slideInLeft 0.3s ease;
           box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
           position: absolute;
-          top: 0;
+          bottom: 0;
           left: 0;
         }
         [data-theme="dark"] .mobile-menu {
@@ -1182,6 +1180,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .mobile-user-dropdown {
           right: 0 !important;
           left: auto !important;
+          bottom: 0 !important;
+          top: auto !important;
         }
         .mobile-notif-wrapper {
           position: relative;
