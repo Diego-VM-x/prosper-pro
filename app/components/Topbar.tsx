@@ -625,7 +625,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           animation: fadeIn 0.2s ease;
         }
         .mobile-menu {
-          width: 300px;
+          width: 400px; /* Extendido en ancho */
+          max-height: 80vh; /* Permite scroll vertical */
+          overflow-y: auto;
           max-width: 85vw;
           height: 100%;
           background: #ffffff;
