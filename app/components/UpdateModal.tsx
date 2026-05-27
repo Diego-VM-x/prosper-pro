@@ -9,10 +9,10 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.8.0",
+  version = "0.8.2",
   notes = [
-    { emoji: "🚀", text: "Actualización a BETA 0.8.0 con mejoras de rendimiento." },
-    { emoji: "🛠️", text: "Nuevas herramientas de análisis financiero." },
+    { emoji: "🚀", text: "Actualización a BETA 0.8.2 con mejoras de rendimiento y nuevas funcionalidades." },
+    { emoji: "🛠️", text: "Nuevas herramientas de análisis financiero y reporte avanzado." },
     { emoji: "🔧", text: "Corrección de bugs críticos y estabilidad mejorada." },
     { emoji: "📱", text: "Mejoras en la experiencia móvil y UI responsiva." },
     { emoji: "⚡", text: "Optimización de carga de datos y sincronización." },

@@ -7,6 +7,7 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 export default function NotasVersionPage() {
   const versions = [
     { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'], preRelease: true },
+    { version: '0.8.2', date: '2026-05-27', notes: ['Actualización a BETA 0.8.2 con mejoras de rendimiento y nuevas funcionalidades.', 'Nuevas herramientas de análisis financiero y reporte avanzado.'], preRelease: true },
   ];
 
   const upcoming = [
