@@ -1,5 +1,10 @@
 # Contexto del Proyecto: Prosper-Pro
 
+## PRE-release 0.8.2 (27 de Mayo, 2026)
+- **Menú Móvil en Pantalla Completa**: El menú desplegable móvil ahora ocupa el 100% del ancho y alto de la pantalla en dispositivos móviles. Se modificó `.mobile-menu` en `Topbar.tsx` para usar `position: fixed`, `width: 100vw`, `height: 100vh` y eliminar el shadow.
+- **Dropdown de Usuario Alineado Abajo**: Se ajustó `.mobile-user-dropdown` en `Topbar.tsx` para que aparezca alineado al borde inferior (`bottom: 0 !important; top: auto !important;`).
+- **Animaciones Eliminadas**: Se eliminaron las animaciones `dropdownFadeIn` y `dropdownFadeOut` del componente `CustomSelect.tsx` para mejorar el rendimiento y simplificar el código.
+
 ## Estado Actual (20 de Mayo, 2026 - Conversión USD/BS con cambio de valor principal + moneda persistente)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
