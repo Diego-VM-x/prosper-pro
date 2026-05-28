@@ -936,8 +936,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           color: var(--text-secondary);
         }
         @media (max-width: 1024px) {
-          .mobile-menu-btn { display: flex !important; }
-          .desktop-actions { display: none; }
+          .mobile-menu-btn { display: none; }
+          .desktop-actions { display: flex; }
           .topbar-collapse-btn { display: none; }
           .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
@@ -1070,12 +1070,13 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           top: calc(100% + 12px);
           right: 0;
           width: 260px;
+          max-height: 80vh;
+          overflow-y: auto;
           background: #ffffff;
           border: 1px solid var(--border-default);
           border-radius: var(--radius-xl);
           box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
           z-index: 10000;
-          overflow: hidden;
           animation: fadeInUp 0.2s ease;
         }
         [data-theme="dark"] .user-dropdown {
@@ -1192,8 +1193,24 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-search { max-width: 180px; }
           .topbar-search-shortcut { display: none; }
           .topbar-user-info { display: none; }
-          .notifications-dropdown { width: 280px; right: -8px; }
-          .user-dropdown { width: 220px; }
+          .notifications-dropdown { 
+            position: fixed;
+            top: 64px;
+            left: 16px;
+            right: 16px;
+            width: auto;
+            max-height: 80vh;
+            overflow-y: auto;
+          }
+          .user-dropdown { 
+            position: fixed;
+            top: 64px;
+            left: 16px;
+            right: 16px;
+            width: auto;
+            max-height: 80vh;
+            overflow-y: auto;
+          }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
           .mobile-user-actions { display: flex; }
