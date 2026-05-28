@@ -786,9 +786,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         /* Base: ocultar elementos móviles en desktop */
         .mobile-menu-btn { display: none; }
-        .mobile-user-actions { display: none; align-items: center; gap: 8px; position: relative; }
+        .mobile-user-actions { display: none; align-items: center; gap: 8px; position: relative; z-index: 1001; }
         /* Base: mostrar acciones desktop */
-        .desktop-actions { display: flex; align-items: center; gap: 12px; }
+        .desktop-actions { display: flex; align-items: center; gap: 12px; position: relative; z-index: 100; }
         .topbar-logo-link {
           display: flex;
           align-items: center;
@@ -1183,6 +1183,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .mobile-user-dropdown {
           right: 0 !important;
           left: auto !important;
+          z-index: 10002 !important;
         }
         .mobile-notif-wrapper {
           position: relative;
