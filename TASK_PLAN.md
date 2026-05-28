@@ -22,29 +22,23 @@
 
 ## 📋 Tareas Pendientes
 
-### 1. Configurar Vercel para Producción
-- **Descripción**: Agregar las 7 variables `NEXT_PUBLIC_FIREBASE_*` en Vercel Dashboard → prosper-pro → Settings → Environment Variables. Los valores están en `VERCEL_ENV_VARS.txt`.
-- **Prioridad**: 🔴 Crítica
-- **Responsable**: Usuario (requiere acceso a Vercel Dashboard)
-- **Estimación**: 10 min
-
-### 2. Redeploy en Vercel
-- **Descripción**: Después de agregar las variables, hacer un redeploy desde Vercel Dashboard o con `git push`.
-- **Prioridad**: 🔴 Crítica
-- **Responsable**: Usuario
-- **Estimación**: 5 min
-
-### 3. Activar Firebase Storage (Opcional)
-- **Descripción**: Habilitar Firebase Storage en la consola de Firebase para permitir subida de fotos de perfil.
-- **Prioridad**: 🟢 Baja
-- **Responsable**: Usuario (requiere acceso a Firebase Console)
-- **Estimación**: 5 min
-
-### 4. Búsqueda Avanzada
-- **Descripción**: Extender la búsqueda global para incluir resultados de cursos y transacciones (no solo metas).
-- **Prioridad**: 🟡 Media
+### 1. Evitar saldos negativos en finanzas
+- **Descripción**: Añadir validaciones en el módulo de finanzas para impedir que el saldo de una cuenta sea menor a cero tras una transacción.
+- **Prioridad**: 🔴 Alta (Integridad de datos)
 - **Responsable**: opencode
 - **Estimación**: 1-2 horas
+
+### 2. Perfeccionar planes (Agregar usuarios)
+- **Descripción**: Completar la funcionalidad de planes (metas compartidas), permitiendo invitar o agregar usuarios mediante su nombre o correo electrónico.
+- **Prioridad**: 🟡 Media (Funcionalidad Core)
+- **Responsable**: opencode
+- **Estimación**: 2-3 horas
+
+### 3. Integraciones externas (Listmonk, Formbricks, Chatwoot)
+- **Descripción**: Configurar e integrar las conexiones con Listmonk (Email Marketing), Formbricks (Feedback/Encuestas) y Chatwoot (Soporte/Chat).
+- **Prioridad**: 🟢 Baja (Herramientas de terceros)
+- **Responsable**: opencode
+- **Estimación**: 3-4 horas
 
 ---
 
@@ -52,6 +46,6 @@
 
 | Prioridad | Cantidad | Responsable |
 |-----------|----------|-------------|
-| 🔴 Crítica | 2 | Usuario (Vercel) |
+| 🔴 Alta | 1 | opencode |
 | 🟡 Media | 1 | opencode |
-| 🟢 Baja | 1 | Usuario (Firebase) |
+| 🟢 Baja | 1 | opencode |
