@@ -1004,7 +1004,8 @@ export function Dashboard() {
           .deadline-badge { width: 38px; height: 38px; }
           .deadline-badge-days { font-size: 0.875rem; }
           .account-item-icon { width: 36px; height: 36px; font-size: 1rem; }
-          .modal-content { width: 95%; padding: 16px; }
+          .modal-overlay { align-items: flex-start; padding-top: 10vh; }
+          .modal-content { width: 95%; padding: 16px; max-height: 85vh; }
           .modal-footer { flex-direction: column-reverse; }
           .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
         }
