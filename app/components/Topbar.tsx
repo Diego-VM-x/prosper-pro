@@ -613,9 +613,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       {/* Estilos inline */}
       <style>{`
         .mobile-menu-btn { display: none; }
-        .desktop-actions { display: flex; align-items: center; gap: 8px; }
+        .desktop-actions { display: flex; align-items: center; gap: 12px; z-index: 100; }
         .mobile-menu-overlay {
-          position: fixed;
           inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
