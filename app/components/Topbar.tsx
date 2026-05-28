@@ -785,6 +785,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           gap: 10px;
           flex-shrink: 0;
         }
+        /* Base: ocultar elementos móviles en desktop */
+        .mobile-menu-btn { display: none; }
+        .mobile-user-actions { display: none; align-items: center; gap: 8px; position: relative; }
+        /* Base: mostrar acciones desktop */
+        .desktop-actions { display: flex; align-items: center; gap: 12px; }
         .topbar-logo-link {
           display: flex;
           align-items: center;
@@ -936,8 +941,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           color: var(--text-secondary);
         }
         @media (max-width: 1024px) {
-          .mobile-menu-btn { display: none; }
-          .desktop-actions { display: flex; }
+          .mobile-menu-btn { display: flex; }
+          .mobile-user-actions { display: flex; }
+          .desktop-actions { display: none !important; }
           .topbar-collapse-btn { display: none; }
           .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
@@ -1190,9 +1196,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         /* Responsive */
         @media (max-width: 768px) {
-          .topbar-search { max-width: 180px; }
+          .topbar-search { max-width: 140px; }
           .topbar-search-shortcut { display: none; }
-          .topbar-user-info { display: none; }
           .notifications-dropdown { 
             position: fixed;
             top: 64px;
@@ -1213,7 +1218,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
-          .mobile-user-actions { display: flex; }
         }
 
         /* Mobile notifications */

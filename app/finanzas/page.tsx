@@ -265,8 +265,8 @@ export default function FinanzasPage() {
       return;
     }
 
-    // Validar fondos si es gasto y hay cuenta seleccionada
-    if (newTx.type === 'expense' && newTx.accountId) {
+    // Validar fondos si es gasto o ahorro y hay cuenta seleccionada
+    if ((newTx.type === 'expense' || newTx.type === 'saving') && newTx.accountId) {
       const acc = accounts.find(a => a.id === newTx.accountId);
       if (acc && acc.balance < amount) {
         error(`Fondos insuficientes en "${acc.name}". Balance: ${formatInCurrency(acc.balance, acc.currency || 'USD')}`);

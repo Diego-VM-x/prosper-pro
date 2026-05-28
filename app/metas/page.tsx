@@ -289,6 +289,14 @@ export default function MetasPage() {
       return;
     }
 
+    if (addAccountId) {
+      const acc = accounts.find(a => a.id === addAccountId);
+      if (acc && acc.balance < amount) {
+        warning(`Saldo insuficiente en la cuenta. Balance actual: ${formatAmount(acc.balance)}`);
+        return;
+      }
+    }
+
     setFormLoading(true);
     try {
       // Actualizar plan
@@ -326,6 +334,14 @@ export default function MetasPage() {
     if (isNaN(amount) || amount <= 0) {
       warning('Monto inválido.');
       return;
+    }
+
+    if (payAccountId) {
+      const acc = accounts.find(a => a.id === payAccountId);
+      if (acc && acc.balance < amount) {
+        warning(`Saldo insuficiente en la cuenta. Balance actual: ${formatAmount(acc.balance)}`);
+        return;
+      }
     }
 
     setFormLoading(true);
