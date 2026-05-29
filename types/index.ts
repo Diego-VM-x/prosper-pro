@@ -63,6 +63,7 @@ export interface FinancialPlan {
   // Campos para gastos compartidos
   sharedWith: string[]; // uids de usuarios invitados
   shareAmount: number; // monto que debe pagar cada invitado
+  contributions?: Record<string, number>; // uid -> monto aportado por cada usuario
   // Campos para recurrentes
   frequency?: RecurringFrequency;
   nextDueDate?: string;

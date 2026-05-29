@@ -45,6 +45,18 @@ export async function getPlansByOwnerId(ownerId: string): Promise<FinancialPlan[
   return plans;
 }
 
+// Obtener planes compartidos con el usuario (sharedWith lo contiene)
+export async function getSharedPlans(ownerId: string): Promise<FinancialPlan[]> {
+  const q = query(collection(db, COLLECTION), where('sharedWith', 'array-contains', ownerId));
+  const snapshot = await getDocs(q);
+  const plans: FinancialPlan[] = [];
+  snapshot.forEach((docSnap) => {
+    plans.push({ id: docSnap.id, ...docSnap.data() } as FinancialPlan);
+  });
+  plans.sort((a, b) => b.createdAt - a.createdAt);
+  return plans;
+}
+
 // Crear plan financiero
 export async function createPlan(plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const now = Date.now();

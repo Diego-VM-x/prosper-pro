@@ -259,17 +259,6 @@ export default function ConfiguracionPage() {
                             placeholder="Describe tu perfil financiero..."
                           />
                         </div>
-                        <button
-                          className="btn-save"
-                          onClick={handleSaveProfile}
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <span className="btn-loading">
-                              <span className="spinner" /> Guardando...
-                            </span>
-                          ) : 'Guardar Cambios'}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -606,6 +595,24 @@ export default function ConfiguracionPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Floating Save Bar */}
+          <div className="settings-save-bar">
+            <div className="settings-save-bar-inner">
+              <span className="settings-save-hint">Los cambios no se guardan automáticamente</span>
+              <button
+                className="btn-save"
+                onClick={handleSaveProfile}
+                disabled={saving}
+              >
+                {saving ? (
+                  <span className="btn-loading">
+                    <span className="spinner" /> Guardando...
+                  </span>
+                ) : 'Guardar Cambios'}
+              </button>
             </div>
           </div>
 
@@ -1402,6 +1409,32 @@ export default function ConfiguracionPage() {
             }
             .btn-danger-confirm:hover:not(:disabled) { background: #DC2626; }
             .btn-danger-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+            /* Floating Save Bar */
+            .settings-save-bar {
+              position: sticky;
+              bottom: 0;
+              z-index: 10;
+              margin-top: 24px;
+              background: var(--bg-card);
+              border: 1px solid var(--border-default);
+              border-radius: 12px;
+              padding: 12px 20px;
+              box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+            }
+            .settings-save-bar-inner {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+            }
+            .settings-save-hint {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+            }
+            .settings-save-bar .btn-save {
+              flex-shrink: 0;
+            }
 
             /* Footer */
             .settings-footer {

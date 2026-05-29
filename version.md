@@ -1,5 +1,16 @@
 # Historial de Versiones: Prosper-Pro
 
+## [0.8.6 BETA] - 2026-05-29
+### Añadido
+- **Planes compartidos colaborativos**: Los planes invitados ahora aparecen automáticamente en tu lista de Metas. Badge "Compartido" e "Invitado" para identificar el rol.
+- **Contribuciones por usuario**: Cada vez que alguien añade fondos a un plan compartido, queda registrado quién aportó y se muestra en la tarjeta.
+- **Barra Guardar Cambios global**: Botón sticky al fondo de Configuración, visible desde cualquier pestaña, que guarda todas las preferencias de una vez (nombre, moneda, privacidad, alertas, etc.).
+- **Exclusión automática**: Ya no puedes enviarte una solicitud a ti mismo al compartir planes.
+
+### Corregido
+- **Privacidad de perfil persistente**: El toggle público/privado ahora se guarda correctamente al hacer clic en "Guardar Cambios". Ya no se reinicia al recargar la página.
+- **Al rechazar solicitud**: El usuario invitado se elimina del plan compartido, evitando accesos no deseados.
+
 ## [0.8.5 BETA] - 2026-05-29
 ### Añadido
 - **Privacidad de perfil**: Nueva opción en Configuración > Preferencias para elegir si tu perfil es público o privado. Si es privado, solo te pueden encontrar por email exacto al compartir planes.

@@ -11,6 +11,8 @@ import { ConfirmDialog } from '@/app/components/Toast';
 import { CustomSelect } from '../components/CustomSelect';
 import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accounts';
 import { createTransaction } from '@/lib/firestore/transactions';
+import { getDoc, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
 import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock, IconCheck, IconArrowForward } from '../components/icons';
@@ -305,7 +307,8 @@ export default function MetasPage() {
       // Actualizar plan
       const newCurrent = Math.min(plan.current + amount, plan.target);
       const newStatus: PlanStatus = newCurrent >= plan.target ? 'completed' : 'progress';
-      await updatePlanFn(plan.id, { current: newCurrent, status: newStatus });
+      const contributions = { ...(plan.contributions || {}), [uid || 'unknown']: (plan.contributions?.[uid || 'unknown'] || 0) + amount };
+      await updatePlanFn(plan.id, { current: newCurrent, status: newStatus, contributions });
 
       // Crear transacción si hay cuenta
       if (addAccountId && uid) {
@@ -454,10 +457,10 @@ export default function MetasPage() {
     try {
       if (query.includes('@')) {
         const userFound = await searchUserByEmail(query);
-        if (userFound) setShareFoundUser(userFound);
+        if (userFound && userFound.uid !== uid) setShareFoundUser(userFound);
       } else {
         const results = await searchUsersByName(query);
-        setShareSearchResults(results);
+        setShareSearchResults(results.filter(u => u.uid !== uid));
       }
     } catch (e) {
       console.error('Error buscando usuario:', e);
@@ -476,6 +479,18 @@ export default function MetasPage() {
     try {
       await respondToRequest(request.id, response);
       setReceivedRequests(prev => prev.filter(r => r.id !== request.id));
+      // Si rechaza, remover al usuario del sharedWith del plan
+      if (response === 'rejected' && request.planId) {
+        const planDoc = await getDoc(doc(db, 'financial_plans', request.planId));
+        if (planDoc.exists()) {
+          const data = planDoc.data();
+          const sharedWith = data.sharedWith || [];
+          const filtered = sharedWith.filter((suid: string) => suid !== uid);
+          if (filtered.length !== sharedWith.length) {
+            await updateDoc(doc(db, 'financial_plans', request.planId), { sharedWith: filtered });
+          }
+        }
+      }
       success(response === 'accepted' ? 'Solicitud aceptada' : 'Solicitud rechazada');
     } catch (e: any) {
       error(`Error: ${e?.message}`);
@@ -622,8 +637,16 @@ export default function MetasPage() {
                         <h3 className="plan-card-title">{plan.title}</h3>
                         <span className="plan-card-type" style={{ color: typeInfo?.color }}>{typeInfo?.label}</span>
                       </div>
-                      <div className="plan-card-status" style={{ background: `${STATUS_COLORS[plan.status]}20`, color: STATUS_COLORS[plan.status] }}>
-                        {STATUS_LABELS[plan.status]}
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                        {plan.sharedWith && plan.sharedWith.length > 0 && (
+                          <span className="plan-card-badge plan-card-badge-shared">Compartido</span>
+                        )}
+                        {plan.ownerId !== uid && (
+                          <span className="plan-card-badge plan-card-badge-invited">Invitado</span>
+                        )}
+                        <div className="plan-card-status" style={{ background: `${STATUS_COLORS[plan.status]}20`, color: STATUS_COLORS[plan.status] }}>
+                          {STATUS_LABELS[plan.status]}
+                        </div>
                       </div>
                     </div>
 
@@ -660,6 +683,15 @@ export default function MetasPage() {
                           </span>
                         )}
                       </div>
+                      {plan.contributions && Object.keys(plan.contributions).length > 0 && (
+                        <div className="plan-card-contributions">
+                          {Object.entries(plan.contributions).map(([contribUid, contribAmount]) => (
+                            <span key={contribUid} className="plan-card-meta-item plan-card-contrib-item">
+                              {contribUid === uid ? 'Tu aporte' : 'Otro usuario'}: {formatAmount(contribAmount)}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="plan-card-actions">
@@ -678,15 +710,21 @@ export default function MetasPage() {
                           + Abonar
                         </button>
                       )}
-                      <button className="plan-action-btn" onClick={() => setShowShareModal(plan)}>
-                        <IconUsers width={14} />
-                      </button>
-                      <button className="plan-action-btn" onClick={() => openEditModal(plan)}>
-                        <IconEdit width={14} />
-                      </button>
-                      <button className="plan-action-btn plan-action-danger" onClick={() => handleDeletePlan(plan)}>
-                        <IconTrash width={14} />
-                      </button>
+                      {plan.ownerId === uid && (
+                        <button className="plan-action-btn" onClick={() => setShowShareModal(plan)}>
+                          <IconUsers width={14} />
+                        </button>
+                      )}
+                      {plan.ownerId === uid && (
+                        <button className="plan-action-btn" onClick={() => openEditModal(plan)}>
+                          <IconEdit width={14} />
+                        </button>
+                      )}
+                      {plan.ownerId === uid && (
+                        <button className="plan-action-btn plan-action-danger" onClick={() => handleDeletePlan(plan)}>
+                          <IconTrash width={14} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -1056,8 +1094,13 @@ export default function MetasPage() {
           .plan-card-info { flex: 1; min-width: 0; }
           .plan-card-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
           .plan-card-type { font-size: 0.6875rem; font-weight: 600; }
-          .plan-card-status { padding: 3px 8px; border-radius: var(--radius-full); font-size: 0.625rem; font-weight: 700; flex-shrink: 0; }
-          .plan-card-body { padding: 0 14px 10px; }
+           .plan-card-status { padding: 3px 8px; border-radius: var(--radius-full); font-size: 0.625rem; font-weight: 700; flex-shrink: 0; }
+           .plan-card-badge { padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.5625rem; font-weight: 700; }
+           .plan-card-badge-shared { background: rgba(59,130,246,0.15); color: #3b82f6; }
+           .plan-card-badge-invited { background: rgba(245,158,11,0.15); color: #f59e0b; }
+           .plan-card-contributions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-default); }
+           .plan-card-contrib-item { font-weight: 600; color: var(--text-secondary); }
+           .plan-card-body { padding: 0 14px 10px; }
           .plan-card-desc { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 8px 0; }
           .plan-card-amounts { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
           .plan-card-current { font-size: 1.25rem; font-weight: 800; color: var(--text-primary); }

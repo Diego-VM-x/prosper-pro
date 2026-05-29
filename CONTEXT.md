@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (28 de Mayo, 2026 -Último push test-deploy)
+## Estado Actual (29 de Mayo, 2026 - v0.8.6 BETA)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -127,6 +127,15 @@
   - Dashboard: Eliminado botón "Importar Datos" y modal CSV. Flechas (↗) de tarjetas ahora son funcionales con `useRouter` → `/metas`, `/finanzas`, `/cursos`.
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
+
+### 29/05/2026 - v0.8.6 BETA: Planes Compartidos Colaborativos + Guardado Global
+- **Planes compartidos colaborativos**: Los planes donde el usuario está en `sharedWith` se cargan junto a los propios en Metas. Badge "Compartido" e "Invitado" visibles en cada card. Botones editar/eliminar/compartir solo para el dueño (`ownerId === uid`). Al rechazar solicitud se remueve al usuario de `sharedWith`.
+- **Contribuciones por usuario**: Nuevo campo `contributions: Record<string, number>` en `FinancialPlan`. Al añadir fondos se registra quién aportó. Se muestra en la card del plan.
+- **Barra flotante Guardar Cambios**: Botón sticky al fondo en Configuración, visible desde cualquier pestaña, que persiste todas las preferencias (nombre, bio, moneda, idioma, alertas, privacidad de perfil). Se removió el botón duplicado que solo estaba en la pestaña Perfil.
+- **Exclusión de usuario actual**: Al buscar personas para compartir, se excluye automáticamente el propio usuario de los resultados.
+- **Types**: Añadido `contributions?: Record<string, number>` a `FinancialPlan`.
+- **Firestore**: Nueva función `getSharedPlans()` (usa `array-contains`). `GoalsContext` carga planes propios + compartidos sin duplicados.
+- **Merge**: Build exitoso, 14/14 páginas generadas.
 
 ### 29/05/2026 - v0.8.5 BETA: Fix Responsive Móvil, Animaciones y UpdateModal
 - **Topbar.tsx - Menú móvil**: Cambiado de `max-height: 80vh` a `height: 100%; min-height: 100dvh` para cubrir toda la pantalla. Agregada `animation: slideInLeft 0.3s cubic-bezier(...)` y `fadeIn 0.25s` en overlay.

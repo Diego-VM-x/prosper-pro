@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { useAuth } from './AuthContext';
 import { subscribeToGoals, createGoal, updateGoal, deleteGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
 import { subscribeToReminders, createReminder, updateReminder, deleteReminder, getRemindersByOwnerId } from '@/lib/firestore/reminders';
-import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId } from '@/lib/firestore/plans';
+import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans } from '@/lib/firestore/plans';
 import type { Goal, Reminder, FinancialPlan } from '@/types';
 
 interface GoalsContextType {
@@ -98,7 +98,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     return () => { cancelled = true; };
   }, [user?.uid, loading, refreshKey]);
 
-  // Cargar planes financieros
+  // Cargar planes financieros (propios + compartidos)
   useEffect(() => {
     if (loading) return;
     const uid = user?.uid;
@@ -106,8 +106,15 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     let cancelled = false;
     async function loadPlans() {
       try {
-        const data = await getPlansByOwnerId(uid as string);
-        if (!cancelled) setPlans(data);
+        const [ownPlans, sharedPlans] = await Promise.all([
+          getPlansByOwnerId(uid as string),
+          getSharedPlans(uid as string),
+        ]);
+        // Evitar duplicados: sharedPlans puede incluir planes donde el usuario es owner si sharedWith contiene su uid
+        const ownIds = new Set(ownPlans.map(p => p.id));
+        const allPlans = [...ownPlans, ...sharedPlans.filter(p => !ownIds.has(p.id))];
+        allPlans.sort((a, b) => b.createdAt - a.createdAt);
+        if (!cancelled) setPlans(allPlans);
       } catch (e) {
         console.error('[GoalsContext] Error cargando planes:', e);
       }
