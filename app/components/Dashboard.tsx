@@ -570,7 +570,7 @@ export function Dashboard() {
               </div>
               <label className="form-label">Icono</label>
               <div style={{ display: 'flex', gap: 6 }}>
-                {['🎯', '🛡️', '📈', '✈️', '🎓', '', '🏠', '🚗'].map((icon) => (
+                {['??', '???', '??', '??', '??', '??', '??'].map((icon) => (
                   <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.25rem', padding: 6, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer' }}>{icon}</button>
                 ))}
               </div>
@@ -957,11 +957,6 @@ export function Dashboard() {
         .form-input:focus { border-color: var(--color-prosper-green); }
         select.form-input { cursor: pointer; }
 
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
@@ -1013,3 +1008,5 @@ export function Dashboard() {
     </DashboardLayout>
   );
 }
+
+

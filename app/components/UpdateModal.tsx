@@ -278,6 +278,54 @@ export function UpdateModal({
         .um-btn:active {
           transform: translateY(0);
         }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+          .um-card { max-width: 90%; }
+          .um-header { padding: 1.5rem 1.25rem 1.25rem; }
+          .um-title { font-size: 1.35rem; }
+          .um-subtitle { font-size: 0.8rem; }
+          .um-body { padding: 1.25rem 1.25rem; gap: 0.6rem; }
+          .um-note { padding: 0.6rem 0.85rem; }
+          .um-note-text { font-size: 0.8rem; }
+          .um-footer { padding: 0.85rem 1.25rem 1.25rem; gap: 0.6rem; }
+          .um-btn { padding: 0.55rem 1rem; font-size: 0.82rem; }
+        }
+        @media (max-width: 480px) {
+          .um-overlay { align-items: flex-end; }
+          .um-card {
+            max-width: 100%;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            max-height: 85vh;
+            overflow-y: auto;
+          }
+          .um-header { padding: 1.25rem 1rem 1rem; }
+          .um-title { font-size: 1.15rem; }
+          .um-subtitle { font-size: 0.75rem; }
+          .um-badge { font-size: 0.65rem; padding: 3px 10px; }
+          .um-close { top: 0.7rem; right: 0.7rem; width: 28px; height: 28px; font-size: 1rem; }
+          .um-body { padding: 1rem 1rem; gap: 0.5rem; }
+          .um-note { padding: 0.5rem 0.75rem; border-radius: 10px; gap: 0.6rem; }
+          .um-note-emoji { font-size: 1rem; }
+          .um-note-text { font-size: 0.75rem; }
+          .um-footer {
+            flex-direction: column-reverse;
+            padding: 0.75rem 1rem 1.25rem;
+            gap: 0.5rem;
+          }
+          .um-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 0.65rem 1rem;
+            font-size: 0.85rem;
+          }
+        }
+        @media (max-width: 360px) {
+          .um-title { font-size: 1rem; }
+          .um-note-text { font-size: 0.7rem; }
+          .um-btn { font-size: 0.78rem; padding: 0.55rem 0.85rem; }
+        }
       `}</style>
       <div className="um-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
         <div className="um-card" role="dialog" aria-modal="true" aria-label="Novedades de la versión">

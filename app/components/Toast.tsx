@@ -234,7 +234,6 @@ export function ConfirmDialog({
         .confirm-btn-confirm { color: white; }
         .confirm-btn-confirm:hover { filter: brightness(1.1); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
     </div>
   );

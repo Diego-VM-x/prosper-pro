@@ -479,11 +479,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           </div>
 
           {/* Avatar con dropdown */}
-          <div
-            className="topbar-avatar"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-          >
-            {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+          <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <div className="topbar-avatar">
+              {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+            </div>
+            <span className="mobile-user-name">{user?.displayName || 'Usuario'}</span>
           </div>
           {showUserMenu && (
             <div className="user-dropdown mobile-user-dropdown">
@@ -615,6 +615,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .mobile-menu-btn { display: none; }
         .desktop-actions { display: flex; align-items: center; gap: 12px; z-index: 100; }
         .mobile-menu-overlay {
+          position: fixed;
           inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
@@ -1183,15 +1184,21 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           margin-left: auto;
           padding-right: 8px;
         }
+        .mobile-user-name {
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          white-space: nowrap;
+          max-width: 100px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
         .mobile-user-dropdown {
           right: 0 !important;
           left: auto !important;
-<<<<<<< HEAD
           bottom: 0 !important;
           top: auto !important;
-=======
           z-index: 10002 !important;
->>>>>>> 3a375dd4f8b9ac299a2ea700c8ed34d5b1871774
         }
         .mobile-notif-wrapper {
           position: relative;
@@ -1249,6 +1256,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-search input { padding: 6px 10px 6px 30px; font-size: 0.8125rem; }
           .topbar-icon-btn { width: 32px; height: 32px; }
           .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
+          .mobile-user-name { display: none; }
           .notifications-dropdown { width: 260px; }
           .mobile-menu { width: 100%; max-width: 100%; }
         }
@@ -1256,3 +1264,5 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     </header>
   );
 }
+
+
