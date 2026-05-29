@@ -622,20 +622,19 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           z-index: 1000;
           display: flex;
           justify-content: flex-start;
+          animation: fadeIn 0.25s ease;
         }
         .mobile-menu {
-          width: 400px; /* Extendido en ancho */
-          max-height: 80vh; /* Permite scroll vertical */
-          overflow-y: auto;
+          width: 400px;
           max-width: 85vw;
-          height: auto;
+          height: 100%;
+          min-height: 100dvh;
           background: #ffffff;
           display: flex;
           flex-direction: column;
           box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
-          position: absolute;
-          bottom: 0;
-          left: 0;
+          animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow-y: auto;
         }
         [data-theme="dark"] .mobile-menu {
           background: #0a1628;
@@ -1194,10 +1193,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           text-overflow: ellipsis;
         }
         .mobile-user-dropdown {
-          right: 0 !important;
-          left: auto !important;
-          bottom: 0 !important;
-          top: auto !important;
           z-index: 10002 !important;
         }
         .mobile-notif-wrapper {
@@ -1222,7 +1217,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
             max-height: 80vh;
             overflow-y: auto;
           }
-          .user-dropdown { 
+          .user-dropdown:not(.mobile-user-dropdown) { 
             position: fixed;
             top: 64px;
             left: 16px;
@@ -1230,6 +1225,18 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
             width: auto;
             max-height: 80vh;
             overflow-y: auto;
+          }
+          .user-dropdown.mobile-user-dropdown {
+            position: fixed !important;
+            bottom: 0 !important;
+            top: auto !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            border-radius: 20px 20px 0 0 !important;
+            max-height: 80vh !important;
+            overflow-y: auto !important;
+            animation: fadeInUp 0.3s ease;
           }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
@@ -1258,7 +1265,10 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
           .mobile-user-name { display: none; }
           .notifications-dropdown { width: 260px; }
-          .mobile-menu { width: 100%; max-width: 100%; }
+          .mobile-menu { width: 100%; max-width: 100%; min-height: 100dvh; }
+          .user-dropdown.mobile-user-dropdown {
+            max-height: 70vh !important;
+          }
         }
       `}</style>
     </header>
