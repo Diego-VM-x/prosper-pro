@@ -20,7 +20,8 @@ export default function NotasVersionPage() {
   ];
 
   const upcoming = [
-    { version: '1.5.0', expected: '2024-10-10', notes: ['Integración con Firebase.', 'Modo oscuro personalizable.'] },
+    { version: '0.8.7 BETA', expected: 'Sin fecha estimada', notes: ['Arreglo de bugs visuales y mejoras en el soporte de bugs y sugerencias.'] },
+    { version: '0.9.0 BETA', expected: 'Sin fecha estimada', notes: ['Funcionalidad completa en todas las configuraciones.'] },
   ];
 
   return (

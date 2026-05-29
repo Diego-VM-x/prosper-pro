@@ -156,17 +156,18 @@ export async function searchUserByEmail(email: string): Promise<FoundUser | null
   return user;
 }
 
-// Buscar usuarios por nombre (solo perfiles públicos)
+// Buscar usuarios por nombre (solo perfiles públicos o sin campo showProfile)
 export async function searchUsersByName(queryStr: string): Promise<FoundUser[]> {
   if (!queryStr || queryStr.length < 2) return [];
   const usersRef = collection(db, 'users');
-  // Busca usuarios con perfil público cuyo displayName contenga el texto (case-insensitive via client filter)
-  const q = query(usersRef, where('showProfile', '==', true), limit(20));
+  const q = query(usersRef, limit(30));
   const snapshot = await getDocs(q);
   const results: FoundUser[] = [];
   const lower = queryStr.toLowerCase();
   snapshot.forEach((docSnap) => {
     const d = docSnap.data();
+    // Excluir solo si showProfile es explícitamente false. Ausencia del campo = público
+    if (d.showProfile === false) return;
     const name = (d.displayName || '').toLowerCase();
     if (name.includes(lower)) {
       results.push(userFromDoc(docSnap));
