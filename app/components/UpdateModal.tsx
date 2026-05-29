@@ -9,13 +9,13 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.8.0",
+  version = "0.8.5 BETA",
   notes = [
-    { emoji: "🚀", text: "Actualización a BETA 0.8.0 con mejoras de rendimiento." },
-    { emoji: "🛠️", text: "Nuevas herramientas de análisis financiero." },
-    { emoji: "🔧", text: "Corrección de bugs críticos y estabilidad mejorada." },
-    { emoji: "📱", text: "Mejoras en la experiencia móvil y UI responsiva." },
-    { emoji: "⚡", text: "Optimización de carga de datos y sincronización." },
+    { emoji: "📱", text: "Menú móvil rediseñado: pantalla completa con animación suave." },
+    { emoji: "👇", text: "Dropdown de usuario en móvil convertido a bottom-sheet." },
+    { emoji: "👤", text: "Nombre de usuario visible en la topbar móvil." },
+    { emoji: "🎨", text: "Animaciones consolidadas: fadeInUp unificado sin sobrescrituras." },
+    { emoji: "🚀", text: "Modal de novedades totalmente responsivo." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first

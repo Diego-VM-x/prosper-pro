@@ -128,6 +128,15 @@
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
 
+### 29/05/2026 - v0.8.5 BETA: Fix Responsive Móvil, Animaciones y UpdateModal
+- **Topbar.tsx - Menú móvil**: Cambiado de `max-height: 80vh` a `height: 100%; min-height: 100dvh` para cubrir toda la pantalla. Agregada `animation: slideInLeft 0.3s cubic-bezier(...)` y `fadeIn 0.25s` en overlay.
+- **Topbar.tsx - Dropdown usuario móvil**: Separado del dropdown desktop. En ≤768px se convierte en bottom-sheet (`position: fixed; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 20px 20px 0 0`). En ≤480px max-height 70vh.
+- **Topbar.tsx - Nombre de usuario**: Agregado `<span className="mobile-user-name">` junto al avatar en `mobile-user-actions`, oculto en ≤480px.
+- **Topbar.tsx - Merge conflict**: Resuelto conflicto `<<<<<<< HEAD` en `.mobile-user-dropdown` que rompía todo el CSS de la clase.
+- **globals.css - Keyframes duplicados**: Consolidados 4 `@keyframes fadeInUp` (40px, 16px, 20px, 20px) en uno solo canonical con `translate3d(0, 20px, 0)` + nuevo `fadeInUpLarge` (40px) para landing page. Eliminados de Dashboard.tsx y Toast.tsx.
+- **UpdateModal.tsx - Responsividad completa**: 3 breakpoints (768px, 480px, 360px). En ≤480px se ancla al fondo con `align-items: flex-end`, ocupa 100% ancho, footer en `column-reverse`.
+- **Version**: Actualizada a 0.8.5 BETA en UpdateModal, version.md y notas-version.
+
 ### 16/05/2026 - Eliminación de Comunidad y Logros
 - **Archivos movidos a backup (`_backup_comunidad_logros/`)**:
   - `app/logros/` → Carpeta completa preservada

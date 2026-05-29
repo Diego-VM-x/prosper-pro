@@ -6,6 +6,14 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.8.5 BETA', date: '2026-05-29', notes: [
+      'Menú móvil rediseñado: pantalla completa con animación slideInLeft suave.',
+      'Dropdown de usuario en móvil convertido a bottom-sheet (ancho completo, scroll).',
+      'Nombre de usuario visible en la topbar móvil junto al avatar.',
+      'Animaciones consolidadas: fadeInUp unificado (20px) + fadeInUpLarge (40px) para landing.',
+      'Modal de notas de versión (UpdateModal) totalmente responsivo.',
+      'Corregido merge conflict en CSS de .mobile-user-dropdown.',
+    ], preRelease: true },
     { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'], preRelease: true },
   ];
 
