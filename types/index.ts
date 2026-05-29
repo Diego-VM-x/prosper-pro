@@ -27,6 +27,8 @@ export interface UserProfile {
   /** User-defined exchange rates (manual input) */
   customRates?: Record<string, number>;
   darkModeSync?: boolean;
+  /** Si el perfil es visible en búsquedas públicas (default: true) */
+  showProfile?: boolean;
   notifications?: {
     priceAlerts?: boolean;
     budgetAlerts?: boolean;

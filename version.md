@@ -1,13 +1,18 @@
 # Historial de Versiones: Prosper-Pro
 
 ## [0.8.5 BETA] - 2026-05-29
+### Añadido
+- **Privacidad de perfil**: Nueva opción en Configuración > Preferencias para elegir si tu perfil es público o privado. Si es privado, solo te pueden encontrar por email exacto al compartir planes.
+- **Búsqueda por nombre**: Al compartir un plan financiero ahora puedes escribir el nombre de la persona en lugar de solo el email. Si tiene perfil público, aparecerá en una lista de resultados.
+- **Etiquetas "En Desarrollo"**: Agregamos badges verdes en las secciones de Idiomas, Sesiones Activas y contacto por Email para indicar que están en desarrollo.
+
 ### Corregido
-- Dropdown móvil (hamburguesa): ahora cubre toda la pantalla (100dvh) con animación slideInLeft suave.
-- Dropdown de usuario en móvil: convertido a bottom-sheet con bordes redondeados superiores, ancho completo y scroll.
-- Nombre de usuario visible en la topbar móvil junto al avatar.
-- Merge conflict sin resolver en `.mobile-user-dropdown` que rompía el CSS.
-- Consolidados 4 `@keyframes fadeInUp` duplicados en una única canonical (20px) + `fadeInUpLarge` (40px) para landing page.
-- Modal de notas de versión (`UpdateModal`): responsivo completo con anclaje inferior en ≤480px.
+- **Menú móvil**: El menú hamburguesa ahora ocupa toda la pantalla y se desliza suavemente desde la izquierda sin cortes ni animaciones entrecortadas.
+- **Menú de usuario en móvil**: Al tocar tu avatar en la barra superior ahora se abre una ventana desde abajo tipo bottom-sheet con bordes redondeados, ocupando todo el ancho.
+- **Nombre visible en móvil**: Tu nombre ahora aparece junto al avatar en la barra superior cuando navegas desde el teléfono.
+- **Animaciones**: Se unificaron todas las animaciones de entrada (fadeInUp) para que menús, ventanas y elementos aparezcan con transiciones suaves y consistentes en toda la app.
+- **Ventana de novedades**: Esta ventana ahora se ve bien en cualquier tamaño de pantalla, especialmente en móviles donde se ancla al fondo.
+- **Error de CSS**: Se corrigió un conflicto en el código que impedía que los menús desplegables funcionaran correctamente en la versión móvil.
 
 ## [0.8.2] - 2026-05-28
 ### Añadido

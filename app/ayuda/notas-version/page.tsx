@@ -7,12 +7,14 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 export default function NotasVersionPage() {
   const versions = [
     { version: '0.8.5 BETA', date: '2026-05-29', notes: [
-      'Menú móvil rediseñado: pantalla completa con animación slideInLeft suave.',
-      'Dropdown de usuario en móvil convertido a bottom-sheet (ancho completo, scroll).',
-      'Nombre de usuario visible en la topbar móvil junto al avatar.',
-      'Animaciones consolidadas: fadeInUp unificado (20px) + fadeInUpLarge (40px) para landing.',
-      'Modal de notas de versión (UpdateModal) totalmente responsivo.',
-      'Corregido merge conflict en CSS de .mobile-user-dropdown.',
+      'Privacidad de perfil: nueva opción en Configuración para elegir si tu perfil es público o privado. Si es privado, solo te encuentran por email exacto.',
+      'Búsqueda por nombre al compartir planes: ahora puedes escribir el nombre de la persona y aparecerá una lista con los resultados.',
+      'Menú hamburguesa renovado: ahora cubre toda la pantalla y se desliza suavemente desde la izquierda.',
+      'Menú de usuario en móvil: al tocar tu avatar se abre una ventana desde abajo (bottom-sheet) con bordes redondeados.',
+      'Nombre visible en la barra superior del móvil junto al avatar.',
+      'Animaciones corregidas: todos los menús y ventanas ahora tienen transiciones consistentes y suaves.',
+      'Ventana de novedades adaptada a cualquier pantalla, anclada al fondo en móviles.',
+      'Etiquetas "En Desarrollo" agregadas en Idiomas, Sesiones Activas y contacto por Email.',
     ], preRelease: true },
     { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'], preRelease: true },
   ];

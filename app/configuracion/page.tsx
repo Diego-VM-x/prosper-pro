@@ -26,6 +26,7 @@ export default function ConfiguracionPage() {
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const [showProfile, setShowProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -70,6 +71,7 @@ export default function ConfiguracionPage() {
         setCurrency(((p as any).currency || 'USD') as CurrencyCode);
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
+        setShowProfile((p as any).showProfile !== false);
       }
     });
 
@@ -88,6 +90,7 @@ export default function ConfiguracionPage() {
         language,
         currency,
         customRates: null,
+        showProfile,
         notifications: {
           priceAlerts,
           budgetAlerts,
@@ -308,7 +311,7 @@ export default function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Idioma de Interfaz <span style={{fontSize:'0.7rem',marginLeft:'4px',color:'var(--text-secondary)'}}>(estado: BETA)</span></label>
+                      <label className="pref-label">Idioma de Interfaz <span style={{fontSize:'0.65rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>En Desarrollo</span></label>
                       <div className="option-grid">
                         {[
                           { value: 'es', label: 'Español', flag: '🇪🇸' },
@@ -420,6 +423,24 @@ export default function ConfiguracionPage() {
                         {showUpdateModalPref ? '✅ Sí' : '❌ No'}
                       </button>
                     </div>
+
+                    <div className="pref-section" style={{ marginTop: '1rem' }}>
+                      <label className="pref-label">Privacidad del Perfil</label>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                        Controla si otros usuarios pueden encontrarte al buscar por nombre para compartir planes.
+                      </p>
+                      <button
+                        className={`theme-option ${showProfile ? 'active' : ''}`}
+                        onClick={() => setShowProfile(!showProfile)}
+                      >
+                        {showProfile ? '🌐 Perfil Público' : '🔒 Perfil Privado'}
+                      </button>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+                        {showProfile
+                          ? 'Otros usuarios pueden encontrarte por nombre o email al compartir planes.'
+                          : 'Solo te pueden encontrar por email exacto. Tu nombre no aparece en búsquedas.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -472,7 +493,7 @@ export default function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Sesiones Activas</h2>
+                      <h2 className="panel-title">Sesiones Activas <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
                       <p className="panel-desc">Dispositivos conectados a tu cuenta</p>
                     </div>
 

@@ -6,6 +6,8 @@ import {
   deleteDoc,
   query,
   where,
+  orderBy,
+  limit,
   getDocs,
   onSnapshot,
   type QuerySnapshot,
@@ -13,6 +15,13 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { ExpenseRequest, RequestStatus } from '@/types';
+
+export interface FoundUser {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+}
 
 const COLLECTION = 'expense_requests';
 
@@ -122,17 +131,46 @@ export async function getPendingReceivedRequests(ownerId: string): Promise<Expen
   return requests;
 }
 
-// Buscar usuario por email (para enviar solicitud)
-export async function searchUserByEmail(email: string): Promise<{ uid: string; displayName: string | null; email: string | null; photoURL: string | null } | null> {
+function userFromDoc(doc: { id: string; data: () => DocumentData }): FoundUser {
+  const d = doc.data();
+  return {
+    uid: doc.id,
+    displayName: d.displayName || null,
+    email: d.email || null,
+    photoURL: d.photoURL || null,
+  };
+}
+
+// Buscar usuario por email exacto (siempre funciona, respeta privacidad solo para mostrar nombre)
+export async function searchUserByEmail(email: string): Promise<FoundUser | null> {
   const usersRef = collection(db, 'users');
   const q = query(usersRef, where('email', '==', email));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const data = snapshot.docs[0].data();
-  return {
-    uid: snapshot.docs[0].id,
-    displayName: data.displayName || null,
-    email: data.email || null,
-    photoURL: data.photoURL || null,
-  };
+  const user = userFromDoc(snapshot.docs[0]);
+  // Si el perfil es privado, no mostramos el nombre público
+  if (data.showProfile === false) {
+    user.displayName = null;
+  }
+  return user;
+}
+
+// Buscar usuarios por nombre (solo perfiles públicos)
+export async function searchUsersByName(queryStr: string): Promise<FoundUser[]> {
+  if (!queryStr || queryStr.length < 2) return [];
+  const usersRef = collection(db, 'users');
+  // Busca usuarios con perfil público cuyo displayName contenga el texto (case-insensitive via client filter)
+  const q = query(usersRef, where('showProfile', '==', true), limit(20));
+  const snapshot = await getDocs(q);
+  const results: FoundUser[] = [];
+  const lower = queryStr.toLowerCase();
+  snapshot.forEach((docSnap) => {
+    const d = docSnap.data();
+    const name = (d.displayName || '').toLowerCase();
+    if (name.includes(lower)) {
+      results.push(userFromDoc(docSnap));
+    }
+  });
+  return results.slice(0, 10);
 }

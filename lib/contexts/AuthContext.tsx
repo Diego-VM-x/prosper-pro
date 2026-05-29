@@ -69,6 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 createdAt: Date.now(),
                 isSeeded: false,
                 currency: 'USD' as CurrencyCode,
+                showProfile: true,
               });
               try {
                 await seedUserData(firebaseUser.uid);
@@ -120,6 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       createdAt: Date.now(),
       isSeeded: false,
       currency: currency || 'USD',
+      showProfile: true,
     });
   };
 

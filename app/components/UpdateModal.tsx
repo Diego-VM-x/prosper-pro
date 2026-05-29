@@ -11,11 +11,14 @@ interface UpdateModalProps {
 export function UpdateModal({
   version = "0.8.5 BETA",
   notes = [
-    { emoji: "📱", text: "Menú móvil rediseñado: pantalla completa con animación suave." },
-    { emoji: "👇", text: "Dropdown de usuario en móvil convertido a bottom-sheet." },
-    { emoji: "👤", text: "Nombre de usuario visible en la topbar móvil." },
-    { emoji: "🎨", text: "Animaciones consolidadas: fadeInUp unificado sin sobrescrituras." },
-    { emoji: "🚀", text: "Modal de novedades totalmente responsivo." },
+    { emoji: "📱", text: "El menú hamburguesa ahora se abre en pantalla completa y se desliza suavemente desde la izquierda, cubriendo todo el móvil sin cortes." },
+    { emoji: "👤", text: "Al tocar tu avatar en móvil ahora aparece una ventana desde abajo (bottom-sheet) con tu perfil, tema y opción de cerrar sesión." },
+    { emoji: "🔤", text: "Tu nombre de usuario ahora se ve junto al avatar en la barra superior del móvil." },
+    { emoji: "🔒", text: "Nueva opción de privacidad en Configuración: puedes elegir si otros te encuentran por nombre o solo por email exacto al compartir planes." },
+    { emoji: "👥", text: "Al compartir un plan financiero ahora puedes buscar usuarios por nombre o email. Si tienen perfil público, aparecen en una lista para seleccionarlos." },
+    { emoji: "🏷️", text: "Agregamos etiquetas verdes \"En Desarrollo\" en idiomas, sesiones activas y contacto por email para que sepas qué funciones están en camino." },
+    { emoji: "🎨", text: "Corregimos problemas de animación: los menús desplegables y ventanas ahora tienen transiciones suaves y consistentes en toda la app." },
+    { emoji: "📋", text: "La ventana de novedades (esta misma) ahora se adapta perfectamente a cualquier pantalla, especialmente en móviles donde se ancla al fondo." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first

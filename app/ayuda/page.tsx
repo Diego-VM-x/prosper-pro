@@ -379,7 +379,7 @@ export default function AyudaPage() {
                 <div className="ayuda-support-icon-wrap">
                   <span className="ayuda-support-emoji">📧</span>
                 </div>
-                <h3 className="ayuda-support-title">Email</h3>
+                <h3 className="ayuda-support-title">Email <span style={{fontSize:'0.6rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h3>
                 <p className="ayuda-support-desc">Respuesta en 24h hábiles.</p>
                 <button className="ayuda-support-btn ayuda-support-btn-primary" onClick={() => window.location.href = 'mailto:soporte@prosperpro.com'}>Enviar</button>
               </div>

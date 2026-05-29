@@ -11,7 +11,8 @@ import { ConfirmDialog } from '@/app/components/Toast';
 import { CustomSelect } from '../components/CustomSelect';
 import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accounts';
 import { createTransaction } from '@/lib/firestore/transactions';
-import { sendExpenseRequest, searchUserByEmail, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
+import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
+import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock, IconCheck, IconArrowForward } from '../components/icons';
 import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest } from '@/types';
 
@@ -130,7 +131,9 @@ export default function MetasPage() {
   const [shareAmount, setShareAmount] = useState('');
   const [shareMessage, setShareMessage] = useState('');
   const [shareLoading, setShareLoading] = useState(false);
-  const [shareFoundUser, setShareFoundUser] = useState<{ uid: string; displayName: string | null; email: string | null; photoURL: string | null } | null>(null);
+  const [shareFoundUser, setShareFoundUser] = useState<FoundUser | null>(null);
+  const [shareSearchResults, setShareSearchResults] = useState<FoundUser[]>([]);
+  const [shareSearching, setShareSearching] = useState(false);
 
   // Received requests
   const [receivedRequests, setReceivedRequests] = useState<ExpenseRequest[]>([]);
@@ -442,23 +445,31 @@ export default function MetasPage() {
     }
   };
 
-  const handleSearchShareUser = async (email: string) => {
-    setShareEmail(email);
+  const handleSearchShareUser = async (query: string) => {
+    setShareEmail(query);
     setShareFoundUser(null);
-    if (!email || !email.includes('@')) return;
+    setShareSearchResults([]);
+    if (!query || query.length < 2) return;
+    setShareSearching(true);
     try {
-      const userFound = await searchUserByEmail(email);
-      if (userFound) {
-        setShareFoundUser({
-          uid: userFound.uid,
-          displayName: userFound.displayName,
-          email: userFound.email,
-          photoURL: userFound.photoURL,
-        });
+      if (query.includes('@')) {
+        const userFound = await searchUserByEmail(query);
+        if (userFound) setShareFoundUser(userFound);
+      } else {
+        const results = await searchUsersByName(query);
+        setShareSearchResults(results);
       }
     } catch (e) {
       console.error('Error buscando usuario:', e);
+    } finally {
+      setShareSearching(false);
     }
+  };
+
+  const selectShareUser = (user: FoundUser) => {
+    setShareFoundUser(user);
+    setShareSearchResults([]);
+    setShareEmail(user.email || '');
   };
 
   const handleRespondRequest = async (request: ExpenseRequest, response: 'accepted' | 'rejected') => {
@@ -865,11 +876,37 @@ export default function MetasPage() {
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
-                    <label className="plan-label">Email del usuario</label>
-                    <input className="plan-input" type="email" placeholder="usuario@email.com" value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
+                    <label className="plan-label">Nombre o email del usuario</label>
+                    <input className="plan-input" type="text" placeholder="Nombre o email..." value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
+                    {shareSearching && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>Buscando...</span>}
                   </div>
 
-                  {/* User Profile Card */}
+                  {/* Search Results (multiple users) */}
+                  {shareSearchResults.length > 0 && !shareFoundUser && (
+                    <div className="share-search-results">
+                      {shareSearchResults.map(user => (
+                        <div key={user.uid} className="share-user-card share-user-selectable" onClick={() => selectShareUser(user)}>
+                          <div className="share-user-avatar">
+                            {user.photoURL ? (
+                              <img src={user.photoURL} alt="" />
+                            ) : (
+                              <span>{(user.displayName || user.email || '?')[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="share-user-info">
+                            <span className="share-user-name">{user.displayName || 'Usuario'}</span>
+                            <span className="share-user-email">{user.email}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {shareSearchResults.length === 0 && shareEmail.length >= 2 && !shareEmail.includes('@') && !shareSearching && !shareFoundUser && (
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>Sin resultados. Prueba con el email exacto.</p>
+                  )}
+
+                  {/* Selected User Profile Card */}
                   {shareFoundUser && (
                     <div className="share-user-card">
                       <div className="share-user-avatar">
@@ -884,6 +921,7 @@ export default function MetasPage() {
                         <span className="share-user-email">{shareFoundUser.email}</span>
                       </div>
                       <span className="share-user-check">✓</span>
+                      <button className="share-user-change" onClick={() => { setShareFoundUser(null); setShareEmail(''); setShareSearchResults([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.75rem', padding: '4px' }}>✕</button>
                     </div>
                   )}
 
@@ -1047,6 +1085,12 @@ export default function MetasPage() {
           .share-user-name { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
           .share-user-email { font-size: 0.6875rem; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
           .share-user-check { font-size: 1.25rem; color: var(--color-prosper-green); flex-shrink: 0; }
+          .share-user-selectable { cursor: pointer; border-color: var(--border-default); transition: border-color 0.15s, background 0.15s; }
+          .share-user-selectable:hover { border-color: var(--color-prosper-green); background: rgba(61,204,142,0.06); }
+          .share-search-results { display: flex; flex-direction: column; gap: 0; max-height: 240px; overflow-y: auto; }
+          .share-search-results .share-user-card { margin-bottom: 0; border-radius: 0; border-bottom: none; }
+          .share-search-results .share-user-card:first-child { border-radius: 10px 10px 0 0; }
+          .share-search-results .share-user-card:last-child { border-radius: 0 0 10px 10px; border-bottom: 1px solid var(--border-default); }
 
           /* Empty */
           .plans-empty { text-align: center; padding: 48px 24px; color: var(--text-secondary); }
