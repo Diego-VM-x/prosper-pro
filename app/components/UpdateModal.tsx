@@ -9,14 +9,15 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.8.5 BETA",
+  version = "0.8.7 BETA",
   notes = [
-    { emoji: "📱", text: "Menú móvil rediseñado: pantalla completa, deslizamiento suave." },
-    { emoji: "👤", text: "Menú de usuario en móvil ahora tipo bottom-sheet." },
-    { emoji: "🔤", text: "Nombre visible junto al avatar en la barra móvil." },
-    { emoji: "🔒", text: "Privacidad de perfil: público o privado desde Configuración." },
-    { emoji: "👥", text: "Busca usuarios por nombre o email al compartir planes." },
-    { emoji: "🏷️", text: "Etiquetas \"En Desarrollo\" en funciones próximas." },
+    { emoji: "📊", text: "Dashboard renovado: widgets de Resumen del Mes, Últimos Movimientos y Acciones Rápidas." },
+    { emoji: "🔁", text: "Flechas inteligentes en secciones scrollables con auto-scroll al hover." },
+    { emoji: "👥", text: "Planes compartidos colaborativos: ambos usuarios ven y aportan al plan." },
+    { emoji: "💰", text: "Contribuciones por usuario registradas al añadir fondos a un plan compartido." },
+    { emoji: "💾", text: "Barra Guardar Cambios siempre visible en Configuración desde cualquier pestaña." },
+    { emoji: "🔒", text: "Perfil público/privado ahora persiste correctamente al guardar." },
+    { emoji: "✨", text: "Estética general mejorada: sombras, transiciones, glassmorphism y hover effects." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first
@@ -243,6 +244,8 @@ export function UpdateModal({
         .um-note:nth-child(3) { animation-delay: 0.19s; }
         .um-note:nth-child(4) { animation-delay: 0.26s; }
         .um-note:nth-child(5) { animation-delay: 0.33s; }
+        .um-note:nth-child(6) { animation-delay: 0.40s; }
+        .um-note:nth-child(7) { animation-delay: 0.47s; }
 
         /* ── FOOTER ── */
         .um-footer {

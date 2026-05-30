@@ -6,6 +6,8 @@
 - **Últimos Movimientos**: Las últimas 5 transacciones aparecen en el Dashboard con icono, descripción, fecha y monto.
 - **Acciones Rápidas**: Cuatro botones elegantes para crear plan, cuenta, transacción o ir al calendario.
 - **Dashboard más dinámico**: La sección inferior ahora se desplaza horizontalmente para acomodar los nuevos widgets sin saturar la pantalla.
+- **Flechas inteligentes**: Aparecen al hacer hover en secciones con scroll horizontal. Auto-scroll continuo al mantener el ratón sobre la flecha. Se ocultan automáticamente en los bordes.
+- **Estética premium**: Welcome banner con gradiente profundo y glow radial. Cards con efecto glassmorphism, sombras expandidas y transiciones suaves. Iconos y badges con escala al hover.
 
 ## [0.8.6 BETA] - 2026-05-29
 ### Añadido

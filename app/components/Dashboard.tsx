@@ -78,6 +78,15 @@ export function Dashboard() {
     }
   });
   const bottomScrollRef = useRef<HTMLDivElement>(null);
+  const statsScrollRef = useRef<HTMLDivElement>(null);
+  const [statsAtStart, setStatsAtStart] = useState(true);
+  const [statsAtEnd, setStatsAtEnd] = useState(false);
+  const [bottomAtStart, setBottomAtStart] = useState(true);
+  const [bottomAtEnd, setBottomAtEnd] = useState(false);
+
+  const [statsHover, setStatsHover] = useState(false);
+  const [bottomHover, setBottomHover] = useState(false);
+  const autoScrollRef = useRef<number | null>(null);
 
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
@@ -98,10 +107,50 @@ export function Dashboard() {
       }, 0);
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
-  const scrollBottom = (dir: 'left' | 'right') => {
-    if (!bottomScrollRef.current) return;
-    const amount = 300;
-    bottomScrollRef.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
+  useEffect(() => {
+    const el = bottomScrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setBottomAtStart(el.scrollLeft <= 2);
+      setBottomAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 2);
+    };
+    el.addEventListener('scroll', check);
+    check();
+    return () => el.removeEventListener('scroll', check);
+  }, []);
+
+  useEffect(() => {
+    const el = statsScrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setStatsAtStart(el.scrollLeft <= 2);
+      setStatsAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 2);
+    };
+    el.addEventListener('scroll', check);
+    check();
+    return () => el.removeEventListener('scroll', check);
+  }, []);
+
+  const startAutoScroll = (ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') => {
+    stopAutoScroll();
+    const step = () => {
+      const el = ref.current;
+      if (!el) return;
+      el.scrollBy({ left: dir === 'left' ? -8 : 8, behavior: 'auto' });
+      autoScrollRef.current = window.setTimeout(step, 16);
+    };
+    step();
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollRef.current !== null) {
+      clearTimeout(autoScrollRef.current);
+      autoScrollRef.current = null;
+    }
+  };
+
+  const scrollBy = (ref: React.RefObject<HTMLDivElement | null>, dir: 'left' | 'right') => {
+    ref.current?.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
   };
 
   const [newGoal, setNewGoal] = useState({
@@ -295,9 +344,21 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Pills - Horizontal Scroll */}
-        <div className="stats-scroll">
-          <div className="stat-pill" onClick={() => router.push('/finanzas')}>
+        {/* Stats Pills - Horizontal Scroll with Smart Arrows */}
+        <div className="scrollable-wrapper" onMouseEnter={() => setStatsHover(true)} onMouseLeave={() => { setStatsHover(false); stopAutoScroll(); }}>
+          {!statsAtStart && (
+            <button
+              className={`scroll-arrow scroll-arrow-left ${statsHover ? 'visible' : ''}`}
+              onClick={() => scrollBy(statsScrollRef, 'left')}
+              onMouseEnter={() => startAutoScroll(statsScrollRef, 'left')}
+              onMouseLeave={stopAutoScroll}
+              aria-label="Scroll left"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          )}
+          <div className="stats-scroll" ref={statsScrollRef}>
+            <div className="stat-pill" onClick={() => router.push('/finanzas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro Mensual</span>
@@ -327,6 +388,18 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+        {!statsAtEnd && (
+          <button
+            className={`scroll-arrow scroll-arrow-right ${statsHover ? 'visible' : ''}`}
+            onClick={() => scrollBy(statsScrollRef, 'right')}
+            onMouseEnter={() => startAutoScroll(statsScrollRef, 'right')}
+            onMouseLeave={stopAutoScroll}
+            aria-label="Scroll right"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        )}
+      </div>
 
         {/* Today Section - Avisos */}
         {todayItems.length > 0 && (
@@ -438,10 +511,18 @@ export function Dashboard() {
         </div>
 
         {/* Bottom Section: Progress + Upcoming + Accounts */}
-        <div className="bottom-section-wrapper">
-          <button className="bottom-scroll-arrow bottom-scroll-arrow-left" onClick={() => scrollBottom('left')} aria-label="Scroll left">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          </button>
+        <div className="bottom-section-wrapper" onMouseEnter={() => setBottomHover(true)} onMouseLeave={() => { setBottomHover(false); stopAutoScroll(); }}>
+          {!bottomAtStart && (
+            <button
+              className={`scroll-arrow scroll-arrow-left ${bottomHover ? 'visible' : ''}`}
+              onClick={() => scrollBy(bottomScrollRef, 'left')}
+              onMouseEnter={() => startAutoScroll(bottomScrollRef, 'left')}
+              onMouseLeave={stopAutoScroll}
+              aria-label="Scroll left"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          )}
           <div className="bottom-section" ref={bottomScrollRef}>
             {/* Progress Ring */}
             <div className="content-card progress-section">
@@ -646,9 +727,17 @@ export function Dashboard() {
               </button>
             </div>
           </div>
-          <button className="bottom-scroll-arrow bottom-scroll-arrow-right" onClick={() => scrollBottom('right')} aria-label="Scroll right">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
+          {!bottomAtEnd && (
+            <button
+              className={`scroll-arrow scroll-arrow-right ${bottomHover ? 'visible' : ''}`}
+              onClick={() => scrollBy(bottomScrollRef, 'right')}
+              onMouseEnter={() => startAutoScroll(bottomScrollRef, 'right')}
+              onMouseLeave={stopAutoScroll}
+              aria-label="Scroll right"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          )}
         </div>
         </div>
       </div>
@@ -719,10 +808,10 @@ export function Dashboard() {
           margin: 0 auto;
         }
 
-        /* Welcome Banner */
+        /* Welcome Banner - Premium */
         .welcome-banner {
           position: relative;
-          background: linear-gradient(135deg, var(--color-prosper-navy) 0%, #2A5A4E 50%, var(--color-prosper-green) 100%);
+          background: linear-gradient(135deg, #0F1D2E 0%, #1A3A4A 40%, #1B4A3A 70%, #0F2D1E 100%);
           border-radius: var(--radius-xl);
           padding: 32px 40px;
           margin-bottom: 24px;
@@ -731,7 +820,19 @@ export function Dashboard() {
           align-items: center;
           justify-content: space-between;
           min-height: 140px;
-          box-shadow: 0 4px 30px rgba(61,204,142,0.15), 0 0 60px rgba(61,204,142,0.05);
+          box-shadow: 0 4px 30px rgba(61,204,142,0.12), 0 0 80px rgba(61,204,142,0.04), inset 0 1px 0 rgba(255,255,255,0.06);
+          border: 1px solid rgba(61,204,142,0.15);
+        }
+        .welcome-banner::before {
+          content: '';
+          position: absolute;
+          top: -50%;
+          left: -50%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(ellipse at 30% 50%, rgba(61,204,142,0.06) 0%, transparent 50%),
+                      radial-gradient(ellipse at 70% 50%, rgba(30,58,110,0.08) 0%, transparent 50%);
+          pointer-events: none;
         }
         .welcome-content { position: relative; z-index: 1; }
         .welcome-greeting {
@@ -803,7 +904,7 @@ export function Dashboard() {
           transition: all var(--transition-fast);
           position: relative;
         }
-        .stat-pill:hover { box-shadow: var(--shadow-md), 0 0 20px rgba(61,204,142,0.15); transform: translateY(-2px); border-color: var(--color-prosper-green); }
+        .stat-pill:hover { box-shadow: 0 8px 28px -6px rgba(61,204,142,0.18), 0 0 30px rgba(61,204,142,0.08); transform: translateY(-3px); border-color: var(--color-prosper-green); }
         .stat-pill-icon {
           width: 44px;
           height: 44px;
@@ -813,8 +914,10 @@ export function Dashboard() {
           justify-content: center;
           font-size: 1.25rem;
           flex-shrink: 0;
-          box-shadow: 0 0 12px rgba(61,204,142,0.1);
+          box-shadow: 0 0 16px rgba(61,204,142,0.08);
+          transition: transform 0.2s ease;
         }
+        .stat-pill:hover .stat-pill-icon { transform: scale(1.08); }
         .stat-pill-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .stat-pill-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-pill-value { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; text-shadow: 0 0 12px rgba(61,204,142,0.1); }
@@ -863,7 +966,8 @@ export function Dashboard() {
           cursor: pointer;
           transition: all var(--transition-fast);
         }
-        .today-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm), 0 0 16px rgba(61,204,142,0.08); }
+        .today-item:hover { background: var(--bg-card); box-shadow: 0 4px 16px rgba(61,204,142,0.08); transform: translateX(3px); }
+        .today-item-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 10px currentColor; }
         .today-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
         .today-item-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .today-item-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
@@ -882,11 +986,24 @@ export function Dashboard() {
           border: 1px solid var(--border-default);
           border-radius: var(--radius-xl);
           padding: 24px;
-          transition: all var(--transition-fast);
+          transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          position: relative;
+        }
+        .content-card::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          pointer-events: none;
+          background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%);
         }
         .content-card:hover {
           border-color: rgba(61,204,142,0.3);
-          box-shadow: 0 0 24px rgba(61,204,142,0.08);
+          box-shadow: 0 0 30px rgba(61,204,142,0.08), 0 8px 32px -8px rgba(10,22,40,0.15);
+          transform: translateY(-2px);
+        }
+        [data-theme="dark"] .content-card:hover {
+          box-shadow: 0 0 30px rgba(61,204,142,0.06), 0 12px 40px -10px rgba(0,0,0,0.4);
         }
         .content-card-header {
           display: flex;
@@ -941,14 +1058,15 @@ export function Dashboard() {
         }
         .plans-empty-btn:hover { filter: brightness(1.1); }
 
-        /* Bottom Section */
-        .bottom-section-wrapper {
+        /* ===== SCROLLABLE WRAPPER (Smart Arrows) ===== */
+        .scrollable-wrapper {
           position: relative;
           display: flex;
           align-items: center;
           gap: 8px;
+          margin-bottom: 24px;
         }
-        .bottom-scroll-arrow {
+        .scroll-arrow {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
@@ -959,22 +1077,35 @@ export function Dashboard() {
           background: var(--bg-card);
           border: 1px solid var(--border-default);
           color: var(--text-secondary);
-          display: none;
+          display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          flex-shrink: 0;
-          transition: all var(--transition-fast);
+          transition: all 0.2s ease;
           box-shadow: var(--shadow-sm);
+          opacity: 0;
+          pointer-events: none;
         }
-        .bottom-scroll-arrow-left { left: -10px; }
-        .bottom-scroll-arrow-right { right: -10px; }
-        .bottom-scroll-arrow:hover {
+        .scroll-arrow.visible {
+          opacity: 1;
+          pointer-events: auto;
+        }
+        .scroll-arrow-left { left: -14px; }
+        .scroll-arrow-right { right: -14px; }
+        .scroll-arrow:hover {
           background: var(--color-prosper-green);
           color: white;
           border-color: var(--color-prosper-green);
-          box-shadow: 0 0 16px rgba(61,204,142,0.4);
+          box-shadow: 0 0 20px rgba(61,204,142,0.4);
+          transform: translateY(-50%) scale(1.1);
         }
+        .bottom-section-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .bottom-section-wrapper .scroll-arrow { display: flex; }
         .bottom-section {
           width: 100%;
           display: flex;
@@ -1019,17 +1150,19 @@ export function Dashboard() {
           cursor: pointer;
           transition: all var(--transition-fast);
         }
-        .deadline-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
+        .deadline-item:hover { background: var(--bg-card); box-shadow: 0 4px 16px rgba(61,204,142,0.08); transform: translateX(3px); }
         .deadline-badge {
           width: 44px;
           height: 44px;
-          border-radius: var(--radius-md);
+          border-radius: 10px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          transition: transform 0.2s ease;
         }
+        .deadline-item:hover .deadline-badge { transform: scale(1.08); }
         .deadline-badge.urgent { background: rgba(239,68,68,0.15); box-shadow: 0 0 12px rgba(239,68,68,0.2); }
         .deadline-badge.warning { background: rgba(245,158,11,0.15); box-shadow: 0 0 12px rgba(245,158,11,0.2); }
         .deadline-badge.normal { background: rgba(61,204,142,0.15); box-shadow: 0 0 12px rgba(61,204,142,0.2); }
@@ -1160,7 +1293,7 @@ export function Dashboard() {
           .bottom-section { gap: 14px; }
           .bottom-section > * { min-width: 260px; max-width: 300px; }
           .stat-pill { min-width: 160px; }
-          .bottom-scroll-arrow { display: flex; }
+          .scroll-arrow { display: flex; }
           .content-card { padding: 16px; }
           .main-content-grid { gap: 16px; }
           .summary-card, .recent-tx-card { min-width: 260px; }

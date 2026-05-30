@@ -128,11 +128,14 @@
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
 
-### 29/05/2026 - v0.8.7 BETA: Dashboard Widgets Elegantes
+### 29/05/2026 - v0.8.7 BETA: Dashboard Widgets Elegantes + Flechas Inteligentes
 - **Resumen del Mes**: Nuevo widget con ingresos, gastos y balance del mes actual con barra visual proporcional.
 - **Últimos Movimientos**: Lista de las 5 transacciones más recientes con icono por tipo, fecha, descripción y monto.
 - **Acciones Rápidas**: Grid de 4 botones (Nuevo Plan, Nueva Cuenta, Transacción, Calendario) con hover neón.
-- **Bottom section**: Migrada de grid a flexbox con scroll horizontal suave y `scroll-snap` para mejor experiencia multi-widget.
+- **Flechas inteligentes**: Añadidas a secciones scrollables (stats pills y widgets inferiores). Aparecen al hover, ocultas en bordes, auto-scroll continuo al mantener hover. Scroll position tracking con useEffect + refs.
+- **Auto-scroll**: startAutoScroll/stopAutoScroll con requestAnimationFrame-style (setTimeout 16ms) para scroll suave al mantener el ratón sobre la flecha.
+- **Estética premium**: Welcome banner con gradiente profundo + radial glow + borde sutil. Content cards con glassmorphism (::after gradient), hover translateY(-2px), sombras expandidas. Stat pills con icono scale(1.08) en hover. Today/deadline items con translateX(3px) + glow.
+- **Notas de versión**: Actualizado UpdateModal a v0.8.7 BETA con 7 notas resumidas. Eliminada sección de próximas actualizaciones en notas-version.
 - **Build**: 14/14 páginas generadas, sin errores.
 
 ### 29/05/2026 - v0.8.6 BETA: Planes Compartidos Colaborativos + Guardado Global
