@@ -344,21 +344,9 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Pills - Horizontal Scroll with Smart Arrows */}
-        <div className="scrollable-wrapper" onMouseEnter={() => setStatsHover(true)} onMouseLeave={() => { setStatsHover(false); stopAutoScroll(); }}>
-          {!statsAtStart && (
-            <button
-              className={`scroll-arrow scroll-arrow-left ${statsHover ? 'visible' : ''}`}
-              onClick={() => scrollBy(statsScrollRef, 'left')}
-              onMouseEnter={() => startAutoScroll(statsScrollRef, 'left')}
-              onMouseLeave={stopAutoScroll}
-              aria-label="Scroll left"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-          )}
-          <div className="stats-scroll" ref={statsScrollRef}>
-            <div className="stat-pill" onClick={() => router.push('/finanzas')}>
+        {/* Stats Pills - Grid visible */}
+        <div className="stats-grid">
+          <div className="stat-pill" onClick={() => router.push('/finanzas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro Mensual</span>
@@ -388,18 +376,6 @@ export function Dashboard() {
             </div>
           </div>
         </div>
-        {!statsAtEnd && (
-          <button
-            className={`scroll-arrow scroll-arrow-right ${statsHover ? 'visible' : ''}`}
-            onClick={() => scrollBy(statsScrollRef, 'right')}
-            onMouseEnter={() => startAutoScroll(statsScrollRef, 'right')}
-            onMouseLeave={stopAutoScroll}
-            aria-label="Scroll right"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        )}
-      </div>
 
         {/* Today Section - Avisos */}
         {todayItems.length > 0 && (
@@ -434,25 +410,10 @@ export function Dashboard() {
           </div>
         )}
 
-        {/* Main Content: Chart + Plans */}
-        <div className="main-content-grid">
-          {/* Financial Chart */}
-          <div className="content-card chart-card">
-            <div className="content-card-header">
-              <div className="content-card-header-left">
-                <IconTrendUp width={18} />
-                <h2 className="content-card-title">Rendimiento Financiero</h2>
-              </div>
-              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                Ver detalles <IconArrowForward width={14} />
-              </button>
-            </div>
-            <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
-              <FinancialStatusChart />
-            </Suspense>
-          </div>
+        {/* Widgets Grid - all visible */}
+        <div className="widgets-grid">
 
-          {/* Active Plans Sidebar */}
+          {/* Active Plans */}
           <div className="content-card plans-card">
             <div className="content-card-header">
               <div className="content-card-header-left">
@@ -508,24 +469,9 @@ export function Dashboard() {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Bottom Section: Progress + Upcoming + Accounts */}
-        <div className="bottom-section-wrapper" onMouseEnter={() => setBottomHover(true)} onMouseLeave={() => { setBottomHover(false); stopAutoScroll(); }}>
-          {!bottomAtStart && (
-            <button
-              className={`scroll-arrow scroll-arrow-left ${bottomHover ? 'visible' : ''}`}
-              onClick={() => scrollBy(bottomScrollRef, 'left')}
-              onMouseEnter={() => startAutoScroll(bottomScrollRef, 'left')}
-              onMouseLeave={stopAutoScroll}
-              aria-label="Scroll left"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-          )}
-          <div className="bottom-section" ref={bottomScrollRef}>
-            {/* Progress Ring */}
-            <div className="content-card progress-section">
+          {/* Progress Ring */}
+          <div className="content-card progress-section">
             <div className="content-card-header">
               <h2 className="content-card-title">Progreso General</h2>
             </div>
@@ -727,18 +673,24 @@ export function Dashboard() {
               </button>
             </div>
           </div>
-          {!bottomAtEnd && (
-            <button
-              className={`scroll-arrow scroll-arrow-right ${bottomHover ? 'visible' : ''}`}
-              onClick={() => scrollBy(bottomScrollRef, 'right')}
-              onMouseEnter={() => startAutoScroll(bottomScrollRef, 'right')}
-              onMouseLeave={stopAutoScroll}
-              aria-label="Scroll right"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          )}
         </div>
+
+        {/* Chart - Full width at bottom */}
+        <div className="chart-bottom-wrapper">
+          <div className="content-card chart-card">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconTrendUp width={18} />
+                <h2 className="content-card-title">Rendimiento Financiero</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                Ver detalles <IconArrowForward width={14} />
+              </button>
+            </div>
+            <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
+              <FinancialStatusChart />
+            </Suspense>
+          </div>
         </div>
       </div>
 
@@ -880,23 +832,18 @@ export function Dashboard() {
         .welcome-shape-2 { width: 200px; height: 200px; background: white; bottom: -80px; left: 10%; }
         .welcome-shape-3 { width: 150px; height: 150px; background: white; top: 20%; right: 30%; }
 
-        /* Stats Scroll */
-        .stats-scroll {
-          display: flex;
-          gap: 12px;
-          overflow-x: auto;
-          padding-bottom: 8px;
+        /* Stats Grid - 4 pills always visible */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
           margin-bottom: 24px;
-          scrollbar-width: none;
         }
-        .stats-scroll::-webkit-scrollbar { display: none; }
         .stat-pill {
-          flex: 0 0 auto;
-          min-width: 180px;
           background: var(--bg-card);
           border: 1px solid var(--border-default);
           border-radius: var(--radius-lg);
-          padding: 16px 20px;
+          padding: 18px 20px;
           display: flex;
           align-items: center;
           gap: 14px;
@@ -975,9 +922,9 @@ export function Dashboard() {
         .today-item-arrow { font-size: 1.25rem; color: var(--text-tertiary); flex-shrink: 0; }
 
         /* Content Cards */
-        .main-content-grid {
+        .widgets-grid {
           display: grid;
-          grid-template-columns: 1fr 340px;
+          grid-template-columns: repeat(3, 1fr);
           gap: 20px;
           margin-bottom: 24px;
         }
@@ -1058,70 +1005,27 @@ export function Dashboard() {
         }
         .plans-empty-btn:hover { filter: brightness(1.1); }
 
-        /* ===== SCROLLABLE WRAPPER (Smart Arrows) ===== */
-        .scrollable-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        /* ===== CHART BOTTOM ===== */
+        .chart-bottom-wrapper {
           margin-bottom: 24px;
         }
-        .scroll-arrow {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 10;
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: var(--bg-card);
-          border: 1px solid var(--border-default);
-          color: var(--text-secondary);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          box-shadow: var(--shadow-sm);
-          opacity: 0;
-          pointer-events: none;
+        .chart-bottom-wrapper .chart-card {
+          padding: 20px 24px;
         }
-        .scroll-arrow.visible {
-          opacity: 1;
-          pointer-events: auto;
+        .chart-bottom-wrapper .content-card-header {
+          margin-bottom: 16px;
         }
-        .scroll-arrow-left { left: -14px; }
-        .scroll-arrow-right { right: -14px; }
-        .scroll-arrow:hover {
-          background: var(--color-prosper-green);
-          color: white;
-          border-color: var(--color-prosper-green);
-          box-shadow: 0 0 20px rgba(61,204,142,0.4);
-          transform: translateY(-50%) scale(1.1);
+        /* Estilos para ordenar cards en el grid */
+        .widgets-grid .content-card {
+          min-width: 0;
         }
-        .bottom-section-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .bottom-section-wrapper .scroll-arrow { display: flex; }
-        .bottom-section {
-          width: 100%;
-          display: flex;
-          gap: 20px;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          scrollbar-width: none;
-          padding: 4px 0;
-        }
-        .bottom-section::-webkit-scrollbar { display: none; }
-        .bottom-section > * {
-          scroll-snap-align: start;
-          min-width: 280px;
-          max-width: 340px;
-          flex: 0 0 auto;
-        }
+        .widgets-grid .plans-card { grid-column: span 1; }
+        .widgets-grid .progress-section { grid-column: span 1; }
+        .widgets-grid .deadlines-section { grid-column: span 1; }
+        .widgets-grid .accounts-section { grid-column: span 2; }
+        .widgets-grid .summary-card { grid-column: span 1; }
+        .widgets-grid .recent-tx-card { grid-column: span 1; }
+        .widgets-grid .quick-actions-card { grid-column: span 1; }
 
         /* Progress Section */
         .progress-section { display: flex; flex-direction: column; align-items: center; }
@@ -1279,24 +1183,21 @@ export function Dashboard() {
         @media (max-width: 1024px) {
           .welcome-banner { padding: 24px; }
           .welcome-title { font-size: 1.5rem; }
-          .main-content-grid { grid-template-columns: 1fr; }
-          .bottom-section { gap: 14px; }
-          .progress-section { grid-column: auto; }
-          .bottom-scroll-arrow { display: flex; }
-          .bottom-section-wrapper { gap: 4px; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .widgets-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+          .widgets-grid .accounts-section { grid-column: span 2; }
           .chart-card { min-height: auto; }
         }
         @media (max-width: 768px) {
           .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
           .welcome-actions { width: 100%; }
           .welcome-actions .btn-sm { width: 100%; justify-content: center; }
-          .bottom-section { gap: 14px; }
-          .bottom-section > * { min-width: 260px; max-width: 300px; }
-          .stat-pill { min-width: 160px; }
-          .scroll-arrow { display: flex; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .stat-pill { padding: 14px 16px; }
+          .widgets-grid { grid-template-columns: 1fr; gap: 14px; }
+          .widgets-grid .accounts-section { grid-column: span 1; }
+          .widgets-grid .content-card { min-width: 0; }
           .content-card { padding: 16px; }
-          .main-content-grid { gap: 16px; }
-          .summary-card, .recent-tx-card { min-width: 260px; }
         }
         @media (max-width: 480px) {
           .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }
@@ -1305,9 +1206,13 @@ export function Dashboard() {
           .welcome-shape-1 { width: 150px; height: 150px; }
           .welcome-shape-2 { width: 100px; height: 100px; }
           .welcome-shape-3 { display: none; }
-          .stat-pill { min-width: 140px; padding: 12px 14px; }
+          .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+          .stat-pill { padding: 12px 14px; gap: 10px; }
           .stat-pill-icon { width: 36px; height: 36px; font-size: 1rem; }
           .stat-pill-value { font-size: 1rem; }
+          .stat-pill-label { font-size: 0.625rem; }
+          .widgets-grid { grid-template-columns: 1fr; gap: 12px; }
+          .widgets-grid .accounts-section { grid-column: span 1; }
           .content-card { padding: 16px; border-radius: var(--radius-lg); }
           .content-card-title { font-size: 0.9375rem; }
           .progress-ring-container { width: 100px; height: 100px; }
