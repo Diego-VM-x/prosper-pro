@@ -479,13 +479,13 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           </div>
 
           {/* Avatar con dropdown */}
-          <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+          <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
             <div className="topbar-avatar">
               {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+            <div className="mobile-user-text">
               <span className="mobile-user-name">{user?.displayName || 'Usuario'}</span>
-              <span className="mobile-user-email" style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', display: 'none' }}>{user?.email}</span>
+              <span className="mobile-user-email">{user?.email}</span>
             </div>
           </div>
           {showUserMenu && (
@@ -1191,7 +1191,20 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           font-weight: 600;
           color: var(--text-primary);
           white-space: nowrap;
-          max-width: 100px;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .mobile-user-text {
+          display: flex;
+          flex-direction: column;
+          line-height: 1.15;
+        }
+        .mobile-user-email {
+          font-size: 0.625rem;
+          color: var(--text-secondary);
+          white-space: nowrap;
+          max-width: 120px;
           overflow: hidden;
           text-overflow: ellipsis;
         }
@@ -1266,7 +1279,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-search input { padding: 6px 10px 6px 30px; font-size: 0.8125rem; }
           .topbar-icon-btn { width: 32px; height: 32px; }
           .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
-          .mobile-user-name { font-size: 0.75rem; max-width: 80px; }
+          .mobile-user-name { font-size: 0.7rem; max-width: 70px; }
+          .mobile-user-email { font-size: 0.5625rem; max-width: 70px; }
           .notifications-dropdown { width: 260px; }
           .mobile-menu { width: 100%; max-width: 100%; min-height: 100dvh; }
           .user-dropdown.mobile-user-dropdown {
