@@ -1,5 +1,12 @@
 # Historial de Versiones: Prosper-Pro
 
+## [0.8.7 BETA] - 2026-05-29
+### Añadido
+- **Resumen del Mes**: Widget en el Dashboard que muestra ingresos, gastos y balance del mes actual con una barra comparativa visual.
+- **Últimos Movimientos**: Las últimas 5 transacciones aparecen en el Dashboard con icono, descripción, fecha y monto.
+- **Acciones Rápidas**: Cuatro botones elegantes para crear plan, cuenta, transacción o ir al calendario.
+- **Dashboard más dinámico**: La sección inferior ahora se desplaza horizontalmente para acomodar los nuevos widgets sin saturar la pantalla.
+
 ## [0.8.6 BETA] - 2026-05-29
 ### Añadido
 - **Planes compartidos colaborativos**: Los planes invitados ahora aparecen automáticamente en tu lista de Metas. Badge "Compartido" e "Invitado" para identificar el rol.

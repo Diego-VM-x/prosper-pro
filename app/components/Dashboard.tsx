@@ -15,6 +15,8 @@ import {
   IconTasks,
   IconClock,
   IconArrowForward,
+  IconZap,
+  IconReceipt,
 } from './icons';
 import { CustomSelect } from './CustomSelect';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
@@ -197,6 +199,35 @@ export function Dashboard() {
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progressPct / 100);
+
+  const recentTransactions = useMemo(() => {
+    return [...transactions].sort((a, b) => (b.date || 0) - (a.date || 0)).slice(0, 5);
+  }, [transactions]);
+
+  const startOfMonth = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  }, []);
+
+  const monthlyIncome = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'income' && t.date >= startOfMonth)
+      .reduce((sum, t) => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return sum + convertBetween(t.amount, txCurrency, displayCurrency);
+      }, 0);
+  }, [transactions, accounts, displayCurrency, convertBetween, startOfMonth]);
+
+  const monthlyExpenses = useMemo(() => {
+    return transactions
+      .filter(t => t.type === 'expense' && t.date >= startOfMonth)
+      .reduce((sum, t) => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const txCurrency = account?.currency || 'USD';
+        return sum + convertBetween(t.amount, txCurrency, displayCurrency);
+      }, 0);
+  }, [transactions, accounts, displayCurrency, convertBetween, startOfMonth]);
 
   const activePlans = plans.filter((p) => p.status === 'progress' || p.status === 'pending');
   const savingsPlans = plans.filter((p) => p.type === 'savings' && p.status !== 'completed');
@@ -517,6 +548,102 @@ export function Dashboard() {
               {accounts.length === 0 && (
                 <p className="empty-msg">Sin cuentas configuradas</p>
               )}
+            </div>
+          </div>
+
+          {/* Monthly Summary */}
+          <div className="content-card summary-card">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconWallet width={18} />
+                <h2 className="content-card-title">Resumen del Mes</h2>
+              </div>
+            </div>
+            <div className="summary-body">
+              <div className="summary-row">
+                <span className="summary-label">Ingresos</span>
+                <span className="summary-value income">{formatInCurrency(monthlyIncome, displayCurrency)}</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">Gastos</span>
+                <span className="summary-value expense">{formatInCurrency(monthlyExpenses, displayCurrency)}</span>
+              </div>
+              {(monthlyIncome + monthlyExpenses) > 0 && (
+                <div className="summary-bar">
+                  <div className="summary-bar-track">
+                    <div className="summary-bar-fill income-fill" style={{ width: `${(monthlyIncome / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
+                    <div className="summary-bar-fill expense-fill" style={{ width: `${(monthlyExpenses / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
+                  </div>
+                </div>
+              )}
+              <div className="summary-row summary-total">
+                <span className="summary-label">Balance</span>
+                <span className={`summary-value ${monthlyIncome - monthlyExpenses >= 0 ? 'income' : 'expense'}`}>
+                  {formatInCurrency(monthlyIncome - monthlyExpenses, displayCurrency)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Transactions */}
+          <div className="content-card recent-tx-card">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconReceipt width={18} />
+                <h2 className="content-card-title">Últimos Movimientos</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                Ver todo
+              </button>
+            </div>
+            <div className="recent-tx-list">
+              {recentTransactions.length > 0 ? recentTransactions.map((tx) => {
+                const txIcon = tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '💰';
+                const txAccount = accounts.find(a => a.id === tx.accountId);
+                const txCurr = txAccount?.currency || 'USD';
+                return (
+                  <div className="recent-tx-item" key={tx.id} onClick={() => router.push('/finanzas')}>
+                    <div className={`recent-tx-icon tx-${tx.type}`}>{txIcon}</div>
+                    <div className="recent-tx-info">
+                      <span className="recent-tx-desc">{tx.description || tx.category}</span>
+                      <span className="recent-tx-date">{tx.date ? new Date(tx.date).toLocaleDateString() : ''}</span>
+                    </div>
+                    <span className={`recent-tx-amount tx-${tx.type}`}>
+                      {tx.type === 'income' ? '+' : '-'}{formatInCurrency(tx.amount, txCurr)}
+                    </span>
+                  </div>
+                );
+              }) : (
+                <p className="empty-msg" style={{ padding: '24px 0' }}>Sin movimientos recientes</p>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="content-card quick-actions-card">
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconZap width={18} />
+                <h2 className="content-card-title">Acciones Rápidas</h2>
+              </div>
+            </div>
+            <div className="quick-actions-grid">
+              <button className="quick-action-btn" onClick={() => router.push('/metas')}>
+                <span className="quick-action-icon">🎯</span>
+                <span className="quick-action-label">Nuevo Plan</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => router.push('/finanzas')}>
+                <span className="quick-action-icon">💳</span>
+                <span className="quick-action-label">Nueva Cuenta</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => router.push('/finanzas')}>
+                <span className="quick-action-icon">💸</span>
+                <span className="quick-action-label">Transacción</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => router.push('/calendario')}>
+                <span className="quick-action-icon">📅</span>
+                <span className="quick-action-label">Calendario</span>
+              </button>
             </div>
           </div>
           <button className="bottom-scroll-arrow bottom-scroll-arrow-right" onClick={() => scrollBottom('right')} aria-label="Scroll right">
@@ -850,8 +977,7 @@ export function Dashboard() {
         }
         .bottom-section {
           width: 100%;
-          display: grid;
-          grid-template-columns: 200px 1fr 1fr;
+          display: flex;
           gap: 20px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
@@ -859,7 +985,12 @@ export function Dashboard() {
           padding: 4px 0;
         }
         .bottom-section::-webkit-scrollbar { display: none; }
-        .bottom-section > * { scroll-snap-align: start; }
+        .bottom-section > * {
+          scroll-snap-align: start;
+          min-width: 280px;
+          max-width: 340px;
+          flex: 0 0 auto;
+        }
 
         /* Progress Section */
         .progress-section { display: flex; flex-direction: column; align-items: center; }
@@ -941,6 +1072,56 @@ export function Dashboard() {
 
         .empty-msg { padding: 16px 0; color: var(--text-secondary); font-size: 0.875rem; text-align: center; margin: 0; }
 
+        /* Monthly Summary */
+        .summary-body { display: flex; flex-direction: column; gap: 12px; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; }
+        .summary-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+        .summary-value { font-size: 0.9375rem; font-weight: 700; }
+        .summary-value.income { color: var(--color-prosper-green); }
+        .summary-value.expense { color: var(--color-error); }
+        .summary-total { padding-top: 10px; border-top: 1px solid var(--border-default); }
+        .summary-bar { height: 8px; background: var(--border-default); border-radius: var(--radius-full); overflow: hidden; display: flex; gap: 2px; }
+        .summary-bar-track { display: flex; gap: 2px; width: 100%; height: 100%; }
+        .summary-bar-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.6s ease; min-width: 4px; }
+        .income-fill { background: var(--color-prosper-green); }
+        .expense-fill { background: var(--color-error); }
+
+        /* Recent Transactions */
+        .recent-tx-list { display: flex; flex-direction: column; gap: 6px; }
+        .recent-tx-item {
+          display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+          background: var(--bg-input); border-radius: var(--radius-md);
+          cursor: pointer; transition: all var(--transition-fast);
+        }
+        .recent-tx-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
+        .recent-tx-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; flex-shrink: 0; }
+        .recent-tx-icon.tx-income { background: rgba(61,204,142,0.15); }
+        .recent-tx-icon.tx-expense { background: rgba(239,68,68,0.15); }
+        .recent-tx-icon.tx-saving { background: rgba(59,130,246,0.15); }
+        .recent-tx-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .recent-tx-desc { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .recent-tx-date { font-size: 0.625rem; color: var(--text-tertiary); }
+        .recent-tx-amount { font-size: 0.8125rem; font-weight: 700; flex-shrink: 0; }
+        .recent-tx-amount.tx-income { color: var(--color-prosper-green); }
+        .recent-tx-amount.tx-expense { color: var(--color-error); }
+        .recent-tx-amount.tx-saving { color: var(--color-blue-500, #3B82F6); }
+
+        /* Quick Actions */
+        .quick-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .quick-action-btn {
+          display: flex; flex-direction: column; align-items: center; gap: 6px;
+          padding: 16px 8px; border-radius: var(--radius-md);
+          background: var(--bg-input); border: 1px solid var(--border-default);
+          cursor: pointer; transition: all var(--transition-fast);
+          font-family: inherit;
+        }
+        .quick-action-btn:hover {
+          background: var(--bg-card); border-color: var(--color-prosper-green);
+          box-shadow: 0 0 16px rgba(61,204,142,0.12); transform: translateY(-2px);
+        }
+        .quick-action-icon { font-size: 1.25rem; }
+        .quick-action-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); }
+
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
         .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 90%; max-width: 440px; max-height: 85vh; padding: 24px; display: flex; flex-direction: column; animation: fadeInUp 0.3s ease; }
@@ -966,7 +1147,7 @@ export function Dashboard() {
           .welcome-banner { padding: 24px; }
           .welcome-title { font-size: 1.5rem; }
           .main-content-grid { grid-template-columns: 1fr; }
-          .bottom-section { grid-template-columns: 200px 1fr 1fr; }
+          .bottom-section { gap: 14px; }
           .progress-section { grid-column: auto; }
           .bottom-scroll-arrow { display: flex; }
           .bottom-section-wrapper { gap: 4px; }
@@ -976,11 +1157,13 @@ export function Dashboard() {
           .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
           .welcome-actions { width: 100%; }
           .welcome-actions .btn-sm { width: 100%; justify-content: center; }
-          .bottom-section { grid-template-columns: repeat(3, minmax(260px, 1fr)); gap: 14px; }
+          .bottom-section { gap: 14px; }
+          .bottom-section > * { min-width: 260px; max-width: 300px; }
           .stat-pill { min-width: 160px; }
           .bottom-scroll-arrow { display: flex; }
           .content-card { padding: 16px; }
           .main-content-grid { gap: 16px; }
+          .summary-card, .recent-tx-card { min-width: 260px; }
         }
         @media (max-width: 480px) {
           .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }

@@ -128,6 +128,13 @@
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
 
+### 29/05/2026 - v0.8.7 BETA: Dashboard Widgets Elegantes
+- **Resumen del Mes**: Nuevo widget con ingresos, gastos y balance del mes actual con barra visual proporcional.
+- **Últimos Movimientos**: Lista de las 5 transacciones más recientes con icono por tipo, fecha, descripción y monto.
+- **Acciones Rápidas**: Grid de 4 botones (Nuevo Plan, Nueva Cuenta, Transacción, Calendario) con hover neón.
+- **Bottom section**: Migrada de grid a flexbox con scroll horizontal suave y `scroll-snap` para mejor experiencia multi-widget.
+- **Build**: 14/14 páginas generadas, sin errores.
+
 ### 29/05/2026 - v0.8.6 BETA: Planes Compartidos Colaborativos + Guardado Global
 - **Planes compartidos colaborativos**: Los planes donde el usuario está en `sharedWith` se cargan junto a los propios en Metas. Badge "Compartido" e "Invitado" visibles en cada card. Botones editar/eliminar/compartir solo para el dueño (`ownerId === uid`). Al rechazar solicitud se remueve al usuario de `sharedWith`.
 - **Contribuciones por usuario**: Nuevo campo `contributions: Record<string, number>` en `FinancialPlan`. Al añadir fondos se registra quién aportó. Se muestra en la card del plan.
