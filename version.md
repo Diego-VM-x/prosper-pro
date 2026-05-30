@@ -4,10 +4,12 @@
 ### Añadido
 - **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas con distribución visual mejorada (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width.
 - **Animaciones de aparición**: Cada sección del Dashboard aparece con fadeInUp escalonado (dashFadeUp): Welcome banner 0s → Stats 0.05s–0.23s → Today 0.3s → Widgets 0.35s–0.76s → Chart 0.85s.
-- **Responsive mejorado**: 3 breakpoints (1024px → 2 columns, 768px → 1 column). Sin scroll horizontal en desktop.
+- **Acciones Rápidas con modales**: Nuevo Plan navega a `/metas?action=add-plan`, Nueva Cuenta a `/finanzas?action=add-account`, Transacción a `/finanzas?action=add-transaction`. Cada página abre el modal automático y limpia la URL.
+- **Nombre de usuario siempre visible en móvil**: El nombre ya no se oculta en pantallas de 480px. Se añadió estructura de columna para nombre + email.
 
 ### Cambiado
-- **Sin scroll horizontal**: Las stats pills y la bottom-section ahora son grids visibles completos, reemplazando el scroll horizontal con flechas.
+- **Sin scroll horizontal**: Las stats pills y bottom-section ahora son grids visibles completos, reemplazando el scroll horizontal con flechas.
+- **Topbar móvil mejorado**: Avatar, nombre y notificaciones siempre visibles en la barra superior, como en desktop.
 
 ## [0.8.7 BETA] - 2026-05-29
 ### Añadido

@@ -153,6 +153,16 @@ export default function MetasPage() {
     getReceivedRequests(uid).then(setReceivedRequests);
   }, [uid]);
 
+  // Auto-open modal from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'add-plan') {
+      openNewModal();
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const filteredPlans = plans.filter(p => {
     if (filter !== 'all' && p.type !== filter) return false;
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;

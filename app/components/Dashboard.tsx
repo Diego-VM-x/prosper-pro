@@ -655,15 +655,15 @@ export function Dashboard() {
               </div>
             </div>
             <div className="quick-actions-grid">
-              <button className="quick-action-btn" onClick={() => router.push('/metas')}>
+              <button className="quick-action-btn" onClick={() => router.push('/metas?action=add-plan')}>
                 <span className="quick-action-icon">🎯</span>
                 <span className="quick-action-label">Nuevo Plan</span>
               </button>
-              <button className="quick-action-btn" onClick={() => router.push('/finanzas')}>
+              <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-account')}>
                 <span className="quick-action-icon">💳</span>
                 <span className="quick-action-label">Nueva Cuenta</span>
               </button>
-              <button className="quick-action-btn" onClick={() => router.push('/finanzas')}>
+              <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-transaction')}>
                 <span className="quick-action-icon">💸</span>
                 <span className="quick-action-label">Transacción</span>
               </button>

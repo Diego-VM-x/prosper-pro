@@ -137,12 +137,12 @@
 - **Estética premium**: Welcome banner con gradiente + glow radial + glassmorphism en content cards.
 - **Notas de versión**: UpdateModal v0.8.7. Eliminada sección próximas actualizaciones.
 
-### 30/05/2026 - v0.8.8 BETA: Dashboard Reorganizado + Animaciones de Aparición
+### 30/05/2026 - v0.8.8 BETA: Dashboard Reorganizado + Animaciones + Acciones Rápidas + Topbar Móvil
 - **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width. Sin scroll horizontal.
 - **Responsive**: 3 breakpoints (1024px → 2 cols, 768px → 1 col).
-- **Animaciones dashFadeUp**: fadeIn + slideUp (0.5s cubic-bezier) con stagger escalonado: Welcome 0s → Stats 0.05s/0.11s/0.17s/0.23s → Today 0.3s → Widgets 0.35s–0.76s → Chart 0.85s.
-- **Acciones Rápidas**: Botones abren modales funcionales en lugar de solo navegar (próximamente).
-- **CSS inline**: @keyframes dashFadeUp en <style> del componente. Clase .dash-item con animation-fill-mode: both.
+- **Animaciones dashFadeUp**: fadeIn + slideUp (0.5s cubic-bezier) con stagger escalonado.
+- **Acciones Rápidas navegan con modal**: Nuevo Plan → `/metas?action=add-plan`, Nueva Cuenta → `/finanzas?action=add-account`, Transacción → `/finanzas?action=add-transaction`. Cada página detecta el param vía useEffect y abre el modal automáticamente + limpia la URL.
+- **Topbar móvil**: Nombre de usuario visible en todos los breakpoints (se eliminó `display:none` a 480px). Añadida estructura flex column para nombre + email.
 - **Build**: 15/15 páginas, sin errores.
 
 ### 29/05/2026 - v0.8.6 BETA: Planes Compartidos Colaborativos + Guardado Global

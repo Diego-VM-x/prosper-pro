@@ -242,6 +242,19 @@ export default function FinanzasPage() {
     loadTransactions();
   }, [uid, loadTransactions]);
 
+  // Auto-open modal from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    if (action === 'add-transaction') {
+      setShowModal(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (action === 'add-account') {
+      setShowAccountModal(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   // Filtrar transacciones
   const filteredByAccount = selectedAccount === 'all'
     ? transactions
