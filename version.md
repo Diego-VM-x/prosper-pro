@@ -1,5 +1,14 @@
 # Historial de Versiones: Prosper-Pro
 
+## [0.8.8 BETA] - 2026-05-30
+### Añadido
+- **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas con distribución visual mejorada (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width.
+- **Animaciones de aparición**: Cada sección del Dashboard aparece con fadeInUp escalonado (dashFadeUp): Welcome banner 0s → Stats 0.05s–0.23s → Today 0.3s → Widgets 0.35s–0.76s → Chart 0.85s.
+- **Responsive mejorado**: 3 breakpoints (1024px → 2 columns, 768px → 1 column). Sin scroll horizontal en desktop.
+
+### Cambiado
+- **Sin scroll horizontal**: Las stats pills y la bottom-section ahora son grids visibles completos, reemplazando el scroll horizontal con flechas.
+
 ## [0.8.7 BETA] - 2026-05-29
 ### Añadido
 - **Resumen del Mes**: Widget en el Dashboard que muestra ingresos, gastos y balance del mes actual con una barra comparativa visual.

@@ -326,7 +326,7 @@ export function Dashboard() {
     <DashboardLayout>
       <div className="dashboard-container">
         {/* Welcome Banner */}
-        <div className="welcome-banner">
+        <div className="welcome-banner dash-item" style={{animationDelay: '0s'}}>
           <div className="welcome-content">
             <p className="welcome-greeting">{greeting()},</p>
             <h1 className="welcome-title">{user?.displayName || 'Usuario'}</h1>
@@ -345,22 +345,22 @@ export function Dashboard() {
         </div>
 
         {/* Stats Pills - Grid visible */}
-        <div className="stats-grid">
-          <div className="stat-pill" onClick={() => router.push('/finanzas')}>
+        <div className="stats-grid dash-stagger">
+          <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/finanzas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro Mensual</span>
               <span className="stat-pill-value">{formatInCurrency(monthlySavings, displayCurrency)}</span>
             </div>
           </div>
-          <div className="stat-pill" onClick={() => router.push('/metas')}>
+          <div className="stat-pill dash-item" style={{animationDelay: '0.11s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro en Planes</span>
               <span className="stat-pill-value">{formatAmount(totalSavingsCurrent)}</span>
             </div>
           </div>
-          <div className="stat-pill" onClick={() => router.push('/metas')}>
+          <div className="stat-pill dash-item" style={{animationDelay: '0.17s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}>🔄</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Recurrentes/Mes</span>
@@ -368,7 +368,7 @@ export function Dashboard() {
             </div>
             {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
           </div>
-          <div className="stat-pill" onClick={() => router.push('/metas')}>
+          <div className="stat-pill dash-item" style={{animationDelay: '0.23s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}>✓</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Metas Completadas</span>
@@ -379,7 +379,7 @@ export function Dashboard() {
 
         {/* Today Section - Avisos */}
         {todayItems.length > 0 && (
-          <div className="today-section">
+          <div className="today-section dash-item" style={{animationDelay: '0.3s'}}>
             <div className="section-header">
               <div className="section-header-left">
                 <IconCalendar width={18} />
@@ -411,10 +411,10 @@ export function Dashboard() {
         )}
 
         {/* Widgets Grid - all visible */}
-        <div className="widgets-grid">
+        <div className="widgets-grid dash-stagger">
 
           {/* Active Plans */}
-          <div className="content-card plans-card">
+          <div className="content-card plans-card dash-item" style={{animationDelay: '0.35s'}}>
             <div className="content-card-header">
               <div className="content-card-header-left">
                 <IconTasks width={18} />
@@ -471,7 +471,7 @@ export function Dashboard() {
           </div>
 
           {/* Progress Ring */}
-          <div className="content-card progress-section">
+          <div className="content-card progress-section dash-item" style={{animationDelay: '0.42s'}}>
             <div className="content-card-header">
               <h2 className="content-card-title">Progreso General</h2>
             </div>
@@ -500,7 +500,7 @@ export function Dashboard() {
           </div>
 
           {/* Upcoming Deadlines */}
-          <div className="content-card deadlines-section">
+          <div className="content-card deadlines-section dash-item" style={{animationDelay: '0.55s'}}>
             <div className="content-card-header">
               <div className="content-card-header-left">
                 <IconClock width={18} />
@@ -530,7 +530,7 @@ export function Dashboard() {
           </div>
 
           {/* Quick Access Accounts */}
-          <div className="content-card accounts-section">
+          <div className="content-card accounts-section dash-item" style={{animationDelay: '0.48s'}}>
             <div className="content-card-header">
               <div className="content-card-header-left">
                 <IconWallet width={18} />
@@ -579,7 +579,7 @@ export function Dashboard() {
           </div>
 
           {/* Monthly Summary */}
-          <div className="content-card summary-card">
+          <div className="content-card summary-card dash-item" style={{animationDelay: '0.62s'}}>
             <div className="content-card-header">
               <div className="content-card-header-left">
                 <IconWallet width={18} />
@@ -613,7 +613,7 @@ export function Dashboard() {
           </div>
 
           {/* Recent Transactions */}
-          <div className="content-card recent-tx-card">
+          <div className="content-card recent-tx-card dash-item" style={{animationDelay: '0.69s'}}>
             <div className="content-card-header">
               <div className="content-card-header-left">
                 <IconReceipt width={18} />
@@ -647,7 +647,7 @@ export function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="content-card quick-actions-card">
+          <div className="content-card quick-actions-card dash-item" style={{animationDelay: '0.76s'}}>
             <div className="content-card-header">
               <div className="content-card-header-left">
                 <IconZap width={18} />
@@ -676,7 +676,7 @@ export function Dashboard() {
         </div>
 
         {/* Chart - Full width at bottom */}
-        <div className="chart-bottom-wrapper">
+        <div className="chart-bottom-wrapper dash-item" style={{animationDelay: '0.85s'}}>
           <div className="content-card chart-card">
             <div className="content-card-header">
               <div className="content-card-header-left">
@@ -753,6 +753,14 @@ export function Dashboard() {
 
       <style>{`
         * { box-sizing: border-box; }
+
+        @keyframes dashFadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .dash-item {
+          animation: dashFadeUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
 
         .dashboard-container {
           padding: 0;

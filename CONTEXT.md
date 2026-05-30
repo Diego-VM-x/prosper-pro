@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (29 de Mayo, 2026 - v0.8.6 BETA)
+## Estado Actual (30 de Mayo, 2026 - v0.8.8 BETA)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -131,12 +131,19 @@
 ### 29/05/2026 - v0.8.7 BETA: Dashboard Widgets Elegantes + Flechas Inteligentes
 - **Resumen del Mes**: Nuevo widget con ingresos, gastos y balance del mes actual con barra visual proporcional.
 - **Últimos Movimientos**: Lista de las 5 transacciones más recientes con icono por tipo, fecha, descripción y monto.
-- **Acciones Rápidas**: Grid de 4 botones (Nuevo Plan, Nueva Cuenta, Transacción, Calendario) con hover neón.
-- **Flechas inteligentes**: Añadidas a secciones scrollables (stats pills y widgets inferiores). Aparecen al hover, ocultas en bordes, auto-scroll continuo al mantener hover. Scroll position tracking con useEffect + refs.
-- **Auto-scroll**: startAutoScroll/stopAutoScroll con requestAnimationFrame-style (setTimeout 16ms) para scroll suave al mantener el ratón sobre la flecha.
-- **Estética premium**: Welcome banner con gradiente profundo + radial glow + borde sutil. Content cards con glassmorphism (::after gradient), hover translateY(-2px), sombras expandidas. Stat pills con icono scale(1.08) en hover. Today/deadline items con translateX(3px) + glow.
-- **Notas de versión**: Actualizado UpdateModal a v0.8.7 BETA con 7 notas resumidas. Eliminada sección de próximas actualizaciones en notas-version.
-- **Build**: 14/14 páginas generadas, sin errores.
+- **Acciones Rápidas**: Grid de 4 botones (Nuevo Plan, Nueva Cuenta, Transacción, Calendario).
+- **Flechas inteligentes**: Añadidas a secciones scrollables (stats pills y widgets inferiores). Auto-scroll continuo al mantener hover.
+- **Auto-scroll**: setTimeout(16ms) para scroll suave al mantener ratón sobre la flecha.
+- **Estética premium**: Welcome banner con gradiente + glow radial + glassmorphism en content cards.
+- **Notas de versión**: UpdateModal v0.8.7. Eliminada sección próximas actualizaciones.
+
+### 30/05/2026 - v0.8.8 BETA: Dashboard Reorganizado + Animaciones de Aparición
+- **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width. Sin scroll horizontal.
+- **Responsive**: 3 breakpoints (1024px → 2 cols, 768px → 1 col).
+- **Animaciones dashFadeUp**: fadeIn + slideUp (0.5s cubic-bezier) con stagger escalonado: Welcome 0s → Stats 0.05s/0.11s/0.17s/0.23s → Today 0.3s → Widgets 0.35s–0.76s → Chart 0.85s.
+- **Acciones Rápidas**: Botones abren modales funcionales en lugar de solo navegar (próximamente).
+- **CSS inline**: @keyframes dashFadeUp en <style> del componente. Clase .dash-item con animation-fill-mode: both.
+- **Build**: 15/15 páginas, sin errores.
 
 ### 29/05/2026 - v0.8.6 BETA: Planes Compartidos Colaborativos + Guardado Global
 - **Planes compartidos colaborativos**: Los planes donde el usuario está en `sharedWith` se cargan junto a los propios en Metas. Badge "Compartido" e "Invitado" visibles en cada card. Botones editar/eliminar/compartir solo para el dueño (`ownerId === uid`). Al rechazar solicitud se remueve al usuario de `sharedWith`.
