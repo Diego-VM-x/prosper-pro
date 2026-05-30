@@ -339,15 +339,15 @@ export function Dashboard() {
 
   return (
     <DashboardLayout>
+      {isDesktop && (
+        <div
+          className="cursor-glow"
+          style={{
+            transform: `translate(${mousePos.x - 400}px, ${mousePos.y - 400}px)`,
+          }}
+        />
+      )}
       <div className="dashboard-container" onMouseMove={handleMouseMove}>
-        {isDesktop && (
-          <div
-            className="cursor-glow"
-            style={{
-              background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(61,204,142,0.08), transparent 60%)`,
-            }}
-          />
-        )}
         {/* Welcome Banner */}
         <div className="welcome-banner dash-item" style={{animationDelay: '0s'}}>
           <div className="welcome-content">
@@ -788,22 +788,22 @@ export function Dashboard() {
         @media (min-width: 1025px) {
           .cursor-glow {
             position: fixed;
-            inset: 0;
+            top: 0; left: 0;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(61,204,142,0.18) 0%, transparent 60%);
             pointer-events: none;
             z-index: 0;
-            will-change: background;
-            transition: background 0.05s linear;
-          }
-          .dashboard-container {
-            position: relative;
-            z-index: 1;
+            will-change: transform;
+            transition: transform 0.06s ease-out;
           }
           .content-card, .stat-pill, .welcome-banner, .today-section, .chart-bottom-wrapper {
             position: relative;
-            transition: box-shadow 0.25s ease;
+            transition: box-shadow 0.3s ease;
           }
           .content-card:hover, .stat-pill:hover, .welcome-banner:hover, .today-section:hover, .chart-bottom-wrapper:hover {
-            box-shadow: 0 0 30px rgba(61,204,142,0.08), 0 0 60px rgba(61,204,142,0.04);
+            box-shadow: 0 0 40px rgba(61,204,142,0.12), 0 0 80px rgba(61,204,142,0.06);
           }
         }
 
