@@ -1274,6 +1274,8 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
           .mobile-user-name { font-size: 0.7rem; max-width: 70px; }
           .mobile-user-email { font-size: 0.5625rem; max-width: 70px; }
+          .mobile-user-text { display: none; }
+          .mobile-user-actions { gap: 2px; padding-right: 2px; }
           .notifications-dropdown { width: 260px; }
           .mobile-menu { width: 100%; max-width: 100%; min-height: 100dvh; }
           .user-dropdown.mobile-user-dropdown {
