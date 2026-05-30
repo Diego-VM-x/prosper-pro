@@ -622,7 +622,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
-          z-index: 1000;
+          z-index: 1002;
           display: flex;
           justify-content: flex-start;
           animation: fadeIn 0.25s ease;
