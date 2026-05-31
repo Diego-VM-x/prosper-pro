@@ -323,7 +323,9 @@ export function Dashboard() {
   };
 
   // Cursor neon glow (desktop only)
-  const [mousePos, setMousePos] = useState({ x: -500, y: -500 });
+  const glowRef = useRef<HTMLDivElement>(null);
+  const mouseRef = useRef({ x: -500, y: -500 });
+  const rafRef = useRef<number>(0);
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1025px)');
@@ -334,17 +336,29 @@ export function Dashboard() {
   }, []);
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isDesktop) return;
-    setMousePos({ x: e.clientX, y: e.clientY });
+    mouseRef.current = { x: e.clientX, y: e.clientY };
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = 0;
+        if (glowRef.current) {
+          glowRef.current.style.transform = `translate(${mouseRef.current.x - 400}px, ${mouseRef.current.y - 400}px)`;
+        }
+      });
+    }
   }, [isDesktop]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   return (
     <DashboardLayout>
       {isDesktop && (
         <div
           className="cursor-glow"
-          style={{
-            transform: `translate(${mousePos.x - 400}px, ${mousePos.y - 400}px)`,
-          }}
+          ref={glowRef}
         />
       )}
       <div className="dashboard-container" onMouseMove={handleMouseMove}>
