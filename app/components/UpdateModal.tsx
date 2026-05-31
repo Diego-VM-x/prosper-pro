@@ -9,15 +9,14 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.8.7 BETA",
+  version = "0.8.9 BETA",
   notes = [
-    { emoji: "📊", text: "Dashboard renovado: widgets de Resumen del Mes, Últimos Movimientos y Acciones Rápidas." },
-    { emoji: "🔁", text: "Flechas inteligentes en secciones scrollables con auto-scroll al hover." },
-    { emoji: "👥", text: "Planes compartidos colaborativos: ambos usuarios ven y aportan al plan." },
-    { emoji: "💰", text: "Contribuciones por usuario registradas al añadir fondos a un plan compartido." },
-    { emoji: "💾", text: "Barra Guardar Cambios siempre visible en Configuración desde cualquier pestaña." },
-    { emoji: "🔒", text: "Perfil público/privado ahora persiste correctamente al guardar." },
-    { emoji: "✨", text: "Estética general mejorada: sombras, transiciones, glassmorphism y hover effects." },
+    { emoji: "📱", text: "Dashboard ahora funciona correctamente en móvil: CSS movido a archivo propio, conflictos resueltos con globals.css." },
+    { emoji: "🎯", text: "Widget Progreso General completamente funcional: contabiliza metas y planes, incluyendo planes compartidos." },
+    { emoji: "🔄", text: "Animaciones con fallback prefers-reduced-motion para que ningún elemento quede invisible." },
+    { emoji: "📐", text: "Stats-grid colapsa a 2 columnas en tablets (1280px) donde antes se forzaban 4." },
+    { emoji: "🛠️", text: "Corregido stroke-dashoffset en anillo de progreso que mostraba barra pre-llenada." },
+    { emoji: "💻", text: "Código más limpio: 27KB de CSS inline extraído a dashboard.css." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first

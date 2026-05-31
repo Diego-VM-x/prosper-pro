@@ -1,5 +1,18 @@
 # Historial de Versiones: Prosper-Pro
 
+## [0.8.9 BETA] - 2026-05-30
+### Añadido
+- **CSS inline → archivo propio**: Dashboard ahora importa `dashboard.css` en vez de `<style>` inline. Soluciona bug donde móviles no parseaban el CSS y el dashboard se veía sin diseño.
+- **prefers-reduced-motion fallback**: Animaciones desactivadas para usuarios con preferencia de movimiento reducido, evitando elementos invisibles.
+- **Widget Progreso General funcional**: Ahora contabiliza metas + planes (incluyendo compartidos). Anillo de progreso muestra % combinado, stats reflejan totales reales.
+
+### Corregido
+- **Dashboard sin diseño en móvil**: CSS inline de 27KB no era parseado en navegadores móviles. Movido a `app/dashboard.css` procesado por Next.js.
+- **.stats-grid a 1280px**: Ahora colapsa a 2 columnas en lugar de forzar 4.
+- **.progress-ring-fill**: `stroke-dashoffset` ahora inicia en 0 para evitar barra pre-llenada.
+- **.modal-content**: Respeta `max-width: 440px` en pantallas de 480px.
+- **`* { box-sizing: border-box }` global**: Eliminado del dashboard CSS para no pisar estilos globales.
+
 ## [0.8.8 BETA] - 2026-05-30
 ### Añadido
 - **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas con distribución visual mejorada (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width.

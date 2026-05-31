@@ -6,6 +6,15 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.8.9 BETA', date: '2026-05-30', notes: [
+      'Dashboard funciona correctamente en móvil: CSS movido a archivo propio (dashboard.css), conflictos resueltos con globals.css.',
+      'Widget Progreso General completamente funcional: ahora contabiliza metas y planes, incluyendo planes compartidos.',
+      'Animaciones con fallback prefers-reduced-motion para evitar elementos invisibles en dispositivos con preferencia de movimiento reducido.',
+      'Corregido stats-grid que forzaba 4 columnas en 1280px (ahora colapsa a 2).',
+      'Corregido stroke-dashoffset del anillo de progreso que mostraba la barra pre-llenada.',
+      'Corregido modal-content que no respetaba max-width: 440px en 480px.',
+      'Eliminado * { box-sizing: border-box } global del dashboard CSS que pisaba estilos del sistema.',
+    ], preRelease: true },
     { version: '0.8.7 BETA', date: '2026-05-29', notes: [
       'Dashboard renovado con 3 nuevos widgets: Resumen del Mes (ingresos/gastos/balance), Últimos Movimientos y Acciones Rápidas.',
       'Flechas inteligentes en secciones scrollables: aparecen al hover y auto-scrollan al mantener el ratón.',
