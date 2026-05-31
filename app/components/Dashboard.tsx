@@ -808,26 +808,12 @@ export function Dashboard() {
             border-radius: 50%;
             background: radial-gradient(circle, rgba(61,204,142,0.18) 0%, transparent 60%);
             pointer-events: none;
-            z-index: -1;
+            z-index: 0;
             will-change: transform;
             transition: transform 0.06s ease-out;
           }
           .dashboard-container {
-            position: relative;
-            z-index: 1;
-          }
-          .content-card, .stat-pill, .welcome-banner, .today-section, .chart-bottom-wrapper {
-            position: relative;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
-          }
-          .content-card:hover, .stat-pill:hover, .welcome-banner:hover, .today-section:hover, .chart-bottom-wrapper:hover {
-            box-shadow: 0 0 20px rgba(61,204,142,0.2), 0 0 40px rgba(61,204,142,0.1);
-            border-color: rgba(61,204,142,0.3);
-          }
-        }
-
-        .dashboard-container {
-          padding: 0;
+            padding: 0;
           max-width: 1400px;
           margin: 0 auto;
           background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.03) 100%);
