@@ -1010,6 +1010,20 @@ export function Dashboard() {
         [data-theme="dark"] .content-card:hover {
           box-shadow: 0 0 30px rgba(61,204,142,0.06), 0 12px 40px -10px rgba(0,0,0,0.4);
         }
+        [data-theme="dark"] .content-card,
+        [data-theme="dark"] .stat-pill,
+        [data-theme="dark"] .today-section,
+        [data-theme="dark"] .chart-bottom-wrapper,
+        [data-theme="dark"] .content-card::after {
+          background: #0F1D2E;
+        }
+        [data-theme="amoled"] .content-card,
+        [data-theme="amoled"] .stat-pill,
+        [data-theme="amoled"] .today-section,
+        [data-theme="amoled"] .chart-bottom-wrapper,
+        [data-theme="amoled"] .content-card::after {
+          background: #000000;
+        }
         .content-card-header {
           display: flex;
           align-items: center;
