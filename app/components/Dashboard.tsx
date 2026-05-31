@@ -724,20 +724,20 @@ export function Dashboard() {
             </div>
             <div className="quick-actions-grid">
               <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                <span className="quick-action-icon">📊</span>
-                <span className="quick-action-label">Reportes</span>
+                <span className="quick-action-icon">💱</span>
+                <span className="quick-action-label">USD/BS</span>
               </div>
               <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                <span className="quick-action-icon">📈</span>
-                <span className="quick-action-label">Proyecciones</span>
+                <span className="quick-action-icon">🧾</span>
+                <span className="quick-action-label">Importar factura</span>
               </div>
               <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                <span className="quick-action-icon">💹</span>
-                <span className="quick-action-label">Inversiones</span>
+                <span className="quick-action-icon">🛒</span>
+                <span className="quick-action-label">Listas de compras</span>
               </div>
               <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                <span className="quick-action-icon">🛡️</span>
-                <span className="quick-action-label">Seguros</span>
+                <span className="quick-action-icon">🤖</span>
+                <span className="quick-action-label">Asistente AI</span>
               </div>
             </div>
           </div>
