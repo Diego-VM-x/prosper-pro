@@ -816,6 +816,13 @@ export function Dashboard() {
           padding: 0;
           max-width: 1400px;
           margin: 0 auto;
+          background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(0,0,0,0.03) 100%);
+        }
+        [data-theme="dark"] .dashboard-container {
+          background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 50%, rgba(0,0,0,0.15) 100%);
+        }
+        [data-theme="amoled"] .dashboard-container {
+          background: linear-gradient(135deg, rgba(255,255,255,0.015) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
         }
 
         /* Welcome Banner - Premium */
