@@ -820,8 +820,6 @@ export function Dashboard() {
       )}
 
       <style>{`
-        * { box-sizing: border-box; }
-
         @keyframes dashFadeUp {
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -1144,7 +1142,7 @@ export function Dashboard() {
         .progress-ring-container { position: relative; width: 120px; height: 120px; }
         .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
         .progress-ring .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 8; }
-        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.292; transition: stroke-dashoffset 1s ease; filter: drop-shadow(0 0 8px rgba(61,204,142,0.5)); }
+        .progress-ring .progress-ring-fill { fill: none; stroke: var(--color-prosper-green); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 339.292; stroke-dashoffset: 0; transition: stroke-dashoffset 1s ease; filter: drop-shadow(0 0 8px rgba(61,204,142,0.5)); }
         .progress-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .progress-pct { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
         .progress-label { font-size: 0.625rem; color: var(--text-secondary); margin-top: 2px; }
@@ -1291,6 +1289,9 @@ export function Dashboard() {
           50% { opacity: 0.5; }
         }
 
+        @media (max-width: 1280px) {
+          .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        }
         @media (max-width: 1024px) {
           .welcome-banner { padding: 24px; }
           .welcome-title { font-size: 1.5rem; }
@@ -1310,6 +1311,7 @@ export function Dashboard() {
           .widgets-grid .content-card { min-width: 0; }
           .content-card { padding: 16px; }
           .today-section { padding: 16px 20px; }
+          .progress-ring-container { width: 100px; height: 100px; }
         }
         @media (max-width: 480px) {
           .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }
@@ -1335,7 +1337,7 @@ export function Dashboard() {
           .deadline-badge-days { font-size: 0.875rem; }
           .account-item-icon { width: 36px; height: 36px; font-size: 1rem; }
           .modal-overlay { align-items: flex-start; padding-top: 10vh; }
-          .modal-content { width: 95%; padding: 16px; max-height: 85vh; }
+          .modal-content { width: 95%; max-width: 440px; padding: 16px; max-height: 85vh; }
           .modal-footer { flex-direction: column-reverse; }
           .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
         }
