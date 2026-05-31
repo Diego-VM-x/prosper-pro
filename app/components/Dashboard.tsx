@@ -242,10 +242,18 @@ export function Dashboard() {
     return () => { cancelled = true; };
   }, [user?.uid]);
 
-  const activeGoals = goals.filter((g) => g.status !== 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
-  const completedGoals = goals.filter((g) => g.status === 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
-  const totalGoals = goals.length;
-  const progressPct = totalGoals > 0 ? Math.round((completedGoals.length / totalGoals) * 100) : 0;
+  const activeItems = useMemo(() => {
+    const fromGoals = goals.filter((g) => g.status !== 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
+    const fromPlans = plans.filter((p) => p.status !== 'completed' && p.status !== 'cancelled' && (!query || p.title.toLowerCase().includes(query.toLowerCase())));
+    return fromGoals.length + fromPlans.length;
+  }, [goals, plans, query]);
+  const completedItems = useMemo(() => {
+    const fromGoals = goals.filter((g) => g.status === 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase()))).length;
+    const fromPlans = plans.filter((p) => p.status === 'completed' && (!query || p.title.toLowerCase().includes(query.toLowerCase()))).length;
+    return fromGoals + fromPlans;
+  }, [goals, plans, query]);
+  const totalItems = goals.length + plans.length;
+  const progressPct = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
   const radius = 54;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference * (1 - progressPct / 100);
@@ -409,8 +417,8 @@ export function Dashboard() {
           <div className="stat-pill dash-item" style={{animationDelay: '0.23s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}>✓</div>
             <div className="stat-pill-info">
-              <span className="stat-pill-label">Metas Completadas</span>
-              <span className="stat-pill-value">{completedGoals.length}</span>
+              <span className="stat-pill-label">Metas/Planes</span>
+              <span className="stat-pill-value">{completedItems}</span>
             </div>
           </div>
         </div>
@@ -526,12 +534,12 @@ export function Dashboard() {
               </div>
               <div className="progress-stats">
                 <div className="progress-stat">
-                  <span className="progress-stat-value">{activeGoals.length}</span>
-                  <span className="progress-stat-label">Activas</span>
+                  <span className="progress-stat-value">{activeItems}</span>
+                  <span className="progress-stat-label">Activos</span>
                 </div>
                 <div className="progress-stat">
-                  <span className="progress-stat-value">{completedGoals.length}</span>
-                  <span className="progress-stat-label">Completadas</span>
+                  <span className="progress-stat-value">{completedItems}</span>
+                  <span className="progress-stat-label">Completados</span>
                 </div>
               </div>
             </div>

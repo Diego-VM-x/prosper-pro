@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (30 de Mayo, 2026 - v0.8.8 BETA)
+## Estado Actual (30 de Mayo, 2026 - v0.8.9 BETA)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -136,6 +136,13 @@
 - **Auto-scroll**: setTimeout(16ms) para scroll suave al mantener ratón sobre la flecha.
 - **Estética premium**: Welcome banner con gradiente + glow radial + glassmorphism en content cards.
 - **Notas de versión**: UpdateModal v0.8.7. Eliminada sección próximas actualizaciones.
+
+### 30/05/2026 - v0.8.9 BETA: CSS Fix Móvil + Progreso General con Planes Compartidos
+- **CSS inline → archivo propio**: Movidas 27KB de CSS del `<style>` tag inline en `Dashboard.tsx` a `app/dashboard.css` importado vía Next.js CSS pipeline. Soluciona bug donde móviles no parseaban el `<style>` inline y el dashboard se veía sin diseño (solo texto).
+- **prefers-reduced-motion**: Agregado fallback global en `animations.css` y en Dashboard para que elementos con `animation-fill-mode: both` no queden invisibles en dispositivos con preferencia de movimiento reducido.
+- **Conflictos CSS resueltos**: `.stats-grid` en 1280px (ahora colapsa a 2 columnas), `.progress-ring-fill` con `stroke-dashoffset: 0` (evita barra pre-llenada), `.modal-content` con `max-width: 440px` en 480px.
+- **Widget Progreso General completamente funcional**: Ahora contabiliza metas (goals) Y planes financieros (plans), incluyendo planes compartidos (`sharedWith`). El anillo de progreso muestra el % combinado de completados, y las stats "Activos"/"Completados" reflejan el total de ambos tipos.
+- **Build**: 15/15 páginas, sin errores.
 
 ### 30/05/2026 - v0.8.8 BETA: Dashboard Reorganizado + Animaciones + Acciones Rápidas + Topbar Móvil
 - **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width. Sin scroll horizontal.
