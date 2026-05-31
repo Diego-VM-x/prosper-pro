@@ -394,7 +394,37 @@
 }
 
 /* ==========================================================================
-   7. KEYFRAMES COMPARTIDOS
+   7. PREFERS-REDUCED-MOTION: Desactiva todas las animaciones de entrada
+      para que ningún elemento quede invisible en dispositivos con
+      preferencia de movimiento reducido.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-entrance,
+  .page-content h1, .page-content h2, .page-content h3,
+  .page-content p, .page-content .text-secondary, .page-content .text-sm, .page-content label,
+  .page-content .stat-card, .page-content .stat-pill,
+  .page-content .card, .page-content .content-card, .page-content .plan-card,
+  .page-content .account-card, .page-content .course-card, .page-content .feature-card,
+  .page-content .btn, .page-content button[class*="btn"],
+  .page-content input, .page-content select, .page-content textarea,
+  .page-content table, .page-content tbody tr,
+  .page-content .chart-card, .page-content .chart-container,
+  .page-content .badge, .page-content .tag, .page-content .filter-btn, .page-content .filter-chip,
+  .page-content section, .page-content .section-header,
+  .page-content .progress-bar, .page-content .progress-fill, .page-content [class*="progress"],
+  .page-content .welcome-banner, .page-content .page-header, .page-content .stats-grid,
+  .page-content .bottom-section > *,
+  .stagger-item,
+  .animate-fade-in-up-smooth, .animate-fade-in-right-smooth,
+  .chart-reveal-premium {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+   8. KEYFRAMES COMPARTIDOS
    ========================================================================== */
 
 /* Subida suave SIN transform en el contenedor padre */

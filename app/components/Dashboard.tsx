@@ -829,6 +829,9 @@ export function Dashboard() {
         .dash-item {
           animation: dashFadeUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
+        @media (prefers-reduced-motion: reduce) {
+          .dash-item { animation: none; opacity: 1; transform: none; }
+        }
 
         @media (min-width: 1025px) {
           .cursor-glow {
@@ -1306,6 +1309,7 @@ export function Dashboard() {
           .widgets-grid .accounts-section { grid-column: span 1; }
           .widgets-grid .content-card { min-width: 0; }
           .content-card { padding: 16px; }
+          .today-section { padding: 16px 20px; }
         }
         @media (max-width: 480px) {
           .welcome-banner { padding: 16px; border-radius: var(--radius-lg); }
@@ -1322,6 +1326,8 @@ export function Dashboard() {
           .widgets-grid { grid-template-columns: 1fr; gap: 12px; }
           .widgets-grid .accounts-section { grid-column: span 1; }
           .content-card { padding: 16px; border-radius: var(--radius-lg); }
+          .quick-actions-grid { grid-template-columns: 1fr; gap: 8px; }
+          .today-section { padding: 16px; }
           .content-card-title { font-size: 0.9375rem; }
           .progress-ring-container { width: 100px; height: 100px; }
           .progress-pct { font-size: 1.25rem; }
