@@ -1013,15 +1013,13 @@ export function Dashboard() {
         [data-theme="dark"] .content-card,
         [data-theme="dark"] .stat-pill,
         [data-theme="dark"] .today-section,
-        [data-theme="dark"] .chart-bottom-wrapper,
-        [data-theme="dark"] .content-card::after {
+        [data-theme="dark"] .chart-bottom-wrapper {
           background: #0F1D2E;
         }
         [data-theme="amoled"] .content-card,
         [data-theme="amoled"] .stat-pill,
         [data-theme="amoled"] .today-section,
-        [data-theme="amoled"] .chart-bottom-wrapper,
-        [data-theme="amoled"] .content-card::after {
+        [data-theme="amoled"] .chart-bottom-wrapper {
           background: #000000;
         }
         .content-card-header {
