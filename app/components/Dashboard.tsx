@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense, useRef, useMemo } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -322,9 +322,32 @@ export function Dashboard() {
     return 'Buenas noches';
   };
 
+  // Cursor neon glow (desktop only)
+  const [mousePos, setMousePos] = useState({ x: -500, y: -500 });
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1025px)');
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDesktop) return;
+    setMousePos({ x: e.clientX, y: e.clientY });
+  }, [isDesktop]);
+
   return (
     <DashboardLayout>
-      <div className="dashboard-container">
+      {isDesktop && (
+        <div
+          className="cursor-glow"
+          style={{
+            transform: `translate(${mousePos.x - 400}px, ${mousePos.y - 400}px)`,
+          }}
+        />
+      )}
+      <div className="dashboard-container" onMouseMove={handleMouseMove}>
         {/* Welcome Banner */}
         <div className="welcome-banner dash-item" style={{animationDelay: '0s'}}>
           <div className="welcome-content">
@@ -763,6 +786,22 @@ export function Dashboard() {
         }
 
         @media (min-width: 1025px) {
+          .cursor-glow {
+            position: fixed;
+            top: 0; left: 0;
+            width: 800px;
+            height: 800px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(61,204,142,0.18) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: -1;
+            will-change: transform;
+            transition: transform 0.06s ease-out;
+          }
+          .dashboard-container {
+            position: relative;
+            z-index: 1;
+          }
           .content-card, .stat-pill, .welcome-banner, .today-section, .chart-bottom-wrapper {
             position: relative;
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
