@@ -6,6 +6,7 @@
  */
 
 import { createWorker } from 'tesseract.js';
+import { parseMultipleOcrTexts } from '@/lib/vepay-core';
 import type {
   VEPayReceipt,
   VEPayParseResponse,
@@ -75,21 +76,23 @@ async function extractTextFromImage(file: File, onProgress?: (p: number) => void
 export async function parseReceipt(file: File, onProgress?: (p: number) => void): Promise<VEPayParseResponse> {
   const ocrText = await extractTextFromImage(file, onProgress);
 
-  const response = await fetch('/api/vepay/parse', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      texts: [{ text: ocrText, filename: file.name }],
-      includeRawText: false,
-    }),
-  });
+  const result = parseMultipleOcrTexts(
+    [{ text: ocrText, filename: file.name }],
+    { includeRawText: false }
+  );
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Error al procesar captura: ${text}`);
-  }
-
-  return response.json();
+  return {
+    request_id: crypto.randomUUID?.() || Date.now().toString(16),
+    schema_version: 'vepay_api_receipt_v1',
+    receipts: result.receipts,
+    summary: {
+      total: 1,
+      complete: result.receipts.filter(r => r.validation.is_complete).length,
+      incomplete: result.receipts.filter(r => !r.validation.is_complete).length,
+      errors: result.errors.length,
+    },
+    errors: result.errors,
+  };
 }
 
 export async function parseMultipleReceipts(files: File[], onProgress?: (filename: string, p: number) => void): Promise<VEPayParseResponse> {
@@ -102,21 +105,20 @@ export async function parseMultipleReceipts(files: File[], onProgress?: (filenam
     texts.push({ text: ocrText, filename: file.name });
   }
 
-  const response = await fetch('/api/vepay/parse', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      texts,
-      includeRawText: false,
-    }),
-  });
+  const result = parseMultipleOcrTexts(texts, { includeRawText: false });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Error al procesar capturas: ${text}`);
-  }
-
-  return response.json();
+  return {
+    request_id: crypto.randomUUID?.() || Date.now().toString(16),
+    schema_version: 'vepay_api_receipt_v1',
+    receipts: result.receipts,
+    summary: {
+      total: texts.length,
+      complete: result.receipts.filter(r => r.validation.is_complete).length,
+      incomplete: result.receipts.filter(r => !r.validation.is_complete).length,
+      errors: result.errors.length,
+    },
+    errors: result.errors,
+  };
 }
 
 export function parseAmount(value: string | null | undefined): number {

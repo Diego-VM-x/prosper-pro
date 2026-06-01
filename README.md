@@ -23,7 +23,6 @@
 - **Lecciones aprendidas**: El uso de CSS custom properties (`var(--token)`) con overrides en `[data-theme="dark"]` es la forma más eficiente de implementar modos de color sin duplicar estilos. Mantener iconos SVG inline elimina dependencias externas.
 
 ### [2026-03-30] [09:30] - Limpieza Progresiva y Simplificación para Sitio Web
-- **Resumen técnico**: Eliminación de la "Arquitectura Tripartita" y soporte de Capacitor/Android. Se reestructuró la carpeta `app/` para aplanar la jerarquía y remover Route Groups redundantes. Las habilidades de agente exclusivas de la App se movieron a `.agent/skills/app-exclusive/`.
 - **Desafíos resueltos**: Migración limpia de rutas y depuración de dependencias en `package.json`.
 - **Lecciones aprendidas**: Simplificar el repositorio tempranamente evita deuda técnica en builds y confusiones de ruteo cuando el objetivo es puramente web.
 

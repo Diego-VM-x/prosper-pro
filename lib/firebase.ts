@@ -36,13 +36,40 @@ if (typeof window !== 'undefined') {
   }
 }
 
+if (typeof window !== 'undefined') {
+  try {
+    sessionStorage.getItem('__test');
+  } catch {
+    const store: Record<string, string> = {};
+    Object.defineProperty(window, 'sessionStorage', {
+      value: {
+        getItem: (k: string) => store[k] ?? null,
+        setItem: (k: string, v: string) => { store[k] = v; },
+        removeItem: (k: string) => { delete store[k]; },
+        clear: () => { Object.keys(store).forEach(k => delete store[k]); },
+        key: (i: number) => Object.keys(store)[i] ?? null,
+        get length() { return Object.keys(store).length; },
+      },
+      configurable: true,
+    });
+  }
+}
+
 let app: FirebaseApp;
 let db: ReturnType<typeof getFirestore>;
 let auth: Auth | null = null;
 
 try {
-  // Verificar que al menos las variables críticas existan
   const hasCriticalVars = firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId;
+
+  if (hasCriticalVars && typeof window !== 'undefined') {
+    try {
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const key = sessionStorage.key(i);
+        if (key?.startsWith('firebase:')) sessionStorage.removeItem(key);
+      }
+    } catch {}
+  }
 
   if (hasCriticalVars) {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
@@ -51,7 +78,6 @@ try {
       auth = getAuth(app);
     }
   } else {
-    // Firebase no configurado - crear app dummy para evitar crashes
     console.warn('[Firebase] Configuración incompleta. La app funcionará sin datos de Firebase.');
     app = !getApps().length
       ? initializeApp({ apiKey: 'dummy', projectId: 'dummy', appId: 'dummy' })
@@ -68,10 +94,16 @@ try {
     db = getFirestore(app);
   } catch (fallbackErr) {
     console.error('[Firebase] Fallback también falló:', fallbackErr);
-    // Último recurso: usar valores undefined (las páginas deben manejar auth/db null)
     app = {} as FirebaseApp;
     db = {} as ReturnType<typeof getFirestore>;
   }
 }
 
 export { app, auth, db };
+
+export function enableOfflinePersistence() {
+  if (typeof window === 'undefined' || !db) return Promise.resolve();
+  return import('firebase/firestore').then(({ enableMultiTabIndexedDbPersistence }) =>
+    enableMultiTabIndexedDbPersistence(db).catch(() => {})
+  );
+}

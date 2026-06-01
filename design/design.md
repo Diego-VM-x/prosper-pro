@@ -46,7 +46,6 @@ Este documento registra los componentes estéticos, propósitos arquitectónicos
 - **Decisiones de Diseño**:
   - La página principal se movió de `app/(web)/page.tsx` a `app/page.tsx` para seguir el estándar de Next.js App Router para proyectos mono-sitio.
   - Se archivaron las skills de arquitectura tripartita en `.agent/skills/app-exclusive/` para mantener la base de conocimiento sin interferir en el desarrollo web actual.
-  - Se eliminó Capacitor/Android para aligerar el repositorio.
 
 ### [2026-03-29 21:40] - Estructura Tripartita (APP, WEB, Publicidad)
 - **Archivo/Componente**: Directorios `app/(app)`, `app/(web)`, `app/(publicidad)`.

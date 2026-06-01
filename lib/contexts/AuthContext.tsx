@@ -2,21 +2,13 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  onAuthStateChanged,
-  User,
-  signOut,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  deleteUser
-} from 'firebase/auth';
+import { onAuthStateChanged, signOut, updateCurrentUser, type User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 import { seedUserData } from '@/lib/seed';
 import type { CurrencyCode } from '@/types';
+
 
 interface AuthContextType {
   user: User | null;
@@ -44,154 +36,293 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }): User {
+  return {
+    uid: response.localId,
+    email: response.email || null,
+    displayName: response.displayName || null,
+    photoURL: response.photoUrl || null,
+    emailVerified: false,
+    isAnonymous: false,
+    phoneNumber: null,
+    tenantId: null,
+    providerData: [],
+    metadata: {
+      createdAt: Date.now().toString(),
+      lastLoginAt: Date.now().toString(),
+      lastSignInTime: new Date().toISOString(),
+      creationTime: new Date().toISOString(),
+    },
+    providerId: 'firebase',
+    toJSON: () => ({ uid: response.localId, email: response.email, stsTokenManager: { accessToken: response.idToken, refreshToken: response.refreshToken } }),
+    delete: async () => {},
+    getIdToken: async () => response.idToken,
+    getIdTokenResult: async () => ({
+      token: response.idToken,
+      claims: {},
+      authTime: new Date().toISOString(),
+      issuedAtTime: new Date().toISOString(),
+      expirationTime: new Date(Date.now() + 3600000).toISOString(),
+      signInProvider: null,
+      signInSecondFactor: null,
+    }),
+    reload: async () => {},
+  } as unknown as User;
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        setUser(firebaseUser);
+    let cancelled = false;
+    async function init() {
+      if (!auth) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
+      await enableOfflinePersistence();
+
+      const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (cancelled) return;
         if (firebaseUser) {
-          try {
-            const profile = await getUserProfile(firebaseUser.uid);
-            if (!profile) {
-              await createUserProfile({
-                uid: firebaseUser.uid,
-                displayName: firebaseUser.displayName,
-                email: firebaseUser.email,
-                photoURL: firebaseUser.photoURL,
-                createdAt: Date.now(),
-                isSeeded: false,
-                currency: 'USD' as CurrencyCode,
-                showProfile: true,
-              });
-              try {
-                await seedUserData(firebaseUser.uid);
-              } catch (seedErr) {
-                console.error('Seed error:', seedErr);
-              }
+          setUser(firebaseUser);
+          await onUserReady(firebaseUser);
+        } else {
+          const tokens = await getStoredTokens();
+          if (tokens && tokens.idToken) {
+            const userObj = createUserObject({
+              localId: tokens.localId,
+              email: tokens.email,
+              displayName: tokens.displayName,
+              photoUrl: tokens.photoUrl,
+              idToken: tokens.idToken,
+              refreshToken: tokens.refreshToken,
+            });
+            setUser(userObj);
+            if (auth) {
+              try { await updateCurrentUser(auth, userObj); } catch {}
             }
-            // Solicitar permiso para notificaciones push
             try {
-              const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
-              await requestNotificationPermission();
-            } catch (notifErr) {
-              console.error('Notification permission error:', notifErr);
+              const { getUserDataRest } = await import('@/lib/firebase-auth-rest');
+              const data = await getUserDataRest(tokens.idToken);
+              if (data && data.localId) {
+                await onUserReady(userObj);
+              } else {
+                clearStoredTokens();
+                setUser(null);
+              }
+            } catch {
+              clearStoredTokens();
+              setUser(null);
             }
-          } catch (profileErr) {
-            console.error('Profile error:', profileErr);
           }
         }
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       });
-      return () => unsubscribe();
-    } catch (e) {
-      console.error('Auth init error:', e);
-      setLoading(false);
+      return () => { cancelled = true; unsub(); };
     }
-  }, []);
+    init();
+    }, []);
+
+    async function onUserReady(u: User) {
+      try {
+        const profile = await getUserProfile(u.uid);
+        if (!profile) {
+          await createUserProfile({
+            uid: u.uid,
+            displayName: u.displayName,
+            email: u.email,
+            photoURL: u.photoURL,
+            createdAt: Date.now(),
+            isSeeded: false,
+            currency: 'USD' as CurrencyCode,
+            showProfile: true,
+          });
+          try { await seedUserData(u.uid); } catch {}
+        }
+        
+        // Send welcome notification for every login (new and existing users)
+        try {
+          const { notifyWelcome } = await import('@/lib/firestore/notifications');
+          await notifyWelcome(u.uid, u.displayName || 'Usuario');
+        } catch (error) {
+          console.error('Failed to send welcome notification:', error);
+        }
+        
+        try {
+          const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
+          await requestNotificationPermission();
+        } catch (error) {
+          console.error('Failed to request notification permission:', error);
+        }
+
+        // Initialize Capacitor native push notifications (no-op on web).
+        try {
+          const { initGlobalPushNotifications } = await import('@/src/services/pushNativeService');
+          await initGlobalPushNotifications();
+        } catch (error) {
+          console.error('Failed to init native push notifications:', error);
+        }
+      } catch (error) {
+        console.error('Error in onUserReady:', error);
+      }
+    }
+
+  async function getStoredTokens() {
+    try {
+      const raw = localStorage.getItem('prosper_auth') || sessionStorage.getItem('prosper_auth');
+      if (raw) return JSON.parse(raw);
+      return null;
+    } catch { return null; }
+  }
+
+function storeTokens(tokens: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
+  try {
+    const json = JSON.stringify(tokens);
+    localStorage.setItem('prosper_auth', json);
+    sessionStorage.setItem('prosper_auth', json);
+  } catch {}
+}
+
+function clearStoredTokens() {
+  try { localStorage.removeItem('prosper_auth'); } catch {}
+  try { sessionStorage.removeItem('prosper_auth'); } catch {}
+}
+
+  async function setAppUser(tokens: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
+    storeTokens(tokens);
+    const userObj = createUserObject({
+      localId: tokens.localId,
+      email: tokens.email,
+      displayName: tokens.displayName,
+      photoUrl: tokens.photoUrl,
+      idToken: tokens.idToken,
+      refreshToken: tokens.refreshToken,
+    });
+    setUser(userObj);
+    if (auth) {
+      try { await updateCurrentUser(auth, userObj); } catch {}
+    }
+    try {
+      const profile = await getUserProfile(tokens.localId);
+      if (!profile) {
+        await createUserProfile({
+          uid: tokens.localId,
+          displayName: tokens.displayName || null,
+          email: tokens.email || null,
+          photoURL: tokens.photoUrl || null,
+          createdAt: Date.now(),
+          isSeeded: false,
+          currency: 'USD' as CurrencyCode,
+          showProfile: true,
+        });
+        try { await seedUserData(tokens.localId); } catch {}
+      }
+    } catch {}
+  }
 
   const loginWithGoogle = async () => {
-    if (!auth) throw new Error('Firebase Auth no está disponible. Verifica las variables de entorno.');
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    if (!auth) throw new Error('Firebase Auth no está disponible.');
+    const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
+    await signInWithPopup(auth, new GoogleAuthProvider());
   };
 
   const loginWithEmail = async (email: string, pass: string) => {
-    if (!auth) throw new Error('Firebase Auth no está disponible. Verifica las variables de entorno.');
-    await signInWithEmailAndPassword(auth, email, pass);
+    if (!auth) throw new Error('Firebase Auth no está disponible.');
+    if (!navigator.onLine) throw { code: 'auth/network-request-failed', message: 'Sin conexión a internet.' };
+    try {
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      const userCred = await signInWithEmailAndPassword(auth, email, pass);
+      storeTokens({
+        localId: userCred.user.uid,
+        email: userCred.user.email || undefined,
+        displayName: userCred.user.displayName || undefined,
+        photoUrl: userCred.user.photoURL || undefined,
+        idToken: await userCred.user.getIdToken(),
+        refreshToken: (userCred.user as any).refreshToken || '',
+      });
+      setUser(userCred.user);
+      await onUserReady(userCred.user);
+    } catch (e: any) {
+      throw e;
+    }
   };
 
   const registerWithEmail = async (email: string, pass: string, name: string, currency?: CurrencyCode) => {
     if (!auth) return;
-    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateProfile(userCredential.user, { displayName: name });
-    // Create profile with selected currency
-    await createUserProfile({
-      uid: userCredential.user.uid,
-      displayName: name,
-      email: email,
-      photoURL: null,
-      createdAt: Date.now(),
-      isSeeded: false,
-      currency: currency || 'USD',
-      showProfile: true,
-    });
+    try {
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(userCred.user, { displayName: name });
+      storeTokens({
+        localId: userCred.user.uid,
+        email: userCred.user.email || undefined,
+        displayName: name,
+        photoUrl: userCred.user.photoURL || undefined,
+        idToken: await userCred.user.getIdToken(),
+        refreshToken: (userCred.user as any).refreshToken || '',
+      });
+      setUser(userCred.user);
+      await createUserProfile({
+        uid: userCred.user.uid,
+        displayName: name,
+        email: email,
+        photoURL: null,
+        createdAt: Date.now(),
+        isSeeded: false,
+        currency: currency || 'USD',
+        showProfile: true,
+      });
+      await onUserReady(userCred.user);
+    } catch (e: any) {
+      throw e;
+    }
   };
 
   const logout = async () => {
-    if (!auth) return;
-    await signOut(auth);
+    clearStoredTokens();
+    setUser(null);
+    if (auth) try { await signOut(auth); } catch {}
     router.push('/login');
   };
 
-  const deleteAccount = async (): Promise<{ success: boolean; needsReauth?: boolean; error?: string }> => {
+  const deleteAccount = async () => {
     if (!auth || !user) return { success: false, error: 'No hay usuario autenticado' };
-
     try {
-      const uid = user.uid;
-      console.log('[deleteAccount] Iniciando eliminación para uid:', uid);
-
-      // 1. Eliminar TODOS los datos de Firestore con wipeAllUserData
       const { wipeAllUserData } = await import('@/lib/firestore/accounts');
-      console.log('[deleteAccount] Eliminando todos los datos de Firestore...');
-      const result = await wipeAllUserData(uid);
-      console.log('[deleteAccount] Colecciones eliminadas:', result.wiped);
-      if (result.errors.length > 0) {
-        console.warn('[deleteAccount] Errores al eliminar:', result.errors);
-      }
-
-      // 2. Eliminar usuario de Firebase Auth
-      console.log('[deleteAccount] Eliminando usuario de Auth...');
-      await deleteUser(user);
-      console.log('[deleteAccount] Usuario eliminado exitosamente');
+      const result = await wipeAllUserData(user.uid);
+      try {
+        const { deleteUser } = await import('firebase/auth');
+        await deleteUser(user);
+      } catch {}
+      clearStoredTokens();
+      setUser(null);
       router.push('/login');
-      return { success: true };
+      return { success: true, wiped: result.wiped };
     } catch (e: any) {
-      console.error('[deleteAccount] Error:', e);
       if (e?.code === 'auth/requires-recent-login') {
         return { success: false, needsReauth: true, error: 'Debes volver a iniciar sesión por seguridad antes de eliminar tu cuenta.' };
-      }
-      if (e?.code === 'permission-denied') {
-        return { success: false, error: 'Error de permisos. Verifica las reglas de Firestore en la consola de Firebase.' };
       }
       return { success: false, error: e?.message || 'Error desconocido al eliminar la cuenta.' };
     }
   };
 
-  const enableNotifications = async (): Promise<boolean> => {
+  const enableNotifications = async () => {
     const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
     return requestNotificationPermission();
   };
 
-  const wipeAllData = async (): Promise<{ success: boolean; wiped?: string[]; errors?: string[]; error?: string }> => {
+  const wipeAllData = async () => {
     if (!auth || !user) return { success: false, error: 'No hay usuario autenticado' };
-
     try {
-      const uid = user.uid;
-      console.log('[wipeAllData] Iniciando limpieza para uid:', uid);
-
       const { wipeAllUserData } = await import('@/lib/firestore/accounts');
-      const result = await wipeAllUserData(uid);
-      console.log('[wipeAllData] Colecciones eliminadas:', result.wiped);
-      if (result.errors.length > 0) {
-        console.warn('[wipeAllData] Errores:', result.errors);
-      }
-
-      // Recrear cuentas por defecto después de borrar todo
+      const result = await wipeAllUserData(user.uid);
       const { createDefaultAccounts } = await import('@/lib/firestore/accounts');
-      await createDefaultAccounts(uid);
-      console.log('[wipeAllData] Cuentas por defecto recreadas');
-
+      await createDefaultAccounts(user.uid);
       return { success: true, wiped: result.wiped, errors: result.errors };
     } catch (e: any) {
-      console.error('[wipeAllData] Error:', e);
       return { success: false, error: e?.message || 'Error desconocido al borrar datos.' };
     }
   };

@@ -21,9 +21,10 @@ import {
 import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
-import { subscribeToAccounts, getTotalBalance } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, getTotalBalance, updateAccountBalance } from '@/lib/firestore/accounts';
 import { getPlanSummary } from '@/lib/firestore/plans';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
+import { createTransaction } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 
 const FinancialStatusChart = lazy(() =>
@@ -78,6 +79,12 @@ export function Dashboard() {
       return true;
     }
   });
+  const [transferFrom, setTransferFrom] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferring, setTransferring] = useState(false);
+  const [transferMsg, setTransferMsg] = useState('');
+  const transferMsgTimeout = useRef<number | null>(null);
   const bottomScrollRef = useRef<HTMLDivElement>(null);
   const statsScrollRef = useRef<HTMLDivElement>(null);
   const [statsAtStart, setStatsAtStart] = useState(true);
@@ -241,6 +248,43 @@ export function Dashboard() {
     loadRecurring();
     return () => { cancelled = true; };
   }, [user?.uid]);
+
+  const handleTransfer = async () => {
+    const uid = user?.uid;
+    if (!uid) return;
+    const from = accounts.find(a => a.id === transferFrom);
+    const to = accounts.find(a => a.id === transferTo);
+    const amount = parseFloat(transferAmount);
+    if (!from || !to) { setTransferMsg('Selecciona cuentas de origen y destino'); showTransferMsg(); return; }
+    if (from.id === to.id) { setTransferMsg('Las cuentas deben ser diferentes'); showTransferMsg(); return; }
+    if (!amount || amount <= 0) { setTransferMsg('Ingresa un monto válido'); showTransferMsg(); return; }
+    if (from.balance < amount) { setTransferMsg('Saldo insuficiente en la cuenta origen'); showTransferMsg(); return; }
+    setTransferring(true);
+    setTransferMsg('');
+    try {
+      const fromCurr = from.currency || 'USD', toCurr = to.currency || 'USD';
+      const convertedAmount = fromCurr === toCurr ? amount : convertBetween(amount, fromCurr, toCurr);
+      await updateAccountBalance(from.id, -amount);
+      await updateAccountBalance(to.id, convertedAmount);
+      const date = Date.now();
+      await createTransaction({ ownerId: uid, amount, type: 'saving', category: 'Transferencia', description: `Transferencia a: ${to.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(convertedAmount, toCurr)})` : ''}`, date, accountId: from.id });
+      await createTransaction({ ownerId: uid, amount: convertedAmount, type: 'income', category: 'Transferencia', description: `Transferencia recibida de: ${from.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(amount, fromCurr)})` : ''}`, date, accountId: to.id });
+      setTransferAmount('');
+      setTransferFrom('');
+      setTransferTo('');
+      setTransferMsg('Transferencia realizada');
+      showTransferMsg();
+    } catch (e: any) {
+      setTransferMsg('Error: ' + (e?.message || 'intenta de nuevo'));
+      showTransferMsg();
+    }
+    setTransferring(false);
+  };
+
+  function showTransferMsg() {
+    if (transferMsgTimeout.current) clearTimeout(transferMsgTimeout.current);
+    transferMsgTimeout.current = window.setTimeout(() => setTransferMsg(''), 4000) as unknown as number;
+  }
 
   const activeItems = useMemo(() => {
     const fromGoals = goals.filter((g) => g.status !== 'completed' && (!query || g.title.toLowerCase().includes(query.toLowerCase())));
@@ -717,6 +761,76 @@ export function Dashboard() {
                 <span className="quick-action-icon">📅</span>
                 <span className="quick-action-label">Calendario</span>
               </button>
+            </div>
+          </div>
+
+          {/* Transferencia Rápida */}
+          <div className="content-card transfer-card dash-item" style={{animationDelay: '0.8s'}}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                <h2 className="content-card-title">Transferencia Rápida</h2>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <CustomSelect
+                    value={transferFrom}
+                    onChange={(v) => { setTransferFrom(v); if (v === transferTo) setTransferTo(''); }}
+                    options={accounts.map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
+                    placeholder="Desde..."
+                  />
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                <div style={{ flex: 1 }}>
+                  <CustomSelect
+                    value={transferTo}
+                    onChange={setTransferTo}
+                    options={accounts.filter((a: FinancialAccount) => a.id !== transferFrom).map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
+                    placeholder="Hacia..."
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input
+                    className="form-input"
+                    type="number"
+                    placeholder="Monto"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                  {transferFrom && transferTo && (() => {
+                    const f = accounts.find(a => a.id === transferFrom);
+                    const t = accounts.find(a => a.id === transferTo);
+                    if (!f || !t || f.currency === t.currency) return null;
+                    const amt = parseFloat(transferAmount);
+                    if (!amt || amt <= 0) return null;
+                    const converted = convertBetween(amt, f.currency || 'USD', t.currency || 'USD');
+                    return <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: '0.7rem', color: 'var(--text-tertiary)', pointerEvents: 'none' }}>≈ {formatInCurrency(converted, t.currency || 'USD')}</span>;
+                  })()}
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={handleTransfer} disabled={transferring || !transferFrom || !transferTo || !transferAmount} style={{ whiteSpace: 'nowrap', height: 36 }}>
+                  {transferring ? '...' : 'Transferir'}
+                </button>
+              </div>
+              {transferMsg && (
+                <span style={{ fontSize: '0.75rem', color: transferMsg.includes('Error') || transferMsg.includes('insuficiente') ? 'var(--color-error)' : transferMsg.includes('realizada') ? 'var(--color-prosper-green)' : 'var(--text-secondary)' }}>
+                  {transferMsg}
+                </span>
+              )}
             </div>
           </div>
 

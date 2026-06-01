@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
@@ -404,7 +405,7 @@ export default function AyudaPage() {
 
           <footer className="ayuda-footer">
             <p className="ayuda-footer-label">PROSPER PRO SUPPORT</p>
-            <div className="ayuda-footer-links"><a href="#">Estado del Sistema</a><a href="/ayuda/notas-version">Notas de Versión</a><a href="#">Términos</a></div>
+            <div className="ayuda-footer-links"><a href="#">Estado del Sistema</a><Link href="/ayuda/notas-version">Notas de Versión</Link><a href="#">Términos</a></div>
           </footer>
         </div>
 

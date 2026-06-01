@@ -1,5 +1,15 @@
 # Historial de Versiones: Prosper-Pro
 
+## [0.8.10 BETA] - 2026-05-31
+### Añadido
+- **Centro de Notificaciones**: Página de Configuración > Notificaciones con 10 toggles individuales para controlar cada tipo de alerta.
+- **Preferencias en Firestore**: Las preferencias de notificaciones ahora se guardan en Firestore (`users/{uid}/notifications`) y se sincronizan en tiempo real.
+- **Receiver Balance Diario**: `DailyBalanceReceiver` programado para enviar notificación automática a las 12pm UTC.
+
+### Corregido
+- **NotificationHelper.java**: Eliminada función duplicada `createNotificationChannel` y agregado `TAG` faltante para logs.
+- **Campo data → meta**: Corregido error de tipos en notificaciones (calendario, finanzas, metas) cambiando `data` por `meta`.
+
 ## [0.8.9 BETA] - 2026-05-30
 ### Añadido
 - **CSS inline → archivo propio**: Dashboard ahora importa `dashboard.css` en vez de `<style>` inline. Soluciona bug donde móviles no parseaban el CSS y el dashboard se veía sin diseño.

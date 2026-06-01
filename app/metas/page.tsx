@@ -14,6 +14,7 @@ import { createTransaction } from '@/lib/firestore/transactions';
 import { getDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
+import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock, IconCheck, IconArrowForward } from '../components/icons';
 import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest } from '@/types';
@@ -489,18 +490,27 @@ export default function MetasPage() {
     try {
       await respondToRequest(request.id, response);
       setReceivedRequests(prev => prev.filter(r => r.id !== request.id));
-      // Si rechaza, remover al usuario del sharedWith del plan
       if (response === 'rejected' && request.planId) {
-        const planDoc = await getDoc(doc(db, 'financial_plans', request.planId));
+        const planDoc = await getDoc(doc(db, 'plans', request.planId));
         if (planDoc.exists()) {
           const data = planDoc.data();
           const sharedWith = data.sharedWith || [];
           const filtered = sharedWith.filter((suid: string) => suid !== uid);
           if (filtered.length !== sharedWith.length) {
-            await updateDoc(doc(db, 'financial_plans', request.planId), { sharedWith: filtered });
+            await updateDoc(doc(db, 'plans', request.planId), { sharedWith: filtered });
           }
+          // Notificar al creador que rechazó
+          await addNotification({
+            ownerId: request.fromOwnerId,
+            type: 'plan_rejected',
+            title: 'Invitación rechazada',
+            message: `${user?.displayName || user?.email || 'Alguien'} rechazó tu invitación a "${data.title}"`,
+            read: false,
+            meta: { planId: request.planId, requestId: request.id },
+          });
         }
       }
+      refresh();
       success(response === 'accepted' ? 'Solicitud aceptada' : 'Solicitud rechazada');
     } catch (e: any) {
       error(`Error: ${e?.message}`);

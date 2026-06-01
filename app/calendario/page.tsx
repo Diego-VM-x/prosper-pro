@@ -5,9 +5,11 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/app/components/Toast';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomReminderType, getUserPreferences } from '@/lib/firestore/users';
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
+import { notifyCalendarReminder } from '@/lib/firestore/notifications';
 import type { Reminder, FinancialPlan, Transaction } from '@/types';
 
 const DEFAULT_TYPES: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
@@ -88,6 +90,7 @@ function planToEvents(plan: FinancialPlan): CalendarEvent[] {
 export default function CalendarioPage() {
   const { plans, reminders, userId, addReminder, deleteReminderFn } = useGoals();
   const { user } = useAuth();
+  const { success, error, warning } = useToast();
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -220,6 +223,8 @@ export default function CalendarioPage() {
     });
     setShowModal(false);
     setNewReminder({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' });
+    await notifyCalendarReminder(userId || '', newReminder.title, Date.now().toString(), selectedDate);
+    success('Recordatorio creado');
   };
 
   const selectedEvents = selectedDate ? getEventsForDate(selectedDate) : [];

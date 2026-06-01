@@ -57,6 +57,22 @@ export async function getSharedPlans(ownerId: string): Promise<FinancialPlan[]> 
   return plans;
 }
 
+// Suscribirse a planes compartidos en tiempo real
+export function subscribeToSharedPlans(ownerId: string, callback: (plans: FinancialPlan[]) => void) {
+  const q = query(collection(db, COLLECTION), where('sharedWith', 'array-contains', ownerId));
+  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const plans: FinancialPlan[] = [];
+    snapshot.forEach((docSnap) => {
+      plans.push({ id: docSnap.id, ...docSnap.data() } as FinancialPlan);
+    });
+    plans.sort((a, b) => b.createdAt - a.createdAt);
+    callback(plans);
+  }, (error) => {
+    console.error('subscribeToSharedPlans error:', error);
+    callback([]);
+  });
+}
+
 // Crear plan financiero
 export async function createPlan(plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const now = Date.now();

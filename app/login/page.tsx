@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { sendBrowserNotification } from '@/lib/firestore/notifications';
 import './auth.css';
 
 export default function LoginPage() {
@@ -14,15 +15,29 @@ export default function LoginPage() {
   const { loginWithGoogle, loginWithEmail, user } = useAuth();
   const router = useRouter();
 
+  const sendWelcomeNotification = (userName: string) => {
+    const title = '🎉 ¡Bienvenido/a a Prosper!';
+    const body = `Hola ${userName}, estamos listos para ayudarte a tomar el control de tu futuro financiero.`;
+    console.log('[Login] Sending notification:', title, body);
+    sendBrowserNotification(title, body, 'general');
+  };
+
   const handleGoogleLogin = async () => {
     try {
       setError(null);
       setLoading(true);
       await loginWithGoogle();
-      await new Promise(r => setTimeout(r, 500));
+      console.log('[Login] Google login completed');
+      await new Promise(r => setTimeout(r, 800));
+      
+      // Get user name - use email as primary source since it's available
+      const userName = email.split('@')[0] || 'Usuario';
+      console.log('[Login] User name:', userName);
+      sendWelcomeNotification(userName);
+      
       router.replace('/');
-    } catch {
-      setError('Error al conectar con Google.');
+    } catch (e: any) {
+      setError(e?.message || 'Error al conectar con Google.');
       setLoading(false);
     }
   };
@@ -38,7 +53,14 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginWithEmail(email, password);
-      await new Promise(r => setTimeout(r, 500));
+      console.log('[Login] Email login completed');
+      await new Promise(r => setTimeout(r, 800));
+      
+      // Send welcome notification
+      const userName = email.split('@')[0] || 'Usuario';
+      console.log('[Login] Sending welcome notification to:', userName);
+      sendWelcomeNotification(userName);
+      
       router.replace('/');
     } catch (err: any) {
       setLoading(false);

@@ -9,13 +9,11 @@ Este skill es específico para el proyecto **Prosper-Pro** y facilita la integra
 
 ## Cuándo usar este skill
 - Al inicializar el proyecto con Firebase por primera vez.
-- Cuando se necesite registrar una nueva APP (Web, iOS, Android) en el proyecto.
 - Para configurar o descargar archivos secretos como `google-services.json` o `firebaseConfig`.
 - Para desplegar reglas de seguridad o configuraciones de hosting.
 
 ## Inputs necesarios
 - **ID del Proyecto Firebase**: El ID único del proyecto en la consola de Google.
-- **Plataforma**: (web, android, ios) para la que se requiere la configuración.
 
 ## Workflow
 1. **Validación de Entorno**: Ejecutar `firebase_get_environment` para confirmar que el usuario está logueado y el proyecto activo coincide.

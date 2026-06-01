@@ -8,6 +8,7 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { addNotification } from '@/lib/firestore/notifications';
 import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
@@ -188,6 +189,8 @@ export default function FinanzasPage() {
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
   const [vepayOverrides, setVepayOverrides] = useState<Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string; date: string }>>({});
+  const [vepayManualText, setVepayManualText] = useState('');
+  const [vepayManualProcessing, setVepayManualProcessing] = useState(false);
   const [showAccountingModal, setShowAccountingModal] = useState(false);
   const [accountingAction, setAccountingAction] = useState<string>('');
   const [accountingLoading, setAccountingLoading] = useState(false);
@@ -251,6 +254,12 @@ export default function FinanzasPage() {
       window.history.replaceState({}, '', window.location.pathname);
     } else if (action === 'add-account') {
       setShowAccountModal(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (action === 'transfer') {
+      setShowTransferModal(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (action === 'vepay') {
+      setShowVepayModal(true);
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
@@ -410,6 +419,38 @@ export default function FinanzasPage() {
     }
   };
 
+  const handleVepayManualParse = async () => {
+    if (!vepayManualText.trim() || !uid) return;
+    setVepayManualProcessing(true);
+    try {
+      const { parseMultipleOcrTexts } = await import('@/lib/vepay-core');
+      const result = parseMultipleOcrTexts(
+        [{ text: vepayManualText, filename: 'manual.txt' }],
+        { includeRawText: false }
+      );
+      if (result.receipts && result.receipts.length > 0) {
+        setVepayReceipts(result.receipts);
+        const initialOverrides: Record<string, { flow: 'income' | 'expense'; accountId: string; bank: string; date: string }> = {};
+        result.receipts.forEach(r => {
+          const key = r.transaction_key || '';
+          let dateStr = todayISO();
+          if (r.payment.date_time.iso) dateStr = r.payment.date_time.iso.split('T')[0];
+          initialOverrides[key] = { flow: 'expense', accountId: '', bank: '', date: dateStr };
+        });
+        setVepayOverrides(initialOverrides);
+        success(`${result.receipts.length} recibo(s) detectado(s)`);
+      } else {
+        warning('No se pudo detectar un recibo en el texto.');
+      }
+      if (result.errors && result.errors.length > 0) {
+        result.errors.forEach(err => error(`Error: ${err.message}`));
+      }
+    } catch (err: any) {
+      error(err?.message || 'Error al analizar el texto');
+    }
+    setVepayManualProcessing(false);
+  };
+
   const handleVepayConfirm = async (receipt: VEPayReceipt) => {
     if (!uid) return;
     setTxLoading(true);
@@ -537,6 +578,14 @@ export default function FinanzasPage() {
       await loadTransactions();
 
       success(`Transferencia exitosa: ${fromAcc.name} → ${toAcc.name}`);
+      await addNotification({
+        ownerId: uid!,
+        type: 'transfer',
+        title: 'Transferencia realizada',
+        message: `Se transfirieron ${formatInCurrency(amount, fromCurrency)} de "${fromAcc.name}" a "${toAcc.name}"`,
+        read: false,
+        meta: { fromAccountId: transfer.fromAccountId, toAccountId: transfer.toAccountId },
+      });
       setShowTransferModal(false);
       setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
     } catch (e: any) {
@@ -1375,8 +1424,11 @@ export default function FinanzasPage() {
                   <button className="modal-close" onClick={() => { setShowVepayModal(false); setVepayReceipts([]); setVepayPreview(''); }}>✕</button>
                 </div>
 
-                {/* Upload area */}
+                {/* Upload area (desktop only) */}
                 <div className="vepay-upload-area">
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 8 }}>
+                    Opción 1: Subir captura (solo funciona en escritorio)
+                  </div>
                   <input
                     type="file"
                     accept="image/*"
@@ -1409,6 +1461,29 @@ export default function FinanzasPage() {
                     <img src={vepayPreview} alt="Captura" />
                   </div>
                 )}
+
+                {/* Manual text input */}
+                <div className="vepay-manual-area" style={{ padding: '0 4px', marginTop: 4 }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 6 }}>
+                    Opción 2: Pegar el texto del recibo manualmente
+                  </div>
+                    <textarea
+                      className="form-input"
+                      rows={6}
+                      placeholder="Pega aquí el texto del recibo (pago móvil, transferencia)..."
+                      value={vepayManualText}
+                      onChange={(e) => setVepayManualText(e.target.value)}
+                      style={{ width: '100%', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.8rem' }}
+                    />
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={handleVepayManualParse}
+                      disabled={vepayManualProcessing || !vepayManualText.trim()}
+                      style={{ marginTop: 8, width: '100%' }}
+                    >
+                      {vepayManualProcessing ? 'Analizando...' : 'Analizar texto'}
+                    </button>
+                  </div>
 
                 {/* Receipts detected */}
                 {vepayReceipts.length > 0 && (

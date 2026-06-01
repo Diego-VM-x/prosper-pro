@@ -137,26 +137,44 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Fetch API rates
+  // Load cached rates from localStorage then fetch fresh
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('prosper_exchange_rates');
+      if (cached) {
+        const parsed = JSON.parse(cached) as ExchangeRates;
+        setApiRates(parsed);
+        setRates((prev) => prev.source === 'manual' ? prev : parsed);
+      }
+    } catch {}
     async function fetchRates() {
       try {
-        const res = await fetch('/api/exchange-rates');
+        const res = await fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
+          let oficialRate = 40;
+          let paraleloRate = 40;
+          let updatedAt = Date.now();
+          if (Array.isArray(data)) {
+            const oficial = data.find((d: any) => d.fuente === 'oficial');
+            const paralelo = data.find((d: any) => d.fuente === 'paralelo');
+            if (oficial?.promedio) oficialRate = oficial.promedio;
+            if (paralelo?.promedio) paraleloRate = paralelo.promedio;
+            if (paralelo?.fechaActualizacion || oficial?.fechaActualizacion) {
+              updatedAt = new Date(paralelo?.fechaActualizacion || oficial?.fechaActualizacion).getTime();
+            }
+          }
           const fetched: ExchangeRates = {
-            rates: data.rates,
-            updatedAt: data.updatedAt,
+            rates: { BS: 1.0, USD: oficialRate },
+            updatedAt,
             source: 'api',
           };
           setApiRates(fetched);
           setRates((prev) => {
-            // Only update if user is not using manual override for USD
-            if (prev.source === 'manual') {
-              return prev;
-            }
+            if (prev.source === 'manual') return prev;
             return fetched;
           });
+          try { localStorage.setItem('prosper_exchange_rates', JSON.stringify(fetched)); } catch {}
         }
       } catch (err) {
         console.error('Failed to fetch exchange rates:', err);

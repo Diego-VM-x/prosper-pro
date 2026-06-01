@@ -29,10 +29,7 @@ export interface UserProfile {
   darkModeSync?: boolean;
   /** Si el perfil es visible en búsquedas públicas (default: true) */
   showProfile?: boolean;
-  notifications?: {
-    priceAlerts?: boolean;
-    budgetAlerts?: boolean;
-  };
+  notifications?: Partial<NotificationPreferences>;
 }
 
 export type GoalCategory = 'Ahorro' | 'Inversión' | 'Educación' | 'Otro';
@@ -169,14 +166,45 @@ export interface CommunityMember {
   goalsCount: number;
 }
 
+export type NotificationType =
+  | 'goal'
+  | 'system'
+  | 'plan_invite'        // Invitación a un plan compartido
+  | 'plan_contribution'  // Alguien aportó a tu plan
+  | 'plan_reminder'      // Recordatorio del plan (fecha próxima)
+  | 'plan_rejected'      // Rechazo/eliminación de un plan compartido
+  | 'dollar_change'      // Cambio significativo del valor del dólar BCV
+  | 'daily_balance'      // Balance diario de cuentas (12pm UTC)
+  | 'app_update'         // Nueva versión de la app
+  | 'calendar_reminder'  // Recordatorio del calendario
+  | 'transfer'           // Transferencia realizada
+  | 'reminder'           // Recordatorio creado
+  | 'welcome';           // Notificación de bienvenida
+
 export interface Notification {
   id: string;
   ownerId: string;
   title: string;
   message: string;
-  type: 'goal' | 'system';
+  type: NotificationType;
   read: boolean;
   createdAt: number;
+  /** Datos extra según el tipo (planId, reminderId, etc.) */
+  meta?: Record<string, string | number | boolean>;
+}
+
+/** Preferencias granulares de notificaciones por tipo */
+export interface NotificationPreferences {
+  pushEnabled: boolean;       // Permiso global del sistema
+  planInvite: boolean;        // Invitaciones a planes
+  planContribution: boolean;  // Aportes a mis planes
+  planReminder: boolean;      // Recordatorios de planes
+  planRejected: boolean;      // Rechazo/eliminación de planes
+  dollarChange: boolean;      // Cambio del dólar BCV
+  dailyBalance: boolean;      // Balance diario 12pm UTC
+  appUpdate: boolean;         // Actualizaciones de la app
+  calendarReminder: boolean;  // Recordatorios del calendario
+  welcome: boolean;           // Notificaciones de bienvenida
 }
 
 export interface Course {

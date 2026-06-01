@@ -27,6 +27,14 @@ export default function ConfiguracionPage() {
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
   const [showProfile, setShowProfile] = useState(true);
+  const [planInviteNotif, setPlanInviteNotif] = useState(true);
+  const [planContributionNotif, setPlanContributionNotif] = useState(true);
+  const [planReminderNotif, setPlanReminderNotif] = useState(true);
+  const [planRejectedNotif, setPlanRejectedNotif] = useState(true);
+  const [dollarChangeNotif, setDollarChangeNotif] = useState(true);
+  const [dailyBalanceNotif, setDailyBalanceNotif] = useState(true);
+  const [appUpdateNotif, setAppUpdateNotif] = useState(true);
+  const [calendarReminderNotif, setCalendarReminderNotif] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -72,6 +80,14 @@ export default function ConfiguracionPage() {
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
         setShowProfile((p as any).showProfile !== false);
+        setPlanInviteNotif((p as any).notifications?.planInvite ?? true);
+        setPlanContributionNotif((p as any).notifications?.planContribution ?? true);
+        setPlanReminderNotif((p as any).notifications?.planReminder ?? true);
+        setPlanRejectedNotif((p as any).notifications?.planRejected ?? true);
+        setDollarChangeNotif((p as any).notifications?.dollarChange ?? true);
+        setDailyBalanceNotif((p as any).notifications?.dailyBalance ?? true);
+        setAppUpdateNotif((p as any).notifications?.appUpdate ?? true);
+        setCalendarReminderNotif((p as any).notifications?.calendarReminder ?? true);
       }
     });
 
@@ -94,6 +110,14 @@ export default function ConfiguracionPage() {
         notifications: {
           priceAlerts,
           budgetAlerts,
+          planInvite: planInviteNotif,
+          planContribution: planContributionNotif,
+          planReminder: planReminderNotif,
+          planRejected: planRejectedNotif,
+          dollarChange: dollarChangeNotif,
+          dailyBalance: dailyBalanceNotif,
+          appUpdate: appUpdateNotif,
+          calendarReminder: calendarReminderNotif,
         },
       } as any);
       // Also update display currency in context
@@ -471,6 +495,62 @@ export default function ConfiguracionPage() {
                         desc="Violaciones de límite"
                         checked={budgetAlerts}
                         onChange={() => setBudgetAlerts(!budgetAlerts)}
+                      />
+                      <ToggleRow
+                        icon="📋"
+                        label="Invitaciones a Planes"
+                        desc="Cuando te inviten a colaborar"
+                        checked={planInviteNotif}
+                        onChange={() => setPlanInviteNotif(!planInviteNotif)}
+                      />
+                      <ToggleRow
+                        icon="💚"
+                        label="Aportes a Planes"
+                        desc="Cuando alguien aporte a tu plan"
+                        checked={planContributionNotif}
+                        onChange={() => setPlanContributionNotif(!planContributionNotif)}
+                      />
+                      <ToggleRow
+                        icon="⏰"
+                        label="Recordatorios de Planes"
+                        desc="Fechas límite próximas"
+                        checked={planReminderNotif}
+                        onChange={() => setPlanReminderNotif(!planReminderNotif)}
+                      />
+                      <ToggleRow
+                        icon="❌"
+                        label="Planes Rechazados"
+                        desc="Cuando rechacen o eliminen tu plan"
+                        checked={planRejectedNotif}
+                        onChange={() => setPlanRejectedNotif(!planRejectedNotif)}
+                      />
+                      <ToggleRow
+                        icon="💲"
+                        label="Cambio del Dólar"
+                        desc="Variación de la tasa BCV"
+                        checked={dollarChangeNotif}
+                        onChange={() => setDollarChangeNotif(!dollarChangeNotif)}
+                      />
+                      <ToggleRow
+                        icon="📊"
+                        label="Balance Diario"
+                        desc="Resumen diario a las 12pm UTC"
+                        checked={dailyBalanceNotif}
+                        onChange={() => setDailyBalanceNotif(!dailyBalanceNotif)}
+                      />
+                      <ToggleRow
+                        icon="🚀"
+                        label="Actualizaciones"
+                        desc="Nuevas versiones de la app"
+                        checked={appUpdateNotif}
+                        onChange={() => setAppUpdateNotif(!appUpdateNotif)}
+                      />
+                      <ToggleRow
+                        icon="📅"
+                        label="Recordatorios de Calendario"
+                        desc="Eventos y recordatorios"
+                        checked={calendarReminderNotif}
+                        onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
                       />
                     </div>
                   </div>
@@ -1125,6 +1205,23 @@ export default function ConfiguracionPage() {
               flex-direction: column;
               gap: 12px;
             }
+            .toggle-section-divider {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 8px 0;
+              margin: 4px 0;
+            }
+            .toggle-section-divider span {
+              font-size: 0.75rem;
+              font-weight: 700;
+              color: var(--text-tertiary);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              padding: 4px 12px;
+              border-radius: 999px;
+              background: rgba(61,204,142,0.08);
+            }
             .toggle-row {
               display: flex;
               align-items: center;
@@ -1411,16 +1508,36 @@ export default function ConfiguracionPage() {
             .btn-danger-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
 
             /* Floating Save Bar */
-            .settings-save-bar {
+.settings-save-bar {
               position: sticky;
               bottom: 0;
-              z-index: 10;
-              margin-top: 24px;
-              background: var(--bg-card);
-              border: 1px solid var(--border-default);
-              border-radius: 12px;
-              padding: 12px 20px;
+              left: 0;
+              right: 0;
+              background: var(--bg-page);
+              border-top: 1px solid var(--border-default);
+              border-radius: 12px 12px 0 0;
+              padding: 12px 16px;
               box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+              z-index: 100;
+              max-width: 100%;
+              box-sizing: border-box;
+            }
+            .settings-save-bar-inner {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+              max-width: 100%;
+              overflow: hidden;
+            }
+            .settings-save-hint {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+              white-space: nowrap;
+            }
+            .settings-save-bar .btn-save {
+              flex-shrink: 0;
+              min-width: auto;
             }
             .settings-save-bar-inner {
               display: flex;
@@ -1513,6 +1630,10 @@ export default function ConfiguracionPage() {
               .settings-footer { font-size: 0.5625rem; margin-top: 24px; }
               .mobile-tab { padding: 7px 10px; font-size: 0.6875rem; }
               .mobile-tab-icon { font-size: 0.75rem; }
+              .settings-save-bar { padding: 10px; }
+              .settings-save-bar-inner { flex-direction: column; align-items: stretch; gap: 8px; }
+              .settings-save-hint { text-align: center; }
+              .btn-save { width: 100%; text-align: center; }
             }
 
             /* ===== RESPONSIVE: Very Small (360px) ===== */

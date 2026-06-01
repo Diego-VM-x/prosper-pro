@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { useAuth } from './AuthContext';
 import { subscribeToGoals, createGoal, updateGoal, deleteGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
 import { subscribeToReminders, createReminder, updateReminder, deleteReminder, getRemindersByOwnerId } from '@/lib/firestore/reminders';
-import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans } from '@/lib/firestore/plans';
+import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans, subscribeToSharedPlans } from '@/lib/firestore/plans';
 import type { Goal, Reminder, FinancialPlan } from '@/types';
 
 interface GoalsContextType {
@@ -98,30 +98,38 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     return () => { cancelled = true; };
   }, [user?.uid, loading, refreshKey]);
 
-  // Cargar planes financieros (propios + compartidos)
+  // Cargar planes financieros (propios + compartidos) en tiempo real
   useEffect(() => {
     if (loading) return;
     const uid = user?.uid;
     if (!uid) { setPlans([]); return; }
-    let cancelled = false;
-    async function loadPlans() {
-      try {
-        const [ownPlans, sharedPlans] = await Promise.all([
-          getPlansByOwnerId(uid as string),
-          getSharedPlans(uid as string),
-        ]);
-        // Evitar duplicados: sharedPlans puede incluir planes donde el usuario es owner si sharedWith contiene su uid
-        const ownIds = new Set(ownPlans.map(p => p.id));
-        const allPlans = [...ownPlans, ...sharedPlans.filter(p => !ownIds.has(p.id))];
-        allPlans.sort((a, b) => b.createdAt - a.createdAt);
-        if (!cancelled) setPlans(allPlans);
-      } catch (e) {
-        console.error('[GoalsContext] Error cargando planes:', e);
-      }
-    }
-    loadPlans();
-    return () => { cancelled = true; };
-  }, [user?.uid, loading, refreshKey]);
+
+    const unsubOwn = subscribeToPlans(uid, (ownPlans) => {
+      const ownIds = new Set(ownPlans.map(p => p.id));
+      setPlans(prev => {
+        const shared = prev.filter(p => !ownIds.has(p.id));
+        const all = [...ownPlans, ...shared];
+        all.sort((a, b) => b.createdAt - a.createdAt);
+        return all;
+      });
+    });
+
+    const unsubShared = subscribeToSharedPlans(uid, (sharedPlans) => {
+      setPlans(prev => {
+        const own = prev.filter(p => p.ownerId === uid);
+        const ownIds = new Set(own.map(p => p.id));
+        const shared = sharedPlans.filter(p => !ownIds.has(p.id));
+        const all = [...own, ...shared];
+        all.sort((a, b) => b.createdAt - a.createdAt);
+        return all;
+      });
+    });
+
+    return () => {
+      unsubOwn();
+      unsubShared();
+    };
+  }, [user?.uid, loading]);
 
   // Cargar recordatorios directamente
   useEffect(() => {
