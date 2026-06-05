@@ -498,14 +498,18 @@ select.form-input { cursor: pointer; }
   .welcome-shape-2 { width: 100px; height: 100px; }
   .welcome-shape-3 { display: none; }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .stat-pill { padding: 12px 14px; gap: 10px; }
-  .stat-pill-icon { width: 36px; height: 36px; font-size: 1rem; }
-  .stat-pill-value { font-size: 1rem; }
-  .stat-pill-label { font-size: 0.625rem; }
+  .stat-pill { padding: 12px 10px; gap: 8px; }
+  .stat-pill-icon { width: 32px; height: 32px; font-size: 0.875rem; }
+  .stat-pill-info { gap: 1px; }
+  .stat-pill-value { font-size: 0.875rem; word-break: break-word; line-height: 1.2; }
+  .stat-pill-label { font-size: 0.5625rem; }
   .widgets-grid { grid-template-columns: 1fr; gap: 12px; }
   .widgets-grid .accounts-section { grid-column: span 1; }
   .content-card { padding: 16px; border-radius: var(--radius-lg); }
-  .quick-actions-grid { grid-template-columns: 1fr; gap: 8px; }
+  .quick-actions-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .quick-action-btn { padding: 12px 6px; }
+  .quick-action-icon { font-size: 1.125rem; }
+  .quick-action-label { font-size: 0.625rem; }
   .today-section { padding: 16px; }
   .content-card-title { font-size: 0.9375rem; }
   .progress-ring-container { width: 100px; height: 100px; }
