@@ -323,6 +323,7 @@ export default function MetasPage() {
 
       // Crear transacción si hay cuenta
       if (addAccountId && uid) {
+        const acc = accounts.find(a => a.id === addAccountId);
         await createTransaction({
           ownerId: uid,
           amount,
@@ -331,6 +332,7 @@ export default function MetasPage() {
           description: `Ahorro para: ${plan.title}`,
           date: Date.now(),
           accountId: addAccountId,
+          currency: acc?.currency || 'USD',
         });
         await updateAccountBalance(addAccountId, -amount);
       }
@@ -387,6 +389,7 @@ export default function MetasPage() {
 
       // Crear transacción
       if (payAccountId && uid) {
+        const acc = accounts.find(a => a.id === payAccountId);
         await createTransaction({
           ownerId: uid,
           amount,
@@ -395,6 +398,7 @@ export default function MetasPage() {
           description: `Pago: ${plan.title}`,
           date: Date.now(),
           accountId: payAccountId,
+          currency: acc?.currency || 'USD',
         });
         await updateAccountBalance(payAccountId, -amount);
       }
@@ -524,7 +528,7 @@ export default function MetasPage() {
     setFormDesc(plan.description || '');
     setFormCategory(plan.category);
     setFormTarget(String(plan.target));
-    setFormDeadline(plan.deadline);
+    setFormDeadline(plan.deadline || todayISO());
     setFormFrequency(plan.frequency || 'monthly');
     setFormAccountId(plan.accountId || '');
     setShowNewModal(true);

@@ -6,12 +6,14 @@
  * notificaciones y perfil de usuario Prosper-Pro.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
-import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { subscribeToNotifications, markNotificationRead, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { useClickOutside } from '@/lib/hooks/useClickOutside';
+import { useEscape } from '@/lib/hooks/useKeyPress';
 import {
   IconSearch,
   IconBell,
@@ -45,7 +47,7 @@ interface TopbarProps {
  * Incluye la barra de búsqueda global, botones de acción rápida,
  * toggle de modo oscuro/claro y el perfil del usuario.
  */
-export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
+export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
   const { theme, setTheme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
@@ -59,7 +61,23 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
   const [notifPermissioned, setNotifPermissioned] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Refs para click-outside
+  const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+
+  // Cerrar dropdowns al hacer click fuera
+  useClickOutside(notifRef, () => setShowNotifications(false), showNotifications);
+  useClickOutside(userMenuRef, () => setShowUserMenu(false), showUserMenu);
+  useClickOutside(searchRef, () => setShowSearch(false), showSearch);
+  useEscape(() => {
+    setShowNotifications(false);
+    setShowUserMenu(false);
+    setShowSearch(false);
+    setShowMobileMenu(false);
+  });
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -124,9 +142,18 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleMarkRead = async (id: string) => {
+  const handleMarkRead = useCallback(async (id: string) => {
     await markNotificationRead(id);
-  };
+  }, []);
+
+  const handleDeleteNotif = useCallback(async (id: string) => {
+    await deleteNotification(id);
+  }, []);
+
+  const handleClearAll = useCallback(async () => {
+    if (!user?.uid) return;
+    await deleteAllNotifications(user.uid);
+  }, [user?.uid]);
 
   // Rutas disponibles para búsqueda
   const searchRoutes = [
@@ -139,29 +166,36 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     { name: 'Ayuda', route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
   ];
 
-  // Filtrar resultados según query
-  const searchResults = searchQuery.trim()
-    ? searchRoutes.filter(r =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.keywords.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  // Memoizar resultados de búsqueda para evitar re-filtrado en cada render
+  const searchResults = useMemo(() =>
+    searchQuery.trim()
+      ? searchRoutes.filter(r =>
+          r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          r.keywords.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [],
+    [searchQuery]
+  );
 
-  // Filtrar metas según query
-  const goalResults = searchQuery.trim()
-    ? goals.filter(g =>
-        g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        g.category.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  const goalResults = useMemo(() =>
+    searchQuery.trim()
+      ? goals.filter(g =>
+          g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          g.category.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [],
+    [searchQuery, goals]
+  );
 
-  // Filtrar transacciones según query
-  const txResults = searchQuery.trim()
-    ? transactions.filter(t =>
-        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.category.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 10)
-    : [];
+  const txResults = useMemo(() =>
+    searchQuery.trim()
+      ? transactions.filter(t =>
+          t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.category.toLowerCase().includes(searchQuery.toLowerCase())
+        ).slice(0, 10)
+      : [],
+    [searchQuery, transactions]
+  );
 
   const hasResults = searchResults.length > 0 || goalResults.length > 0 || txResults.length > 0;
   const noData = goals.length === 0 && transactions.length === 0;
@@ -209,7 +243,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       </div>
 
       {/* Búsqueda con resultados de metas */}
-      <div className="topbar-search-wrapper">
+      <div className="topbar-search-wrapper" ref={searchRef}>
         <div className="topbar-search" onClick={() => document.getElementById('global-search')?.focus()}>
           <IconSearch className="topbar-search-icon" />
           <input
@@ -357,12 +391,12 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           </button>
 
           {showNotifications && (
-            <div className="notifications-dropdown">
+            <div className="notifications-dropdown" ref={notifRef}>
               <div className="notifications-dropdown-header">
                 <span>Notificaciones</span>
                 <div className="notif-actions">
                   {notifications.length > 0 && (
-                    <button className="notif-clear-btn" onClick={() => deleteAllNotifications(user?.uid || '')}>
+                    <button className="notif-clear-btn" onClick={handleClearAll}>
                       Limpiar todo
                     </button>
                   )}
@@ -377,7 +411,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                     <p className="notif-title">{notif.title}</p>
                     <p className="notif-message">{notif.message}</p>
                   </div>
-                  <button className="notif-delete-btn" onClick={() => deleteNotification(notif.id)} title="Eliminar">
+                  <button className="notif-delete-btn" onClick={() => handleDeleteNotif(notif.id)} title="Eliminar">
                     ✕
                   </button>
                 </div>
@@ -393,7 +427,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile">
+        <div className="topbar-user" id="user-profile" ref={userMenuRef}>
           {user ? (
             <>
               <div
@@ -449,7 +483,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               {unreadCount > 0 && <span className="topbar-notif-dot" />}
             </button>
             {showNotifications && (
-              <div className="notifications-dropdown mobile-notif-dropdown">
+              <div className="notifications-dropdown mobile-notif-dropdown" ref={notifRef}>
                 <div className="notifications-dropdown-header">
                   <span>Notificaciones</span>
                   {unreadCount > 0 && (
@@ -465,7 +499,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                       <p className="notif-title">{notif.title}</p>
                       <p className="notif-message">{notif.message}</p>
                     </div>
-                    <button className="notif-delete-btn" onClick={() => deleteNotification(notif.id)} title="Eliminar">
+                    <button className="notif-delete-btn" onClick={() => handleDeleteNotif(notif.id)} title="Eliminar">
                       ✕
                     </button>
                   </div>
@@ -1285,6 +1319,6 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       `}</style>
     </header>
   );
-}
+});
 
 

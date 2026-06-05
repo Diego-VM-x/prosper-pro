@@ -69,7 +69,7 @@ export async function getPaymentsByPlan(planId: string): Promise<RecurringPaymen
   snapshot.forEach((docSnap) => {
     payments.push({ id: docSnap.id, ...docSnap.data() } as RecurringPayment);
   });
-  payments.sort((a, b) => b.createdAt - a.createdAt);
+  payments.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return payments;
 }
 
@@ -81,7 +81,7 @@ export function subscribeToPlanPayments(planId: string, callback: (payments: Rec
     snapshot.forEach((docSnap) => {
       payments.push({ id: docSnap.id, ...docSnap.data() } as RecurringPayment);
     });
-    payments.sort((a, b) => b.createdAt - a.createdAt);
+    payments.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     callback(payments);
   }, (error) => {
     console.error('subscribeToPlanPayments error:', error);

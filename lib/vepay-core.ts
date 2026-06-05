@@ -197,14 +197,14 @@ function hasAnyToken(text: string, tokens: string[]): boolean {
   return tokens.some(token => ntext.includes(token));
 }
 
-function detectBankFromCode(accountNumber: string | null): VEPayBankApp {
+function detectBankFromCode(accountNumber: string | null): VEPayBankApp | null {
   if (!accountNumber) return null;
   const digits = accountNumber.replace(/\D/g, '');
   const code = digits.substring(0, 4);
   return BANK_CODES[code] || null;
 }
 
-function detectBankFromName(value: string | null): VEPayBankApp {
+function detectBankFromName(value: string | null): VEPayBankApp | null {
   if (!value) return null;
   const ntext = norm(value);
 
@@ -353,7 +353,7 @@ function stripCounterpartyBankSections(lines: string[]): string[] {
   return kept;
 }
 
-function detectBankFromReceiptText(text: string): VEPayBankApp {
+function detectBankFromReceiptText(text: string): VEPayBankApp | null {
   const lines = cleanLines(text);
   const appText = stripCounterpartyBankSections(lines).join('\n');
 
@@ -363,7 +363,7 @@ function detectBankFromReceiptText(text: string): VEPayBankApp {
   return detectBankFromName(appText);
 }
 
-function detectBank(text: string): VEPayBankApp {
+function detectBank(text: string): VEPayBankApp | null {
   const lines = cleanLines(text);
 
   // Try origin bank first
@@ -384,7 +384,7 @@ function detectBank(text: string): VEPayBankApp {
   return detectBankFromReceiptText(text);
 }
 
-function detectStatus(text: string): VEPayStatus {
+function detectStatus(text: string): VEPayStatus | null {
   const ntext = norm(text);
   const successTokens = [
     'transaccion exitosa', 'operacion exitosa', 'fue exitoso',
@@ -402,7 +402,7 @@ function detectStatus(text: string): VEPayStatus {
   return null;
 }
 
-function detectFlow(text: string): VEPayFlow {
+function detectFlow(text: string): VEPayFlow | null {
   const ntext = norm(text);
 
   // Outgoing payment indicators
@@ -512,8 +512,8 @@ function normalizeConcept(value: string | null): string | null {
   return value ? value.toUpperCase() : null;
 }
 
-function parseDateTime(rawValue: string | null): VEPayDateTime {
-  if (!rawValue) return { raw: null, iso: null };
+function parseDateTime(rawValue: string | null): { raw: string | null; date: string | null; time: string | null; iso: string | null } {
+  if (!rawValue) return { raw: null, date: null, time: null, iso: null };
 
   const raw = rawValue.trim();
   let cleaned = stripAccents(raw);
@@ -522,7 +522,7 @@ function parseDateTime(rawValue: string | null): VEPayDateTime {
 
   // Try DD-MM-YYYY format first, then DD/MM/YYYY
   const dateMatch = cleaned.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
-  if (!dateMatch) return { raw, iso: null };
+  if (!dateMatch) return { raw, date: null, time: null, iso: null };
 
   const day = parseInt(dateMatch[1], 10);
   const month = parseInt(dateMatch[2], 10);
@@ -534,7 +534,7 @@ function parseDateTime(rawValue: string | null): VEPayDateTime {
   try {
     if (!timeMatch) {
       const parsedDate = new Date(year, month - 1, day);
-      return { raw, iso: parsedDate.toISOString().split('T')[0] };
+      return { raw, date: parsedDate.toISOString().split('T')[0], time: null, iso: parsedDate.toISOString().split('T')[0] };
     }
 
     let hour = parseInt(timeMatch[1], 10);
@@ -546,9 +546,9 @@ function parseDateTime(rawValue: string | null): VEPayDateTime {
     if (amPm === 'AM' && hour === 12) hour = 0;
 
     const parsed = new Date(year, month - 1, day, hour, minute, second);
-    return { raw, iso: parsed.toISOString().replace(/\.\d{3}Z$/, '') };
+    return { raw, date: parsed.toISOString().split('T')[0], time: `${hour}:${minute}:${second}`, iso: parsed.toISOString().replace(/\.\d{3}Z$/, '') };
   } catch {
-    return { raw, iso: null };
+    return { raw, date: null, time: null, iso: null };
   }
 }
 
@@ -597,7 +597,7 @@ function missingFields(receipt: VEPayReceipt): string[] {
   return missing;
 }
 
-function emptyReceipt(): VEPayReceipt {
+function emptyReceipt(): any {
   return {
     schema_version: SCHEMA_VERSION,
     source: { file_name: '', file_path: '', sha256: '' },
@@ -714,11 +714,11 @@ export function parseOcrText(
     },
     payment: {
       bank_app: finalBankApp,
-      status: detectStatus(ocrText),
+      status: detectStatus(ocrText) || 'pending',
       flow: flow || (finalBankApp ? 'outgoing' : null),
       reference: finalReference,
       amount: {
-        value: amountValue,
+        value: amountValue ? parseFloat(amountValue) : 0,
         currency: 'VES',
         raw: amountRaw,
       },

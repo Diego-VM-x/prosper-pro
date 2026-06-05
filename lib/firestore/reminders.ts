@@ -30,7 +30,7 @@ export function subscribeToReminders(ownerId: string, callback: (reminders: Remi
   });
 }
 
-export async function createReminder(reminder: Omit<Reminder, 'id'>) {
+export async function createReminder(reminder: Omit<Reminder, 'id' | 'createdAt'>) {
   const docRef = await addDoc(collection(db, COLLECTION), reminder);
   return docRef.id;
 }

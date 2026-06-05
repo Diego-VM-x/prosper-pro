@@ -162,7 +162,7 @@ export function mapReceiptToTransaction(receipt: VEPayReceipt, overrides?: { flo
   originAccount: string;
   accountId?: string;
 } {
-  const amount = parseAmount(receipt.payment.amount.value);
+  const amount = typeof receipt.payment.amount.value === 'number' ? receipt.payment.amount.value : parseAmount(String(receipt.payment.amount.value));
 
   // Use override flow if provided, otherwise detect from receipt
   let type: 'income' | 'expense' | 'saving';

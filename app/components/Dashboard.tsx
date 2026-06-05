@@ -267,8 +267,8 @@ export function Dashboard() {
       await updateAccountBalance(from.id, -amount);
       await updateAccountBalance(to.id, convertedAmount);
       const date = Date.now();
-      await createTransaction({ ownerId: uid, amount, type: 'saving', category: 'Transferencia', description: `Transferencia a: ${to.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(convertedAmount, toCurr)})` : ''}`, date, accountId: from.id });
-      await createTransaction({ ownerId: uid, amount: convertedAmount, type: 'income', category: 'Transferencia', description: `Transferencia recibida de: ${from.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(amount, fromCurr)})` : ''}`, date, accountId: to.id });
+      await createTransaction({ ownerId: uid, amount, type: 'saving', category: 'Transferencia', description: `Transferencia a: ${to.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(convertedAmount, toCurr)})` : ''}`, date, accountId: from.id, currency: fromCurr });
+      await createTransaction({ ownerId: uid, amount: convertedAmount, type: 'income', category: 'Transferencia', description: `Transferencia recibida de: ${from.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(amount, fromCurr)})` : ''}`, date, accountId: to.id, currency: toCurr });
       setTransferAmount('');
       setTransferFrom('');
       setTransferTo('');
@@ -350,7 +350,7 @@ export function Dashboard() {
       icon: newGoal.icon,
     });
     setShowNewGoalModal(false);
-    setNewGoal({ title: '', category: 'Ahorro', current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
+    setNewGoal({ title: '', category: 'savings' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
   };
 
   const upcomingDeadlines = [...goals, ...plans]

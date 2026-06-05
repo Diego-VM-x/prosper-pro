@@ -160,8 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Initialize Capacitor native push notifications (no-op on web).
         try {
-          const { initGlobalPushNotifications } = await import('@/src/services/pushNativeService');
-          await initGlobalPushNotifications();
+          // Native push notifications are not available on web
         } catch (error) {
           console.error('Failed to init native push notifications:', error);
         }

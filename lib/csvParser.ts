@@ -90,6 +90,8 @@ export async function importTransactionsFromCSV(
           category: row.category || 'Otro',
           description: row.description || '',
           date,
+          accountId: 'csv-import',
+          currency: 'USD',
         };
 
         await createTransaction(transaction);

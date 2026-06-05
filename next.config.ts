@@ -13,13 +13,15 @@ const nextConfig: NextConfig = {
         hostname: "lh3.googleusercontent.com",
       },
     ],
-    unoptimized: true, // required for static export — no server-side image optimization
+    unoptimized: true, // required for static export
   },
   compress: true,
   poweredByHeader: false,
   output: "export",
-  // Note: headers() is not supported with output: 'export'.
-  // Security headers should be configured in the hosting platform (Vercel / Capacitor).
+  // Experimental optimizations
+  experimental: {
+    optimizePackageImports: ["recharts", "firebase"],
+  },
 };
 
 export default nextConfig;
