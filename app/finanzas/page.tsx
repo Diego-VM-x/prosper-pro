@@ -621,7 +621,7 @@ export default function FinanzasPage() {
   };
 
   const openEditAccount = (acc: FinancialAccount) => {
-    setEditingAccount({ id: acc.id, name: acc.name, color: acc.color });
+    setEditingAccount({ id: acc.id, name: acc.name, color: acc.color || '#3DCC8E' });
     setShowEditAccountModal(true);
   };
 
@@ -1874,7 +1874,7 @@ export default function FinanzasPage() {
           .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
 
           /* Table */
-          .transactions-table-wrapper { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
+          .transactions-table-wrapper { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow-x: auto; -webkit-overflow-scrolling: touch; }
           .transactions-table { width: 100%; border-collapse: collapse; }
           .transactions-table th { text-align: left; padding: 12px 16px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-input); border-bottom: 1px solid var(--border-default); }
           .transactions-table td { padding: 12px 16px; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); }
@@ -2091,6 +2091,12 @@ export default function FinanzasPage() {
           .accounting-info-text strong { color: var(--text-primary); }
 
           /* Responsive */
+          @media (max-width: 1024px) {
+            .accounts-grid { grid-template-columns: repeat(2, 1fr); }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .page-header-actions { flex-wrap: wrap; }
+            .page-header-actions .btn { flex: 1; min-width: 140px; }
+          }
           @media (max-width: 768px) {
             .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
             .page-header-left { text-align: center; }
