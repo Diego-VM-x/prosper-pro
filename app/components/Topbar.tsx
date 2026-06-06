@@ -147,13 +147,27 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   }, []);
 
   const handleDeleteNotif = useCallback(async (id: string) => {
-    await deleteNotification(id);
-  }, []);
+    const prev = notifications;
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await deleteNotification(id);
+    } catch (e) {
+      console.error('Error al eliminar notificación:', e);
+      setNotifications(prev);
+    }
+  }, [notifications]);
 
   const handleClearAll = useCallback(async () => {
     if (!user?.uid) return;
-    await deleteAllNotifications(user.uid);
-  }, [user?.uid]);
+    const prev = notifications;
+    setNotifications([]);
+    try {
+      await deleteAllNotifications(user.uid);
+    } catch (e) {
+      console.error('Error al limpiar notificaciones:', e);
+      setNotifications(prev);
+    }
+  }, [user?.uid, notifications]);
 
   // Rutas disponibles para búsqueda
   const searchRoutes = [

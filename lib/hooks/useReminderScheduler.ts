@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import type { Reminder } from '@/types';
 import { sendBrowserNotification } from '@/lib/firestore/notifications';
 
@@ -46,12 +48,14 @@ export function useReminderScheduler(reminders: Reminder[], userId: string | nul
         // La hora ya pasó, notificar inmediatamente
         notify(reminder);
         notifiedRef.current.add(reminder.id);
+        deactivateReminder(reminder.id);
       } else {
         // Programar notificación futura
         const timerId = window.setTimeout(() => {
           notify(reminder);
           notifiedRef.current.add(reminder.id);
           timersRef.current.delete(reminder.id);
+          deactivateReminder(reminder.id);
         }, delay);
         timersRef.current.set(reminder.id, timerId);
       }
@@ -89,4 +93,12 @@ function notify(reminder: Reminder) {
     : `Recordatorio programado para ${reminder.date}`;
   
   sendBrowserNotification(title, body, 'calendar');
+}
+
+async function deactivateReminder(reminderId: string) {
+  try {
+    await updateDoc(doc(db, 'reminders', reminderId), { isActive: false });
+  } catch (err) {
+    console.error('Error desactivando recordatorio:', err);
+  }
 }

@@ -9,7 +9,7 @@ import { useToast } from '@/app/components/Toast';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomReminderType, getUserPreferences } from '@/lib/firestore/users';
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
-import { notifyCalendarReminder } from '@/lib/firestore/notifications';
+
 import { useReminderScheduler } from '@/lib/hooks/useReminderScheduler';
 import type { Reminder, FinancialPlan, Transaction } from '@/types';
 
@@ -223,7 +223,6 @@ export default function CalendarioPage() {
     });
     setShowModal(false);
     setNewReminder({ title: '', description: '', reminderTime: '09:00', type: 'other' });
-    await notifyCalendarReminder(userId || '', newReminder.title, Date.now().toString(), selectedDate);
     success('Recordatorio creado');
   };
 

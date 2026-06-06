@@ -10,6 +10,8 @@ import {
   CURRENCY_MAP,
   CURRENCY_LIST,
 } from '@/lib/currency';
+import { notifyDollarChange, notifyDailyBalance, notifyAppUpdate } from '@/lib/firestore/notifications';
+import { getAccountsByOwnerId } from '@/lib/firestore/accounts';
 import type { CurrencyCode, ExchangeRates } from '@/types';
 
 // ============================================================
@@ -332,6 +334,57 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       convertCurrency(amount, from, to, effectiveRates),
     [effectiveRates]
   );
+
+  // ── Notification Triggers ────────────────────────────────────
+
+  // Dollar rate change notification
+  useEffect(() => {
+    if (!user?.uid || !rates?.rates?.USD || rates.source !== 'api') return;
+    const lastNotifiedRate = Number(localStorage.getItem('prosper_last_usd_rate') || 0);
+    if (lastNotifiedRate > 0) {
+      const diff = Math.abs(rates.rates.USD - lastNotifiedRate);
+      const pct = diff / lastNotifiedRate;
+      if (pct >= 0.005) {
+        notifyDollarChange(user.uid, lastNotifiedRate, rates.rates.USD).catch(console.error);
+      }
+    }
+    localStorage.setItem('prosper_last_usd_rate', String(rates.rates.USD));
+  }, [rates?.rates?.USD, rates?.source, user?.uid]);
+
+  // Daily balance notification (at 12:00 local time)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const checkDailyBalance = () => {
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const lastSent = localStorage.getItem('prosper_daily_balance_sent');
+      if (lastSent === todayKey) return;
+      if (now.getHours() >= 12) {
+        getAccountsByOwnerId(user.uid)
+          .then((accounts) => {
+            const totalUSD = accounts.filter((a) => a.currency === 'USD').reduce((s, a) => s + a.balance, 0);
+            const totalBS = accounts.filter((a) => a.currency === 'BS').reduce((s, a) => s + a.balance, 0);
+            notifyDailyBalance(user.uid, totalUSD, totalBS).catch(console.error);
+            localStorage.setItem('prosper_daily_balance_sent', todayKey);
+          })
+          .catch(console.error);
+      }
+    };
+    checkDailyBalance();
+    const interval = setInterval(checkDailyBalance, 60000);
+    return () => clearInterval(interval);
+  }, [user?.uid]);
+
+  // App update notification
+  useEffect(() => {
+    if (!user?.uid) return;
+    const APP_VERSION = '0.1.0';
+    const lastVersion = localStorage.getItem('prosper_app_version');
+    if (lastVersion && lastVersion !== APP_VERSION) {
+      notifyAppUpdate(user.uid, APP_VERSION, 'Nueva versión disponible con mejoras y correcciones.').catch(console.error);
+    }
+    localStorage.setItem('prosper_app_version', APP_VERSION);
+  }, [user?.uid]);
 
   const value = useMemo(
     () => ({
