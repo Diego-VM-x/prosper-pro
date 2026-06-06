@@ -18,9 +18,12 @@ export interface CurrencyConfig {
 export const CURRENCY_MAP: Record<CurrencyCode, CurrencyConfig> = {
   BS: { code: 'BS', symbol: 'Bs.', name: 'Bolívar', flag: '🇻🇪', locale: 'es-VE', decimals: 2 },
   USD: { code: 'USD', symbol: '$', name: 'Dólar', flag: '🇺🇸', locale: 'en-US', decimals: 2 },
+  EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', locale: 'de-DE', decimals: 2 },
+  USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💎', locale: 'en-US', decimals: 2 },
+  SOL: { code: 'SOL', symbol: '◎', name: 'Solana', flag: '☀️', locale: 'en-US', decimals: 2 },
 };
 
-export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS'];
+export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL'];
 
 // ============================================================
 // DEFAULT EXCHANGE RATES (fallback / initial values)
@@ -32,6 +35,9 @@ export const DEFAULT_RATES: ExchangeRates = {
   rates: {
     BS: 1.0,
     USD: 45.00,   // 1 USD = 45.00 BS (fallback)
+    EUR: 48.50,   // 1 EUR = 48.50 BS (fallback)
+    USDT: 45.00,  // 1 USDT ≈ 1 USD (fallback)
+    SOL: 9000.00, // 1 SOL ≈ 200 USD * 45 BS (fallback)
   },
   updatedAt: Date.now(),
   source: 'api',

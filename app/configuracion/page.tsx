@@ -367,10 +367,24 @@ export default function ConfiguracionPage() {
 
                     {rates.source === 'api' && (
                       <div className="pref-section">
-                        <label className="pref-label">Tasa de Cambio Oficial (BCV)</label>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>✓ Tasa oficial BCV activa:</span>
-                          <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD} Bs.</strong>
+                        <label className="pref-label">Tasas de Cambio Activas</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 EUR = {rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 USDT = {rates.rates.USDT?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.rates.SOL?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
                         </div>
                       </div>
                     )}

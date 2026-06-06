@@ -86,7 +86,7 @@ function SummaryWidget({ label, value, altValue, color, showAmounts, showConvers
 export default function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates } = useCurrency();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -97,12 +97,39 @@ export default function FinanzasPage() {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
   const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
+  const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; color: string } | null>(null);
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
+
+  // Crypto rates (USDT & SOL in USD from CoinGecko)
+  const [cryptoRates, setCryptoRates] = useState<{ usdt: number | null; sol: number | null; loading: boolean }>({ usdt: null, sol: null, loading: true });
+
+  useEffect(() => {
+    async function fetchCryptoRates() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=usd', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          setCryptoRates({
+            usdt: data?.tether?.usd ?? null,
+            sol: data?.solana?.usd ?? null,
+            loading: false,
+          });
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to fetch crypto rates:', err);
+      }
+      setCryptoRates(prev => ({ ...prev, loading: false }));
+    }
+    fetchCryptoRates();
+    const interval = setInterval(fetchCryptoRates, 60000); // refresh every minute
+    return () => clearInterval(interval);
+  }, []);
 
   // Calcular balance total reactivamente
   // Suma los balances de todas las cuentas y convierte a displayCurrency
@@ -610,6 +637,7 @@ export default function FinanzasPage() {
     success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
     setNewAccount({ name: '', type: 'checking', balance: 0, currency: 'BS', color: '' });
+    setAccountCategory('monedas');
   };
 
   const handleEditAccount = async () => {
@@ -911,6 +939,52 @@ export default function FinanzasPage() {
               <button className="btn btn-primary" onClick={() => setShowModal(true)}>
                 <IconPlus width={14} /> Nueva Transacción
               </button>
+            </div>
+          </div>
+
+          {/* Tasas de cambio */}
+          <div className="summary-section" style={{ marginBottom: '16px' }}>
+            <div className="summary-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🇺🇸 USD → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.source === 'api' ? (
+                    <span>1 USD = {rates.rates.USD.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando tasa...</span>
+                  )}
+                </span>
+              </div>
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💎 USDT → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {cryptoRates.loading ? (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
+                  ) : cryptoRates.usdt && rates.rates.USD ? (
+                    <span>1 USDT = {Number((cryptoRates.usdt * rates.rates.USD).toFixed(2)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                  )}
+                </span>
+              </div>
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ☀️ SOL → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {cryptoRates.loading ? (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
+                  ) : cryptoRates.sol && rates.rates.USD ? (
+                    <span>1 SOL = {Number((cryptoRates.sol * rates.rates.USD).toFixed(2)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                  )}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1372,14 +1446,37 @@ export default function FinanzasPage() {
                     />
                   </div>
                   <div className="tx-field">
+                    <label className="tx-label">Categoría</label>
+                    <CustomSelect
+                      value={accountCategory}
+                      onChange={(val) => {
+                        setAccountCategory(val as 'monedas' | 'criptos');
+                        setNewAccount({ ...newAccount, currency: val === 'criptos' ? 'USDT' : 'BS' });
+                      }}
+                      options={[
+                        { value: 'monedas', label: 'Monedas', icon: '💱' },
+                        { value: 'criptos', label: 'Criptos', icon: '₿' },
+                      ]}
+                      placeholder="Seleccionar categoría..."
+                    />
+                  </div>
+                  <div className="tx-field">
                     <label className="tx-label">Moneda</label>
                     <CustomSelect
                       value={newAccount.currency || 'BS'}
                       onChange={(val) => setNewAccount({ ...newAccount, currency: val as CurrencyCode })}
-                      options={[
-                        { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
-                        { value: 'USD', label: 'Dólares (USD)', icon: '🇺🇸' },
-                      ]}
+                      options={
+                        accountCategory === 'criptos'
+                          ? [
+                              { value: 'USDT', label: 'Tether (USDT)', icon: '💎' },
+                              { value: 'SOL', label: 'Solana (SOL)', icon: '☀️' },
+                            ]
+                          : [
+                              { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
+                              { value: 'USD', label: 'Dólares (USD)', icon: '🇺🇸' },
+                              { value: 'EUR', label: 'Euros (EUR)', icon: '🇪🇺' },
+                            ]
+                      }
                       placeholder="Seleccionar moneda..."
                     />
                   </div>

@@ -107,6 +107,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             rates: {
               BS: 1.0,
               USD: customRates['USD'] ?? prev.rates.USD,
+              EUR: customRates['EUR'] ?? prev.rates.EUR,
+              USDT: customRates['USDT'] ?? prev.rates.USDT,
+              SOL: customRates['SOL'] ?? prev.rates.SOL,
             },
             source: 'manual',
           }));
@@ -149,33 +152,64 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     async function fetchRates() {
       try {
-        const res = await fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          let oficialRate = 40;
-          let paraleloRate = 40;
-          let updatedAt = Date.now();
+        // Fetch USD->BS from dolarapi
+        const [usdRes, eurRes, cryptoRes] = await Promise.allSettled([
+          fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' }),
+          fetch('https://api.exchangerate-api.com/v4/latest/USD', { cache: 'no-store' }),
+          fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=usd', { cache: 'no-store' }),
+        ]);
+
+        let oficialRate = 40;
+        let updatedAt = Date.now();
+
+        if (usdRes.status === 'fulfilled' && usdRes.value.ok) {
+          const data = await usdRes.value.json();
           if (Array.isArray(data)) {
             const oficial = data.find((d: any) => d.fuente === 'oficial');
             const paralelo = data.find((d: any) => d.fuente === 'paralelo');
             if (oficial?.promedio) oficialRate = oficial.promedio;
-            if (paralelo?.promedio) paraleloRate = paralelo.promedio;
             if (paralelo?.fechaActualizacion || oficial?.fechaActualizacion) {
               updatedAt = new Date(paralelo?.fechaActualizacion || oficial?.fechaActualizacion).getTime();
             }
           }
-          const fetched: ExchangeRates = {
-            rates: { BS: 1.0, USD: oficialRate },
-            updatedAt,
-            source: 'api',
-          };
-          setApiRates(fetched);
-          setRates((prev) => {
-            if (prev.source === 'manual') return prev;
-            return fetched;
-          });
-          try { localStorage.setItem('prosper_exchange_rates', JSON.stringify(fetched)); } catch {}
         }
+
+        let eurRate = 48.5;
+        if (eurRes.status === 'fulfilled' && eurRes.value.ok) {
+          const data = await eurRes.value.json();
+          const eurToUsd = data?.rates?.EUR;
+          if (eurToUsd && eurToUsd > 0) {
+            eurRate = Number((oficialRate / eurToUsd).toFixed(2));
+          }
+        }
+
+        let usdtRate = oficialRate;
+        let solRate = 9000;
+        if (cryptoRes.status === 'fulfilled' && cryptoRes.value.ok) {
+          const data = await cryptoRes.value.json();
+          const usdtUsd = data?.tether?.usd;
+          const solUsd = data?.solana?.usd;
+          if (usdtUsd && usdtUsd > 0) usdtRate = Number((usdtUsd * oficialRate).toFixed(2));
+          if (solUsd && solUsd > 0) solRate = Number((solUsd * oficialRate).toFixed(2));
+        }
+
+        const fetched: ExchangeRates = {
+          rates: {
+            BS: 1.0,
+            USD: oficialRate,
+            EUR: eurRate,
+            USDT: usdtRate,
+            SOL: solRate,
+          },
+          updatedAt,
+          source: 'api',
+        };
+        setApiRates(fetched);
+        setRates((prev) => {
+          if (prev.source === 'manual') return prev;
+          return fetched;
+        });
+        try { localStorage.setItem('prosper_exchange_rates', JSON.stringify(fetched)); } catch {}
       } catch (err) {
         console.error('Failed to fetch exchange rates:', err);
       }
