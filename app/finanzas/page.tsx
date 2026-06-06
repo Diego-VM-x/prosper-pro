@@ -96,7 +96,7 @@ export default function FinanzasPage() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
-  const [newAccount, setNewAccount] = useState({ name: '', type: 'checking' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
   const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
@@ -105,31 +105,7 @@ export default function FinanzasPage() {
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
 
-  // Crypto rates (USDT & SOL in USD from CoinGecko)
-  const [cryptoRates, setCryptoRates] = useState<{ usdt: number | null; sol: number | null; loading: boolean }>({ usdt: null, sol: null, loading: true });
-
-  useEffect(() => {
-    async function fetchCryptoRates() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=usd', { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          setCryptoRates({
-            usdt: data?.tether?.usd ?? null,
-            sol: data?.solana?.usd ?? null,
-            loading: false,
-          });
-          return;
-        }
-      } catch (err) {
-        console.error('Failed to fetch crypto rates:', err);
-      }
-      setCryptoRates(prev => ({ ...prev, loading: false }));
-    }
-    fetchCryptoRates();
-    const interval = setInterval(fetchCryptoRates, 60000); // refresh every minute
-    return () => clearInterval(interval);
-  }, []);
+  // P2P rates come from CurrencyContext now (rates.p2pRates)
 
   // Calcular balance total reactivamente
   // Suma los balances de todas las cuentas y convierte a displayCurrency
@@ -628,7 +604,7 @@ export default function FinanzasPage() {
       type: newAccount.type,
       balance: newAccount.balance,
       currency: newAccount.currency || 'BS',
-      icon: newAccount.type === 'checking' ? '🏦' : newAccount.type === 'savings' ? '💰' : '💵',
+      icon: newAccount.type === 'digital' ? '💳' : newAccount.type === 'bank' ? '🏦' : '💱',
       color: newAccount.color || ACCOUNT_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -636,7 +612,7 @@ export default function FinanzasPage() {
     await createAccount(acc);
     success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
-    setNewAccount({ name: '', type: 'checking', balance: 0, currency: 'BS', color: '' });
+    setNewAccount({ name: '', type: 'digital', balance: 0, currency: 'BS', color: '' });
     setAccountCategory('monedas');
   };
 
@@ -959,13 +935,38 @@ export default function FinanzasPage() {
               </div>
               <div className="summary-card" style={{ padding: '12px 16px' }}>
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  💎 USDT → 🇻🇪 BS
+                  🇪🇺 EUR → 🇻🇪 BS
                 </span>
                 <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {cryptoRates.loading ? (
+                  {rates.source === 'api' && rates.rates.EUR ? (
+                    <span>1 EUR = {rates.rates.EUR.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
-                  ) : cryptoRates.usdt && rates.rates.USD ? (
-                    <span>1 USDT = {Number((cryptoRates.usdt * rates.rates.USD).toFixed(2)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  )}
+                </span>
+              </div>
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🇨🇴 COP → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.source === 'api' && rates.rates.COP ? (
+                    <span>1 COP = {rates.rates.COP.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
+                  )}
+                </span>
+              </div>
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💎 USDT → 🇻🇪 BS
+                  {rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.p2pRates?.USDT ? (
+                    <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : rates.rates.USDT ? (
+                    <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                   ) : (
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
                   )}
@@ -974,12 +975,13 @@ export default function FinanzasPage() {
               <div className="summary-card" style={{ padding: '12px 16px' }}>
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   ☀️ SOL → 🇻🇪 BS
+                  {rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
                 </span>
                 <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {cryptoRates.loading ? (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
-                  ) : cryptoRates.sol && rates.rates.USD ? (
-                    <span>1 SOL = {Number((cryptoRates.sol * rates.rates.USD).toFixed(2)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  {rates.p2pRates?.SOL ? (
+                    <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : rates.rates.SOL ? (
+                    <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                   ) : (
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
                   )}
@@ -997,7 +999,7 @@ export default function FinanzasPage() {
                   <div className="account-info">
                     <span className="account-name">{acc.name}</span>
                     <span className="account-type">
-                      {acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'} • {acc.currency || 'BS'}
+                      {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
                     </span>
                   </div>
                   <div className="account-actions-group">
@@ -1438,9 +1440,9 @@ export default function FinanzasPage() {
                       value={newAccount.type}
                       onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
                       options={[
-                        { value: 'checking', label: 'Corriente', icon: '🏦' },
-                        { value: 'savings', label: 'Ahorro', icon: '💰' },
-                        { value: 'cash', label: 'Efectivo', icon: '💵' },
+                        { value: 'digital', label: 'Billetera Digital', icon: '💳' },
+                        { value: 'bank', label: 'Banco', icon: '🏦' },
+                        { value: 'foreign', label: 'Divisas', icon: '💱' },
                       ]}
                       placeholder="Seleccionar tipo..."
                     />

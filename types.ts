@@ -7,12 +7,13 @@ export type CurrencyCode = 'USD' | 'BS' | 'EUR' | 'USDT' | 'SOL' | 'COP';
 
 export interface ExchangeRates {
   rates: Record<CurrencyCode, number>;
+  p2pRates?: Record<string, number>;
   updatedAt: number;
   source: string;
 }
 
 // ─── Accounts ───
-export type AccountType = 'checking' | 'savings' | 'cash' | 'investment' | 'other';
+export type AccountType = 'digital' | 'bank' | 'foreign';
 
 export interface FinancialAccount {
   id: string;

@@ -151,13 +151,33 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         setRates((prev) => prev.source === 'manual' ? prev : parsed);
       }
     } catch {}
+    async function fetchBinanceP2P(asset: string): Promise<number | null> {
+      try {
+        const res = await fetch('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, fiat: 'VES', tradeType: 'SELL', page: 1, rows: 10 }),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!Array.isArray(data?.data) || data.data.length === 0) return null;
+        const prices = data.data.slice(0, 5).map((adv: any) => parseFloat(adv.adv.price)).filter((p: number) => p > 0);
+        if (prices.length === 0) return null;
+        return Number((prices.reduce((a: number, b: number) => a + b, 0) / prices.length).toFixed(2));
+      } catch {
+        return null;
+      }
+    }
+
     async function fetchRates() {
       try {
         // Fetch USD->BS from dolarapi
-        const [usdRes, eurRes, cryptoRes] = await Promise.allSettled([
+        const [usdRes, eurRes, cryptoRes, p2pUsdtRes, p2pSolRes] = await Promise.allSettled([
           fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' }),
           fetch('https://api.exchangerate-api.com/v4/latest/USD', { cache: 'no-store' }),
           fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=usd', { cache: 'no-store' }),
+          fetchBinanceP2P('USDT'),
+          fetchBinanceP2P('SOL'),
         ]);
 
         let oficialRate = 40;
@@ -199,6 +219,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
           if (solUsd && solUsd > 0) solRate = Number((solUsd * oficialRate).toFixed(2));
         }
 
+        const p2pRates: Record<string, number> = {};
+        if (p2pUsdtRes.status === 'fulfilled' && p2pUsdtRes.value) p2pRates.USDT = p2pUsdtRes.value;
+        if (p2pSolRes.status === 'fulfilled' && p2pSolRes.value) p2pRates.SOL = p2pSolRes.value;
+
         const fetched: ExchangeRates = {
           rates: {
             BS: 1.0,
@@ -208,6 +232,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             SOL: solRate,
             COP: copRate,
           },
+          p2pRates,
           updatedAt,
           source: 'api',
         };

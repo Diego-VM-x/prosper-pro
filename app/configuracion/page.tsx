@@ -397,6 +397,18 @@ export default function ConfiguracionPage() {
                             <span>✓</span>
                             <strong style={{ color: 'var(--text-primary)' }}>1 COP = {rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</strong>
                           </div>
+                          {rates.p2pRates?.USDT && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
+                              <strong style={{ color: 'var(--text-primary)' }}>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                            </div>
+                          )}
+                          {rates.p2pRates?.SOL && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
+                              <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}

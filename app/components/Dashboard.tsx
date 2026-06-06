@@ -637,7 +637,7 @@ export function Dashboard() {
             </div>
             <div className="accounts-list">
               {accounts.slice(0, 4).map((acc) => {
-                const typeIcons: Record<string, string> = { checking: '🏦', savings: '💰', cash: '💵' };
+                const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
                 return (
                   <div className="account-item" key={acc.id} onClick={() => router.push('/finanzas')}>
                     <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
@@ -646,7 +646,7 @@ export function Dashboard() {
                     <div className="account-item-info">
                       <span className="account-item-name">{acc.name}</span>
                       <span className="account-item-type">
-                        {acc.type === 'checking' ? 'Corriente' : acc.type === 'savings' ? 'Ahorro' : 'Efectivo'} • {acc.currency || 'BS'}
+                        {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>

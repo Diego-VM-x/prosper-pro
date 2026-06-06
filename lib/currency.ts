@@ -41,6 +41,7 @@ export const DEFAULT_RATES: ExchangeRates = {
     SOL: 9000.00, // 1 SOL ≈ 200 USD * 45 BS (fallback)
     COP: 0.0105,  // 1 COP ≈ 0.0105 BS (fallback)
   },
+  p2pRates: {},
   updatedAt: Date.now(),
   source: 'api',
 };
