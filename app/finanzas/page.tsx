@@ -960,17 +960,23 @@ export default function FinanzasPage() {
               <div className="summary-card" style={{ padding: '12px 16px' }}>
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   💎 USDT → 🇻🇪 BS
-                  {rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
                 </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.p2pRates?.USDT ? (
-                    <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : rates.rates.USDT ? (
-                    <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {rates.rates.USDT ? (
+                    <span className="summary-value" style={{ fontSize: '1rem', color: 'var(--color-prosper-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
+                    </span>
                   ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
                   )}
-                </span>
+                  {rates.p2pRates?.USDT && (
+                    <span className="summary-value" style={{ fontSize: '1rem', color: '#4edea3', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="summary-card" style={{ padding: '12px 16px' }}>
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1118,48 +1124,63 @@ export default function FinanzasPage() {
               <thead>
                 <tr>
                   <th>Descripción</th>
-                  <th>Cuenta</th>
                   <th>Categoría</th>
-                  <th>Tipo</th>
-                  <th>Fecha</th>
+                  <th>Estado</th>
                   <th>Monto</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredTx.length > 0 ? filteredTx.map((tx, index) => (
-                  <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <td>{tx.description || '—'}</td>
-                    <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
-                    <td>{tx.category}</td>
-                    <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
-                    <td>{formatDate(tx.date)}</td>
-                    <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                      {showAmounts ? (
-                        <>
-                          <div>
-                            {tx.type === 'expense' ? '-' : '+'}
-                            {formatInCurrency(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD')}
+                {filteredTx.length > 0 ? filteredTx.map((tx, index) => {
+                  const txAccount = accounts.find((a) => a.id === tx.accountId);
+                  const txCurrency = txAccount?.currency || 'USD';
+                  return (
+                    <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div className="tx-icon-box" style={{ background: TYPE_COLORS[tx.type] + '18', color: TYPE_COLORS[tx.type] }}>
+                            {TYPE_ICONS[tx.type]}
                           </div>
-                          {(accounts.find(a => a.id === tx.accountId)?.currency || 'USD') !== displayCurrency && (
-                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                              ≈ {tx.type === 'expense' ? '-' : '+'}
-                              {formatInCurrency(convertBetween(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD', displayCurrency), displayCurrency)}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{tx.description || '—'}</span>
+                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{formatDate(tx.date)} • {getAccountName(tx.accountId)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="tx-category-pill">{tx.category}</span></td>
+                      <td>
+                        <span className="tx-status">
+                          <span className="tx-status-dot" style={{ background: tx.type === 'expense' ? '#ffb3af' : '#4edea3' }} />
+                          COMPLETADO
+                        </span>
+                      </td>
+                      <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
+                        {showAmounts ? (
+                          <>
+                            <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
+                              {tx.type === 'expense' ? '-' : '+'}
+                              {formatInCurrency(tx.amount, txCurrency)}
                             </div>
-                          )}
-                        </>
-                      ) : (
-                        '••••••'
-                      )}
-                    </td>
-                    <td>
-                      <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
-                        <IconTrash width={14} />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr><td colSpan={7} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
+                            {txCurrency !== displayCurrency && (
+                              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                                ≈ {tx.type === 'expense' ? '-' : '+'}
+                                {formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          '••••••'
+                        )}
+                      </td>
+                      <td>
+                        <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
+                          <IconTrash width={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr><td colSpan={5} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
                 )}
               </tbody>
             </table>
@@ -1986,6 +2007,39 @@ export default function FinanzasPage() {
           .amount-income { color: var(--color-prosper-green); }
           .amount-expense { color: var(--color-error); }
           .amount-saving { color: var(--color-pine-500); }
+
+          /* Tabla premium */
+          .tx-icon-box {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+          }
+          .tx-category-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+            font-size: 0.6875rem;
+            font-weight: 600;
+          }
+          .tx-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+          }
+          .tx-status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+          }
+
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
 
            /* Modal */
