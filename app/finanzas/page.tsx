@@ -15,6 +15,7 @@ import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestor
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
 import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPayBankApp, getBankDisplayName, VEPAY_BANKS } from '@/lib/vepay';
+import { getAccountRates, convertCurrency } from '@/lib/currency';
 import type { Transaction, FinancialAccount, AccountType, CurrencyCode } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
@@ -96,7 +97,7 @@ export default function FinanzasPage() {
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
-  const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '', rateMode: undefined as 'official' | 'p2p' | undefined });
   const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
@@ -111,10 +112,10 @@ export default function FinanzasPage() {
   // Suma los balances de todas las cuentas y convierte a displayCurrency
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
-      const converted = convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+      const converted = convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode));
       return sum + converted;
     }, 0);
-  }, [accounts, displayCurrency, convertBetween]);
+  }, [accounts, displayCurrency, rates, p2pMode]);
 
   // Calcular resumen mensual reactivamente
   // ESTRATEGIA: Sumar en moneda nativa de cada cuenta primero, luego convertir totales
@@ -621,13 +622,14 @@ export default function FinanzasPage() {
       currency: newAccount.currency || 'BS',
       icon: newAccount.type === 'digital' ? '💳' : newAccount.type === 'bank' ? '🏦' : '💱',
       color: newAccount.color || ACCOUNT_TYPE_COLORS[newAccount.type],
+      rateMode: newAccount.rateMode,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
     await createAccount(acc);
     success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
-    setNewAccount({ name: '', type: 'digital', balance: 0, currency: 'BS', color: '' });
+    setNewAccount({ name: '', type: 'digital', balance: 0, currency: 'BS', color: '', rateMode: undefined });
     setAccountCategory('monedas');
   };
 
@@ -1092,7 +1094,7 @@ export default function FinanzasPage() {
                   </div>
                   {showAmounts && acc.currency !== displayCurrency && (
                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                      ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                      ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
                     </div>
                   )}
                 </div>
@@ -1577,6 +1579,32 @@ export default function FinanzasPage() {
                       placeholder="Seleccionar moneda..."
                     />
                   </div>
+                  {(newAccount.currency === 'USDT' || newAccount.currency === 'SOL') && (
+                    <div className="tx-field">
+                      <label className="tx-label">Tasa de conversión</label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${newAccount.rateMode !== 'p2p' ? 'btn-primary' : 'btn-outline'}`}
+                          onClick={() => setNewAccount({ ...newAccount, rateMode: 'official' })}
+                          style={{ flex: 1 }}
+                        >
+                          Oficial
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${newAccount.rateMode === 'p2p' ? 'btn-primary' : 'btn-outline'}`}
+                          onClick={() => setNewAccount({ ...newAccount, rateMode: 'p2p' })}
+                          style={{ flex: 1 }}
+                        >
+                          P2P
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                        {newAccount.rateMode === 'p2p' ? 'Usará el precio P2P real para convertir esta cuenta.' : 'Usará la tasa de mercado oficial para convertir esta cuenta.'}
+                      </span>
+                    </div>
+                  )}
                   <div className="tx-field">
                     <label className="tx-label">Balance Inicial</label>
                     <div className="tx-input-wrap">

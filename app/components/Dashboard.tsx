@@ -26,6 +26,7 @@ import { getPlanSummary } from '@/lib/firestore/plans';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
 import { createTransaction } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
+import { getAccountRates, convertCurrency } from '@/lib/currency';
 
 const FinancialStatusChart = lazy(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
@@ -62,7 +63,7 @@ export function Dashboard() {
   const { query } = useSearch();
   const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
-  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode } = useCurrency();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthlyRecurring, setMonthlyRecurring] = useState(0);
@@ -98,9 +99,9 @@ export function Dashboard() {
 
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
-      return sum + convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+      return sum + convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode));
     }, 0);
-  }, [accounts, displayCurrency, convertBetween]);
+  }, [accounts, displayCurrency, rates, p2pMode]);
 
   const monthlySavings = useMemo(() => {
     const savings = transactions.filter((t) => t.type === 'saving');
@@ -655,7 +656,7 @@ export function Dashboard() {
                       </span>
                       {showBalances && acc.currency !== displayCurrency && (
                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
-                          ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                          ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
                         </span>
                       )}
                     </div>

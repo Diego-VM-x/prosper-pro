@@ -24,6 +24,8 @@ export interface FinancialAccount {
   currency: CurrencyCode;
   icon?: string;
   color?: string;
+  /** Preferred rate mode for this account (only relevant for USDT/SOL) */
+  rateMode?: 'official' | 'p2p';
   createdAt: number;
   updatedAt: number;
 }

@@ -81,6 +81,25 @@ export function convertCurrency(
   return Number(converted.toFixed(decimals));
 }
 
+/**
+ * Get effective exchange rates for a specific account, respecting its
+ * individual rateMode preference (if set) or falling back to the global P2P toggle.
+ */
+export function getAccountRates(
+  account: { currency: CurrencyCode; rateMode?: 'official' | 'p2p' } | undefined,
+  rates: ExchangeRates,
+  globalP2pMode: boolean
+): Record<string, number> {
+  const r = { ...rates.rates };
+  const mode = account?.rateMode;
+  const useP2P = mode === 'p2p' || (mode !== 'official' && globalP2pMode);
+  if (useP2P && rates.p2pRates) {
+    if (rates.p2pRates.USDT) r.USDT = rates.p2pRates.USDT;
+    if (rates.p2pRates.SOL) r.SOL = rates.p2pRates.SOL;
+  }
+  return r;
+}
+
 // ============================================================
 // FORMAT CURRENCY
 // ============================================================
