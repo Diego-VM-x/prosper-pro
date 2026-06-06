@@ -161,6 +161,18 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         setRates((prev) => prev.source === 'manual' ? prev : parsed);
       }
     } catch {}
+    async function fetchCriptoYaP2P(): Promise<number | null> {
+      try {
+        const res = await fetch('https://criptoya.com/api/binancep2p/usdt/ves', { cache: 'no-store' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data?.ask && data.ask > 0) return Number(data.ask);
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
     async function fetchBinanceP2P(asset: string): Promise<number | null> {
       try {
         const res = await fetch('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
@@ -186,9 +198,15 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
           fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' }),
           fetch('https://api.exchangerate-api.com/v4/latest/USD', { cache: 'no-store' }),
           fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=usd', { cache: 'no-store' }),
-          fetchBinanceP2P('USDT'),
+          fetchCriptoYaP2P(),
           fetchBinanceP2P('SOL'),
         ]);
+
+        // Fallback to Binance P2P for USDT if CriptoYa fails
+        let p2pUsdt = p2pUsdtRes.status === 'fulfilled' ? p2pUsdtRes.value : null;
+        if (!p2pUsdt) {
+          try { p2pUsdt = await fetchBinanceP2P('USDT'); } catch {}
+        }
 
         let oficialRate = 40;
         let updatedAt = Date.now();
@@ -230,7 +248,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         }
 
         const p2pRates: Record<string, number> = {};
-        if (p2pUsdtRes.status === 'fulfilled' && p2pUsdtRes.value) p2pRates.USDT = p2pUsdtRes.value;
+        if (p2pUsdt) p2pRates.USDT = p2pUsdt;
         if (p2pSolRes.status === 'fulfilled' && p2pSolRes.value) p2pRates.SOL = p2pSolRes.value;
 
         const fetched: ExchangeRates = {
@@ -257,6 +275,8 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       }
     }
     fetchRates();
+    const interval = setInterval(fetchRates, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // Set display currency (persist to localStorage)
@@ -275,7 +295,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, []);
 
-  // Effective rates: override USDT/SOL with P2P when p2pMode is active
+  // Effective rates: override USDT/SOL with real P2P prices when p2pMode is active
   const effectiveRates = useMemo(() => {
     const r = { ...rates.rates };
     if (p2pMode && rates.p2pRates) {

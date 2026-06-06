@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -267,10 +267,15 @@ export default function FinanzasPage() {
     }
   }, []);
 
-  // Toast de confirmación al cambiar modo P2P
+  // Toast de confirmación al cambiar modo P2P (skip on mount)
+  const didMountP2P = useRef(false);
   useEffect(() => {
+    if (!didMountP2P.current) {
+      didMountP2P.current = true;
+      return;
+    }
     if (p2pMode) {
-      success('Modo P2P activado: conversiones usando precios Binance P2P');
+      success('Modo P2P activado: conversiones usando precios P2P en tiempo real');
     } else {
       warning('Modo Oficial activado: conversiones usando precios de mercado');
     }
@@ -914,17 +919,44 @@ export default function FinanzasPage() {
                 </svg>
                 <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
               </button>
-              <button
-                className={`btn btn-outline ${p2pMode ? 'btn-p2p-active' : 'btn-p2p-idle'}`}
-                onClick={() => setP2pMode(!p2pMode)}
-                title={p2pMode ? 'Usando tasas P2P' : 'Usar tasas P2P'}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-default)',
+                  overflow: 'hidden',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                }}
+                title="Elige entre tasa de mercado (Oficial) o precio P2P real para USDT/SOL"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M7 16V4M7 4L3 8M7 4l4 4"/>
-                  <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
-                </svg>
-                <span className="btn-p2p-label">{p2pMode ? 'P2P On' : 'P2P Off'}</span>
-              </button>
+                <button
+                  onClick={() => setP2pMode(false)}
+                  style={{
+                    padding: '6px 12px',
+                    border: 'none',
+                    background: !p2pMode ? 'var(--color-prosper-green)' : 'transparent',
+                    color: !p2pMode ? '#fff' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Oficial
+                </button>
+                <button
+                  onClick={() => setP2pMode(true)}
+                  style={{
+                    padding: '6px 12px',
+                    border: 'none',
+                    background: p2pMode ? '#4edea3' : 'transparent',
+                    color: p2pMode ? '#003824' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  P2P
+                </button>
+              </div>
               <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -978,7 +1010,12 @@ export default function FinanzasPage() {
                   )}
                 </span>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDT ? '1px solid #4edea3' : undefined }}>
+              <div
+                className="summary-card"
+                onClick={() => setP2pMode(!p2pMode)}
+                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDT ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                title="Clic para alternar entre tasa Oficial y P2P"
+              >
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   💎 USDT → 🇻🇪 BS
                   {p2pMode && rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
@@ -992,7 +1029,7 @@ export default function FinanzasPage() {
                   )}
                   {rates.p2pRates?.USDT && (
                     <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
                       <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
                     </span>
                   )}
@@ -1001,7 +1038,12 @@ export default function FinanzasPage() {
                   )}
                 </div>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.SOL ? '1px solid #4edea3' : undefined }}>
+              <div
+                className="summary-card"
+                onClick={() => setP2pMode(!p2pMode)}
+                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.SOL ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                title="Clic para alternar entre tasa Oficial y P2P"
+              >
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   ☀️ SOL → 🇻🇪 BS
                   {p2pMode && rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
@@ -1015,7 +1057,7 @@ export default function FinanzasPage() {
                   )}
                   {rates.p2pRates?.SOL && (
                     <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
                       <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
                     </span>
                   )}
