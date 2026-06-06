@@ -194,7 +194,6 @@ export interface UserProfile {
   updatedAt?: number;
   notifications?: NotificationPreferences;
   showProfile?: boolean;
-  isSeeded?: boolean;
 }
 
 // ─── Courses ───

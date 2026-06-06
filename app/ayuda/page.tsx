@@ -15,7 +15,7 @@ import {
 import { submitFeedback, getFeedbackByOwner } from '@/lib/firestore/feedback';
 
 const faqs = [
-  { category: 'Primeros Pasos', q: '¿Cómo creo mi cuenta en Prosper Pro?', a: 'Ve a la página de registro, ingresa tu email y contraseña, o usa tu cuenta de Google. Una vez registrado, accederás al dashboard en /dashboard.' },
+  { category: 'Primeros Pasos', q: '¿Cómo creo mi cuenta en Prosper Pro?', a: 'Ve a la página de registro, ingresa tu email y contraseña, o usa tu cuenta de Google. Una vez registrado, accederás al dashboard en /.' },
   { category: 'Primeros Pasos', q: '¿Cómo configuro mi perfil?', a: 'Ve a Configuración > Perfil. Ahí puedes cambiar tu nombre, foto de perfil, email y preferencias de tema (claro/oscuro).' },
   { category: 'Primeros Pasos', q: '¿Cómo vinculo mi primera cuenta financiera?', a: 'Ve a Finanzas > Nueva Cuenta. Selecciona el tipo (Corriente, Ahorro, Efectivo), asigna un nombre y balance inicial.' },
   { category: 'Primeros Pasos', q: '¿Cómo navego por la app?', a: 'El dashboard tiene un menú lateral con acceso a: Dashboard, Planes Financieros, Calendario, Finanzas, Configuración y Ayuda. En móvil, usa el botón hamburguesa.' },
@@ -46,7 +46,7 @@ const faqs = [
   { category: 'Seguridad', q: '¿Mis datos están seguros?', a: 'Sí. Usamos Firebase con reglas de seguridad que aíslan datos por ownerId. Solo tú puedes acceder a tu información.' },
   { category: 'Seguridad', q: '¿Puedo usar Prosper Pro en varios dispositivos?', a: 'Sí. Los datos se sincronizan en tiempo real via Firestore.' },
   { category: 'General', q: '¿Prosper Pro es gratuito?', a: 'Sí. Todas las funcionalidades están disponibles sin costo.' },
-  { category: 'General', q: '¿En qué URL está el dashboard?', a: 'El dashboard está en /dashboard. La página principal (/) es una landing page.' },
+  { category: 'General', q: '¿En qué URL está el dashboard?', a: 'El dashboard está en /. La página principal (/) es el dashboard cuando inicias sesión.' },
 ];
 
 const categories = [

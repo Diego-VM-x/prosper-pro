@@ -4,7 +4,7 @@ const STATIC_ASSETS = [
   '/',
   '/login',
   '/register',
-  '/dashboard',
+  '/inicio',
   '/manifest.json',
   '/logo-icon.png',
 ];

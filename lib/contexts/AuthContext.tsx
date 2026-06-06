@@ -136,7 +136,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email: u.email,
             photoURL: u.photoURL,
             createdAt: Date.now(),
-            isSeeded: false,
             currency: 'USD' as CurrencyCode,
             showProfile: true,
           });
@@ -212,7 +211,6 @@ function clearStoredTokens() {
           email: tokens.email || null,
           photoURL: tokens.photoUrl || null,
           createdAt: Date.now(),
-          isSeeded: false,
           currency: 'USD' as CurrencyCode,
           showProfile: true,
         });
@@ -268,7 +266,6 @@ function clearStoredTokens() {
         email: email,
         photoURL: null,
         createdAt: Date.now(),
-        isSeeded: false,
         currency: currency || 'USD',
         showProfile: true,
       });

@@ -33,7 +33,7 @@ const TIME_RANGES: { key: TimeRange; label: string }[] = [
   { key: 'year', label: 'Año' },
 ];
 
-function CustomTooltip({ active, payload, label, formatter }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string }) {
+function CustomTooltip({ active, payload, label, formatter, showAmounts }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string; showAmounts?: boolean }) {
   const fmt = formatter || ((v: number) => `$${v}`);
   if (active && payload && payload.length) {
     return (
@@ -45,11 +45,13 @@ function CustomTooltip({ active, payload, label, formatter }: { active?: boolean
         boxShadow: 'var(--shadow-md)',
       }}>
         <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</p>
-        {payload.map((p) => (
+        {showAmounts ? payload.map((p) => (
           <p key={p.dataKey} style={{ margin: '2px 0', fontSize: '12px', color: p.color }}>
             {p.dataKey === 'income' ? '📥 Ingresos' : p.dataKey === 'expense' ? '📤 Gastos' : '💰 Ahorro'}: {fmt(p.value)}
           </p>
-        ))}
+        )) : (
+          <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-tertiary)' }}>Montos ocultos</p>
+        )}
       </div>
     );
   }
@@ -154,7 +156,8 @@ export function FinancialStatusChart() {
   }, []);
 
   const chartData = useMemo((): ChartDataPoint[] => {
-    if (transactions.length === 0) return [];
+    const nonTransferTxs = transactions.filter(t => t.category !== 'Transferencia');
+    if (nonTransferTxs.length === 0) return [];
 
     const now = new Date();
     const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -207,7 +210,7 @@ export function FinancialStatusChart() {
     }
 
     return periods.map((period) => {
-      const periodTxs = transactions.filter((t) => {
+      const periodTxs = nonTransferTxs.filter((t) => {
         const txDate = new Date(t.date);
         return txDate >= period.start && txDate <= period.end;
       });
@@ -228,14 +231,15 @@ export function FinancialStatusChart() {
   }, [transactions, selectedRange, accounts, displayCurrency, convertBetween]);
 
   const totals = useMemo(() => {
+    const nonTransferTxs = transactions.filter(t => t.category !== 'Transferencia');
     const convertTx = (t: Transaction) => {
       const account = accounts.find((a) => a.id === t.accountId);
       const txCurrency = account?.currency || 'USD';
       return convertBetween(t.amount, txCurrency, displayCurrency);
     };
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0);
-    const saving = transactions.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0);
+    const income = nonTransferTxs.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0);
+    const expense = nonTransferTxs.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0);
+    const saving = nonTransferTxs.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0);
     return { income, expense, saving, balance: income - expense - saving };
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
@@ -374,7 +378,7 @@ export function FinancialStatusChart() {
       {/* Chart */}
       {loading ? (
         <SkeletonChart />
-      ) : chartData.length === 0 ? (
+      ) : chartData.length === 0 || chartData.every(d => d.income === 0 && d.expense === 0 && d.saving === 0) ? (
         <div style={{
           height: `${chartHeight}px`,
           display: 'flex',
@@ -402,18 +406,14 @@ export function FinancialStatusChart() {
               tickFormatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} />} />
+            <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} showAmounts={showAmounts} />} />
             <Legend
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
               formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}
             />
-            {showAmounts && (
-              <>
-                <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="saving" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-              </>
-            )}
+            <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="saving" fill="#F59E0B" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

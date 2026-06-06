@@ -32,6 +32,12 @@ export default function Home() {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
+    if (!loading && user) {
+      router.replace('/');
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -67,7 +73,7 @@ export default function Home() {
             <a href="#features" className="nav-link">Funciones</a>
             <a href="#how-it-works" className="nav-link">Cómo Funciona</a>
             {user ? (
-              <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+              <button className="btn btn-primary" onClick={() => router.push('/')}>
                 Ir al Dashboard
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
@@ -110,7 +116,7 @@ export default function Home() {
             <AnimatedSection animationType="fade-up" delay={300}>
               <div className="landing-hero-cta">
                 {user ? (
-                  <button className="btn btn-primary btn-xl" onClick={() => router.push('/dashboard')}>
+                  <button className="btn btn-primary btn-xl" onClick={() => router.push('/')}>
                     Ir al Dashboard
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </button>
@@ -363,7 +369,7 @@ export default function Home() {
                 <p>Únete a Prosper Pro y comienza a construir tu libertad financiera hoy mismo.</p>
                 <div className="cta-buttons">
                   {user ? (
-                    <button className="btn btn-white btn-xl" onClick={() => router.push('/dashboard')}>
+                    <button className="btn btn-white btn-xl" onClick={() => router.push('/')}>
                       Ir al Dashboard
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </button>
@@ -400,7 +406,7 @@ export default function Home() {
             <div className="footer-col">
               <h4>Cuenta</h4>
               {user ? (
-                <button onClick={() => router.push('/dashboard')}>Dashboard</button>
+                <button onClick={() => router.push('/')}>Dashboard</button>
               ) : (
                 <>
                   <button onClick={() => router.push('/login')}>Iniciar Sesión</button>

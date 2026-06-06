@@ -104,7 +104,7 @@ export function Dashboard() {
   }, [accounts, displayCurrency, rates, p2pMode]);
 
   const monthlySavings = useMemo(() => {
-    const savings = transactions.filter((t) => t.type === 'saving');
+    const savings = transactions.filter((t) => t.type === 'saving' && t.category !== 'Transferencia');
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     return savings
@@ -314,7 +314,7 @@ export function Dashboard() {
 
   const monthlyIncome = useMemo(() => {
     return transactions
-      .filter(t => t.type === 'income' && t.date >= startOfMonth)
+      .filter(t => t.type === 'income' && t.category !== 'Transferencia' && t.date >= startOfMonth)
       .reduce((sum, t) => {
         const account = accounts.find(a => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
@@ -324,7 +324,7 @@ export function Dashboard() {
 
   const monthlyExpenses = useMemo(() => {
     return transactions
-      .filter(t => t.type === 'expense' && t.date >= startOfMonth)
+      .filter(t => t.type === 'expense' && t.category !== 'Transferencia' && t.date >= startOfMonth)
       .reduce((sum, t) => {
         const account = accounts.find(a => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';

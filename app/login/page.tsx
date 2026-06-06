@@ -12,8 +12,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail, user } = useAuth();
+  const { loginWithGoogle, loginWithEmail, user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/');
+    }
+  }, [user, authLoading, router]);
 
   const sendWelcomeNotification = (userName: string) => {
     const title = '🎉 ¡Bienvenido/a a Prosper!';

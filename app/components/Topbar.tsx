@@ -158,7 +158,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   // Rutas disponibles para búsqueda
   const searchRoutes = [
     { name: 'Inicio', route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
-    { name: 'Dashboard', route: '/dashboard', icon: '📊', keywords: 'dashboard inicio principal' },
+    { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
     { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
     { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
@@ -204,7 +204,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     <header className="topbar" id="main-topbar">
       {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
-        <Link href="/dashboard" className="topbar-logo-link">
+        <Link href="/" className="topbar-logo-link">
           <img
             src="/logo-icon.png"
             alt="Prosper Logo"
@@ -589,7 +589,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               </button>
             </div>
             <nav className="mobile-menu-nav">
-              <Link href="/dashboard" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconDashboard /> Dashboard
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>

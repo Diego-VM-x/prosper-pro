@@ -127,7 +127,7 @@ export default function FinanzasPage() {
     const totalsByCurrency: Record<string, { income: number; expenses: number; saving: number }> = {};
     
     transactions.forEach((t) => {
-      if (t.date >= startOfMonth) {
+      if (t.date >= startOfMonth && t.category !== 'Transferencia') {
         const account = accounts.find((a) => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
         
