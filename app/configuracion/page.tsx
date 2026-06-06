@@ -348,6 +348,8 @@ export default function ConfiguracionPage() {
                       <div className="option-grid currency-grid">
                         {CURRENCY_LIST.map(code => {
                           const cfg = CURRENCY_MAP[code];
+                          const rateToBs = rates.rates[code];
+                          const isBs = code === 'BS';
                           return (
                             <button
                               key={code}
@@ -356,9 +358,15 @@ export default function ConfiguracionPage() {
                                 setCurrency(code);
                                 setDisplayCurrency(code);
                               }}
+                              style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}
                             >
                               <span className="option-flag">{cfg.flag}</span>
                               <span className="option-text">{cfg.symbol} {cfg.name}</span>
+                              {!isBs && rateToBs && rateToBs > 0 && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-prosper-green)', fontWeight: 500, marginLeft: '28px' }}>
+                                  1 {cfg.code} ≈ {rateToBs.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })} Bs.
+                                </span>
+                              )}
                             </button>
                           );
                         })}
