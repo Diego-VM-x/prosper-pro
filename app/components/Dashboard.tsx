@@ -630,7 +630,7 @@ export function Dashboard() {
               </div>
             </div>
             <div className="accounts-list">
-              {accounts.slice(0, 3).map((acc) => {
+              {accounts.slice(0, 4).map((acc) => {
                 const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
                 return (
                   <div className="account-item" key={acc.id} onClick={() => router.push('/finanzas')}>
