@@ -86,7 +86,7 @@ function SummaryWidget({ label, value, altValue, color, showAmounts, showConvers
 export default function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -903,6 +903,16 @@ export default function FinanzasPage() {
                   )}
                 </svg>
                 <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
+              </button>
+              <button
+                className={`btn btn-outline ${p2pMode ? 'btn-p2p-active' : ''}`}
+                onClick={() => setP2pMode(!p2pMode)}
+                title={p2pMode ? 'Usando tasas P2P' : 'Usar tasas P2P'}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2v20M2 12h20"/>
+                </svg>
+                <span className="btn-p2p-label">{p2pMode ? 'P2P On' : 'P2P Off'}</span>
               </button>
               <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2067,6 +2077,8 @@ export default function FinanzasPage() {
           .btn-vepay { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
           .btn-vepay:hover { background: var(--color-prosper-green); color: white; }
           .btn-vepay-label { display: none; }
+          .btn-p2p-active { border-color: #4edea3 !important; background: rgba(78,222,163,0.12) !important; color: #4edea3 !important; }
+          .btn-p2p-label { display: none; }
           .btn-sm { padding: 8px 14px; font-size: 0.75rem; }
 
           /* VEPay Modal */
@@ -2262,6 +2274,7 @@ export default function FinanzasPage() {
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
+            .btn-p2p-label { display: inline; }
             .modal-accounting { max-width: none; }
             .accounting-actions { grid-template-columns: 1fr 1fr; }
             .accounting-accounts-list { grid-template-columns: 1fr 1fr; }

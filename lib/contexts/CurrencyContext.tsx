@@ -39,6 +39,10 @@ interface CurrencyContextType {
   currencies: typeof CURRENCY_LIST;
   /** Currency config map */
   currencyMap: typeof CURRENCY_MAP;
+  /** Whether to use P2P rates for USDT/SOL */
+  p2pMode: boolean;
+  /** Toggle P2P rates */
+  setP2pMode: (v: boolean) => void;
 }
 
 const CurrencyContext = createContext<CurrencyContextType>({
@@ -53,6 +57,8 @@ const CurrencyContext = createContext<CurrencyContextType>({
   convertBetween: (a) => a,
   currencies: CURRENCY_LIST,
   currencyMap: CURRENCY_MAP,
+  p2pMode: false,
+  setP2pMode: () => {},
 });
 
 export const useCurrency = () => useContext(CurrencyContext);
@@ -62,6 +68,7 @@ export const useCurrency = () => useContext(CurrencyContext);
 // ============================================================
 
 const DISPLAY_CURRENCY_KEY = 'prosper-display-currency';
+const P2P_MODE_KEY = 'prosper-p2p-mode';
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -71,6 +78,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<ExchangeRates>(DEFAULT_RATES);
   const [loading, setLoading] = useState(true);
   const [apiRates, setApiRates] = useState<ExchangeRates | null>(null);
+  const [p2pMode, setP2pModeState] = useState<boolean>(() => {
+    try { return localStorage.getItem(P2P_MODE_KEY) === 'true'; } catch { return false; }
+  });
   const apiRatesRef = React.useRef<ExchangeRates | null>(null);
 
   useEffect(() => {
@@ -257,19 +267,37 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, []);
 
+  // Set P2P mode (persist to localStorage)
+  const setP2pMode = useCallback((v: boolean) => {
+    setP2pModeState(v);
+    try {
+      localStorage.setItem(P2P_MODE_KEY, String(v));
+    } catch {}
+  }, []);
+
+  // Effective rates: override USDT/SOL with P2P when p2pMode is active
+  const effectiveRates = useMemo(() => {
+    const r = { ...rates.rates };
+    if (p2pMode && rates.p2pRates) {
+      if (rates.p2pRates.USDT) r.USDT = rates.p2pRates.USDT;
+      if (rates.p2pRates.SOL) r.SOL = rates.p2pRates.SOL;
+    }
+    return r;
+  }, [rates, p2pMode]);
+
   // Convert from base currency to display currency
   const convert = useCallback(
-    (amount: number) => convertCurrency(amount, baseCurrency, displayCurrency, rates.rates),
-    [baseCurrency, displayCurrency, rates.rates]
+    (amount: number) => convertCurrency(amount, baseCurrency, displayCurrency, effectiveRates),
+    [baseCurrency, displayCurrency, effectiveRates]
   );
 
   // Convert + format
   const formatAmount = useCallback(
     (amount: number) => {
-      const converted = convertCurrency(amount, baseCurrency, displayCurrency, rates.rates);
+      const converted = convertCurrency(amount, baseCurrency, displayCurrency, effectiveRates);
       return formatCurrencyValue(converted, displayCurrency);
     },
-    [baseCurrency, displayCurrency, rates.rates]
+    [baseCurrency, displayCurrency, effectiveRates]
   );
 
   // Format in a specific currency (no conversion)
@@ -281,8 +309,8 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // Convert between any two currencies
   const convertBetween = useCallback(
     (amount: number, from: CurrencyCode, to: CurrencyCode) =>
-      convertCurrency(amount, from, to, rates.rates),
-    [rates.rates]
+      convertCurrency(amount, from, to, effectiveRates),
+    [effectiveRates]
   );
 
   const value = useMemo(
@@ -298,8 +326,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       convertBetween,
       currencies: CURRENCY_LIST,
       currencyMap: CURRENCY_MAP,
+      p2pMode,
+      setP2pMode,
     }),
-    [baseCurrency, displayCurrency, rates, loading, setDisplayCurrency, convert, formatAmount, formatInCurrency, convertBetween]
+    [baseCurrency, displayCurrency, rates, loading, setDisplayCurrency, convert, formatAmount, formatInCurrency, convertBetween, p2pMode, setP2pMode]
   );
 
   return (
