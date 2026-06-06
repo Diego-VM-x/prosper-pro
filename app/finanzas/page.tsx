@@ -5,7 +5,6 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
-import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
@@ -862,434 +861,310 @@ export default function FinanzasPage() {
 
   const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
 
-  const { goals } = useGoals();
-
-  const prevMonthSummary = useMemo(() => {
-    const now = new Date();
-    const startPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-    const endPrev = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const totalsByCurrency: Record<string, { income: number; expenses: number; saving: number }> = {};
-    transactions.forEach((t) => {
-      if (t.date >= startPrev && t.date < endPrev) {
-        const acc = accounts.find((a) => a.id === t.accountId);
-        const c = acc?.currency || 'USD';
-        if (!totalsByCurrency[c]) totalsByCurrency[c] = { income: 0, expenses: 0, saving: 0 };
-        if (t.type === 'income') totalsByCurrency[c].income += t.amount;
-        else if (t.type === 'expense') totalsByCurrency[c].expenses += t.amount;
-        else if (t.type === 'saving') totalsByCurrency[c].saving += t.amount;
-      }
-    });
-    let income = 0, expenses = 0, saving = 0;
-    Object.entries(totalsByCurrency).forEach(([c, t]) => {
-      income += convertBetween(t.income, c as CurrencyCode, displayCurrency);
-      expenses += convertBetween(t.expenses, c as CurrencyCode, displayCurrency);
-      saving += convertBetween(t.saving, c as CurrencyCode, displayCurrency);
-    });
-    return { income, expenses, saving, balance: income - expenses - saving };
-  }, [transactions, accounts, displayCurrency, convertBetween]);
-
-  const pctChange = (current: number, previous: number) => {
-    if (previous === 0 && current === 0) return null;
-    if (previous === 0) return null;
-    return ((current - previous) / previous) * 100;
-  };
-
-  const incomeChange = pctChange(summary.income, prevMonthSummary.income);
-  const expenseChange = pctChange(summary.expenses, prevMonthSummary.expenses);
-  const savingChange = pctChange(summary.saving, prevMonthSummary.saving);
-
-  const renderBadge = (val: number | null, color: string) => {
-    if (val === null) return <span className="arch-metric-badge" style={{ color: 'var(--text-secondary)' }}>—</span>;
-    return <span className="arch-metric-badge" style={{ color }}>{val >= 0 ? '📈' : '📉'} {val >= 0 ? '+' : ''}{val.toFixed(0)}%</span>;
-  };
-
-  const monthlySavings = useMemo(() => {
-    const months: number[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const start = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-      let saving = 0;
-      transactions.forEach((t) => {
-        if (t.type === 'saving' && t.date >= start && t.date < end) {
-          saving += convertBetween(t.amount, accounts.find((a) => a.id === t.accountId)?.currency || 'USD', displayCurrency);
-        }
-      });
-      months.push(saving);
-    }
-    const max = Math.max(...months, 1);
-    return months.map((m) => (m / max) * 100);
-  }, [transactions, accounts, displayCurrency, convertBetween]);
-
-  const insightText = useMemo(() => {
-    const now = new Date();
-    const startThis = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const startPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-    const endPrev = startThis;
-    const catTotalsThis: Record<string, number> = {};
-    const catTotalsPrev: Record<string, number> = {};
-    transactions.forEach((t) => {
-      if (t.type !== 'expense') return;
-      const amount = convertBetween(t.amount, accounts.find((a) => a.id === t.accountId)?.currency || 'USD', displayCurrency);
-      if (t.date >= startThis) catTotalsThis[t.category] = (catTotalsThis[t.category] || 0) + amount;
-      else if (t.date >= startPrev && t.date < endPrev) catTotalsPrev[t.category] = (catTotalsPrev[t.category] || 0) + amount;
-    });
-    let maxCat = '';
-    let maxPct = -Infinity;
-    Object.keys(catTotalsThis).forEach((cat) => {
-      const prev = catTotalsPrev[cat] || 0;
-      const curr = catTotalsThis[cat];
-      const pct = prev === 0 ? (curr > 0 ? 100 : 0) : ((curr - prev) / prev) * 100;
-      if (pct > maxPct) { maxPct = pct; maxCat = cat; }
-    });
-    if (maxCat && maxPct > 10) {
-      return `He detectado que tus gastos en "${maxCat}" han aumentado un ${maxPct.toFixed(0)}% este mes. Recomiendo diversificar ${formatInCurrency(summary.income * 0.1, displayCurrency)} extras hacia tu fondo de emergencia para mantener el ritmo de crecimiento proyectado.`;
-    }
-    const savingRate = summary.income > 0 ? (summary.saving / summary.income) * 100 : 0;
-    if (savingRate < 10) {
-      return `Tu tasa de ahorro actual es del ${savingRate.toFixed(1)}%. Te sugiero incrementar tus aportes a fondos de emergencia para alcanzar el 20% recomendado.`;
-    }
-    return `Tu flujo de caja se mantiene estable este mes. Continúa diversificando tus ingresos y monitorea los gastos recurrentes para optimizar tu crecimiento patrimonial.`;
-  }, [transactions, accounts, summary, displayCurrency, convertBetween, formatInCurrency]);
-
-  const primaryGoal = goals.length > 0 ? goals[0] : null;
-  const goalTarget = primaryGoal ? formatInCurrency(primaryGoal.target, displayCurrency) : formatInCurrency(50000, displayCurrency);
-  const goalProgress = primaryGoal ? Math.min(100, (primaryGoal.current / primaryGoal.target) * 100) : 85.8;
-  const goalCaption = primaryGoal
-    ? `Estás al ${goalProgress.toFixed(1)}% de tu meta: ${primaryGoal.title}`
-    : 'Estás al 85.8% de tu objetivo anual.';
-
-  const [cryptoAssets, setCryptoAssets] = useState<Array<{symbol: string; name: string; icon: string; change: number}>>([]);
-  useEffect(() => {
-    async function fetchAssets() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=tether,solana&price_change_percentage=24h', { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        const mapped = data.map((c: any) => ({
-          symbol: c.symbol.toUpperCase(),
-          name: c.id === 'tether' ? 'Tether' : 'Solana',
-          icon: c.id === 'tether' ? '💎' : '◎',
-          change: c.price_change_percentage_24h ?? 0,
-        }));
-        setCryptoAssets(mapped);
-      } catch {}
-    }
-    fetchAssets();
-  }, []);
-
-  const dailySpark = useMemo(() => {
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const incomeArr = Array(daysInMonth).fill(0);
-    const expenseArr = Array(daysInMonth).fill(0);
-    const savingArr = Array(daysInMonth).fill(0);
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    transactions.forEach((t) => {
-      if (t.date >= startOfMonth) {
-        const day = new Date(t.date).getDate() - 1;
-        const val = convertBetween(t.amount, accounts.find((a) => a.id === t.accountId)?.currency || 'USD', displayCurrency);
-        if (t.type === 'income') incomeArr[day] += val;
-        else if (t.type === 'expense') expenseArr[day] += val;
-        else if (t.type === 'saving') savingArr[day] += val;
-      }
-    });
-    const normalize = (arr: number[]) => {
-      const max = Math.max(...arr, 1);
-      return arr.map((v) => (v / max) * 100);
-    };
-    return {
-      income: normalize(incomeArr),
-      expense: normalize(expenseArr),
-      saving: normalize(savingArr),
-      balance: normalize(incomeArr.map((v, i) => v - expenseArr[i] - savingArr[i])),
-    };
-  }, [transactions, accounts, displayCurrency, convertBetween]);
-
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="finanzas-page">          {/* Header */}
-          <div className="arch-header">
-            <div className="arch-header-text">
-              <h1>Finanzas</h1>
-              <p>Gestiona tu capital con precisión arquitectónica. Visualiza flujos, proyecciones y optimiza tu crecimiento patrimonial.</p>
+        <div className="finanzas-page">
+          {/* Header */}
+          <div className="page-header">
+            <div className="page-header-left">
+              <h1 className="page-title">Finanzas</h1>
+              <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
             </div>
-            <div className="arch-header-actions">
-              <button className="arch-btn-primary" onClick={() => setShowModal(true)}>
-                <IconPlus width={16} /> Nueva Transacción
+            <div className="page-header-actions">
+              <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
+                <IconPlus width={14} /> Nueva Cuenta
+              </button>
+              <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
+                <IconWallet width={14} /> Transferir
+              </button>
+              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Archivar todo el historial">
+                <IconArchive width={14} /> Borrar Historial
+              </button>
+              <button className="btn btn-outline btn-accounting" onClick={() => setShowAccountingModal(true)} title="Gestión contable avanzada">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                </svg>
+                <span className="btn-accounting-label">Gestión Contable</span>
+              </button>
+              <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  {showAmounts ? (
+                    <>
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </>
+                  ) : (
+                    <>
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </>
+                  )}
+                </svg>
+                <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
+              </button>
+              <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span className="btn-vepay-label">Importar Captura</span>
+              </button>
+              <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+                <IconPlus width={14} /> Nueva Transacción
               </button>
             </div>
           </div>
 
-          {/* Métricas */}
-          <div className="arch-metrics">
-            <div className="arch-metric-card" style={{ borderLeftColor: '#4edea3' }}>
-              <div className="arch-metric-top">
-                <span className="arch-metric-label">INGRESOS</span>
-                {renderBadge(incomeChange, '#4edea3')}
+          {/* Tasas de cambio */}
+          <div className="summary-section" style={{ marginBottom: '16px' }}>
+            <div className="summary-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🇺🇸 USD → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.source === 'api' ? (
+                    <span>1 USD = {rates.rates.USD.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando tasa...</span>
+                  )}
+                </span>
               </div>
-              <div className="arch-metric-value" style={{ color: '#4edea3' }}>
-                {showAmounts ? formatInCurrency(summary.income, displayCurrency) : '••••••'}
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🇪🇺 EUR → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.source === 'api' && rates.rates.EUR ? (
+                    <span>1 EUR = {rates.rates.EUR.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
+                  )}
+                </span>
               </div>
-              <div className="arch-sparkline">
-                {dailySpark.income.slice(-10).map((v, i) => (
-                  <div key={i} className="arch-spark-bar" style={{ height: `${Math.max(4, v)}%`, background: '#4edea3' }} />
-                ))}
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🇨🇴 COP → 🇻🇪 BS
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.source === 'api' && rates.rates.COP ? (
+                    <span>1 COP = {rates.rates.COP.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
+                  )}
+                </span>
               </div>
-            </div>
-            <div className="arch-metric-card" style={{ borderLeftColor: '#ffb3af' }}>
-              <div className="arch-metric-top">
-                <span className="arch-metric-label">GASTOS</span>
-                {renderBadge(expenseChange, '#ffb3af')}
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💎 USDT → 🇻🇪 BS
+                  {rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.p2pRates?.USDT ? (
+                    <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : rates.rates.USDT ? (
+                    <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                  )}
+                </span>
               </div>
-              <div className="arch-metric-value" style={{ color: '#ffb3af' }}>
-                {showAmounts ? formatInCurrency(summary.expenses, displayCurrency) : '••••••'}
-              </div>
-              <div className="arch-sparkline">
-                {dailySpark.expense.slice(-10).map((v, i) => (
-                  <div key={i} className="arch-spark-bar" style={{ height: `${Math.max(4, v)}%`, background: '#ffb3af' }} />
-                ))}
-              </div>
-            </div>
-            <div className="arch-metric-card" style={{ borderLeftColor: '#9ed2b5' }}>
-              <div className="arch-metric-top">
-                <span className="arch-metric-label">AHORRO</span>
-                {renderBadge(savingChange, '#9ed2b5')}
-              </div>
-              <div className="arch-metric-value" style={{ color: '#9ed2b5' }}>
-                {showAmounts ? formatInCurrency(summary.saving, displayCurrency) : '••••••'}
-              </div>
-              <div className="arch-sparkline">
-                {dailySpark.saving.slice(-10).map((v, i) => (
-                  <div key={i} className="arch-spark-bar" style={{ height: `${Math.max(4, v)}%`, background: '#9ed2b5' }} />
-                ))}
-              </div>
-            </div>
-            <div className="arch-metric-card" style={{ borderLeftColor: '#4edea3' }}>
-              <div className="arch-metric-top">
-                <span className="arch-metric-label">BALANCE</span>
-                <span className="arch-metric-badge" style={{ color: '#dde4dd' }}>🏛️ Total</span>
-              </div>
-              <div className="arch-metric-value" style={{ color: '#dde4dd' }}>
-                {showAmounts ? formatInCurrency(totalBalance, displayCurrency) : '••••••'}
-              </div>
-              <div className="arch-sparkline">
-                {dailySpark.balance.slice(-10).map((v, i) => (
-                  <div key={i} className="arch-spark-bar" style={{ height: `${Math.max(4, Math.abs(v))}%`, background: v >= 0 ? '#4edea3' : '#ffb3af' }} />
-                ))}
+              <div className="summary-card" style={{ padding: '12px 16px' }}>
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ☀️ SOL → 🇻🇪 BS
+                  {rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
+                </span>
+                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
+                  {rates.p2pRates?.SOL ? (
+                    <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : rates.rates.SOL ? (
+                    <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                  )}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Cuentas */}
-          <div className="arch-accounts-section" style={{ marginBottom: '24px' }}>
-            <h3>Mis Cuentas</h3>
-            <div className="arch-accounts-grid">
-              {accounts.map((acc) => (
-                <div key={acc.id} className="arch-account-chip" style={{ borderLeftColor: acc.color }}>
-                  <span className="arch-account-chip-name">{acc.icon} {acc.name}</span>
-                  <span className="arch-account-chip-balance">{showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}</span>
+          <div className="accounts-grid">
+            {accounts.map((acc, index) => (
+              <div key={acc.id} className="account-card stagger-item" style={{ borderLeftColor: acc.color, animationDelay: `${index * 0.05}s` }}>
+                <div className="account-card-header">
+                  <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
+                  <div className="account-info">
+                    <span className="account-name">{acc.name}</span>
+                    <span className="account-type">
+                      {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
+                    </span>
+                  </div>
+                  <div className="account-actions-group">
+                    <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
+                    <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
+                  </div>
                 </div>
-              ))}
-              <button className="arch-account-chip arch-add-chip" onClick={() => setShowAccountModal(true)}>
-                <IconPlus width={14} /> Nueva Cuenta
+                <div className="account-balance-group">
+                  <div className="account-balance" style={{ color: acc.color }}>
+                    {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                  </div>
+                  {showAmounts && acc.currency !== displayCurrency && (
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                      ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {accounts.length === 0 && (
+              <div className="empty-accounts">
+                <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
+            </div>
+          )}
+
+          {/* Modal Editar Cuenta */}
+          {showEditAccountModal && editingAccount && (
+            <div className="modal-overlay" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Editar Cuenta</h2>
+                    <p className="modal-subtitle">Nombre y color</p>
+                  </div>
+                  <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="tx-field">
+                    <label className="tx-label">Nombre</label>
+                    <input className="tx-input" type="text" placeholder="Nombre de la cuenta" value={editingAccount.name} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Color</label>
+                    <div className="color-picker-row">
+                      {['#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'].map((c) => (
+                        <button
+                          key={c}
+                          className={`color-dot ${editingAccount.color === c ? 'active' : ''}`}
+                          style={{ background: c }}
+                          onClick={() => setEditingAccount({ ...editingAccount, color: c })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={handleEditAccount}>Guardar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          </div>
+
+          {/* Resumen mensual */}
+          <div className="summary-section">
+            <div className="summary-grid">
+              <SummaryWidget label="Ingresos" value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Gastos" value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Ahorro" value={summary.saving} altValue={altSummary.saving} color="var(--color-pine-500)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+            </div>
+            <button
+              onClick={() => { const next = !showConversion; setShowConversion(next); try { localStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
+              className={`conversion-toggle ${showConversion ? 'active' : ''}`}
+              title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
+            >
+              ⇄ {showConversion ? `${displayCurrency}/${altCurrency}` : 'Convertir'}
+            </button>
+          </div>
+
+          {/* Gráfico */}
+          <FinancialStatusChart />
+
+          {/* Filtros */}
+          <div className="filter-bar">
+            <CustomSelect
+              value={selectedAccount}
+              onChange={(val) => setSelectedAccount(val)}
+              options={[
+                { value: 'all', label: 'Todas las cuentas', icon: '📊' },
+                ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+              ]}
+              placeholder="Seleccionar cuenta..."
+            />
+            {['Todos', 'income', 'expense', 'saving'].map((t) => (
+              <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
+                {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
               </button>
-            </div>
+            ))}
+            <CustomSelect
+              value={filterCategory}
+              onChange={(val) => setFilterCategory(val)}
+              options={[
+                { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
+                ...categories.map((c) => ({ value: c, label: c })),
+              ]}
+              placeholder="Seleccionar categoría..."
+            />
           </div>
 
-          <div className="arch-main">
-            {/* Contenido principal */}
-            <div className="arch-content">
-              <div className="arch-toolbar">
-                <h2>Transacciones Recientes</h2>
-                <div className="arch-tabs">
-                  {(['Todos', 'income', 'expense', 'saving'] as const).map((t) => (
-                    <button
-                      key={t}
-                      className={filterType === t ? 'active' : ''}
-                      onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}
-                    >
-                      {t === 'Todos' ? 'Todos' : TYPE_LABELS[t]}
-                    </button>
-                  ))}
-                </div>
-                <div className="arch-toolbar-actions">
-                  <button className="arch-icon-btn" onClick={toggleShowAmounts} title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}>
-                    {showAmounts ? '👁️' : '🙈'}
-                  </button>
-                  <button
-                    className={`arch-icon-btn ${showConversion ? 'active' : ''}`}
-                    onClick={() => { const next = !showConversion; setShowConversion(next); try { localStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
-                    title="Convertir"
-                  >
-                    ⇄
-                  </button>
-                  <CustomSelect
-                    value={selectedAccount}
-                    onChange={(val) => setSelectedAccount(val)}
-                    options={[
-                      { value: 'all', label: 'Todas las cuentas', icon: '📊' },
-                      ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
-                    ]}
-                    placeholder="Cuenta..."
-                  />
-                  <CustomSelect
-                    value={filterCategory}
-                    onChange={(val) => setFilterCategory(val)}
-                    options={[
-                      { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
-                      ...categories.map((c) => ({ value: c, label: c })),
-                    ]}
-                    placeholder="Categoría..."
-                  />
-                </div>
-              </div>
-
-              <div className="arch-table-wrapper">
-                <table className="arch-table">
-                  <thead>
-                    <tr>
-                      <th>Descripción</th>
-                      <th>Categoría</th>
-                      <th>Estado</th>
-                      <th>Monto</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTx.length > 0 ? filteredTx.slice(0, 8).map((tx, index) => {
-                      const txAccount = accounts.find((a) => a.id === tx.accountId);
-                      const txCurrency = txAccount?.currency || 'USD';
-                      return (
-                        <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
-                          <td>
-                            <div className="arch-tx-icon" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>
-                              {TYPE_ICONS[tx.type]}
+          {/* Tabla de transacciones */}
+          <div className="transactions-table-wrapper">
+            <table className="transactions-table">
+              <thead>
+                <tr>
+                  <th>Descripción</th>
+                  <th>Cuenta</th>
+                  <th>Categoría</th>
+                  <th>Tipo</th>
+                  <th>Fecha</th>
+                  <th>Monto</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTx.length > 0 ? filteredTx.map((tx, index) => (
+                  <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                    <td>{tx.description || '—'}</td>
+                    <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
+                    <td>{tx.category}</td>
+                    <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
+                    <td>{formatDate(tx.date)}</td>
+                    <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
+                      {showAmounts ? (
+                        <>
+                          <div>
+                            {tx.type === 'expense' ? '-' : '+'}
+                            {formatInCurrency(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD')}
+                          </div>
+                          {(accounts.find(a => a.id === tx.accountId)?.currency || 'USD') !== displayCurrency && (
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                              ≈ {tx.type === 'expense' ? '-' : '+'}
+                              {formatInCurrency(convertBetween(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD', displayCurrency), displayCurrency)}
                             </div>
-                            <div className="arch-tx-info">
-                              <span className="arch-tx-desc">{tx.description || '—'}</span>
-                              <span className="arch-tx-meta">{formatDate(tx.date)} • {getAccountName(tx.accountId)}</span>
-                            </div>
-                          </td>
-                          <td><span className="arch-category-pill">{tx.category}</span></td>
-                          <td>
-                            <span className="arch-status">
-                              <span className="arch-status-dot" style={{ background: tx.type === 'expense' ? '#ffb3af' : '#4edea3' }} />
-                              COMPLETADO
-                            </span>
-                          </td>
-                          <td className="arch-amount" style={{ color: tx.type === 'expense' ? '#ffb3af' : tx.type === 'income' ? '#4edea3' : '#9ed2b5' }}>
-                            {showAmounts ? (
-                              <>
-                                <div>{tx.type === 'expense' ? '-' : '+'}{formatInCurrency(tx.amount, txCurrency)}</div>
-                                {txCurrency !== displayCurrency && showConversion && (
-                                  <div className="arch-amount-alt">
-                                    ≈ {tx.type === 'expense' ? '-' : '+'}{formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              '••••••'
-                            )}
-                          </td>
-                          <td>
-                            <button className="arch-delete-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
-                              <IconTrash width={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    }) : (
-                      <tr><td colSpan={5} className="arch-empty">No hay transacciones. ¡Agrega tu primera!</td></tr>
-                    )}
-                  </tbody>
-                </table>
-                {filteredTx.length > 8 && (
-                  <button className="arch-view-all">Ver todo el historial ({filteredTx.length})</button>
+                          )}
+                        </>
+                      ) : (
+                        '••••••'
+                      )}
+                    </td>
+                    <td>
+                      <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
+                        <IconTrash width={14} />
+                      </button>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr><td colSpan={7} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
                 )}
-              </div>
-
-            </div>
-
-            {/* Sidebar derecho */}
-            <div className="arch-sidebar">
-              <div className="arch-card">
-                <div className="arch-card-header">
-                  <h3>Proyección de Ahorro</h3>
-                  <span className="arch-card-more">⋮</span>
-                </div>
-                <div className="arch-chart-bars">
-                  {monthlySavings.map((h, i) => (
-                    <div key={i} className="arch-chart-bar-wrap">
-                      <div className="arch-chart-bar" style={{ height: `${Math.max(8, h)}%`, opacity: i === monthlySavings.length - 1 ? 1 : 0.5 }} />
-                    </div>
-                  ))}
-                </div>
-                <div className="arch-goal-row">
-                  <span>Meta final</span>
-                  <span className="arch-goal-value">{goalTarget}</span>
-                </div>
-                <div className="arch-progress-bg">
-                  <div className="arch-progress-fill" style={{ width: `${goalProgress}%` }} />
-                </div>
-                <p className="arch-goal-caption">{goalCaption}</p>
-              </div>
-
-              <div className="arch-card arch-insight">
-                <h4>✨ Insight del Arquitecto</h4>
-                <p>{insightText}</p>
-                <button className="arch-btn-outline" onClick={() => setShowAccountingModal(true)}>Optimizar Portafolio</button>
-              </div>
-
-              <div className="arch-card">
-                <h5>ACTIVOS DESTACADOS</h5>
-                {cryptoAssets.length > 0 ? (
-                  <>
-                    {cryptoAssets.map((a) => (
-                      <div key={a.symbol} className="arch-asset-row">
-                        <span>{a.icon} {a.name}</span>
-                        <span className={a.change >= 0 ? 'arch-positive' : 'arch-negative'}>
-                          {a.change >= 0 ? '+' : ''}{a.change.toFixed(1)}%
-                        </span>
-                      </div>
-                    ))}
-                    <div className="arch-asset-row">
-                      <span>🇺🇸 Dólar</span>
-                      <span>{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="arch-asset-row"><span>💎 Tether</span><span className="arch-positive">+0.0%</span></div>
-                    <div className="arch-asset-row"><span>◎ Solana</span><span className="arch-positive">+0.0%</span></div>
-                    <div className="arch-asset-row"><span>🇺🇸 Dólar</span><span>{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span></div>
-                  </>
-                )}
-              </div>
-
-              <div className="arch-card arch-rates">
-                <h5>TASAS EN VIVO</h5>
-                <div className="arch-rate-row"><span>🇺🇸 USD</span><span>{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span></div>
-                <div className="arch-rate-row"><span>🇪🇺 EUR</span><span>{rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span></div>
-                <div className="arch-rate-row">
-                  <span>💎 USDT</span>
-                  <span>
-                    {(rates.p2pRates?.USDT || rates.rates.USDT)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
-                    {rates.p2pRates?.USDT && <span className="arch-p2p-badge">P2P</span>}
-                  </span>
-                </div>
-                <div className="arch-rate-row">
-                  <span>☀️ SOL</span>
-                  <span>
-                    {(rates.p2pRates?.SOL || rates.rates.SOL)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
-                    {rates.p2pRates?.SOL && <span className="arch-p2p-badge">P2P</span>}
-                  </span>
-                </div>
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
+
           {/* Modal Transacción */}
           {showModal && (
             <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -1984,423 +1859,9 @@ export default function FinanzasPage() {
             onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
           />
         </div>
+
         <style>{`
           .finanzas-page { padding: 0; }
-          .finanzas-page { padding: 0; }
-          .arch-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-          }
-          .arch-header-text { max-width: 560px; }
-          .arch-header-text h1 {
-            font-size: 2.25rem;
-            font-weight: 800;
-            line-height: 1.2;
-            color: var(--text-primary);
-            margin: 0 0 8px 0;
-            letter-spacing: -0.025em;
-          }
-          .arch-header-text p {
-            font-size: 0.9375rem;
-            color: var(--text-secondary);
-            margin: 0;
-            line-height: 1.5;
-          }
-          .arch-header-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
-          .arch-btn-primary {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            border-radius: 12px;
-            background: #4edea3;
-            color: #003824;
-            font-size: 0.875rem;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(78, 222, 163, 0.25);
-          }
-          .arch-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(78, 222, 163, 0.35); }
-
-          .arch-metrics {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
-          }
-          .arch-metric-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-left: 4px solid;
-            border-radius: 16px;
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: all 0.2s;
-          }
-          .arch-metric-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-          .arch-metric-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-          }
-          .arch-metric-label {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-          }
-          .arch-metric-badge {
-            font-size: 0.75rem;
-            font-weight: 700;
-            background: rgba(255,255,255,0.06);
-            padding: 4px 8px;
-            border-radius: 8px;
-          }
-          .arch-metric-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-          }
-          .arch-sparkline {
-            display: flex;
-            align-items: flex-end;
-            gap: 3px;
-            height: 28px;
-            margin-top: 4px;
-          }
-          .arch-spark-bar {
-            flex: 1;
-            border-radius: 2px;
-            min-height: 3px;
-            opacity: 0.7;
-          }
-
-          .arch-main {
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 24px;
-            align-items: start;
-          }
-          .arch-content { min-width: 0; }
-          .arch-sidebar { display: flex; flex-direction: column; gap: 16px; }
-
-          .arch-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-          }
-          .arch-toolbar h2 {
-            font-size: 1.125rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
-          }
-          .arch-tabs {
-            display: flex;
-            gap: 6px;
-          }
-          .arch-tabs button {
-            padding: 8px 16px;
-            border-radius: 10px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            color: var(--text-secondary);
-            font-size: 0.8125rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-          }
-          .arch-tabs button.active {
-            background: #21523c;
-            color: #4edea3;
-            border-color: #4edea3;
-          }
-          .arch-tabs button:hover:not(.active) { border-color: #4edea3; color: #4edea3; }
-          .arch-toolbar-actions { display: flex; align-items: center; gap: 8px; }
-          .arch-icon-btn {
-            width: 36px; height: 36px;
-            border-radius: 10px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            color: var(--text-secondary);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 0.875rem;
-            transition: all 0.15s;
-          }
-          .arch-icon-btn:hover { border-color: #4edea3; color: #4edea3; }
-          .arch-icon-btn.active { background: rgba(78,222,163,0.12); border-color: #4edea3; color: #4edea3; }
-
-          .arch-table-wrapper {
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 12px;
-          }
-          .arch-table { width: 100%; border-collapse: collapse; }
-          .arch-table th {
-            text-align: left;
-            padding: 14px 16px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            background: var(--bg-input);
-            border-bottom: 1px solid var(--border-default);
-          }
-          .arch-table td {
-            padding: 14px 16px;
-            font-size: 0.8125rem;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--border-default);
-            vertical-align: middle;
-          }
-          .arch-table tr:last-child td { border-bottom: none; }
-          .arch-table tr:hover { background: var(--bg-input); }
-          .arch-tx-icon {
-            width: 36px; height: 36px;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
-          }
-          .arch-tx-info { display: flex; flex-direction: column; gap: 2px; }
-          .arch-tx-desc { font-weight: 600; color: var(--text-primary); }
-          .arch-tx-meta { font-size: 0.6875rem; color: var(--text-secondary); }
-          .arch-category-pill {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 9999px;
-            background: rgba(255,255,255,0.06);
-            color: var(--text-secondary);
-            font-size: 0.6875rem;
-            font-weight: 600;
-          }
-          .arch-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.6875rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-          }
-          .arch-status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-          }
-          .arch-amount { font-weight: 700; text-align: right; }
-          .arch-amount-alt { font-size: 10px; color: var(--text-secondary); font-weight: 400; margin-top: 2px; }
-          .arch-delete-btn {
-            background: none; border: none; color: var(--text-tertiary);
-            cursor: pointer; padding: 6px; border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.15s;
-          }
-          .arch-delete-btn:hover { color: #ffb3af; background: rgba(255,179,175,0.1); }
-          .arch-empty { text-align: center; padding: 32px; color: var(--text-secondary); font-size: 0.875rem; }
-          .arch-view-all {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background: none;
-            border: none;
-            border-top: 1px solid var(--border-default);
-            color: #4edea3;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.15s;
-          }
-          .arch-view-all:hover { background: rgba(78,222,163,0.08); }
-
-          .arch-accounts-section { margin-top: 24px; }
-          .arch-accounts-section h3 { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 12px 0; }
-          .arch-accounts-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-          .arch-account-chip {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 10px 14px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-left: 3px solid;
-            border-radius: 12px;
-            min-width: 180px;
-            flex: 1 1 200px;
-            transition: all 0.2s;
-          }
-          .arch-account-chip:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-          .arch-account-chip-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
-          .arch-account-chip-balance { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
-          .arch-add-chip {
-            border-style: dashed;
-            justify-content: center;
-            cursor: pointer;
-            color: #4edea3;
-            font-weight: 600;
-            background: rgba(78,222,163,0.06);
-          }
-          .arch-add-chip:hover { background: rgba(78,222,163,0.12); }
-
-          .arch-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-radius: 16px;
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-          }
-          .arch-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          }
-          .arch-card-header h3, .arch-card-header h4, .arch-card-header h5 {
-            margin: 0;
-            font-weight: 700;
-            color: var(--text-primary);
-          }
-          .arch-card-header h3 { font-size: 0.9375rem; }
-          .arch-card-header h4 { font-size: 0.875rem; }
-          .arch-card-header h5 {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-          }
-          .arch-card-more {
-            background: none; border: none; color: var(--text-secondary);
-            cursor: pointer; font-size: 1rem; padding: 2px 6px;
-          }
-          .arch-chart-bars {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-            height: 80px;
-          }
-          .arch-chart-bar-wrap { flex: 1; display: flex; align-items: flex-end; height: 100%; }
-          .arch-chart-bar {
-            width: 100%;
-            border-radius: 6px 6px 0 0;
-            background: #4edea3;
-            transition: height 0.4s ease;
-          }
-          .arch-goal-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-          }
-          .arch-goal-value { font-weight: 700; }
-          .arch-progress-bg {
-            height: 6px;
-            border-radius: 9999px;
-            background: rgba(255,255,255,0.08);
-            overflow: hidden;
-          }
-          .arch-progress-fill {
-            height: 100%;
-            border-radius: 9999px;
-            background: #4edea3;
-            transition: width 0.6s ease;
-          }
-          .arch-goal-caption {
-            font-size: 0.6875rem;
-            color: var(--text-secondary);
-            margin: 0;
-            text-align: center;
-          }
-          .arch-insight p {
-            font-size: 0.8125rem;
-            color: var(--text-secondary);
-            line-height: 1.55;
-            margin: 0;
-          }
-          .arch-btn-outline {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            background: transparent;
-            border: 1px solid rgba(78,222,163,0.4);
-            color: #4edea3;
-            font-size: 0.8125rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-          }
-          .arch-btn-outline:hover { background: rgba(78,222,163,0.12); }
-          .arch-asset-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            border-bottom: 1px solid var(--border-default);
-          }
-          .arch-asset-row:last-child { border-bottom: none; }
-          .arch-positive { color: #4edea3; font-weight: 700; }
-          .arch-negative { color: #ffb3af; font-weight: 700; }
-          .arch-rates h5 { margin-bottom: 10px; }
-          .arch-rate-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-default);
-          }
-          .arch-rate-row:last-child { border-bottom: none; }
-          .arch-p2p-badge {
-            font-size: 9px;
-            background: #4edea3;
-            color: #003824;
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-weight: 700;
-            margin-left: 4px;
-          }
-
-          @media (max-width: 1200px) {
-            .arch-main { grid-template-columns: 1fr; }
-            .arch-sidebar { flex-direction: row; flex-wrap: wrap; }
-            .arch-sidebar > * { flex: 1 1 300px; }
-            .arch-metrics { grid-template-columns: repeat(2, 1fr); }
-          }
-          @media (max-width: 768px) {
-            .arch-header { flex-direction: column; }
-            .arch-metrics { grid-template-columns: 1fr; }
-            .arch-toolbar { flex-direction: column; align-items: flex-start; }
-            .arch-table-wrapper { overflow-x: auto; }
-            .arch-table { min-width: 720px; }
-            .arch-sidebar { flex-direction: column; }
-          }
-
           .btn-toggle-label { display: none; }
           .page-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
           .btn-danger-outline { color: var(--color-error) !important; border-color: var(--color-error) !important; }
