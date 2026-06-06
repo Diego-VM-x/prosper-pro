@@ -3,36 +3,51 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { AnimatedSection } from './components/AnimatedSection';
 import './landing.css';
 
-function useInView(threshold = 0.1) {
+function useScrollReveal() {
   const ref = useRef<HTMLDivElement>(null);
-  const [isInView, setIsInView] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setIsInView(true);
-        obs.unobserve(el);
-      }
-    }, { threshold });
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.unobserve(el);
+        }
+      },
+      { threshold: 0.1 }
+    );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [threshold]);
+  }, []);
 
-  return { ref, isInView };
+  return { ref, visible };
+}
+
+function ScrollReveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const { ref, visible } = useScrollReveal();
+  return (
+    <div
+      ref={ref}
+      className={`reveal ${visible ? 'visible' : ''} ${className}`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [scrollY, setScrollY] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
+    const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -48,33 +63,37 @@ export default function Home() {
 
   return (
     <div className="landing-page">
-      {/* Floating Background */}
-      <div className="landing-bg">
-        <div className="landing-blob landing-blob-1" />
-        <div className="landing-blob landing-blob-2" />
-        <div className="landing-blob landing-blob-3" />
-        <div className="landing-blob landing-blob-4" />
+      {/* Background Glow */}
+      <div className="landing-bg-glow" aria-hidden="true">
+        <div className="landing-glow landing-glow-1" />
+        <div className="landing-glow landing-glow-2" />
+        <div className="landing-glow landing-glow-3" />
       </div>
 
       {/* Header */}
-      <header className={`landing-header ${scrollY > 50 ? 'scrolled' : ''}`}>
+      <header className={`landing-header ${scrolled ? 'scrolled' : ''}`}>
         <div className="landing-header-inner">
-          <div className="landing-logo">
+          <div className="landing-logo" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <img src="/logo-icon.png" alt="Prosper" width={36} height={36} />
-            <span className="landing-logo-text">Prosper<span className="landing-logo-dot">.</span></span>
+            <span className="landing-logo-text">
+              Prosper<span className="landing-logo-dot">.</span>
+            </span>
           </div>
           <nav className="landing-nav">
-            <a href="#features" className="nav-link">Funciones</a>
-            <a href="#how-it-works" className="nav-link">Cómo Funciona</a>
+            <a href="#features" className="landing-nav-link">Funciones</a>
+            <a href="#como-funciona" className="landing-nav-link">Cómo Funciona</a>
             {user ? (
-              <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+              <button className="landing-btn landing-btn-primary" onClick={() => router.push('/dashboard')}>
                 Ir al Dashboard
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
               </button>
             ) : (
               <>
-                <button className="btn btn-ghost" onClick={() => router.push('/login')}>Iniciar Sesión</button>
-                <button className="btn btn-primary" onClick={() => router.push('/register')}>Comenzar Gratis</button>
+                <button className="landing-btn landing-btn-ghost" onClick={() => router.push('/login')}>Iniciar Sesión</button>
+                <button className="landing-btn landing-btn-primary" onClick={() => router.push('/register')}>Comenzar Gratis</button>
               </>
             )}
           </nav>
@@ -82,53 +101,59 @@ export default function Home() {
       </header>
 
       <main>
-        {/* Hero Section */}
+        {/* Hero */}
         <section className="landing-hero">
           <div className="landing-hero-content">
-            <AnimatedSection animationType="fade-up" delay={0}>
+            <ScrollReveal>
               <div className="landing-badge">
                 <span className="landing-badge-dot" />
                 {user ? 'Ya estás registrado' : '100% Gratis · Sin anuncios'}
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={100}>
+            <ScrollReveal delay={100}>
               <h1 className="landing-hero-title">
                 Toma el control de tu
                 <span className="landing-gradient-text"> futuro financiero</span>
               </h1>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={200}>
+            <ScrollReveal delay={200}>
               <p className="landing-hero-subtitle">
                 {user
                   ? 'Bienvenido de vuelta. Explora las novedades de Prosper o vuelve a tu dashboard.'
                   : 'Gestiona cuentas, crea planes de ahorro, analiza tus gastos y aprende finanzas personales. Todo en un solo lugar, sin complicaciones.'}
               </p>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={300}>
+            <ScrollReveal delay={300}>
               <div className="landing-hero-cta">
                 {user ? (
-                  <button className="btn btn-primary btn-xl" onClick={() => router.push('/dashboard')}>
+                  <button className="landing-btn landing-btn-primary landing-btn-xl" onClick={() => router.push('/dashboard')}>
                     Ir al Dashboard
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
                   </button>
                 ) : (
                   <>
-                    <button className="btn btn-primary btn-xl" onClick={() => router.push('/register')}>
+                    <button className="landing-btn landing-btn-primary landing-btn-xl" onClick={() => router.push('/register')}>
                       Crear Cuenta Gratis
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
                     </button>
-                    <button className="btn btn-outline btn-xl" onClick={() => router.push('/login')}>
+                    <button className="landing-btn landing-btn-outline landing-btn-xl" onClick={() => router.push('/login')}>
                       Ya tengo cuenta
                     </button>
                   </>
                 )}
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={400}>
+            <ScrollReveal delay={400}>
               <div className="landing-hero-stats">
                 <div className="hero-stat">
                   <span className="hero-stat-value">Multi-moneda</span>
@@ -145,11 +170,10 @@ export default function Home() {
                   <span className="hero-stat-label">Solo tú lo ves</span>
                 </div>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
           </div>
 
-          {/* Hero Visual */}
-          <AnimatedSection animationType="fade-up" delay={500} className="landing-hero-visual">
+          <ScrollReveal delay={500} className="landing-hero-visual">
             <div className="hero-mockup">
               <div className="mockup-header">
                 <div className="mockup-dots">
@@ -193,21 +217,21 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          </AnimatedSection>
+          </ScrollReveal>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="landing-features-section">
-          <AnimatedSection animationType="fade-up" delay={0}>
+        {/* Features */}
+        <section id="features" className="landing-section">
+          <ScrollReveal>
             <div className="section-header">
               <span className="section-tag">Funciones</span>
               <h2 className="section-title">Todo lo que necesitas para crecer financieramente</h2>
               <p className="section-desc">Herramientas poderosas diseñadas para simplificar tu vida financiera.</p>
             </div>
-          </AnimatedSection>
+          </ScrollReveal>
 
           <div className="features-grid">
-            <AnimatedSection animationType="fade-up" delay={0}>
+            <ScrollReveal delay={0}>
               <div className="feature-card feature-card-large">
                 <div className="feature-card-visual">
                   <div className="feature-visual-accounts">
@@ -223,7 +247,7 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-                <div className="feature-card-content">
+                <div>
                   <div className="feature-icon-wrapper">
                     <span className="feature-icon">📊</span>
                   </div>
@@ -236,9 +260,9 @@ export default function Home() {
                   </ul>
                 </div>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={100}>
+            <ScrollReveal delay={100}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">🎯</span>
@@ -251,9 +275,9 @@ export default function Home() {
                   <li>Compartir gastos con otros</li>
                 </ul>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={200}>
+            <ScrollReveal delay={200}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">📈</span>
@@ -266,9 +290,9 @@ export default function Home() {
                   <li>Resumen financiero detallado</li>
                 </ul>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={300}>
+            <ScrollReveal delay={300}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">🎓</span>
@@ -281,9 +305,9 @@ export default function Home() {
                   <li>Aprende a tu ritmo</li>
                 </ul>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
-            <AnimatedSection animationType="fade-up" delay={400}>
+            <ScrollReveal delay={400}>
               <div className="feature-card">
                 <div className="feature-icon-wrapper">
                   <span className="feature-icon">📅</span>
@@ -296,65 +320,65 @@ export default function Home() {
                   <li>Alertas de vencimiento</li>
                 </ul>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
           </div>
         </section>
 
         {/* How It Works */}
-        <section id="how-it-works" className="landing-how-section">
-          <AnimatedSection animationType="fade-up" delay={0}>
+        <section id="como-funciona" className="landing-section">
+          <ScrollReveal>
             <div className="section-header">
               <span className="section-tag">Cómo Funciona</span>
               <h2 className="section-title">Empieza en 3 simples pasos</h2>
               <p className="section-desc">Sin configuraciones complicadas. Regístrate y comienza en segundos.</p>
             </div>
-          </AnimatedSection>
+          </ScrollReveal>
 
           <div className="steps-container">
-            <AnimatedSection animationType="fade-up" delay={0}>
+            <ScrollReveal delay={0}>
               <div className="step-card">
                 <div className="step-number">1</div>
                 <h3>Crea tu cuenta</h3>
                 <p>Regístrate gratis con Google o email. Elige tu moneda preferida (USD o BS).</p>
                 <div className="step-visual">
-                  <div className="step-icon-step">🚀</div>
+                  <span className="step-icon-step">🚀</span>
                 </div>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
             <div className="step-connector" />
 
-            <AnimatedSection animationType="fade-up" delay={200}>
+            <ScrollReveal delay={200}>
               <div className="step-card">
                 <div className="step-number">2</div>
                 <h3>Agrega tus cuentas</h3>
                 <p>Crea tus cuentas financieras, registra ingresos y gastos. Todo se sincroniza al instante.</p>
                 <div className="step-visual">
-                  <div className="step-icon-step">💳</div>
+                  <span className="step-icon-step">💳</span>
                 </div>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
 
             <div className="step-connector" />
 
-            <AnimatedSection animationType="fade-up" delay={400}>
+            <ScrollReveal delay={400}>
               <div className="step-card">
                 <div className="step-number">3</div>
                 <h3>Alcanza tus metas</h3>
                 <p>Crea planes de ahorro, sigue tu progreso y visualiza tu crecimiento financiero.</p>
                 <div className="step-visual">
-                  <div className="step-icon-step">🎯</div>
+                  <span className="step-icon-step">🎯</span>
                 </div>
               </div>
-            </AnimatedSection>
+            </ScrollReveal>
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* CTA */}
         <section className="landing-cta-section">
-          <AnimatedSection animationType="fade-up" delay={0}>
+          <ScrollReveal>
             <div className="cta-card">
-              <div className="cta-bg-shapes">
+              <div className="cta-bg-shapes" aria-hidden="true">
                 <div className="cta-shape cta-shape-1" />
                 <div className="cta-shape cta-shape-2" />
               </div>
@@ -363,21 +387,27 @@ export default function Home() {
                 <p>Únete a Prosper Pro y comienza a construir tu libertad financiera hoy mismo.</p>
                 <div className="cta-buttons">
                   {user ? (
-                    <button className="btn btn-white btn-xl" onClick={() => router.push('/dashboard')}>
+                    <button className="landing-btn landing-btn-xl" style={{ background: 'white', color: '#0a1628' }} onClick={() => router.push('/dashboard')}>
                       Ir al Dashboard
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
                     </button>
                   ) : (
-                    <button className="btn btn-white btn-xl" onClick={() => router.push('/register')}>
+                    <button className="landing-btn landing-btn-xl" style={{ background: 'white', color: '#0a1628' }} onClick={() => router.push('/register')}>
                       Comenzar Gratis
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
                     </button>
                   )}
                 </div>
                 <p className="cta-note">{user ? 'Ya tienes una cuenta activa' : 'Sin tarjeta de crédito · Sin compromisos · 100% gratis'}</p>
               </div>
             </div>
-          </AnimatedSection>
+          </ScrollReveal>
         </section>
       </main>
 
@@ -395,7 +425,7 @@ export default function Home() {
             <div className="footer-col">
               <h4>Producto</h4>
               <a href="#features">Funciones</a>
-              <a href="#how-it-works">Cómo Funciona</a>
+              <a href="#como-funciona">Cómo Funciona</a>
             </div>
             <div className="footer-col">
               <h4>Cuenta</h4>
@@ -409,9 +439,9 @@ export default function Home() {
               )}
             </div>
           </div>
-          <div className="footer-bottom">
-            <p>© 2026 Prosper Pro. Todos los derechos reservados.</p>
-          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>© 2026 Prosper Pro. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>
