@@ -171,7 +171,7 @@ export default function LoginPage() {
               ¿No tienes una cuenta? <Link href="/register">Regístrate gratis</Link>
             </div>
             <div className="auth-footer">
-              <Link href="/" className="home-btn">Ir al inicio</Link>
+              <Link href="/inicio" className="home-btn">Ir al inicio</Link>
             </div>
           </div>
         </div>
