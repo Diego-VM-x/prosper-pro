@@ -889,13 +889,19 @@ export default function FinanzasPage() {
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
   const pctChange = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
+    if (previous === 0 && current === 0) return null;
+    if (previous === 0) return null;
     return ((current - previous) / previous) * 100;
   };
 
   const incomeChange = pctChange(summary.income, prevMonthSummary.income);
   const expenseChange = pctChange(summary.expenses, prevMonthSummary.expenses);
   const savingChange = pctChange(summary.saving, prevMonthSummary.saving);
+
+  const renderBadge = (val: number | null, color: string) => {
+    if (val === null) return <span className="arch-metric-badge" style={{ color: 'var(--text-secondary)' }}>—</span>;
+    return <span className="arch-metric-badge" style={{ color }}>{val >= 0 ? '📈' : '📉'} {val >= 0 ? '+' : ''}{val.toFixed(0)}%</span>;
+  };
 
   const monthlySavings = useMemo(() => {
     const months: number[] = [];
@@ -958,13 +964,13 @@ export default function FinanzasPage() {
   useEffect(() => {
     async function fetchAssets() {
       try {
-        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,solana&price_change_percentage=24h', { cache: 'no-store' });
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=tether,solana&price_change_percentage=24h', { cache: 'no-store' });
         if (!res.ok) return;
         const data = await res.json();
         const mapped = data.map((c: any) => ({
           symbol: c.symbol.toUpperCase(),
-          name: c.id === 'bitcoin' ? 'Bitcoin' : 'Solana',
-          icon: c.id === 'bitcoin' ? '₿' : '◎',
+          name: c.id === 'tether' ? 'Tether' : 'Solana',
+          icon: c.id === 'tether' ? '💎' : '◎',
           change: c.price_change_percentage_24h ?? 0,
         }));
         setCryptoAssets(mapped);
@@ -1022,9 +1028,7 @@ export default function FinanzasPage() {
             <div className="arch-metric-card" style={{ borderLeftColor: '#4edea3' }}>
               <div className="arch-metric-top">
                 <span className="arch-metric-label">INGRESOS</span>
-                <span className="arch-metric-badge" style={{ color: '#4edea3' }}>
-                  {incomeChange >= 0 ? '📈' : '📉'} {incomeChange >= 0 ? '+' : ''}{incomeChange.toFixed(0)}%
-                </span>
+                {renderBadge(incomeChange, '#4edea3')}
               </div>
               <div className="arch-metric-value" style={{ color: '#4edea3' }}>
                 {showAmounts ? formatInCurrency(summary.income, displayCurrency) : '••••••'}
@@ -1038,9 +1042,7 @@ export default function FinanzasPage() {
             <div className="arch-metric-card" style={{ borderLeftColor: '#ffb3af' }}>
               <div className="arch-metric-top">
                 <span className="arch-metric-label">GASTOS</span>
-                <span className="arch-metric-badge" style={{ color: '#ffb3af' }}>
-                  {expenseChange >= 0 ? '📈' : '📉'} {expenseChange >= 0 ? '+' : ''}{expenseChange.toFixed(0)}%
-                </span>
+                {renderBadge(expenseChange, '#ffb3af')}
               </div>
               <div className="arch-metric-value" style={{ color: '#ffb3af' }}>
                 {showAmounts ? formatInCurrency(summary.expenses, displayCurrency) : '••••••'}
@@ -1054,9 +1056,7 @@ export default function FinanzasPage() {
             <div className="arch-metric-card" style={{ borderLeftColor: '#9ed2b5' }}>
               <div className="arch-metric-top">
                 <span className="arch-metric-label">AHORRO</span>
-                <span className="arch-metric-badge" style={{ color: '#9ed2b5' }}>
-                  {savingChange >= 0 ? '📈' : '📉'} {savingChange >= 0 ? '+' : ''}{savingChange.toFixed(0)}%
-                </span>
+                {renderBadge(savingChange, '#9ed2b5')}
               </div>
               <div className="arch-metric-value" style={{ color: '#9ed2b5' }}>
                 {showAmounts ? formatInCurrency(summary.saving, displayCurrency) : '••••••'}
@@ -1080,6 +1080,22 @@ export default function FinanzasPage() {
                   <div key={i} className="arch-spark-bar" style={{ height: `${Math.max(4, Math.abs(v))}%`, background: v >= 0 ? '#4edea3' : '#ffb3af' }} />
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* Cuentas */}
+          <div className="arch-accounts-section" style={{ marginBottom: '24px' }}>
+            <h3>Mis Cuentas</h3>
+            <div className="arch-accounts-grid">
+              {accounts.map((acc) => (
+                <div key={acc.id} className="arch-account-chip" style={{ borderLeftColor: acc.color }}>
+                  <span className="arch-account-chip-name">{acc.icon} {acc.name}</span>
+                  <span className="arch-account-chip-balance">{showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}</span>
+                </div>
+              ))}
+              <button className="arch-account-chip arch-add-chip" onClick={() => setShowAccountModal(true)}>
+                <IconPlus width={14} /> Nueva Cuenta
+              </button>
             </div>
           </div>
 
@@ -1195,21 +1211,6 @@ export default function FinanzasPage() {
                 )}
               </div>
 
-              {/* Cuentas rápidas */}
-              <div className="arch-accounts-section">
-                <h3>Mis Cuentas</h3>
-                <div className="arch-accounts-grid">
-                  {accounts.map((acc) => (
-                    <div key={acc.id} className="arch-account-chip" style={{ borderLeftColor: acc.color }}>
-                      <span className="arch-account-chip-name">{acc.icon} {acc.name}</span>
-                      <span className="arch-account-chip-balance">{showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}</span>
-                    </div>
-                  ))}
-                  <button className="arch-account-chip arch-add-chip" onClick={() => setShowAccountModal(true)}>
-                    <IconPlus width={14} /> Nueva Cuenta
-                  </button>
-                </div>
-              </div>
             </div>
 
             {/* Sidebar derecho */}
@@ -1244,17 +1245,26 @@ export default function FinanzasPage() {
 
               <div className="arch-card">
                 <h5>ACTIVOS DESTACADOS</h5>
-                {cryptoAssets.length > 0 ? cryptoAssets.map((a) => (
-                  <div key={a.symbol} className="arch-asset-row">
-                    <span>{a.icon} {a.name}</span>
-                    <span className={a.change >= 0 ? 'arch-positive' : 'arch-negative'}>
-                      {a.change >= 0 ? '+' : ''}{a.change.toFixed(1)}%
-                    </span>
-                  </div>
-                )) : (
+                {cryptoAssets.length > 0 ? (
                   <>
-                    <div className="arch-asset-row"><span>₿ Bitcoin</span><span className="arch-positive">+4.2%</span></div>
-                    <div className="arch-asset-row"><span>◎ Solana</span><span className="arch-positive">+1.8%</span></div>
+                    {cryptoAssets.map((a) => (
+                      <div key={a.symbol} className="arch-asset-row">
+                        <span>{a.icon} {a.name}</span>
+                        <span className={a.change >= 0 ? 'arch-positive' : 'arch-negative'}>
+                          {a.change >= 0 ? '+' : ''}{a.change.toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                    <div className="arch-asset-row">
+                      <span>🇺🇸 Dólar</span>
+                      <span>{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="arch-asset-row"><span>💎 Tether</span><span className="arch-positive">+0.0%</span></div>
+                    <div className="arch-asset-row"><span>◎ Solana</span><span className="arch-positive">+0.0%</span></div>
+                    <div className="arch-asset-row"><span>🇺🇸 Dólar</span><span>{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span></div>
                   </>
                 )}
               </div>
