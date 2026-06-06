@@ -626,3 +626,16 @@
 - **finanzas/page.tsx**: Convertido los menús desplegables de tipo y categoría a grupos de botones en filtros y formularios.
 - **Beneficios**: Eliminado riesgo de corte en modales, mejor experiencia de usuario táctil, selección clara y rápida.
 - **Implementación**: Grupos de botones con estilos hover/active y inputs personalizados para categorías con funcionalidad de añadir nuevo.
+
+
+### 06/06/2026 - Optimizaciones de Rendimiento Críticas (Performance v0.9.1)
+Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir" / carga extremadamente lenta en dispositivos de gama baja.
+
+- **tesseract.js - Eliminado import estático**: `lib/vepay.ts` eliminó `import { createWorker } from 'tesseract.js'` del top-level. Ahora solo se carga vía `await import('tesseract.js')` dentro de `extractTextFromImage()`. Esto elimina ~30MB de WASM del bundle inicial, previniendo que la app crashee en dispositivos con poca RAM o conexión lenta.
+- **Firebase SSR Fix - "Service firestore is not available"**: `lib/firebase.ts` reescrito para detectar `typeof window !== 'undefined'`. En SSR (build estático) usa mocks de Firestore en lugar de llamar `getFirestore()`, que falla en Node.js con el SDK web. En cliente con config válida, carga Firebase normalmente vía `require()` dinámico. Esto elimina el error crítico que aparecía durante `next build` y podría causar hydratation failures en producción.
+- **React.memo en páginas principales**: `Dashboard`, `FinanzasPage`, `CalendarioPage`, `MetasPage`, `ConfiguracionPage`, `Home` (inicio) ahora están envueltos en `memo()` para prevenir re-renders innecesarios cuando los props no cambian.
+- **Preconnect a Firebase**: `app/layout.tsx` agregó `<link rel="preconnect" href="https://firestore.googleapis.com" />` y `dns-prefetch` para reducir latencia de conexión a Firestore en el primer paint.
+- **Content-visibility CSS**: `app/globals.css` agregó la clase `.content-section` con `content-visibility: auto` y `contain-intrinsic-size` para que el navegador salte el rendering de secciones fuera del viewport, mejorando significativamente el tiempo de paint en páginas largas.
+- **Lazy loading en imágenes**: Agregado `loading="lazy"` a imágenes no críticas: thumbnails de cursos (`cursos/page.tsx`), preview VEPay (`finanzas/page.tsx`), y avatares de usuarios (`metas/page.tsx`). Reduce LCP (Largest Contentful Paint).
+- **Safe storage helper**: Creado `lib/safeStorage.ts` con wrappers para `localStorage` y `sessionStorage` que capturan silenciosamente errores de modo privado / storage deshabilitado / quota exceeded.
+- **Build verificado**: `npm run build` exitoso en 33.6s (mejora desde ~40-46s), 16/16 páginas generadas, sin errores de Firebase en SSR.

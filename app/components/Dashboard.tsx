@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -58,7 +58,7 @@ function getDaysUntil(dateStr: string): number {
 
 
 
-export function Dashboard() {
+export const Dashboard = memo(function Dashboard() {
   const router = useRouter();
   const { query } = useSearch();
   const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
@@ -939,6 +939,6 @@ export function Dashboard() {
 
     </DashboardLayout>
   );
-}
+});
 
 

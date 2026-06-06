@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -12,7 +12,7 @@ import type { UserProfile, CurrencyCode } from '@/types';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
-export default function ConfiguracionPage() {
+const ConfiguracionPage = memo(function ConfiguracionPage() {
   const { user, logout, deleteAccount, wipeAllData, enableNotifications } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
@@ -1699,7 +1699,7 @@ export default function ConfiguracionPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-}
+});
 
 function ToggleRow({ icon, label, desc, checked, onChange, disabled }: { icon: string; label: string; desc: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -1719,3 +1719,4 @@ function ToggleRow({ icon, label, desc, checked, onChange, disabled }: { icon: s
     </div>
   );
 }
+export default ConfiguracionPage;

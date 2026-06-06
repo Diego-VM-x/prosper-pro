@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -84,7 +84,7 @@ function SummaryWidget({ label, value, altValue, color, showAmounts, showConvers
   );
 }
 
-export default function FinanzasPage() {
+const FinanzasPage = memo(function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
@@ -1647,7 +1647,7 @@ export default function FinanzasPage() {
                 {/* Preview */}
                 {vepayPreview && (
                   <div className="vepay-preview">
-                    <img src={vepayPreview} alt="Captura" />
+                    <img src={vepayPreview} alt="Captura" loading="lazy" />
                   </div>
                 )}
 
@@ -2428,4 +2428,5 @@ export default function FinanzasPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-}
+});
+export default FinanzasPage;

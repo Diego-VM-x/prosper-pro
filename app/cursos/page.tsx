@@ -68,7 +68,7 @@ export default function CoursesPage() {
             return (
               <div key={course.id} className="card animate-fadeInUp" style={{ overflow: 'hidden' }}>
                 <div style={{ position: 'relative' }}>
-                  <img src={course.thumbnail} alt={course.title} style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+                  <img src={course.thumbnail} alt={course.title} loading="lazy" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
                   {isCompleted && (
                     <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-prosper-green)', color: 'white', padding: '4px 8px', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700 }}>✅ Completado</div>
                   )}
