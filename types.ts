@@ -3,7 +3,7 @@
 // ============================================================
 
 // ─── Currency ───
-export type CurrencyCode = 'USD' | 'BS' | 'EUR' | 'USDT' | 'SOL';
+export type CurrencyCode = 'USD' | 'BS' | 'EUR' | 'USDT' | 'SOL' | 'COP';
 
 export interface ExchangeRates {
   rates: Record<CurrencyCode, number>;

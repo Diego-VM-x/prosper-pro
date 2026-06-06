@@ -21,6 +21,7 @@ export const CURRENCY_MAP: Record<CurrencyCode, CurrencyConfig> = {
   EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', locale: 'de-DE', decimals: 2 },
   USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💎', locale: 'en-US', decimals: 2 },
   SOL: { code: 'SOL', symbol: '◎', name: 'Solana', flag: '☀️', locale: 'en-US', decimals: 2 },
+  COP: { code: 'COP', symbol: '$', name: 'Peso Colombiano', flag: '🇨🇴', locale: 'es-CO', decimals: 0 },
 };
 
 export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL'];
@@ -38,6 +39,7 @@ export const DEFAULT_RATES: ExchangeRates = {
     EUR: 48.50,   // 1 EUR = 48.50 BS (fallback)
     USDT: 45.00,  // 1 USDT ≈ 1 USD (fallback)
     SOL: 9000.00, // 1 SOL ≈ 200 USD * 45 BS (fallback)
+    COP: 0.0105,  // 1 COP ≈ 0.0105 BS (fallback)
   },
   updatedAt: Date.now(),
   source: 'api',

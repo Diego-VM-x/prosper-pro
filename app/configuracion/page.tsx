@@ -385,6 +385,10 @@ export default function ConfiguracionPage() {
                             <span>✓</span>
                             <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.rates.SOL?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
                           </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 COP = {rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</strong>
+                          </div>
                         </div>
                       </div>
                     )}

@@ -110,6 +110,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
               EUR: customRates['EUR'] ?? prev.rates.EUR,
               USDT: customRates['USDT'] ?? prev.rates.USDT,
               SOL: customRates['SOL'] ?? prev.rates.SOL,
+              COP: customRates['COP'] ?? prev.rates.COP,
             },
             source: 'manual',
           }));
@@ -175,11 +176,16 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         }
 
         let eurRate = 48.5;
+        let copRate = 0.0105;
         if (eurRes.status === 'fulfilled' && eurRes.value.ok) {
           const data = await eurRes.value.json();
           const eurToUsd = data?.rates?.EUR;
+          const copToUsd = data?.rates?.COP;
           if (eurToUsd && eurToUsd > 0) {
             eurRate = Number((oficialRate / eurToUsd).toFixed(2));
+          }
+          if (copToUsd && copToUsd > 0) {
+            copRate = Number((oficialRate / copToUsd).toFixed(4));
           }
         }
 
@@ -200,6 +206,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             EUR: eurRate,
             USDT: usdtRate,
             SOL: solRate,
+            COP: copRate,
           },
           updatedAt,
           source: 'api',

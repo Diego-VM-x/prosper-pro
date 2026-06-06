@@ -1475,6 +1475,7 @@ export default function FinanzasPage() {
                               { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
                               { value: 'USD', label: 'Dólares (USD)', icon: '🇺🇸' },
                               { value: 'EUR', label: 'Euros (EUR)', icon: '🇪🇺' },
+                              { value: 'COP', label: 'Pesos Colombianos (COP)', icon: '🇨🇴' },
                             ]
                       }
                       placeholder="Seleccionar moneda..."
