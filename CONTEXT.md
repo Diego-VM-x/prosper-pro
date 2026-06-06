@@ -1,15 +1,15 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (31 de Mayo, 2026 - v0.8.10 BETA)
+## Estado Actual (6 de Junio, 2026 - v0.9.0)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
 - **Modo**: App inicia en BLANCO - sin datos de ejemplo. Todo dato viene de Firebase.
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
-- **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore (transactions, accounts, goals, plans, reminders, notifications, expense_requests, recurring_payments, feedback, user_course_progress, users).
+- **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
-- **Bug Fix Crítico (19/05/2026)**: Corregida doble conversión en widgets de resumen financiero. `formatAmount` convertía valores que ya estaban convertidos, causando que 79 BS se multiplicara por la tasa dos veces. Fix: cambiado `formatAmount` → `formatInCurrency` en summary y totalBalance. También eliminado código duplicado en `accounts.ts` donde `recalculateAccountBalance` estaba repetida 6 veces.
+- **Versión actual**: 0.9.0 (publicada en test-deploy y main).
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -556,6 +556,15 @@
   - `app/components/Dashboard.tsx`: Usa `useGoals()` en lugar de carga manual. Sección "Avisos Recientes" añadida.
   - `app/metas/page.tsx`: Refactorizado para usar `useGoals()`. Sin useState/useEffect manual.
   - `app/calendario/page.tsx`: Refactorizado para usar `useGoals()`. Botón "+ Recordatorio" añadido.
+
+### 06/06/2026 - v0.9.0: Notificaciones Fix + P2P Responsivo + Dashboard Optimizado
+- **Notificaciones fix en PC**: `useClickOutside` mejorado con separación de mousedown/mouseup y flag `justClickedInside`. Botones de eliminar notificación usan `onPointerDown` con `preventDefault` para evitar cierre accidental del dropdown.
+- **Tasas P2P responsivo**: Toggle Oficial/P2P en Finanzas migrado de estilos inline a clase CSS `.btn-p2p-toggle`. En móvil se adapta al grid del header igual que los demás botones.
+- **Dashboard stats pills**: Grid cambiado de 4 a 3 columnas para que los 3 pills (Ahorro en Planes, Recurrentes/Mes, Metas/Planes) ocupen una sola fila sin espacios vacíos.
+- **Historial de movimientos**: En Dashboard siempre muestra los últimos 4. En Finanzas, botón "Ver más" carga transacciones de 5 en 5.
+- **Notas de versión v0.9.0**: UpdateModal y página `/ayuda/notas-version` actualizados con 5 puntos clave en lenguaje de usuario.
+- **Badges "En Desarrollo"**: Centro de Notificaciones y Recordatorios de Calendario en Configuración marcados como en desarrollo.
+- **Build**: `tsc --noEmit` exitoso sin errores.
 
 ## Tareas Pendientes
 1. **Configurar variables de entorno en Vercel**: Las 7 variables NEXT_PUBLIC_FIREBASE_* deben agregarse manualmente en Vercel Dashboard → prosper-pro → Settings → Environment Variables. Ver `VERCEL_ENV_VARS.txt` para los valores del nuevo proyecto `prospeweb`.
