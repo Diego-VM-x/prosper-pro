@@ -15,7 +15,7 @@ export function UpdateModal({
     { emoji: "💱", text: "Nuevas criptos P2P: ahora soportamos Bitcoin (BTC) y USD Coin (USDC) con precios reales de Binance." },
     { emoji: "🎨", text: "Landing page renovada: diseño más moderno con testimonios, FAQ interactivo y tutoriales paso a paso." },
     { emoji: "⚡", text: "Animaciones optimizadas: transiciones más fluidas y menos consumo de CPU en dispositivos de gama baja." },
-    { emoji: "🛡️", text: "Redirección inteligente: la página /inicio ahora redirige automáticamente a la home unificada." },
+    { emoji: "🛡️", text: "Redirección inteligente: /dashboard redirige automáticamente a la home unificada." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first

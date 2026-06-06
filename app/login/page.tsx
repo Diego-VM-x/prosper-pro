@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { auth } from '@/lib/firebase';
 import { sendBrowserNotification } from '@/lib/firestore/notifications';
 import './auth.css';
 
@@ -139,8 +140,13 @@ export default function LoginPage() {
             </div>
 
             <div className="auth-content">
+              {!auth && (
+                <div className="error-alert" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B' }}>
+                  ⚠️ <strong>Servicio no disponible:</strong> Firebase no está configurado en este deploy. Si eres el administrador, verifica las variables de entorno en Vercel Dashboard y haz <strong>Redeploy</strong>.
+                </div>
+              )}
               {error && <div className="error-alert">{error}</div>}
-              <button onClick={handleGoogleLogin} className="google-btn" disabled={loading}>
+              <button onClick={handleGoogleLogin} className="google-btn" disabled={loading || !auth}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -163,7 +169,7 @@ export default function LoginPage() {
                   <label>Contraseña</label>
                   <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
                 </div>
-                <button type="submit" className="login-btn" disabled={loading}>
+                <button type="submit" className="login-btn" disabled={loading || !auth}>
                   {loading ? (
                     <span className="login-btn-loading">
                       <span className="spinner" /> Entrando...
@@ -177,7 +183,7 @@ export default function LoginPage() {
               ¿No tienes una cuenta? <Link href="/register">Regístrate gratis</Link>
             </div>
             <div className="auth-footer">
-              <Link href="/inicio" className="home-btn">Ir al inicio</Link>
+              <Link href="/" className="home-btn">Ir al inicio</Link>
             </div>
           </div>
         </div>

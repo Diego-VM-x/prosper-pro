@@ -11,7 +11,7 @@ export default function NotasVersionPage() {
       'Imágenes optimizadas por Next.js (formatos WebP/AVIF automáticos).',
       'Nuevas criptomonedas P2P: Bitcoin (BTC) y USD Coin (USDC) con precios reales de Binance.',
       'Landing page completamente renovada con testimonios, FAQ interactivo, barra de confianza y tutoriales.',
-      'Redirección inteligente: /inicio redirige a / para evitar duplicación de landing pages.',
+      'Redirección inteligente: /dashboard redirige a / para evitar duplicación de landing pages.',
       'Animaciones CSS optimizadas: menor consumo de CPU en dispositivos de gama baja.',
     ], preRelease: false },
     { version: '0.9.0', date: '2026-06-06', notes: [
