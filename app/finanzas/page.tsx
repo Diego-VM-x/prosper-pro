@@ -1862,71 +1862,11 @@ export default function FinanzasPage() {
 
         <style>{`
           .finanzas-page { padding: 0; }
-
-          /* Header redesign — compact toolbar */
-          .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 0 12px 0; border-bottom: 1px solid var(--border-default); margin-bottom: 14px; }
-          .page-title { font-size: 1.375rem; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.02em; }
-          .page-subtitle { font-size: 0.8125rem; color: var(--text-secondary); margin: 2px 0 0 0; }
-          .page-header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
-          .page-header-actions .btn { padding: 8px 12px; font-size: 0.75rem; border-radius: 10px; gap: 5px; min-height: 36px; }
-          .page-header-actions .btn-primary { background: linear-gradient(135deg, var(--color-prosper-green), #2db57a); box-shadow: 0 3px 10px rgba(61,204,142,0.3); border: none; }
-          .page-header-actions .btn-primary:hover { box-shadow: 0 5px 16px rgba(61,204,142,0.45); transform: translateY(-1.5px); filter: brightness(1.05); }
-          .page-header-actions .btn-outline { border-color: var(--border-default); background: var(--bg-card); }
-          .page-header-actions .btn-outline:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: rgba(61,204,142,0.06); }
-          .btn-toggle-label, .btn-vepay-label, .btn-accounting-label { display: none; }
+          .btn-toggle-label { display: none; }
+          .page-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
           .btn-danger-outline { color: var(--color-error) !important; border-color: var(--color-error) !important; }
           .btn-danger-outline:hover { background: var(--color-error) !important; color: white !important; }
-          .btn-accounting { color: var(--color-gold-500) !important; border-color: var(--color-gold-500) !important; }
-          .btn-accounting:hover { background: var(--color-gold-500) !important; color: white !important; }
-          .btn-vepay { color: var(--color-prosper-green) !important; border-color: var(--color-prosper-green) !important; }
-          .btn-vepay:hover { background: var(--color-prosper-green) !important; color: white !important; }
-
-          /* Rates ticker — horizontal compact bar */
-          .summary-section { margin-bottom: 14px; }
-          .summary-section .summary-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-          .summary-section .summary-card {
-            flex: 1 1 auto;
-            min-width: 120px;
-            max-width: 180px;
-            padding: 10px 12px;
-            border-radius: var(--radius-lg);
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-          .summary-section .summary-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(61,204,142,0.3); }
-          .summary-section .summary-label {
-            font-size: 0.6875rem;
-            color: var(--text-tertiary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-          }
-          .summary-section .summary-value {
-            font-size: 0.9375rem;
-            font-weight: 700;
-            color: var(--color-prosper-green);
-            white-space: nowrap;
-          }
-          .summary-section .summary-value span { display: inline; }
-
-          /* Live indicator */
-          .summary-card:first-child .summary-label::before {
-            content: '';
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--color-prosper-green);
-            animation: pulseDot 1.6s ease-in-out infinite;
-          }
-          @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+          .btn-toggle-visibility { gap: 4px; }
 
           /* Type selector in modal */
           .tx-type-selector { display: flex; gap: 8px; margin-bottom: 4px; }
@@ -1998,50 +1938,20 @@ export default function FinanzasPage() {
           }
           .delete-tx-btn:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
 
-          /* Accounts — cleaner cards */
-          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 18px; }
-          .account-card {
-            position: relative;
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-top: 3px solid;
-            border-radius: var(--radius-lg);
-            padding: 14px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-          }
-          .account-card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-            pointer-events: none;
-          }
-          .account-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.08), 0 3px 8px rgba(0,0,0,0.04); border-color: rgba(61,204,142,0.25); }
-          .account-card-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-          .account-icon {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.25rem;
-            flex-shrink: 0;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-          }
-          .account-card:hover .account-icon { transform: scale(1.1) rotate(-4deg); }
-          .account-info { flex: 1; min-width: 0; }
-          .account-name { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .account-type { font-size: 0.6875rem; color: var(--text-tertiary); display: block; margin-top: 1px; }
-          .account-actions-group { display: flex; gap: 2px; opacity: 0.55; transition: opacity 0.2s; }
-          .account-card:hover .account-actions-group { opacity: 1; }
-          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 5px; border-radius: 6px; display: flex; transition: all 0.15s; }
-          .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); transform: scale(1.1); }
-          .account-balance-group { padding-top: 10px; border-top: 1px dashed var(--border-default); }
-          .account-balance { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
-          .account-balance-group div:last-child { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 2px; font-weight: 500; }
-          .empty-accounts { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 36px 24px; color: var(--text-secondary); grid-column: 1 / -1; background: var(--bg-card); border: 1px dashed var(--border-default); border-radius: var(--radius-lg); }
-          .empty-accounts::before { content: '💳'; font-size: 2.25rem; margin-bottom: 10px; opacity: 0.45; }
-          .empty-accounts p { margin: 0; font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); }
+          /* Accounts */
+          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+          .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
+          .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+          .account-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+          .account-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+          .account-info { flex: 1; }
+          .account-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); display: block; }
+          .account-type { font-size: 0.6875rem; color: var(--text-tertiary); text-transform: capitalize; }
+          .account-actions-group { display: flex; gap: 2px; align-items: center; }
+          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; transition: all var(--transition-fast); }
+          .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
+          .account-balance { font-size: 1.375rem; font-weight: 800; }
+          .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
 
           /* Summary */
           .summary-section { position: relative; margin-bottom: 24px; }
