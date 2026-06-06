@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+
+const isBrowser = typeof window !== 'undefined';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,21 +12,17 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Validación de variables de entorno
-const requiredEnvVars = [
-  'NEXT_PUBLIC_FIREBASE_API_KEY',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-  'NEXT_PUBLIC_FIREBASE_APP_ID',
-];
-
-let missingVars: string[] = [];
-if (typeof window !== 'undefined') {
-  missingVars = requiredEnvVars.filter(
-    (v) => !process.env[v]
-  );
+// Validación de variables de entorno (solo en cliente para evitar ruido en build)
+if (isBrowser) {
+  const requiredEnvVars = [
+    'NEXT_PUBLIC_FIREBASE_API_KEY',
+    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
+    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+    'NEXT_PUBLIC_FIREBASE_APP_ID',
+  ];
+  const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
   if (missingVars.length > 0) {
     console.error(
       '[Firebase] Variables de entorno faltantes:',
@@ -36,7 +32,8 @@ if (typeof window !== 'undefined') {
   }
 }
 
-if (typeof window !== 'undefined') {
+// Polyfill de sessionStorage para modo privado / sandbox
+if (isBrowser) {
   try {
     sessionStorage.getItem('__test');
   } catch {
@@ -55,54 +52,92 @@ if (typeof window !== 'undefined') {
   }
 }
 
+// Mock de Firestore para SSR (evita "Service firestore is not available" en build)
+const createFirestoreMock = (): any => {
+  const noop = () => Promise.resolve();
+  const noopUnsub = () => {};
+  return {
+    type: 'firestore-mock' as const,
+    collection: () => ({ doc: () => ({ get: noop, set: noop, update: noop, delete: noop }) }),
+    doc: () => ({ get: noop, set: noop, update: noop, delete: noop }),
+    getDoc: noop,
+    setDoc: noop,
+    updateDoc: noop,
+    deleteDoc: noop,
+    addDoc: noop,
+    query: () => ({ get: noop }),
+    where: () => ({}),
+    orderBy: () => ({}),
+    limit: () => ({}),
+    onSnapshot: () => noopUnsub,
+  };
+};
+
 let app: FirebaseApp;
-let db: ReturnType<typeof getFirestore>;
-let auth: Auth | null = null;
+let db: any;
+let auth: any = null;
+
+const hasCriticalVars = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
 
 try {
-  const hasCriticalVars = firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId;
-
-  if (hasCriticalVars && typeof window !== 'undefined') {
-    try {
-      for (let i = sessionStorage.length - 1; i >= 0; i--) {
-        const key = sessionStorage.key(i);
-        if (key?.startsWith('firebase:')) sessionStorage.removeItem(key);
-      }
-    } catch {}
-  }
-
   if (hasCriticalVars) {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    db = getFirestore(app);
-    if (typeof window !== 'undefined') {
+
+    if (isBrowser) {
+      // Cliente: inicializar Firestore y Auth normalmente
+      const { getFirestore } = require('firebase/firestore');
+      const { getAuth } = require('firebase/auth');
+      db = getFirestore(app);
       auth = getAuth(app);
+
+      // Limpiar sessionStorage de firebase en cada inicio (evita conflictos con tabs)
+      try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+          const key = sessionStorage.key(i);
+          if (key?.startsWith('firebase:')) sessionStorage.removeItem(key);
+        }
+      } catch {}
+    } else {
+      // SSR: usar mocks para evitar que el SDK web de Firestore falle en Node.js
+      db = createFirestoreMock();
+      auth = null;
     }
-  } else {
+  } else if (isBrowser) {
+    // Cliente sin config válida: app funciona sin datos de Firebase
     console.warn('[Firebase] Configuración incompleta. La app funcionará sin datos de Firebase.');
     app = !getApps().length
       ? initializeApp({ apiKey: 'dummy', projectId: 'dummy', appId: 'dummy' })
       : getApp();
+    const { getFirestore } = require('firebase/firestore');
     db = getFirestore(app);
+  } else {
+    // SSR sin config válida: usar mocks
+    app = {} as FirebaseApp;
+    db = createFirestoreMock();
   }
 } catch (e) {
   console.error('[Firebase] Error al inicializar:', e);
-  // Fallback: crear app con config inválida para prevenir crashes
-  try {
-    app = !getApps().length
-      ? initializeApp({ apiKey: 'invalid', projectId: 'invalid', appId: 'invalid' })
-      : getApp();
-    db = getFirestore(app);
-  } catch (fallbackErr) {
-    console.error('[Firebase] Fallback también falló:', fallbackErr);
+  if (isBrowser) {
+    try {
+      app = !getApps().length
+        ? initializeApp({ apiKey: 'invalid', projectId: 'invalid', appId: 'invalid' })
+        : getApp();
+      const { getFirestore } = require('firebase/firestore');
+      db = getFirestore(app);
+    } catch {
+      app = {} as FirebaseApp;
+      db = createFirestoreMock();
+    }
+  } else {
     app = {} as FirebaseApp;
-    db = {} as ReturnType<typeof getFirestore>;
+    db = createFirestoreMock();
   }
 }
 
 export { app, auth, db };
 
 export function enableOfflinePersistence() {
-  if (typeof window === 'undefined' || !db) return Promise.resolve();
+  if (!isBrowser || !db || db.type === 'firestore-mock') return Promise.resolve();
   return import('firebase/firestore').then(({ enableMultiTabIndexedDbPersistence }) =>
     enableMultiTabIndexedDbPersistence(db).catch(() => {})
   );

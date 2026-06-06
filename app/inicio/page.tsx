@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { AnimatedSection } from '../components/AnimatedSection';
@@ -26,7 +26,7 @@ function useInView(threshold = 0.1) {
   return { ref, isInView };
 }
 
-export default function Home() {
+const Home = memo(function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [scrollY, setScrollY] = useState(0);
@@ -422,4 +422,5 @@ export default function Home() {
       </footer>
     </div>
   );
-}
+});
+export default Home;

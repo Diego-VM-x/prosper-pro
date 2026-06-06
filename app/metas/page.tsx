@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
@@ -89,7 +89,7 @@ function getDaysRemaining(deadline: string): string {
   return `${days} días`;
 }
 
-export default function MetasPage() {
+const MetasPage = memo(function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
@@ -950,7 +950,7 @@ export default function MetasPage() {
                         <div key={user.uid} className="share-user-card share-user-selectable" onClick={() => selectShareUser(user)}>
                           <div className="share-user-avatar">
                             {user.photoURL ? (
-                              <img src={user.photoURL} alt="" />
+                              <img src={user.photoURL} alt="" loading="lazy" />
                             ) : (
                               <span>{(user.displayName || user.email || '?')[0].toUpperCase()}</span>
                             )}
@@ -973,7 +973,7 @@ export default function MetasPage() {
                     <div className="share-user-card">
                       <div className="share-user-avatar">
                         {shareFoundUser.photoURL ? (
-                          <img src={shareFoundUser.photoURL} alt="" />
+                          <img src={shareFoundUser.photoURL} alt="" loading="lazy" />
                         ) : (
                           <span>{(shareFoundUser.displayName || shareFoundUser.email || '?')[0].toUpperCase()}</span>
                         )}
@@ -1224,4 +1224,5 @@ export default function MetasPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-}
+});
+export default MetasPage;

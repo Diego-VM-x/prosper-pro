@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
@@ -88,7 +88,7 @@ function planToEvents(plan: FinancialPlan): CalendarEvent[] {
   return events;
 }
 
-export default function CalendarioPage() {
+const CalendarioPage = memo(function CalendarioPage() {
   const { plans, reminders, userId, addReminder, deleteReminderFn } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
@@ -562,4 +562,5 @@ export default function CalendarioPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-}
+});
+export default CalendarioPage;
