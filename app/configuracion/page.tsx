@@ -501,7 +501,7 @@ export default function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Centro de Notificaciones</h2>
+                      <h2 className="panel-title">Centro de Notificaciones <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
                       <p className="panel-desc">Controla qué alertas recibes</p>
                     </div>
 
@@ -586,7 +586,7 @@ export default function ConfiguracionPage() {
                       <ToggleRow
                         icon="📅"
                         label="Recordatorios de Calendario"
-                        desc="Eventos y recordatorios"
+                        desc="En desarrollo"
                         checked={calendarReminderNotif}
                         onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
                       />

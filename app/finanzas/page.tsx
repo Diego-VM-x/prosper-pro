@@ -912,43 +912,9 @@ export default function FinanzasPage() {
                 </svg>
                 <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
               </button>
-              <div
-                style={{
-                  display: 'inline-flex',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-default)',
-                  overflow: 'hidden',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                }}
-                title="Elige entre tasa de mercado (Oficial) o precio P2P real para USDT/SOL"
-              >
-                <button
-                  onClick={() => setP2pMode(false)}
-                  style={{
-                    padding: '6px 12px',
-                    border: 'none',
-                    background: !p2pMode ? 'var(--color-prosper-green)' : 'transparent',
-                    color: !p2pMode ? '#fff' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  Oficial
-                </button>
-                <button
-                  onClick={() => setP2pMode(true)}
-                  style={{
-                    padding: '6px 12px',
-                    border: 'none',
-                    background: p2pMode ? '#4edea3' : 'transparent',
-                    color: p2pMode ? '#003824' : 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  P2P
-                </button>
+              <div className="btn-p2p-toggle" title="Elige entre tasa de mercado (Oficial) o precio P2P real para USDT/SOL">
+                <button className={!p2pMode ? 'active' : ''} onClick={() => setP2pMode(false)}>Oficial</button>
+                <button className={p2pMode ? 'active' : ''} onClick={() => setP2pMode(true)}>P2P</button>
               </div>
               <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -2162,6 +2128,10 @@ export default function FinanzasPage() {
           .btn-p2p-idle { border-color: rgba(78,222,163,0.4) !important; color: #4edea3 !important; }
           .btn-p2p-idle:hover { background: rgba(78,222,163,0.08) !important; }
           .btn-sm { padding: 8px 14px; font-size: 0.75rem; }
+          .btn-p2p-toggle { display: inline-flex; border-radius: 8px; border: 1px solid var(--border-default); overflow: hidden; font-size: 0.8125rem; font-weight: 600; }
+          .btn-p2p-toggle button { padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-size: inherit; font-weight: inherit; font-family: inherit; }
+          .btn-p2p-toggle button.active:first-child { background: var(--color-prosper-green); color: #fff; }
+          .btn-p2p-toggle button.active:last-child { background: #4edea3; color: #003824; }
 
           /* VEPay Modal */
           .modal-vepay { max-width: 520px; }
@@ -2356,6 +2326,8 @@ export default function FinanzasPage() {
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
+            .page-header-actions .btn-p2p-toggle { display: flex; width: 100%; }
+            .page-header-actions .btn-p2p-toggle button { flex: 1; justify-content: center; padding: 10px 8px; font-size: 0.75rem; }
             .modal-accounting { max-width: none; }
             .accounting-actions { grid-template-columns: 1fr 1fr; }
             .accounting-accounts-list { grid-template-columns: 1fr 1fr; }

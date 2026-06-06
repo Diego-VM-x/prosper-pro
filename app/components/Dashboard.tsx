@@ -96,6 +96,7 @@ export function Dashboard() {
   const [statsHover, setStatsHover] = useState(false);
   const [bottomHover, setBottomHover] = useState(false);
   const autoScrollRef = useRef<number | null>(null);
+  const [txLimit, setTxLimit] = useState(5);
 
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
@@ -304,8 +305,8 @@ export function Dashboard() {
   const strokeDashoffset = circumference * (1 - progressPct / 100);
 
   const recentTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => (b.date || 0) - (a.date || 0)).slice(0, 5);
-  }, [transactions]);
+    return [...transactions].sort((a, b) => (b.date || 0) - (a.date || 0)).slice(0, txLimit);
+  }, [transactions, txLimit]);
 
   const startOfMonth = useMemo(() => {
     const now = new Date();
@@ -728,6 +729,15 @@ export function Dashboard() {
                 <p className="empty-msg" style={{ padding: '24px 0' }}>Sin movimientos recientes</p>
               )}
             </div>
+            {transactions.length > txLimit && (
+              <button
+                className="content-card-action"
+                onClick={() => setTxLimit(prev => prev + 5)}
+                style={{ marginTop: '8px', alignSelf: 'center', fontSize: '0.75rem' }}
+              >
+                Ver más ({transactions.length - txLimit} restantes)
+              </button>
+            )}
           </div>
 
           {/* Quick Actions */}

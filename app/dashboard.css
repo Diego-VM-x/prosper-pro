@@ -264,6 +264,8 @@
 
 /* Plans List */
 .plans-list { display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto; }
+.plans-card .plans-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 10px; }
+.plans-card .plan-item { min-width: 150px; flex: 0 0 auto; }
 .plan-item { cursor: pointer; transition: all var(--transition-fast); }
 .plan-item:hover { opacity: 0.85; }
 .plan-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -316,7 +318,7 @@
 
 /* Progress Section */
 .progress-section { display: flex; flex-direction: column; align-items: center; }
-.progress-ring-wrapper { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.progress-ring-wrapper { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 16px; width: 100%; }
 .progress-ring-container { position: relative; width: 120px; height: 120px; }
 .progress-ring { transform: rotate(-90deg); width: 100%; height: 100%; }
 .progress-ring .progress-ring-track { fill: none; stroke: var(--border-default); stroke-width: 8; }
@@ -331,6 +333,8 @@
 
 /* Deadlines Section */
 .deadlines-list { display: flex; flex-direction: column; gap: 10px; }
+.deadlines-section .deadlines-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 10px; }
+.deadlines-section .deadline-item { min-width: 180px; flex: 0 0 auto; }
 .deadline-item {
   display: flex;
   align-items: center;
