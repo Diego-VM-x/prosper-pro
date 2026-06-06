@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -12,7 +12,7 @@ import type { UserProfile, CurrencyCode } from '@/types';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
-export default function ConfiguracionPage() {
+const ConfiguracionPage = memo(function ConfiguracionPage() {
   const { user, logout, deleteAccount, wipeAllData, enableNotifications } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
@@ -395,6 +395,14 @@ export default function ConfiguracionPage() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 BTC = {rates.rates.BTC?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 USDC = {rates.rates.USDC?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
                             <strong style={{ color: 'var(--text-primary)' }}>1 COP = {rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</strong>
                           </div>
                           {rates.p2pRates?.USDT && (
@@ -407,6 +415,18 @@ export default function ConfiguracionPage() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
                               <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                            </div>
+                          )}
+                          {rates.p2pRates?.BTC && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
+                              <strong style={{ color: 'var(--text-primary)' }}>1 BTC = {rates.p2pRates.BTC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                            </div>
+                          )}
+                          {rates.p2pRates?.USDC && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
+                              <strong style={{ color: 'var(--text-primary)' }}>1 USDC = {rates.p2pRates.USDC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
                             </div>
                           )}
                         </div>
@@ -501,7 +521,7 @@ export default function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Centro de Notificaciones</h2>
+                      <h2 className="panel-title">Centro de Notificaciones <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
                       <p className="panel-desc">Controla qué alertas recibes</p>
                     </div>
 
@@ -523,14 +543,14 @@ export default function ConfiguracionPage() {
                       <ToggleRow
                         icon="📈"
                         label="Alertas de Precio"
-                        desc="Cambios en tiempo real"
+                        desc="En desarrollo"
                         checked={priceAlerts}
                         onChange={() => setPriceAlerts(!priceAlerts)}
                       />
                       <ToggleRow
                         icon="💰"
                         label="Alertas de Presupuesto"
-                        desc="Violaciones de límite"
+                        desc="En desarrollo"
                         checked={budgetAlerts}
                         onChange={() => setBudgetAlerts(!budgetAlerts)}
                       />
@@ -586,7 +606,7 @@ export default function ConfiguracionPage() {
                       <ToggleRow
                         icon="📅"
                         label="Recordatorios de Calendario"
-                        desc="Eventos y recordatorios"
+                        desc="En desarrollo"
                         checked={calendarReminderNotif}
                         onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
                       />
@@ -1699,7 +1719,7 @@ export default function ConfiguracionPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-}
+});
 
 function ToggleRow({ icon, label, desc, checked, onChange, disabled }: { icon: string; label: string; desc: string; checked: boolean; onChange: () => void; disabled?: boolean }) {
   return (
@@ -1719,3 +1739,4 @@ function ToggleRow({ icon, label, desc, checked, onChange, disabled }: { icon: s
     </div>
   );
 }
+export default ConfiguracionPage;

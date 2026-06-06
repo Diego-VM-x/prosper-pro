@@ -21,10 +21,12 @@ export const CURRENCY_MAP: Record<CurrencyCode, CurrencyConfig> = {
   EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', locale: 'de-DE', decimals: 2 },
   USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💎', locale: 'en-US', decimals: 2 },
   SOL: { code: 'SOL', symbol: '◎', name: 'Solana', flag: '☀️', locale: 'en-US', decimals: 2 },
+  BTC: { code: 'BTC', symbol: '₿', name: 'Bitcoin', flag: '🟠', locale: 'en-US', decimals: 2 },
+  USDC: { code: 'USDC', symbol: '$', name: 'USD Coin', flag: '💠', locale: 'en-US', decimals: 2 },
   COP: { code: 'COP', symbol: '$', name: 'Peso Colombiano', flag: '🇨🇴', locale: 'es-CO', decimals: 0 },
 };
 
-export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL'];
+export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL', 'BTC', 'USDC'];
 
 // ============================================================
 // DEFAULT EXCHANGE RATES (fallback / initial values)
@@ -39,6 +41,8 @@ export const DEFAULT_RATES: ExchangeRates = {
     EUR: 48.50,   // 1 EUR = 48.50 BS (fallback)
     USDT: 45.00,  // 1 USDT ≈ 1 USD (fallback)
     SOL: 9000.00, // 1 SOL ≈ 200 USD * 45 BS (fallback)
+    BTC: 4500000.00, // 1 BTC ≈ 100000 USD * 45 BS (fallback)
+    USDC: 45.00,  // 1 USDC ≈ 1 USD (fallback)
     COP: 0.0105,  // 1 COP ≈ 0.0105 BS (fallback)
   },
   p2pRates: {},
@@ -79,6 +83,27 @@ export function convertCurrency(
   const decimals = CURRENCY_MAP[target]?.decimals ?? 2;
 
   return Number(converted.toFixed(decimals));
+}
+
+/**
+ * Get effective exchange rates for a specific account, respecting its
+ * individual rateMode preference (if set) or falling back to the global P2P toggle.
+ */
+export function getAccountRates(
+  account: { currency: CurrencyCode; rateMode?: 'official' | 'p2p' } | undefined,
+  rates: ExchangeRates,
+  globalP2pMode: boolean
+): Record<string, number> {
+  const r = { ...rates.rates };
+  const mode = account?.rateMode;
+  const useP2P = mode === 'p2p' || (mode !== 'official' && globalP2pMode);
+  if (useP2P && rates.p2pRates) {
+    if (rates.p2pRates.USDT) r.USDT = rates.p2pRates.USDT;
+    if (rates.p2pRates.SOL) r.SOL = rates.p2pRates.SOL;
+    if (rates.p2pRates.BTC) r.BTC = rates.p2pRates.BTC;
+    if (rates.p2pRates.USDC) r.USDC = rates.p2pRates.USDC;
+  }
+  return r;
 }
 
 // ============================================================

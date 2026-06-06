@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -9,12 +9,13 @@ import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, createDefaultAccounts, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
 import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPayBankApp, getBankDisplayName, VEPAY_BANKS } from '@/lib/vepay';
+import { getAccountRates, convertCurrency } from '@/lib/currency';
 import type { Transaction, FinancialAccount, AccountType, CurrencyCode } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
@@ -83,20 +84,21 @@ function SummaryWidget({ label, value, altValue, color, showAmounts, showConvers
   );
 }
 
-export default function FinanzasPage() {
+const FinanzasPage = memo(function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txLimit, setTxLimit] = useState(5);
   const [filterType, setFilterType] = useState<string>('Todos');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
-  const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '' });
+  const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '', rateMode: undefined as 'official' | 'p2p' | undefined });
   const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
@@ -111,10 +113,10 @@ export default function FinanzasPage() {
   // Suma los balances de todas las cuentas y convierte a displayCurrency
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
-      const converted = convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+      const converted = convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode));
       return sum + converted;
     }, 0);
-  }, [accounts, displayCurrency, convertBetween]);
+  }, [accounts, displayCurrency, rates, p2pMode]);
 
   // Calcular resumen mensual reactivamente
   // ESTRATEGIA: Sumar en moneda nativa de cada cuenta primero, luego convertir totales
@@ -123,23 +125,21 @@ export default function FinanzasPage() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     
     // Acumuladores por moneda nativa
-    const totalsByCurrency: Record<string, { income: number; expenses: number; saving: number }> = {};
+    const totalsByCurrency: Record<string, { income: number; expenses: number }> = {};
     
     transactions.forEach((t) => {
-      if (t.date >= startOfMonth) {
+      if (t.date >= startOfMonth && t.category !== 'Transferencia') {
         const account = accounts.find((a) => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
         
         if (!totalsByCurrency[txCurrency]) {
-          totalsByCurrency[txCurrency] = { income: 0, expenses: 0, saving: 0 };
+          totalsByCurrency[txCurrency] = { income: 0, expenses: 0 };
         }
         
         if (t.type === 'income') {
           totalsByCurrency[txCurrency].income += t.amount;
         } else if (t.type === 'expense') {
           totalsByCurrency[txCurrency].expenses += t.amount;
-        } else if (t.type === 'saving') {
-          totalsByCurrency[txCurrency].saving += t.amount;
         }
       }
     });
@@ -147,19 +147,16 @@ export default function FinanzasPage() {
     // Convertir totales agregados a la moneda de display
     let income = 0;
     let expenses = 0;
-    let saving = 0;
     
     Object.entries(totalsByCurrency).forEach(([currency, totals]) => {
       income += convertBetween(totals.income, currency as CurrencyCode, displayCurrency);
       expenses += convertBetween(totals.expenses, currency as CurrencyCode, displayCurrency);
-      saving += convertBetween(totals.saving, currency as CurrencyCode, displayCurrency);
     });
     
     return {
       income,
       expenses,
-      saving,
-      balance: income - expenses - saving
+      balance: income - expenses
     };
   }, [transactions, accounts, displayCurrency, convertBetween]);
   const [showAmounts, setShowAmounts] = useState(() => {
@@ -179,7 +176,6 @@ export default function FinanzasPage() {
   const altSummary = useMemo(() => ({
     income: convertBetween(summary.income, displayCurrency, altCurrency),
     expenses: convertBetween(summary.expenses, displayCurrency, altCurrency),
-    saving: convertBetween(summary.saving, displayCurrency, altCurrency),
     balance: convertBetween(summary.balance, displayCurrency, altCurrency),
   }), [summary, displayCurrency, altCurrency, convertBetween]);
   const altTotalBalance = useMemo(() => {
@@ -205,9 +201,6 @@ export default function FinanzasPage() {
     if (!uid) return;
     const unsub = subscribeToAccounts(uid, (accs) => {
       setAccounts(accs);
-      if (accs.length === 0) {
-        createDefaultAccounts(uid);
-      }
     });
     return () => unsub();
   }, [uid]);
@@ -266,6 +259,21 @@ export default function FinanzasPage() {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  // Toast de confirmación al cambiar modo P2P (skip on mount)
+  const didMountP2P = useRef(false);
+  useEffect(() => {
+    if (!didMountP2P.current) {
+      didMountP2P.current = true;
+      return;
+    }
+    if (p2pMode) {
+      success('Modo P2P activado: conversiones usando precios P2P en tiempo real');
+    } else {
+      warning('Modo Oficial activado: conversiones usando precios de mercado');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p2pMode]);
 
   // Filtrar transacciones
   const filteredByAccount = selectedAccount === 'all'
@@ -608,11 +616,12 @@ export default function FinanzasPage() {
       color: newAccount.color || ACCOUNT_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      ...(newAccount.rateMode ? { rateMode: newAccount.rateMode } : {}),
     };
     await createAccount(acc);
     success(`Cuenta "${acc.name}" creada`);
     setShowAccountModal(false);
-    setNewAccount({ name: '', type: 'digital', balance: 0, currency: 'BS', color: '' });
+    setNewAccount({ name: '', type: 'digital', balance: 0, currency: 'BS', color: '', rateMode: undefined });
     setAccountCategory('monedas');
   };
 
@@ -904,6 +913,10 @@ export default function FinanzasPage() {
                 </svg>
                 <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
               </button>
+              <div className="btn-p2p-toggle" title="Elige entre tasa de mercado (Oficial) o precio P2P real para criptos (USDT, SOL, BTC, USDC)">
+                <button className={!p2pMode ? 'active' : ''} onClick={() => setP2pMode(false)}>Oficial</button>
+                <button className={p2pMode ? 'active' : ''} onClick={() => setP2pMode(true)}>P2P</button>
+              </div>
               <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -957,35 +970,117 @@ export default function FinanzasPage() {
                   )}
                 </span>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
+              <div
+                className="summary-card"
+                onClick={() => setP2pMode(!p2pMode)}
+                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDT ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                title="Clic para alternar entre tasa Oficial y P2P"
+              >
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   💎 USDT → 🇻🇪 BS
-                  {rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
+                  {p2pMode && rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
                 </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.p2pRates?.USDT ? (
-                    <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : rates.rates.USDT ? (
-                    <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {rates.rates.USDT && (
+                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.USDT ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.USDT ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
+                    </span>
                   )}
-                </span>
+                  {rates.p2pRates?.USDT && (
+                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                    </span>
+                  )}
+                  {!rates.rates.USDT && !rates.p2pRates?.USDT && (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
+                  )}
+                </div>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
+              <div
+                className="summary-card"
+                onClick={() => setP2pMode(!p2pMode)}
+                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.SOL ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                title="Clic para alternar entre tasa Oficial y P2P"
+              >
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   ☀️ SOL → 🇻🇪 BS
-                  {rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
+                  {p2pMode && rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
                 </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.p2pRates?.SOL ? (
-                    <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : rates.rates.SOL ? (
-                    <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {rates.rates.SOL && (
+                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.SOL ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.SOL ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
+                    </span>
+                  )}
+                  {rates.p2pRates?.SOL && (
+                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                    </span>
+                  )}
+                  {!rates.rates.SOL && !rates.p2pRates?.SOL && (
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
                   )}
+                </div>
+              </div>
+              <div
+                className="summary-card"
+                onClick={() => setP2pMode(!p2pMode)}
+                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.BTC ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                title="Clic para alternar entre tasa Oficial y P2P"
+              >
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🟠 BTC → 🇻🇪 BS
+                  {p2pMode && rates.p2pRates?.BTC && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
                 </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {rates.rates.BTC && (
+                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.BTC ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.BTC ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 BTC = {rates.rates.BTC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
+                    </span>
+                  )}
+                  {rates.p2pRates?.BTC && (
+                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 BTC = {rates.p2pRates.BTC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                    </span>
+                  )}
+                  {!rates.rates.BTC && !rates.p2pRates?.BTC && (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                  )}
+                </div>
+              </div>
+              <div
+                className="summary-card"
+                onClick={() => setP2pMode(!p2pMode)}
+                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDC ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                title="Clic para alternar entre tasa Oficial y P2P"
+              >
+                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💠 USDC → 🇻🇪 BS
+                  {p2pMode && rates.p2pRates?.USDC && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
+                </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {rates.rates.USDC && (
+                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.USDC ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.USDC ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 USDC = {rates.rates.USDC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
+                    </span>
+                  )}
+                  {rates.p2pRates?.USDC && (
+                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 USDC = {rates.p2pRates.USDC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                    </span>
+                  )}
+                  {!rates.rates.USDC && !rates.p2pRates?.USDC && (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1013,7 +1108,7 @@ export default function FinanzasPage() {
                   </div>
                   {showAmounts && acc.currency !== displayCurrency && (
                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                      ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                      ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
                     </div>
                   )}
                 </div>
@@ -1070,7 +1165,6 @@ export default function FinanzasPage() {
             <div className="summary-grid">
               <SummaryWidget label="Ingresos" value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
               <SummaryWidget label="Gastos" value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-              <SummaryWidget label="Ahorro" value={summary.saving} altValue={altSummary.saving} color="var(--color-pine-500)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
               <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
             </div>
             <button
@@ -1118,51 +1212,76 @@ export default function FinanzasPage() {
               <thead>
                 <tr>
                   <th>Descripción</th>
-                  <th>Cuenta</th>
                   <th>Categoría</th>
-                  <th>Tipo</th>
-                  <th>Fecha</th>
+                  <th>Estado</th>
                   <th>Monto</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredTx.length > 0 ? filteredTx.map((tx, index) => (
-                  <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
-                    <td>{tx.description || '—'}</td>
-                    <td><span className="account-badge">{getAccountName(tx.accountId)}</span></td>
-                    <td>{tx.category}</td>
-                    <td><span className="type-badge" style={{ background: TYPE_COLORS[tx.type] + '20', color: TYPE_COLORS[tx.type] }}>{TYPE_LABELS[tx.type]}</span></td>
-                    <td>{formatDate(tx.date)}</td>
-                    <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                      {showAmounts ? (
-                        <>
-                          <div>
-                            {tx.type === 'expense' ? '-' : '+'}
-                            {formatInCurrency(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD')}
+                {filteredTx.length > 0 ? filteredTx.slice(0, txLimit).map((tx, index) => {
+                  const txAccount = accounts.find((a) => a.id === tx.accountId);
+                  const txCurrency = txAccount?.currency || 'USD';
+                  return (
+                    <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div className="tx-icon-box" style={{ background: TYPE_COLORS[tx.type] + '18', color: TYPE_COLORS[tx.type] }}>
+                            {TYPE_ICONS[tx.type]}
                           </div>
-                          {(accounts.find(a => a.id === tx.accountId)?.currency || 'USD') !== displayCurrency && (
-                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                              ≈ {tx.type === 'expense' ? '-' : '+'}
-                              {formatInCurrency(convertBetween(tx.amount, accounts.find(a => a.id === tx.accountId)?.currency || 'USD', displayCurrency), displayCurrency)}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{tx.description || '—'}</span>
+                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{formatDate(tx.date)} • {getAccountName(tx.accountId)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="tx-category-pill">{tx.category}</span></td>
+                      <td>
+                        <span className="tx-status">
+                          <span className="tx-status-dot" style={{ background: tx.type === 'expense' ? '#ffb3af' : '#4edea3' }} />
+                          COMPLETADO
+                        </span>
+                      </td>
+                      <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
+                        {showAmounts ? (
+                          <>
+                            <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
+                              {tx.type === 'expense' ? '-' : '+'}
+                              {formatInCurrency(tx.amount, txCurrency)}
                             </div>
-                          )}
-                        </>
-                      ) : (
-                        '••••••'
-                      )}
-                    </td>
-                    <td>
-                      <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
-                        <IconTrash width={14} />
-                      </button>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr><td colSpan={7} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
+                            {txCurrency !== displayCurrency && (
+                              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                                ≈ {tx.type === 'expense' ? '-' : '+'}
+                                {formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          '••••••'
+                        )}
+                      </td>
+                      <td>
+                        <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
+                          <IconTrash width={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr><td colSpan={5} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
                 )}
               </tbody>
             </table>
+            {filteredTx.length > txLimit && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setTxLimit(prev => prev + 5)}
+                >
+                  Ver más ({filteredTx.length - txLimit} restantes)
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Modal Transacción */}
@@ -1472,6 +1591,8 @@ export default function FinanzasPage() {
                           ? [
                               { value: 'USDT', label: 'Tether (USDT)', icon: '💎' },
                               { value: 'SOL', label: 'Solana (SOL)', icon: '☀️' },
+                              { value: 'BTC', label: 'Bitcoin (BTC)', icon: '🟠' },
+                              { value: 'USDC', label: 'USD Coin (USDC)', icon: '💠' },
                             ]
                           : [
                               { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
@@ -1483,6 +1604,32 @@ export default function FinanzasPage() {
                       placeholder="Seleccionar moneda..."
                     />
                   </div>
+                  {(newAccount.currency === 'USDT' || newAccount.currency === 'SOL' || newAccount.currency === 'BTC' || newAccount.currency === 'USDC') && (
+                    <div className="tx-field">
+                      <label className="tx-label">Tasa de conversión</label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${newAccount.rateMode !== 'p2p' ? 'btn-primary' : 'btn-outline'}`}
+                          onClick={() => setNewAccount({ ...newAccount, rateMode: 'official' })}
+                          style={{ flex: 1 }}
+                        >
+                          Oficial
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${newAccount.rateMode === 'p2p' ? 'btn-primary' : 'btn-outline'}`}
+                          onClick={() => setNewAccount({ ...newAccount, rateMode: 'p2p' })}
+                          style={{ flex: 1 }}
+                        >
+                          P2P
+                        </button>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                        {newAccount.rateMode === 'p2p' ? 'Usará el precio P2P real para convertir esta cuenta.' : 'Usará la tasa de mercado oficial para convertir esta cuenta.'}
+                      </span>
+                    </div>
+                  )}
                   <div className="tx-field">
                     <label className="tx-label">Balance Inicial</label>
                     <div className="tx-input-wrap">
@@ -1558,7 +1705,7 @@ export default function FinanzasPage() {
                 {/* Preview */}
                 {vepayPreview && (
                   <div className="vepay-preview">
-                    <img src={vepayPreview} alt="Captura" />
+                    <img src={vepayPreview} alt="Captura" loading="lazy" />
                   </div>
                 )}
 
@@ -1862,71 +2009,11 @@ export default function FinanzasPage() {
 
         <style>{`
           .finanzas-page { padding: 0; }
-
-          /* Header redesign — compact toolbar */
-          .page-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 0 12px 0; border-bottom: 1px solid var(--border-default); margin-bottom: 14px; }
-          .page-title { font-size: 1.375rem; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.02em; }
-          .page-subtitle { font-size: 0.8125rem; color: var(--text-secondary); margin: 2px 0 0 0; }
-          .page-header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
-          .page-header-actions .btn { padding: 8px 12px; font-size: 0.75rem; border-radius: 10px; gap: 5px; min-height: 36px; }
-          .page-header-actions .btn-primary { background: linear-gradient(135deg, var(--color-prosper-green), #2db57a); box-shadow: 0 3px 10px rgba(61,204,142,0.3); border: none; }
-          .page-header-actions .btn-primary:hover { box-shadow: 0 5px 16px rgba(61,204,142,0.45); transform: translateY(-1.5px); filter: brightness(1.05); }
-          .page-header-actions .btn-outline { border-color: var(--border-default); background: var(--bg-card); }
-          .page-header-actions .btn-outline:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: rgba(61,204,142,0.06); }
-          .btn-toggle-label, .btn-vepay-label, .btn-accounting-label { display: none; }
+          .btn-toggle-label { display: none; }
+          .page-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
           .btn-danger-outline { color: var(--color-error) !important; border-color: var(--color-error) !important; }
           .btn-danger-outline:hover { background: var(--color-error) !important; color: white !important; }
-          .btn-accounting { color: var(--color-gold-500) !important; border-color: var(--color-gold-500) !important; }
-          .btn-accounting:hover { background: var(--color-gold-500) !important; color: white !important; }
-          .btn-vepay { color: var(--color-prosper-green) !important; border-color: var(--color-prosper-green) !important; }
-          .btn-vepay:hover { background: var(--color-prosper-green) !important; color: white !important; }
-
-          /* Rates ticker — horizontal compact bar */
-          .summary-section { margin-bottom: 14px; }
-          .summary-section .summary-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-          .summary-section .summary-card {
-            flex: 1 1 auto;
-            min-width: 120px;
-            max-width: 180px;
-            padding: 10px 12px;
-            border-radius: var(--radius-lg);
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-          }
-          .summary-section .summary-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(61,204,142,0.3); }
-          .summary-section .summary-label {
-            font-size: 0.6875rem;
-            color: var(--text-tertiary);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-          }
-          .summary-section .summary-value {
-            font-size: 0.9375rem;
-            font-weight: 700;
-            color: var(--color-prosper-green);
-            white-space: nowrap;
-          }
-          .summary-section .summary-value span { display: inline; }
-
-          /* Live indicator */
-          .summary-card:first-child .summary-label::before {
-            content: '';
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--color-prosper-green);
-            animation: pulseDot 1.6s ease-in-out infinite;
-          }
-          @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+          .btn-toggle-visibility { gap: 4px; }
 
           /* Type selector in modal */
           .tx-type-selector { display: flex; gap: 8px; margin-bottom: 4px; }
@@ -1998,50 +2085,20 @@ export default function FinanzasPage() {
           }
           .delete-tx-btn:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
 
-          /* Accounts — cleaner cards */
-          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 18px; }
-          .account-card {
-            position: relative;
-            background: var(--bg-card);
-            border: 1px solid var(--border-default);
-            border-top: 3px solid;
-            border-radius: var(--radius-lg);
-            padding: 14px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-          }
-          .account-card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-            pointer-events: none;
-          }
-          .account-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.08), 0 3px 8px rgba(0,0,0,0.04); border-color: rgba(61,204,142,0.25); }
-          .account-card-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-          .account-icon {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.25rem;
-            flex-shrink: 0;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-          }
-          .account-card:hover .account-icon { transform: scale(1.1) rotate(-4deg); }
-          .account-info { flex: 1; min-width: 0; }
-          .account-name { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .account-type { font-size: 0.6875rem; color: var(--text-tertiary); display: block; margin-top: 1px; }
-          .account-actions-group { display: flex; gap: 2px; opacity: 0.55; transition: opacity 0.2s; }
-          .account-card:hover .account-actions-group { opacity: 1; }
-          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 5px; border-radius: 6px; display: flex; transition: all 0.15s; }
-          .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); transform: scale(1.1); }
-          .account-balance-group { padding-top: 10px; border-top: 1px dashed var(--border-default); }
-          .account-balance { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
-          .account-balance-group div:last-child { font-size: 0.75rem; color: var(--text-tertiary); margin-top: 2px; font-weight: 500; }
-          .empty-accounts { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 36px 24px; color: var(--text-secondary); grid-column: 1 / -1; background: var(--bg-card); border: 1px dashed var(--border-default); border-radius: var(--radius-lg); }
-          .empty-accounts::before { content: '💳'; font-size: 2.25rem; margin-bottom: 10px; opacity: 0.45; }
-          .empty-accounts p { margin: 0; font-size: 0.9375rem; font-weight: 600; color: var(--text-primary); }
+          /* Accounts */
+          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+          .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
+          .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+          .account-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+          .account-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+          .account-info { flex: 1; }
+          .account-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); display: block; }
+          .account-type { font-size: 0.6875rem; color: var(--text-tertiary); text-transform: capitalize; }
+          .account-actions-group { display: flex; gap: 2px; align-items: center; }
+          .account-action { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 50%; display: flex; transition: all var(--transition-fast); }
+          .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
+          .account-balance { font-size: 1.375rem; font-weight: 800; }
+          .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
 
           /* Summary */
           .summary-section { position: relative; margin-bottom: 24px; }
@@ -2076,6 +2133,39 @@ export default function FinanzasPage() {
           .amount-income { color: var(--color-prosper-green); }
           .amount-expense { color: var(--color-error); }
           .amount-saving { color: var(--color-pine-500); }
+
+          /* Tabla premium */
+          .tx-icon-box {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.125rem;
+            flex-shrink: 0;
+          }
+          .tx-category-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+            font-size: 0.6875rem;
+            font-weight: 600;
+          }
+          .tx-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+          }
+          .tx-status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+          }
+
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
 
            /* Modal */
@@ -2103,7 +2193,14 @@ export default function FinanzasPage() {
           .btn-vepay { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
           .btn-vepay:hover { background: var(--color-prosper-green); color: white; }
           .btn-vepay-label { display: none; }
+          .btn-p2p-active { border-color: #4edea3 !important; background: rgba(78,222,163,0.12) !important; color: #4edea3 !important; }
+          .btn-p2p-idle { border-color: rgba(78,222,163,0.4) !important; color: #4edea3 !important; }
+          .btn-p2p-idle:hover { background: rgba(78,222,163,0.08) !important; }
           .btn-sm { padding: 8px 14px; font-size: 0.75rem; }
+          .btn-p2p-toggle { display: inline-flex; border-radius: 8px; border: 1px solid var(--border-default); overflow: hidden; font-size: 0.8125rem; font-weight: 600; }
+          .btn-p2p-toggle button { padding: 6px 12px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-size: inherit; font-weight: inherit; font-family: inherit; }
+          .btn-p2p-toggle button.active:first-child { background: var(--color-prosper-green); color: #fff; }
+          .btn-p2p-toggle button.active:last-child { background: #4edea3; color: #003824; }
 
           /* VEPay Modal */
           .modal-vepay { max-width: 520px; }
@@ -2298,6 +2395,8 @@ export default function FinanzasPage() {
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
+            .page-header-actions .btn-p2p-toggle { display: flex; width: 100%; }
+            .page-header-actions .btn-p2p-toggle button { flex: 1; justify-content: center; padding: 10px 8px; font-size: 0.75rem; }
             .modal-accounting { max-width: none; }
             .accounting-actions { grid-template-columns: 1fr 1fr; }
             .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
@@ -2387,4 +2486,5 @@ export default function FinanzasPage() {
       </DashboardLayout>
     </ProtectedRoute>
   );
-}
+});
+export default FinanzasPage;

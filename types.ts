@@ -3,7 +3,7 @@
 // ============================================================
 
 // ─── Currency ───
-export type CurrencyCode = 'USD' | 'BS' | 'EUR' | 'USDT' | 'SOL' | 'COP';
+export type CurrencyCode = 'USD' | 'BS' | 'EUR' | 'USDT' | 'SOL' | 'BTC' | 'USDC' | 'COP';
 
 export interface ExchangeRates {
   rates: Record<CurrencyCode, number>;
@@ -24,6 +24,8 @@ export interface FinancialAccount {
   currency: CurrencyCode;
   icon?: string;
   color?: string;
+  /** Preferred rate mode for this account (only relevant for USDT/SOL/BTC/USDC) */
+  rateMode?: 'official' | 'p2p';
   createdAt: number;
   updatedAt: number;
 }
@@ -155,6 +157,8 @@ export interface Notification {
 
 export interface NotificationPreferences {
   pushEnabled: boolean;
+  priceAlerts: boolean;
+  budgetAlerts: boolean;
   planInvite: boolean;
   planContribution: boolean;
   planReminder: boolean;
