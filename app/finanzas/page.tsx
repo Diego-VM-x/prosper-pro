@@ -91,6 +91,7 @@ export default function FinanzasPage() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [txLimit, setTxLimit] = useState(5);
   const [filterType, setFilterType] = useState<string>('Todos');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
   const [showModal, setShowModal] = useState(false);
@@ -1162,7 +1163,7 @@ export default function FinanzasPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTx.length > 0 ? filteredTx.map((tx, index) => {
+                {filteredTx.length > 0 ? filteredTx.slice(0, txLimit).map((tx, index) => {
                   const txAccount = accounts.find((a) => a.id === tx.accountId);
                   const txCurrency = txAccount?.currency || 'USD';
                   return (
@@ -1215,6 +1216,16 @@ export default function FinanzasPage() {
                 )}
               </tbody>
             </table>
+            {filteredTx.length > txLimit && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setTxLimit(prev => prev + 5)}
+                >
+                  Ver más ({filteredTx.length - txLimit} restantes)
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Modal Transacción */}
