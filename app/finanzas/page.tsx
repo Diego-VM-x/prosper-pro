@@ -267,6 +267,16 @@ export default function FinanzasPage() {
     }
   }, []);
 
+  // Toast de confirmación al cambiar modo P2P
+  useEffect(() => {
+    if (p2pMode) {
+      success('Modo P2P activado: conversiones usando precios Binance P2P');
+    } else {
+      warning('Modo Oficial activado: conversiones usando precios de mercado');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p2pMode]);
+
   // Filtrar transacciones
   const filteredByAccount = selectedAccount === 'all'
     ? transactions
@@ -968,41 +978,51 @@ export default function FinanzasPage() {
                   )}
                 </span>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
+              <div className="summary-card" style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDT ? '1px solid #4edea3' : undefined }}>
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   💎 USDT → 🇻🇪 BS
+                  {p2pMode && rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                  {rates.rates.USDT ? (
-                    <span className="summary-value" style={{ fontSize: '1rem', color: 'var(--color-prosper-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {rates.rates.USDT && (
+                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.USDT ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.USDT ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                       <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
                     </span>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
                   )}
                   {rates.p2pRates?.USDT && (
-                    <span className="summary-value" style={{ fontSize: '1rem', color: '#4edea3', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
                     </span>
+                  )}
+                  {!rates.rates.USDT && !rates.p2pRates?.USDT && (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
                   )}
                 </div>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
+              <div className="summary-card" style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.SOL ? '1px solid #4edea3' : undefined }}>
                 <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   ☀️ SOL → 🇻🇪 BS
-                  {rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: 'var(--color-prosper-green)', color: '#fff', padding: '1px 4px', borderRadius: '4px', marginLeft: '4px' }}>P2P</span>}
+                  {p2pMode && rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
                 </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.p2pRates?.SOL ? (
-                    <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : rates.rates.SOL ? (
-                    <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {rates.rates.SOL && (
+                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.SOL ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.SOL ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
+                    </span>
+                  )}
+                  {rates.p2pRates?.SOL && (
+                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
+                    </span>
+                  )}
+                  {!rates.rates.SOL && !rates.p2pRates?.SOL && (
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
                   )}
-                </span>
+                </div>
               </div>
             </div>
           </div>
