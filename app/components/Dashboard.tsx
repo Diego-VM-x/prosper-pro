@@ -437,14 +437,7 @@ export function Dashboard() {
 
         {/* Stats Pills - Grid visible */}
         <div className="stats-grid dash-stagger">
-          <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/finanzas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
-            <div className="stat-pill-info">
-              <span className="stat-pill-label">Ahorro Mensual</span>
-              <span className="stat-pill-value">{formatInCurrency(monthlySavings, displayCurrency)}</span>
-            </div>
-          </div>
-          <div className="stat-pill dash-item" style={{animationDelay: '0.11s'}} onClick={() => router.push('/metas')}>
+          <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro en Planes</span>

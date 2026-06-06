@@ -23,7 +23,6 @@ interface ChartDataPoint {
   label: string;
   income: number;
   expense: number;
-  saving: number;
 }
 
 const TIME_RANGES: { key: TimeRange; label: string }[] = [
@@ -47,7 +46,7 @@ function CustomTooltip({ active, payload, label, formatter, showAmounts }: { act
         <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</p>
         {showAmounts ? payload.map((p) => (
           <p key={p.dataKey} style={{ margin: '2px 0', fontSize: '12px', color: p.color }}>
-            {p.dataKey === 'income' ? '📥 Ingresos' : p.dataKey === 'expense' ? '📤 Gastos' : '💰 Ahorro'}: {fmt(p.value)}
+            {p.dataKey === 'income' ? '📥 Ingresos' : '📤 Gastos'}: {fmt(p.value)}
           </p>
         )) : (
           <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-tertiary)' }}>Montos ocultos</p>
@@ -225,7 +224,6 @@ export function FinancialStatusChart() {
         label: period.label,
         income: periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0),
         expense: periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0),
-        saving: periodTxs.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0),
       };
     });
   }, [transactions, selectedRange, accounts, displayCurrency, convertBetween]);
@@ -239,15 +237,13 @@ export function FinancialStatusChart() {
     };
     const income = nonTransferTxs.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0);
     const expense = nonTransferTxs.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0);
-    const saving = nonTransferTxs.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0);
-    return { income, expense, saving, balance: income - expense - saving };
+    return { income, expense, balance: income - expense };
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
   const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altTotals = useMemo(() => ({
     income: convertBetween(totals.income, displayCurrency, altCurrency),
     expense: convertBetween(totals.expense, displayCurrency, altCurrency),
-    saving: convertBetween(totals.saving, displayCurrency, altCurrency),
     balance: convertBetween(totals.balance, displayCurrency, altCurrency),
   }), [totals, displayCurrency, altCurrency, convertBetween]);
 
@@ -272,7 +268,7 @@ export function FinancialStatusChart() {
             Flujo Financiero
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Ingresos vs Gastos vs Ahorro
+            Ingresos vs Gastos
           </p>
         </div>
 
@@ -347,7 +343,6 @@ export function FinancialStatusChart() {
         }}>
           <SummaryCard label="Ingresos" value={totals.income} color="var(--color-prosper-green)" showAmounts={showAmounts} altValue={altTotals.income} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
           <SummaryCard label="Gastos" value={totals.expense} color="var(--color-error)" showAmounts={showAmounts} altValue={altTotals.expense} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-          <SummaryCard label="Ahorro" value={totals.saving} color="var(--color-pine-500)" showAmounts={showAmounts} altValue={altTotals.saving} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
           <SummaryCard label="Balance" value={totals.balance} color={totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} altValue={altTotals.balance} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} isBalance />
         </div>
 
@@ -378,7 +373,7 @@ export function FinancialStatusChart() {
       {/* Chart */}
       {loading ? (
         <SkeletonChart />
-      ) : chartData.length === 0 || chartData.every(d => d.income === 0 && d.expense === 0 && d.saving === 0) ? (
+      ) : chartData.length === 0 || chartData.every(d => d.income === 0 && d.expense === 0) ? (
         <div style={{
           height: `${chartHeight}px`,
           display: 'flex',
@@ -409,11 +404,10 @@ export function FinancialStatusChart() {
             <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} showAmounts={showAmounts} />} />
             <Legend
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
-              formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}
+              formatter={(value) => value === 'income' ? '📥 Ingresos' : '📤 Gastos'}
             />
             <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
             <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="saving" fill="#F59E0B" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

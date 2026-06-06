@@ -124,7 +124,7 @@ export default function FinanzasPage() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     
     // Acumuladores por moneda nativa
-    const totalsByCurrency: Record<string, { income: number; expenses: number; saving: number }> = {};
+    const totalsByCurrency: Record<string, { income: number; expenses: number }> = {};
     
     transactions.forEach((t) => {
       if (t.date >= startOfMonth && t.category !== 'Transferencia') {
@@ -132,15 +132,13 @@ export default function FinanzasPage() {
         const txCurrency = account?.currency || 'USD';
         
         if (!totalsByCurrency[txCurrency]) {
-          totalsByCurrency[txCurrency] = { income: 0, expenses: 0, saving: 0 };
+          totalsByCurrency[txCurrency] = { income: 0, expenses: 0 };
         }
         
         if (t.type === 'income') {
           totalsByCurrency[txCurrency].income += t.amount;
         } else if (t.type === 'expense') {
           totalsByCurrency[txCurrency].expenses += t.amount;
-        } else if (t.type === 'saving') {
-          totalsByCurrency[txCurrency].saving += t.amount;
         }
       }
     });
@@ -148,19 +146,16 @@ export default function FinanzasPage() {
     // Convertir totales agregados a la moneda de display
     let income = 0;
     let expenses = 0;
-    let saving = 0;
     
     Object.entries(totalsByCurrency).forEach(([currency, totals]) => {
       income += convertBetween(totals.income, currency as CurrencyCode, displayCurrency);
       expenses += convertBetween(totals.expenses, currency as CurrencyCode, displayCurrency);
-      saving += convertBetween(totals.saving, currency as CurrencyCode, displayCurrency);
     });
     
     return {
       income,
       expenses,
-      saving,
-      balance: income - expenses - saving
+      balance: income - expenses
     };
   }, [transactions, accounts, displayCurrency, convertBetween]);
   const [showAmounts, setShowAmounts] = useState(() => {
@@ -180,7 +175,6 @@ export default function FinanzasPage() {
   const altSummary = useMemo(() => ({
     income: convertBetween(summary.income, displayCurrency, altCurrency),
     expenses: convertBetween(summary.expenses, displayCurrency, altCurrency),
-    saving: convertBetween(summary.saving, displayCurrency, altCurrency),
     balance: convertBetween(summary.balance, displayCurrency, altCurrency),
   }), [summary, displayCurrency, altCurrency, convertBetween]);
   const altTotalBalance = useMemo(() => {
@@ -1148,7 +1142,6 @@ export default function FinanzasPage() {
             <div className="summary-grid">
               <SummaryWidget label="Ingresos" value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
               <SummaryWidget label="Gastos" value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-              <SummaryWidget label="Ahorro" value={summary.saving} altValue={altSummary.saving} color="var(--color-pine-500)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
               <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
             </div>
             <button
