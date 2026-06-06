@@ -14,7 +14,7 @@ import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
-import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPayBankApp, getBankDisplayName, VEPAY_BANKS } from '@/lib/vepay';
+import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPAY_BANKS } from '@/lib/vepay';
 import { getAccountRates, convertCurrency } from '@/lib/currency';
 import type { Transaction, FinancialAccount, AccountType, CurrencyCode } from '@/types';
 

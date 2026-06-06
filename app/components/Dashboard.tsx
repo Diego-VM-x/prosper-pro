@@ -22,7 +22,6 @@ import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts, getTotalBalance, updateAccountBalance } from '@/lib/firestore/accounts';
-import { getPlanSummary } from '@/lib/firestore/plans';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
 import { createTransaction } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';

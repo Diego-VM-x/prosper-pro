@@ -65,10 +65,6 @@ export default function NotasVersionPage() {
           @keyframes scrollUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes scrollDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
         `}</style>
-        <style jsx>{`
-          @keyframes scrollUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-          @keyframes scrollDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        `}</style>
         <div className="notas-page" style={{ maxWidth: '900px', margin: '0 auto', padding: '32px', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
           <h1 className="notas-title" style={{ fontSize: '2rem', fontWeight: '800', marginBottom: '24px', textAlign: 'center', color: 'var(--color-prosper-green)' }}>📜 Notas de Versión</h1>
           <section className="notas-history" style={{ marginBottom: '40px' }}>

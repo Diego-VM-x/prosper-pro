@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
-import { CURRENCY_LIST, CURRENCY_MAP, DEFAULT_RATES } from '@/lib/currency';
+import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import type { UserProfile, CurrencyCode } from '@/types';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';

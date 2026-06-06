@@ -16,7 +16,7 @@ import { db } from '@/lib/firebase';
 import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
 import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
-import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock, IconCheck, IconArrowForward } from '../components/icons';
+import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '../components/icons';
 import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest } from '@/types';
 
 const PLAN_TYPES: { value: PlanType; label: string; icon: string; color: string; desc: string }[] = [
