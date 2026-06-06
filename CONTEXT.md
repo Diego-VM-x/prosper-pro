@@ -1,11 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## PRE-release 0.8.2 (27 de Mayo, 2026)
-- **Menú Móvil en Pantalla Completa**: El menú desplegable móvil ahora ocupa el 100% del ancho y alto de la pantalla en dispositivos móviles. Se modificó `.mobile-menu` en `Topbar.tsx` para usar `position: fixed`, `width: 100vw`, `height: 100vh` y eliminar el shadow.
-- **Dropdown de Usuario Alineado Abajo**: Se ajustó `.mobile-user-dropdown` en `Topbar.tsx` para que aparezca alineado al borde inferior (`bottom: 0 !important; top: auto !important;`).
-- **Animaciones Eliminadas**: Se eliminaron las animaciones `dropdownFadeIn` y `dropdownFadeOut` del componente `CustomSelect.tsx` para mejorar el rendimiento y simplificar el código.
-
-## Estado Actual (20 de Mayo, 2026 - Conversión USD/BS con cambio de valor principal + moneda persistente)
+## Estado Actual (31 de Mayo, 2026 - v0.8.10 BETA)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -132,6 +127,48 @@
   - Dashboard: Eliminado botón "Importar Datos" y modal CSV. Flechas (↗) de tarjetas ahora son funcionales con `useRouter` → `/metas`, `/finanzas`, `/cursos`.
   - Metas: Corregido bug de edición con nueva función `createGoalWithId()` en `goals.ts` (usa `setDoc` con ID explícito).
   - Configuración: Foto de perfil con compresión Canvas (300px, 0.7 calidad) + subida a Firebase Storage. Eliminación de cuenta refactorizada (Storage → Firestore → Auth). Botón "Eliminar" visible en modo claro.
+
+### 29/05/2026 - v0.8.7 BETA: Dashboard Widgets Elegantes + Flechas Inteligentes
+- **Resumen del Mes**: Nuevo widget con ingresos, gastos y balance del mes actual con barra visual proporcional.
+- **Últimos Movimientos**: Lista de las 5 transacciones más recientes con icono por tipo, fecha, descripción y monto.
+- **Acciones Rápidas**: Grid de 4 botones (Nuevo Plan, Nueva Cuenta, Transacción, Calendario).
+- **Flechas inteligentes**: Añadidas a secciones scrollables (stats pills y widgets inferiores). Auto-scroll continuo al mantener hover.
+- **Auto-scroll**: setTimeout(16ms) para scroll suave al mantener ratón sobre la flecha.
+- **Estética premium**: Welcome banner con gradiente + glow radial + glassmorphism en content cards.
+- **Notas de versión**: UpdateModal v0.8.7. Eliminada sección próximas actualizaciones.
+
+### 30/05/2026 - v0.8.9 BETA: CSS Fix Móvil + Progreso General con Planes Compartidos
+- **CSS inline → archivo propio**: Movidas 27KB de CSS del `<style>` tag inline en `Dashboard.tsx` a `app/dashboard.css` importado vía Next.js CSS pipeline. Soluciona bug donde móviles no parseaban el `<style>` inline y el dashboard se veía sin diseño (solo texto).
+- **prefers-reduced-motion**: Agregado fallback global en `animations.css` y en Dashboard para que elementos con `animation-fill-mode: both` no queden invisibles en dispositivos con preferencia de movimiento reducido.
+- **Conflictos CSS resueltos**: `.stats-grid` en 1280px (ahora colapsa a 2 columnas), `.progress-ring-fill` con `stroke-dashoffset: 0` (evita barra pre-llenada), `.modal-content` con `max-width: 440px` en 480px.
+- **Widget Progreso General completamente funcional**: Ahora contabiliza metas (goals) Y planes financieros (plans), incluyendo planes compartidos (`sharedWith`). El anillo de progreso muestra el % combinado de completados, y las stats "Activos"/"Completados" reflejan el total de ambos tipos.
+- **Build**: 15/15 páginas, sin errores.
+
+### 30/05/2026 - v0.8.8 BETA: Dashboard Reorganizado + Animaciones + Acciones Rápidas + Topbar Móvil
+- **Dashboard reorganizado**: Stats en grid 4 columnas, widgets en grid 3 columnas (plans, progress, deadlines, accounts-span2, summary, recent-tx, quick-actions), chart al fondo full-width. Sin scroll horizontal.
+- **Responsive**: 3 breakpoints (1024px → 2 cols, 768px → 1 col).
+- **Animaciones dashFadeUp**: fadeIn + slideUp (0.5s cubic-bezier) con stagger escalonado.
+- **Acciones Rápidas navegan con modal**: Nuevo Plan → `/metas?action=add-plan`, Nueva Cuenta → `/finanzas?action=add-account`, Transacción → `/finanzas?action=add-transaction`. Cada página detecta el param vía useEffect y abre el modal automáticamente + limpia la URL.
+- **Topbar móvil**: Nombre de usuario visible en todos los breakpoints (se eliminó `display:none` a 480px). Añadida estructura flex column para nombre + email.
+- **Build**: 15/15 páginas, sin errores.
+
+### 29/05/2026 - v0.8.6 BETA: Planes Compartidos Colaborativos + Guardado Global
+- **Planes compartidos colaborativos**: Los planes donde el usuario está en `sharedWith` se cargan junto a los propios en Metas. Badge "Compartido" e "Invitado" visibles en cada card. Botones editar/eliminar/compartir solo para el dueño (`ownerId === uid`). Al rechazar solicitud se remueve al usuario de `sharedWith`.
+- **Contribuciones por usuario**: Nuevo campo `contributions: Record<string, number>` en `FinancialPlan`. Al añadir fondos se registra quién aportó. Se muestra en la card del plan.
+- **Barra flotante Guardar Cambios**: Botón sticky al fondo en Configuración, visible desde cualquier pestaña, que persiste todas las preferencias (nombre, bio, moneda, idioma, alertas, privacidad de perfil). Se removió el botón duplicado que solo estaba en la pestaña Perfil.
+- **Exclusión de usuario actual**: Al buscar personas para compartir, se excluye automáticamente el propio usuario de los resultados.
+- **Types**: Añadido `contributions?: Record<string, number>` a `FinancialPlan`.
+- **Firestore**: Nueva función `getSharedPlans()` (usa `array-contains`). `GoalsContext` carga planes propios + compartidos sin duplicados.
+- **Merge**: Build exitoso, 14/14 páginas generadas.
+
+### 29/05/2026 - v0.8.5 BETA: Fix Responsive Móvil, Animaciones y UpdateModal
+- **Topbar.tsx - Menú móvil**: Cambiado de `max-height: 80vh` a `height: 100%; min-height: 100dvh` para cubrir toda la pantalla. Agregada `animation: slideInLeft 0.3s cubic-bezier(...)` y `fadeIn 0.25s` en overlay.
+- **Topbar.tsx - Dropdown usuario móvil**: Separado del dropdown desktop. En ≤768px se convierte en bottom-sheet (`position: fixed; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 20px 20px 0 0`). En ≤480px max-height 70vh.
+- **Topbar.tsx - Nombre de usuario**: Agregado `<span className="mobile-user-name">` junto al avatar en `mobile-user-actions`, oculto en ≤480px.
+- **Topbar.tsx - Merge conflict**: Resuelto conflicto `<<<<<<< HEAD` en `.mobile-user-dropdown` que rompía todo el CSS de la clase.
+- **globals.css - Keyframes duplicados**: Consolidados 4 `@keyframes fadeInUp` (40px, 16px, 20px, 20px) en uno solo canonical con `translate3d(0, 20px, 0)` + nuevo `fadeInUpLarge` (40px) para landing page. Eliminados de Dashboard.tsx y Toast.tsx.
+- **UpdateModal.tsx - Responsividad completa**: 3 breakpoints (768px, 480px, 360px). En ≤480px se ancla al fondo con `align-items: flex-end`, ocupa 100% ancho, footer en `column-reverse`.
+- **Version**: Actualizada a 0.8.5 BETA en UpdateModal, version.md y notas-version.
 
 ### 16/05/2026 - Eliminación de Comunidad y Logros
 - **Archivos movidos a backup (`_backup_comunidad_logros/`)**:

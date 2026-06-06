@@ -10,6 +10,8 @@ import {
   CURRENCY_MAP,
   CURRENCY_LIST,
 } from '@/lib/currency';
+import { notifyDollarChange, notifyDailyBalance, notifyAppUpdate } from '@/lib/firestore/notifications';
+import { getAccountsByOwnerId } from '@/lib/firestore/accounts';
 import type { CurrencyCode, ExchangeRates } from '@/types';
 
 // ============================================================
@@ -39,6 +41,10 @@ interface CurrencyContextType {
   currencies: typeof CURRENCY_LIST;
   /** Currency config map */
   currencyMap: typeof CURRENCY_MAP;
+  /** Whether to use P2P rates for USDT/SOL */
+  p2pMode: boolean;
+  /** Toggle P2P rates */
+  setP2pMode: (v: boolean) => void;
 }
 
 const CurrencyContext = createContext<CurrencyContextType>({
@@ -53,6 +59,8 @@ const CurrencyContext = createContext<CurrencyContextType>({
   convertBetween: (a) => a,
   currencies: CURRENCY_LIST,
   currencyMap: CURRENCY_MAP,
+  p2pMode: false,
+  setP2pMode: () => {},
 });
 
 export const useCurrency = () => useContext(CurrencyContext);
@@ -62,6 +70,7 @@ export const useCurrency = () => useContext(CurrencyContext);
 // ============================================================
 
 const DISPLAY_CURRENCY_KEY = 'prosper-display-currency';
+const P2P_MODE_KEY = 'prosper-p2p-mode';
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -71,6 +80,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<ExchangeRates>(DEFAULT_RATES);
   const [loading, setLoading] = useState(true);
   const [apiRates, setApiRates] = useState<ExchangeRates | null>(null);
+  const [p2pMode, setP2pModeState] = useState<boolean>(() => {
+    try { return localStorage.getItem(P2P_MODE_KEY) === 'true'; } catch { return false; }
+  });
   const apiRatesRef = React.useRef<ExchangeRates | null>(null);
 
   useEffect(() => {
@@ -107,6 +119,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             rates: {
               BS: 1.0,
               USD: customRates['USD'] ?? prev.rates.USD,
+              EUR: customRates['EUR'] ?? prev.rates.EUR,
+              USDT: customRates['USDT'] ?? prev.rates.USDT,
+              SOL: customRates['SOL'] ?? prev.rates.SOL,
+              COP: customRates['COP'] ?? prev.rates.COP,
             },
             source: 'manual',
           }));
@@ -137,32 +153,132 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, [user?.uid]);
 
-  // Fetch API rates
+  // Load cached rates from localStorage then fetch fresh
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem('prosper_exchange_rates');
+      if (cached) {
+        const parsed = JSON.parse(cached) as ExchangeRates;
+        setApiRates(parsed);
+        setRates((prev) => prev.source === 'manual' ? prev : parsed);
+      }
+    } catch {}
+    async function fetchCriptoYaP2P(): Promise<number | null> {
+      try {
+        const res = await fetch('https://criptoya.com/api/binancep2p/usdt/ves', { cache: 'no-store' });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data?.ask && data.ask > 0) return Number(data.ask);
+        return null;
+      } catch {
+        return null;
+      }
+    }
+
+    async function fetchBinanceP2P(asset: string): Promise<number | null> {
+      try {
+        const res = await fetch('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, fiat: 'VES', tradeType: 'SELL', page: 1, rows: 10 }),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!Array.isArray(data?.data) || data.data.length === 0) return null;
+        const prices = data.data.slice(0, 5).map((adv: any) => parseFloat(adv.adv.price)).filter((p: number) => p > 0);
+        if (prices.length === 0) return null;
+        return Number((prices.reduce((a: number, b: number) => a + b, 0) / prices.length).toFixed(2));
+      } catch {
+        return null;
+      }
+    }
+
     async function fetchRates() {
       try {
-        const res = await fetch('/api/exchange-rates');
-        if (res.ok) {
-          const data = await res.json();
-          const fetched: ExchangeRates = {
-            rates: data.rates,
-            updatedAt: data.updatedAt,
-            source: 'api',
-          };
-          setApiRates(fetched);
-          setRates((prev) => {
-            // Only update if user is not using manual override for USD
-            if (prev.source === 'manual') {
-              return prev;
-            }
-            return fetched;
-          });
+        // Fetch USD->BS from dolarapi
+        const [usdRes, eurRes, cryptoRes, p2pUsdtRes, p2pSolRes] = await Promise.allSettled([
+          fetch('https://ve.dolarapi.com/v1/dolares', { cache: 'no-store' }),
+          fetch('https://api.exchangerate-api.com/v4/latest/USD', { cache: 'no-store' }),
+          fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether,solana&vs_currencies=usd', { cache: 'no-store' }),
+          fetchCriptoYaP2P(),
+          fetchBinanceP2P('SOL'),
+        ]);
+
+        // Fallback to Binance P2P for USDT if CriptoYa fails
+        let p2pUsdt = p2pUsdtRes.status === 'fulfilled' ? p2pUsdtRes.value : null;
+        if (!p2pUsdt) {
+          try { p2pUsdt = await fetchBinanceP2P('USDT'); } catch {}
         }
+
+        let oficialRate = 40;
+        let updatedAt = Date.now();
+
+        if (usdRes.status === 'fulfilled' && usdRes.value.ok) {
+          const data = await usdRes.value.json();
+          if (Array.isArray(data)) {
+            const oficial = data.find((d: any) => d.fuente === 'oficial');
+            const paralelo = data.find((d: any) => d.fuente === 'paralelo');
+            if (oficial?.promedio) oficialRate = oficial.promedio;
+            if (paralelo?.fechaActualizacion || oficial?.fechaActualizacion) {
+              updatedAt = new Date(paralelo?.fechaActualizacion || oficial?.fechaActualizacion).getTime();
+            }
+          }
+        }
+
+        let eurRate = 48.5;
+        let copRate = 0.0105;
+        if (eurRes.status === 'fulfilled' && eurRes.value.ok) {
+          const data = await eurRes.value.json();
+          const eurToUsd = data?.rates?.EUR;
+          const copToUsd = data?.rates?.COP;
+          if (eurToUsd && eurToUsd > 0) {
+            eurRate = Number((oficialRate / eurToUsd).toFixed(2));
+          }
+          if (copToUsd && copToUsd > 0) {
+            copRate = Number((oficialRate / copToUsd).toFixed(4));
+          }
+        }
+
+        let usdtRate = oficialRate;
+        let solRate = 9000;
+        if (cryptoRes.status === 'fulfilled' && cryptoRes.value.ok) {
+          const data = await cryptoRes.value.json();
+          const usdtUsd = data?.tether?.usd;
+          const solUsd = data?.solana?.usd;
+          if (usdtUsd && usdtUsd > 0) usdtRate = Number((usdtUsd * oficialRate).toFixed(2));
+          if (solUsd && solUsd > 0) solRate = Number((solUsd * oficialRate).toFixed(2));
+        }
+
+        const p2pRates: Record<string, number> = {};
+        if (p2pUsdt) p2pRates.USDT = p2pUsdt;
+        if (p2pSolRes.status === 'fulfilled' && p2pSolRes.value) p2pRates.SOL = p2pSolRes.value;
+
+        const fetched: ExchangeRates = {
+          rates: {
+            BS: 1.0,
+            USD: oficialRate,
+            EUR: eurRate,
+            USDT: usdtRate,
+            SOL: solRate,
+            COP: copRate,
+          },
+          p2pRates,
+          updatedAt,
+          source: 'api',
+        };
+        setApiRates(fetched);
+        setRates((prev) => {
+          if (prev.source === 'manual') return prev;
+          return fetched;
+        });
+        try { localStorage.setItem('prosper_exchange_rates', JSON.stringify(fetched)); } catch {}
       } catch (err) {
         console.error('Failed to fetch exchange rates:', err);
       }
     }
     fetchRates();
+    const interval = setInterval(fetchRates, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // Set display currency (persist to localStorage)
@@ -173,19 +289,37 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, []);
 
+  // Set P2P mode (persist to localStorage)
+  const setP2pMode = useCallback((v: boolean) => {
+    setP2pModeState(v);
+    try {
+      localStorage.setItem(P2P_MODE_KEY, String(v));
+    } catch {}
+  }, []);
+
+  // Effective rates: override USDT/SOL with real P2P prices when p2pMode is active
+  const effectiveRates = useMemo(() => {
+    const r = { ...rates.rates };
+    if (p2pMode && rates.p2pRates) {
+      if (rates.p2pRates.USDT) r.USDT = rates.p2pRates.USDT;
+      if (rates.p2pRates.SOL) r.SOL = rates.p2pRates.SOL;
+    }
+    return r;
+  }, [rates, p2pMode]);
+
   // Convert from base currency to display currency
   const convert = useCallback(
-    (amount: number) => convertCurrency(amount, baseCurrency, displayCurrency, rates.rates),
-    [baseCurrency, displayCurrency, rates.rates]
+    (amount: number) => convertCurrency(amount, baseCurrency, displayCurrency, effectiveRates),
+    [baseCurrency, displayCurrency, effectiveRates]
   );
 
   // Convert + format
   const formatAmount = useCallback(
     (amount: number) => {
-      const converted = convertCurrency(amount, baseCurrency, displayCurrency, rates.rates);
+      const converted = convertCurrency(amount, baseCurrency, displayCurrency, effectiveRates);
       return formatCurrencyValue(converted, displayCurrency);
     },
-    [baseCurrency, displayCurrency, rates.rates]
+    [baseCurrency, displayCurrency, effectiveRates]
   );
 
   // Format in a specific currency (no conversion)
@@ -197,9 +331,60 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // Convert between any two currencies
   const convertBetween = useCallback(
     (amount: number, from: CurrencyCode, to: CurrencyCode) =>
-      convertCurrency(amount, from, to, rates.rates),
-    [rates.rates]
+      convertCurrency(amount, from, to, effectiveRates),
+    [effectiveRates]
   );
+
+  // ── Notification Triggers ────────────────────────────────────
+
+  // Dollar rate change notification
+  useEffect(() => {
+    if (!user?.uid || !rates?.rates?.USD || rates.source !== 'api') return;
+    const lastNotifiedRate = Number(localStorage.getItem('prosper_last_usd_rate') || 0);
+    if (lastNotifiedRate > 0) {
+      const diff = Math.abs(rates.rates.USD - lastNotifiedRate);
+      const pct = diff / lastNotifiedRate;
+      if (pct >= 0.005) {
+        notifyDollarChange(user.uid, lastNotifiedRate, rates.rates.USD).catch(console.error);
+      }
+    }
+    localStorage.setItem('prosper_last_usd_rate', String(rates.rates.USD));
+  }, [rates?.rates?.USD, rates?.source, user?.uid]);
+
+  // Daily balance notification (at 12:00 local time)
+  useEffect(() => {
+    if (!user?.uid) return;
+    const checkDailyBalance = () => {
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const lastSent = localStorage.getItem('prosper_daily_balance_sent');
+      if (lastSent === todayKey) return;
+      if (now.getHours() >= 12) {
+        getAccountsByOwnerId(user.uid)
+          .then((accounts) => {
+            const totalUSD = accounts.filter((a) => a.currency === 'USD').reduce((s, a) => s + a.balance, 0);
+            const totalBS = accounts.filter((a) => a.currency === 'BS').reduce((s, a) => s + a.balance, 0);
+            notifyDailyBalance(user.uid, totalUSD, totalBS).catch(console.error);
+            localStorage.setItem('prosper_daily_balance_sent', todayKey);
+          })
+          .catch(console.error);
+      }
+    };
+    checkDailyBalance();
+    const interval = setInterval(checkDailyBalance, 60000);
+    return () => clearInterval(interval);
+  }, [user?.uid]);
+
+  // App update notification
+  useEffect(() => {
+    if (!user?.uid) return;
+    const APP_VERSION = '0.9.0';
+    const lastVersion = localStorage.getItem('prosper_app_version');
+    if (lastVersion && lastVersion !== APP_VERSION) {
+      notifyAppUpdate(user.uid, APP_VERSION, 'Nueva versión disponible con mejoras y correcciones.').catch(console.error);
+    }
+    localStorage.setItem('prosper_app_version', APP_VERSION);
+  }, [user?.uid]);
 
   const value = useMemo(
     () => ({
@@ -214,8 +399,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       convertBetween,
       currencies: CURRENCY_LIST,
       currencyMap: CURRENCY_MAP,
+      p2pMode,
+      setP2pMode,
     }),
-    [baseCurrency, displayCurrency, rates, loading, setDisplayCurrency, convert, formatAmount, formatInCurrency, convertBetween]
+    [baseCurrency, displayCurrency, rates, loading, setDisplayCurrency, convert, formatAmount, formatInCurrency, convertBetween, p2pMode, setP2pMode]
   );
 
   return (

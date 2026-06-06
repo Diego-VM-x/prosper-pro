@@ -6,12 +6,48 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.0', date: '2026-06-06', notes: [
+      'Tasas P2P: ahora puedes elegir entre la tasa oficial del BCV o el precio real del mercado (Binance) al ver tus saldos en bolívares.',
+      'Notificaciones mejoradas: borra notificaciones una por una o limpia todas de una vez.',
+      'Historial de movimientos en Finanzas carga de 5 en 5 para mejor velocidad.',
+      'Diseño adaptado a celular: botones, tablas y menús se ven mejor en pantallas pequeñas.',
+      'Dashboard simplificado: se quitó la sección de Ahorro para enfocarse en ingresos, gastos y balance.',
+      'Stats del dashboard ahora muestran 3 indicadores en una sola fila.',
+    ], preRelease: false },
+    { version: '0.8.9 BETA', date: '2026-05-30', notes: [
+      'Dashboard funciona correctamente en móvil: CSS movido a archivo propio (dashboard.css), conflictos resueltos con globals.css.',
+      'Widget Progreso General completamente funcional: ahora contabiliza metas y planes, incluyendo planes compartidos.',
+      'Animaciones con fallback prefers-reduced-motion para evitar elementos invisibles en dispositivos con preferencia de movimiento reducido.',
+      'Corregido stats-grid que forzaba 4 columnas en 1280px (ahora colapsa a 2).',
+      'Corregido stroke-dashoffset del anillo de progreso que mostraba la barra pre-llenada.',
+      'Corregido modal-content que no respetaba max-width: 440px en 480px.',
+      'Eliminado * { box-sizing: border-box } global del dashboard CSS que pisaba estilos del sistema.',
+    ], preRelease: true },
+    { version: '0.8.7 BETA', date: '2026-05-29', notes: [
+      'Dashboard renovado con 3 nuevos widgets: Resumen del Mes (ingresos/gastos/balance), Últimos Movimientos y Acciones Rápidas.',
+      'Flechas inteligentes en secciones scrollables: aparecen al hover y auto-scrollan al mantener el ratón.',
+      'Estética mejorada: glassmorphism, sombras premium, transiciones suaves y hover effects en cards.',
+    ], preRelease: true },
+    { version: '0.8.6 BETA', date: '2026-05-29', notes: [
+      'Planes compartidos colaborativos: los planes donde te invitan aparecen automáticamente en Metas con badges "Compartido" e "Invitado".',
+      'Contribuciones por usuario: al añadir fondos a un plan compartido se registra quién aportó y se muestra en la tarjeta.',
+      'Barra Guardar Cambios global en Configuración, visible desde cualquier pestaña.',
+      'Privacidad de perfil persistente: el toggle público/privado se guarda correctamente al hacer clic en Guardar Cambios.',
+      'Exclusión automática del usuario actual al buscar personas para compartir planes.',
+      'Firestore rules actualizadas para permitir que usuarios invitados actualicen planes compartidos.',
+    ], preRelease: true },
+    { version: '0.8.5 BETA', date: '2026-05-29', notes: [
+      'Privacidad de perfil: nueva opción en Configuración para elegir si tu perfil es público o privado. Si es privado, solo te encuentran por email exacto.',
+      'Búsqueda por nombre al compartir planes: ahora puedes escribir el nombre de la persona y aparecerá una lista con los resultados.',
+      'Menú hamburguesa renovado: ahora cubre toda la pantalla y se desliza suavemente desde la izquierda.',
+      'Menú de usuario en móvil: al tocar tu avatar se abre una ventana desde abajo (bottom-sheet) con bordes redondeados.',
+      'Nombre visible en la barra superior del móvil junto al avatar.',
+      'Animaciones corregidas: todos los menús y ventanas ahora tienen transiciones consistentes y suaves.',
+      'Ventana de novedades adaptada a cualquier pantalla, anclada al fondo en móviles.',
+      'Etiquetas "En Desarrollo" agregadas en Idiomas, Sesiones Activas y contacto por Email.',
+    ], preRelease: true },
     { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'], preRelease: true },
     { version: '0.8.2', date: '2026-05-27', notes: ['Actualización a BETA 0.8.2 con mejoras de rendimiento y nuevas funcionalidades.', 'Nuevas herramientas de análisis financiero y reporte avanzado.'], preRelease: true },
-  ];
-
-  const upcoming = [
-    { version: '1.5.0', expected: '2024-10-10', notes: ['Integración con Firebase.', 'Modo oscuro personalizable.'] },
   ];
 
   return (
@@ -41,17 +77,6 @@ export default function NotasVersionPage() {
                 <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>{v.date}</span>
                 <ul style={{ marginTop: '8px', paddingLeft: '24px' }}>
                   {v.notes.map((note, j) => (<li key={j} style={{ color: 'var(--text-primary)' }}>{note}</li>))}
-                </ul>
-              </div>
-            ))}
-          </section>
-          <section className="notas-upcoming">
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '16px', borderBottom: '2px solid var(--color-prosper-green)', paddingBottom: '4px' }}>Próximas Actualizaciones</h2>
-            {upcoming.map((u, i) => (
-              <div key={i} className="notas-item" style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-prosper-green)' }}>
-                <strong style={{ color: 'var(--color-prosper-green)' }}>{u.version}</strong> – estimado <span style={{ color: 'var(--text-secondary)' }}>{u.expected}</span>
-                <ul style={{ marginTop: '8px', paddingLeft: '24px' }}>
-                  {u.notes.map((note, j) => (<li key={j} style={{ color: 'var(--text-primary)' }}>{note}</li>))}
                 </ul>
               </div>
             ))}

@@ -2,9 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { subscribeToGoals, createGoal, updateGoal, deleteGoal, getGoalsByOwnerId } from '@/lib/firestore/goals';
-import { subscribeToReminders, createReminder, updateReminder, deleteReminder, getRemindersByOwnerId } from '@/lib/firestore/reminders';
-import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId } from '@/lib/firestore/plans';
+import { subscribeToGoals, createGoal, updateGoal, deleteGoal } from '@/lib/firestore/goals';
+import { subscribeToReminders, createReminder, updateReminder, deleteReminder } from '@/lib/firestore/reminders';
+import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans, subscribeToSharedPlans } from '@/lib/firestore/plans';
 import type { Goal, Reminder, FinancialPlan } from '@/types';
 
 interface GoalsContextType {
@@ -18,7 +18,7 @@ interface GoalsContextType {
   addPlan: (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updatePlanFn: (id: string, updates: Partial<FinancialPlan>) => Promise<void>;
   deletePlanFn: (id: string) => Promise<void>;
-  addReminder: (reminder: Omit<Reminder, 'id'>) => Promise<string>;
+  addReminder: (reminder: Omit<Reminder, 'id' | 'createdAt'>) => Promise<string>;
   updateReminderFn: (id: string, updates: Partial<Reminder>) => Promise<void>;
   deleteReminderFn: (id: string) => Promise<void>;
   goalsToday: Goal[];
@@ -80,59 +80,64 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  // Cargar metas directamente
+  // Cargar metas en tiempo real
   useEffect(() => {
     if (loading) return;
     const uid = user?.uid;
     if (!uid) { setGoals([]); return; }
-    let cancelled = false;
-    async function loadGoals() {
-      try {
-        const data = await getGoalsByOwnerId(uid as string);
-        if (!cancelled) setGoals(data);
-      } catch (e) {
-        console.error('[GoalsContext] Error cargando metas:', e);
-      }
-    }
-    loadGoals();
-    return () => { cancelled = true; };
-  }, [user?.uid, loading, refreshKey]);
 
-  // Cargar planes financieros
+    const unsub = subscribeToGoals(uid, (data) => {
+      setGoals(data);
+    });
+
+    return () => unsub();
+  }, [user?.uid, loading]);
+
+  // Cargar planes financieros (propios + compartidos) en tiempo real
   useEffect(() => {
     if (loading) return;
     const uid = user?.uid;
     if (!uid) { setPlans([]); return; }
-    let cancelled = false;
-    async function loadPlans() {
-      try {
-        const data = await getPlansByOwnerId(uid as string);
-        if (!cancelled) setPlans(data);
-      } catch (e) {
-        console.error('[GoalsContext] Error cargando planes:', e);
-      }
-    }
-    loadPlans();
-    return () => { cancelled = true; };
-  }, [user?.uid, loading, refreshKey]);
 
-  // Cargar recordatorios directamente
+    const unsubOwn = subscribeToPlans(uid, (ownPlans) => {
+      const ownIds = new Set(ownPlans.map(p => p.id));
+      setPlans(prev => {
+        const shared = prev.filter(p => !ownIds.has(p.id));
+        const all = [...ownPlans, ...shared];
+        all.sort((a, b) => b.createdAt - a.createdAt);
+        return all;
+      });
+    });
+
+    const unsubShared = subscribeToSharedPlans(uid, (sharedPlans) => {
+      setPlans(prev => {
+        const own = prev.filter(p => p.ownerId === uid);
+        const ownIds = new Set(own.map(p => p.id));
+        const shared = sharedPlans.filter(p => !ownIds.has(p.id));
+        const all = [...own, ...shared];
+        all.sort((a, b) => b.createdAt - a.createdAt);
+        return all;
+      });
+    });
+
+    return () => {
+      unsubOwn();
+      unsubShared();
+    };
+  }, [user?.uid, loading]);
+
+  // Cargar recordatorios en tiempo real
   useEffect(() => {
     if (loading) return;
     const uid = user?.uid;
     if (!uid) { setReminders([]); return; }
-    let cancelled = false;
-    async function loadReminders() {
-      try {
-        const data = await getRemindersByOwnerId(uid as string);
-        if (!cancelled) setReminders(data);
-      } catch (e) {
-        console.error('[GoalsContext] Error cargando recordatorios:', e);
-      }
-    }
-    loadReminders();
-    return () => { cancelled = true; };
-  }, [user?.uid, loading, refreshKey]);
+
+    const unsub = subscribeToReminders(uid, (data) => {
+      setReminders(data);
+    });
+
+    return () => unsub();
+  }, [user?.uid, loading]);
 
   const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!goal.ownerId) throw new Error('Usuario no autenticado');
@@ -169,7 +174,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     refresh();
   }, [refresh]);
 
-  const addReminder = useCallback(async (reminder: Omit<Reminder, 'id'>) => {
+  const addReminder = useCallback(async (reminder: Omit<Reminder, 'id' | 'createdAt'>) => {
     const id = await createReminder(reminder);
     refresh();
     return id;
@@ -188,7 +193,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   // Filtrar metas y recordatorios que vencen hoy
   const todayISO = getTodayISO();
   const goalsToday = goals.filter((g) => {
-    const iso = parseDeadlineToISO(g.deadline);
+    const iso = g.deadline ? parseDeadlineToISO(g.deadline) : null;
     return iso === todayISO && g.status !== 'completed';
   });
   const remindersToday = reminders.filter((r) => r.date === todayISO && r.isActive);

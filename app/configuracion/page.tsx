@@ -26,6 +26,15 @@ export default function ConfiguracionPage() {
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [budgetAlerts, setBudgetAlerts] = useState(true);
+  const [showProfile, setShowProfile] = useState(true);
+  const [planInviteNotif, setPlanInviteNotif] = useState(true);
+  const [planContributionNotif, setPlanContributionNotif] = useState(true);
+  const [planReminderNotif, setPlanReminderNotif] = useState(true);
+  const [planRejectedNotif, setPlanRejectedNotif] = useState(true);
+  const [dollarChangeNotif, setDollarChangeNotif] = useState(true);
+  const [dailyBalanceNotif, setDailyBalanceNotif] = useState(true);
+  const [appUpdateNotif, setAppUpdateNotif] = useState(true);
+  const [calendarReminderNotif, setCalendarReminderNotif] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -70,6 +79,15 @@ export default function ConfiguracionPage() {
         setCurrency(((p as any).currency || 'USD') as CurrencyCode);
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
+        setShowProfile((p as any).showProfile !== false);
+        setPlanInviteNotif((p as any).notifications?.planInvite ?? true);
+        setPlanContributionNotif((p as any).notifications?.planContribution ?? true);
+        setPlanReminderNotif((p as any).notifications?.planReminder ?? true);
+        setPlanRejectedNotif((p as any).notifications?.planRejected ?? true);
+        setDollarChangeNotif((p as any).notifications?.dollarChange ?? true);
+        setDailyBalanceNotif((p as any).notifications?.dailyBalance ?? true);
+        setAppUpdateNotif((p as any).notifications?.appUpdate ?? true);
+        setCalendarReminderNotif((p as any).notifications?.calendarReminder ?? true);
       }
     });
 
@@ -88,9 +106,18 @@ export default function ConfiguracionPage() {
         language,
         currency,
         customRates: null,
+        showProfile,
         notifications: {
           priceAlerts,
           budgetAlerts,
+          planInvite: planInviteNotif,
+          planContribution: planContributionNotif,
+          planReminder: planReminderNotif,
+          planRejected: planRejectedNotif,
+          dollarChange: dollarChangeNotif,
+          dailyBalance: dailyBalanceNotif,
+          appUpdate: appUpdateNotif,
+          calendarReminder: calendarReminderNotif,
         },
       } as any);
       // Also update display currency in context
@@ -256,17 +283,6 @@ export default function ConfiguracionPage() {
                             placeholder="Describe tu perfil financiero..."
                           />
                         </div>
-                        <button
-                          className="btn-save"
-                          onClick={handleSaveProfile}
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <span className="btn-loading">
-                              <span className="spinner" /> Guardando...
-                            </span>
-                          ) : 'Guardar Cambios'}
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -308,7 +324,7 @@ export default function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Idioma de Interfaz <span style={{fontSize:'0.7rem',marginLeft:'4px',color:'var(--text-secondary)'}}>(estado: BETA)</span></label>
+                      <label className="pref-label">Idioma de Interfaz <span style={{fontSize:'0.65rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>En Desarrollo</span></label>
                       <div className="option-grid">
                         {[
                           { value: 'es', label: 'Español', flag: '🇪🇸' },
@@ -332,6 +348,8 @@ export default function ConfiguracionPage() {
                       <div className="option-grid currency-grid">
                         {CURRENCY_LIST.map(code => {
                           const cfg = CURRENCY_MAP[code];
+                          const rateToBs = rates.rates[code];
+                          const isBs = code === 'BS';
                           return (
                             <button
                               key={code}
@@ -340,9 +358,15 @@ export default function ConfiguracionPage() {
                                 setCurrency(code);
                                 setDisplayCurrency(code);
                               }}
+                              style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}
                             >
                               <span className="option-flag">{cfg.flag}</span>
                               <span className="option-text">{cfg.symbol} {cfg.name}</span>
+                              {!isBs && rateToBs && rateToBs > 0 && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--color-prosper-green)', fontWeight: 500, marginLeft: '28px' }}>
+                                  1 {cfg.code} ≈ {rateToBs.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })} Bs.
+                                </span>
+                              )}
                             </button>
                           );
                         })}
@@ -351,10 +375,40 @@ export default function ConfiguracionPage() {
 
                     {rates.source === 'api' && (
                       <div className="pref-section">
-                        <label className="pref-label">Tasa de Cambio Oficial (BCV)</label>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>✓ Tasa oficial BCV activa:</span>
-                          <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD} Bs.</strong>
+                        <label className="pref-label">Tasas de Cambio Activas</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 EUR = {rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 USDT = {rates.rates.USDT?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.rates.SOL?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>✓</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>1 COP = {rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</strong>
+                          </div>
+                          {rates.p2pRates?.USDT && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
+                              <strong style={{ color: 'var(--text-primary)' }}>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                            </div>
+                          )}
+                          {rates.p2pRates?.SOL && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
+                              <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -420,6 +474,24 @@ export default function ConfiguracionPage() {
                         {showUpdateModalPref ? '✅ Sí' : '❌ No'}
                       </button>
                     </div>
+
+                    <div className="pref-section" style={{ marginTop: '1rem' }}>
+                      <label className="pref-label">Privacidad del Perfil</label>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                        Controla si otros usuarios pueden encontrarte al buscar por nombre para compartir planes.
+                      </p>
+                      <button
+                        className={`theme-option ${showProfile ? 'active' : ''}`}
+                        onClick={() => setShowProfile(!showProfile)}
+                      >
+                        {showProfile ? '🌐 Perfil Público' : '🔒 Perfil Privado'}
+                      </button>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '6px' }}>
+                        {showProfile
+                          ? 'Otros usuarios pueden encontrarte por nombre o email al compartir planes.'
+                          : 'Solo te pueden encontrar por email exacto. Tu nombre no aparece en búsquedas.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -429,7 +501,7 @@ export default function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Centro de Notificaciones</h2>
+                      <h2 className="panel-title">Centro de Notificaciones <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
                       <p className="panel-desc">Controla qué alertas recibes</p>
                     </div>
 
@@ -451,16 +523,72 @@ export default function ConfiguracionPage() {
                       <ToggleRow
                         icon="📈"
                         label="Alertas de Precio"
-                        desc="Cambios en tiempo real"
+                        desc="En desarrollo"
                         checked={priceAlerts}
                         onChange={() => setPriceAlerts(!priceAlerts)}
                       />
                       <ToggleRow
                         icon="💰"
                         label="Alertas de Presupuesto"
-                        desc="Violaciones de límite"
+                        desc="En desarrollo"
                         checked={budgetAlerts}
                         onChange={() => setBudgetAlerts(!budgetAlerts)}
+                      />
+                      <ToggleRow
+                        icon="📋"
+                        label="Invitaciones a Planes"
+                        desc="Cuando te inviten a colaborar"
+                        checked={planInviteNotif}
+                        onChange={() => setPlanInviteNotif(!planInviteNotif)}
+                      />
+                      <ToggleRow
+                        icon="💚"
+                        label="Aportes a Planes"
+                        desc="Cuando alguien aporte a tu plan"
+                        checked={planContributionNotif}
+                        onChange={() => setPlanContributionNotif(!planContributionNotif)}
+                      />
+                      <ToggleRow
+                        icon="⏰"
+                        label="Recordatorios de Planes"
+                        desc="Fechas límite próximas"
+                        checked={planReminderNotif}
+                        onChange={() => setPlanReminderNotif(!planReminderNotif)}
+                      />
+                      <ToggleRow
+                        icon="❌"
+                        label="Planes Rechazados"
+                        desc="Cuando rechacen o eliminen tu plan"
+                        checked={planRejectedNotif}
+                        onChange={() => setPlanRejectedNotif(!planRejectedNotif)}
+                      />
+                      <ToggleRow
+                        icon="💲"
+                        label="Cambio del Dólar"
+                        desc="Variación de la tasa BCV"
+                        checked={dollarChangeNotif}
+                        onChange={() => setDollarChangeNotif(!dollarChangeNotif)}
+                      />
+                      <ToggleRow
+                        icon="📊"
+                        label="Balance Diario"
+                        desc="Resumen diario a las 12pm UTC"
+                        checked={dailyBalanceNotif}
+                        onChange={() => setDailyBalanceNotif(!dailyBalanceNotif)}
+                      />
+                      <ToggleRow
+                        icon="🚀"
+                        label="Actualizaciones"
+                        desc="Nuevas versiones de la app"
+                        checked={appUpdateNotif}
+                        onChange={() => setAppUpdateNotif(!appUpdateNotif)}
+                      />
+                      <ToggleRow
+                        icon="📅"
+                        label="Recordatorios de Calendario"
+                        desc="En desarrollo"
+                        checked={calendarReminderNotif}
+                        onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
                       />
                     </div>
                   </div>
@@ -472,7 +600,7 @@ export default function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Sesiones Activas</h2>
+                      <h2 className="panel-title">Sesiones Activas <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
                       <p className="panel-desc">Dispositivos conectados a tu cuenta</p>
                     </div>
 
@@ -585,6 +713,24 @@ export default function ConfiguracionPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Floating Save Bar */}
+          <div className="settings-save-bar">
+            <div className="settings-save-bar-inner">
+              <span className="settings-save-hint">Los cambios no se guardan automáticamente</span>
+              <button
+                className="btn-save"
+                onClick={handleSaveProfile}
+                disabled={saving}
+              >
+                {saving ? (
+                  <span className="btn-loading">
+                    <span className="spinner" /> Guardando...
+                  </span>
+                ) : 'Guardar Cambios'}
+              </button>
             </div>
           </div>
 
@@ -1097,6 +1243,23 @@ export default function ConfiguracionPage() {
               flex-direction: column;
               gap: 12px;
             }
+            .toggle-section-divider {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 8px 0;
+              margin: 4px 0;
+            }
+            .toggle-section-divider span {
+              font-size: 0.75rem;
+              font-weight: 700;
+              color: var(--text-tertiary);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              padding: 4px 12px;
+              border-radius: 999px;
+              background: rgba(61,204,142,0.08);
+            }
             .toggle-row {
               display: flex;
               align-items: center;
@@ -1382,6 +1545,52 @@ export default function ConfiguracionPage() {
             .btn-danger-confirm:hover:not(:disabled) { background: #DC2626; }
             .btn-danger-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
 
+            /* Floating Save Bar */
+.settings-save-bar {
+              position: sticky;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              background: var(--bg-page);
+              border-top: 1px solid var(--border-default);
+              border-radius: 12px 12px 0 0;
+              padding: 12px 16px;
+              box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+              z-index: 100;
+              max-width: 100%;
+              box-sizing: border-box;
+            }
+            .settings-save-bar-inner {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+              max-width: 100%;
+              overflow: hidden;
+            }
+            .settings-save-hint {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+              white-space: nowrap;
+            }
+            .settings-save-bar .btn-save {
+              flex-shrink: 0;
+              min-width: auto;
+            }
+            .settings-save-bar-inner {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+            }
+            .settings-save-hint {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+            }
+            .settings-save-bar .btn-save {
+              flex-shrink: 0;
+            }
+
             /* Footer */
             .settings-footer {
               margin-top: 32px;
@@ -1459,6 +1668,10 @@ export default function ConfiguracionPage() {
               .settings-footer { font-size: 0.5625rem; margin-top: 24px; }
               .mobile-tab { padding: 7px 10px; font-size: 0.6875rem; }
               .mobile-tab-icon { font-size: 0.75rem; }
+              .settings-save-bar { padding: 10px; }
+              .settings-save-bar-inner { flex-direction: column; align-items: stretch; gap: 8px; }
+              .settings-save-hint { text-align: center; }
+              .btn-save { width: 100%; text-align: center; }
             }
 
             /* ===== RESPONSIVE: Very Small (360px) ===== */

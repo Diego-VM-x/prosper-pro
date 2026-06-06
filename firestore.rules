@@ -89,11 +89,12 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
-    // Plans (Financial Plans): solo el propietario
+    // Plans (Financial Plans): propietario o usuarios compartidos
     match /plans/{planId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && (resource.data.ownerId == request.auth.uid || request.auth.uid in resource.data.sharedWith);
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
     // Expense Requests (solicitudes entre usuarios)

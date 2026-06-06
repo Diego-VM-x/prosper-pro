@@ -98,7 +98,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         {/* Navegación Principal */}
         <nav className="sidebar-nav">
           {!isCollapsed && <p className="sidebar-label">Menú</p>}
-          <Link href="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? 'Dashboard' : undefined}>
+          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? 'Dashboard' : undefined}>
             <IconDashboard /> {!isCollapsed && 'Dashboard'}
           </Link>
           <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? 'Planes' : undefined}>

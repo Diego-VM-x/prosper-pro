@@ -5,9 +5,12 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useToast } from '@/app/components/Toast';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomReminderType, getUserPreferences } from '@/lib/firestore/users';
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
+
+import { useReminderScheduler } from '@/lib/hooks/useReminderScheduler';
 import type { Reminder, FinancialPlan, Transaction } from '@/types';
 
 const DEFAULT_TYPES: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
@@ -88,11 +91,12 @@ function planToEvents(plan: FinancialPlan): CalendarEvent[] {
 export default function CalendarioPage() {
   const { plans, reminders, userId, addReminder, deleteReminderFn } = useGoals();
   const { user } = useAuth();
+  const { success, error, warning } = useToast();
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [newReminder, setNewReminder] = useState({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' as Reminder['type'] });
+  const [newReminder, setNewReminder] = useState({ title: '', description: '', reminderTime: '09:00', type: 'other' as Reminder['type'] });
   const [allTypes, setAllTypes] = useState<Record<string, string>>({ ...DEFAULT_TYPES });
   const [customTypes, setCustomTypes] = useState<string[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -212,15 +216,18 @@ export default function CalendarioPage() {
       ownerId: userId || 'local',
       title: newReminder.title,
       description: newReminder.description,
-      startTime: newReminder.startTime,
-      endTime: newReminder.endTime,
+      reminderTime: newReminder.reminderTime,
       date: selectedDate,
       type: newReminder.type,
       isActive: true,
     });
     setShowModal(false);
-    setNewReminder({ title: '', description: '', startTime: '09:00', endTime: '10:00', type: 'other' });
+    setNewReminder({ title: '', description: '', reminderTime: '09:00', type: 'other' });
+    success('Recordatorio creado');
   };
+
+  // Programar notificaciones de recordatorios
+  useReminderScheduler(reminders, userId);
 
   const selectedEvents = selectedDate ? getEventsForDate(selectedDate) : [];
 
@@ -356,7 +363,7 @@ export default function CalendarioPage() {
                               </button>
                             </div>
                             <p className="cal-event-desc">
-                              {rem.startTime} - {rem.endTime} {rem.description && `• ${rem.description}`}
+                              {rem.reminderTime} {rem.description && `• ${rem.description}`}
                             </p>
                           </div>
                         </div>
@@ -396,12 +403,8 @@ export default function CalendarioPage() {
                 <input className="cal-form-input" type="text" placeholder="Detalles del recordatorio" value={newReminder.description} onChange={(e) => setNewReminder({ ...newReminder, description: e.target.value })} />
                 <div className="cal-form-row">
                   <div className="cal-form-col">
-                    <label className="cal-form-label">Hora inicio</label>
-                    <input className="cal-form-input" type="time" value={newReminder.startTime} onChange={(e) => setNewReminder({ ...newReminder, startTime: e.target.value })} />
-                  </div>
-                  <div className="cal-form-col">
-                    <label className="cal-form-label">Hora fin</label>
-                    <input className="cal-form-input" type="time" value={newReminder.endTime} onChange={(e) => setNewReminder({ ...newReminder, endTime: e.target.value })} />
+                    <label className="cal-form-label">Hora de notificación</label>
+                    <input className="cal-form-input" type="time" value={newReminder.reminderTime} onChange={(e) => setNewReminder({ ...newReminder, reminderTime: e.target.value })} />
                   </div>
                 </div>
                 <label className="cal-form-label">Tipo</label>

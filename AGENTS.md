@@ -20,7 +20,8 @@ Actúa como un Desarrollador Senior enfocado en ahorro de recursos (Context-Spar
   - Cambios en la estructura de archivos
   - Notas técnicas relevantes
   - Historial de instrucciones con fecha actual
-- **PUSH A GIT:** Después de actualizar `CONTEXT.md`, pregunta al usuario si desea hacer push al repositorio remoto.
+- **ACTUALIZACIÓN DE VERSIONES:** Cada vez que el usuario solicite que los nuevos cambios se hagan en una versión, modifica el archivo `version.md` documentando la nueva versión y sus cambios.
+- **PUSH A GIT:** Después de actualizar `CONTEXT.md` o `version.md`, pregunta siempre al usuario a qué rama desea enviar los cambios (por ejemplo, `master` o `test-deploy`). Si el usuario usa palabras clave como "test" o "testear", asume que se refiere a la rama `test-deploy`.
 
 ### 4. OPTIMIZACIÓN PARA PC DE BAJOS RECURSOS (i3/4GB RAM)
 - Prioriza soluciones que no requieran instalar nuevas librerías pesadas.

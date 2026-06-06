@@ -6,12 +6,14 @@
  * notificaciones y perfil de usuario Prosper-Pro.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
-import { subscribeToNotifications, markNotificationRead, getUnreadCount, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { subscribeToNotifications, markNotificationRead, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { useClickOutside } from '@/lib/hooks/useClickOutside';
+import { useEscape } from '@/lib/hooks/useKeyPress';
 import {
   IconSearch,
   IconBell,
@@ -45,7 +47,7 @@ interface TopbarProps {
  * Incluye la barra de búsqueda global, botones de acción rápida,
  * toggle de modo oscuro/claro y el perfil del usuario.
  */
-export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
+export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
   const { theme, setTheme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
@@ -59,7 +61,23 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
   const [notifPermissioned, setNotifPermissioned] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
+  // Refs para click-outside
+  const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+
+  // Cerrar dropdowns al hacer click fuera
+  useClickOutside(notifRef, () => setShowNotifications(false), showNotifications);
+  useClickOutside(userMenuRef, () => setShowUserMenu(false), showUserMenu);
+  useClickOutside(searchRef, () => setShowSearch(false), showSearch);
+  useEscape(() => {
+    setShowNotifications(false);
+    setShowUserMenu(false);
+    setShowSearch(false);
+    setShowMobileMenu(false);
+  });
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -124,14 +142,40 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleMarkRead = async (id: string) => {
+  const handleMarkRead = useCallback(async (id: string) => {
     await markNotificationRead(id);
-  };
+  }, []);
+
+  const notificationsRef = useRef(notifications);
+  notificationsRef.current = notifications;
+
+  const handleDeleteNotif = useCallback(async (id: string) => {
+    const prev = notificationsRef.current;
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await deleteNotification(id);
+    } catch (e) {
+      console.error('Error al eliminar notificación:', e);
+      setNotifications(prev);
+    }
+  }, []);
+
+  const handleClearAll = useCallback(async () => {
+    if (!user?.uid) return;
+    const prev = notificationsRef.current;
+    setNotifications([]);
+    try {
+      await deleteAllNotifications(user.uid);
+    } catch (e) {
+      console.error('Error al limpiar notificaciones:', e);
+      setNotifications(prev);
+    }
+  }, [user?.uid]);
 
   // Rutas disponibles para búsqueda
   const searchRoutes = [
     { name: 'Inicio', route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
-    { name: 'Dashboard', route: '/dashboard', icon: '📊', keywords: 'dashboard inicio principal' },
+    { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
     { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
     { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
@@ -139,29 +183,36 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     { name: 'Ayuda', route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
   ];
 
-  // Filtrar resultados según query
-  const searchResults = searchQuery.trim()
-    ? searchRoutes.filter(r =>
-        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.keywords.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  // Memoizar resultados de búsqueda para evitar re-filtrado en cada render
+  const searchResults = useMemo(() =>
+    searchQuery.trim()
+      ? searchRoutes.filter(r =>
+          r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          r.keywords.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [],
+    [searchQuery]
+  );
 
-  // Filtrar metas según query
-  const goalResults = searchQuery.trim()
-    ? goals.filter(g =>
-        g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        g.category.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  const goalResults = useMemo(() =>
+    searchQuery.trim()
+      ? goals.filter(g =>
+          g.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          g.category.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : [],
+    [searchQuery, goals]
+  );
 
-  // Filtrar transacciones según query
-  const txResults = searchQuery.trim()
-    ? transactions.filter(t =>
-        t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.category.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 10)
-    : [];
+  const txResults = useMemo(() =>
+    searchQuery.trim()
+      ? transactions.filter(t =>
+          t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          t.category.toLowerCase().includes(searchQuery.toLowerCase())
+        ).slice(0, 10)
+      : [],
+    [searchQuery, transactions]
+  );
 
   const hasResults = searchResults.length > 0 || goalResults.length > 0 || txResults.length > 0;
   const noData = goals.length === 0 && transactions.length === 0;
@@ -170,7 +221,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
     <header className="topbar" id="main-topbar">
       {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
-        <Link href="/dashboard" className="topbar-logo-link">
+        <Link href="/" className="topbar-logo-link">
           <img
             src="/logo-icon.png"
             alt="Prosper Logo"
@@ -209,7 +260,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       </div>
 
       {/* Búsqueda con resultados de metas */}
-      <div className="topbar-search-wrapper">
+      <div className="topbar-search-wrapper" ref={searchRef}>
         <div className="topbar-search" onClick={() => document.getElementById('global-search')?.focus()}>
           <IconSearch className="topbar-search-icon" />
           <input
@@ -357,12 +408,12 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           </button>
 
           {showNotifications && (
-            <div className="notifications-dropdown">
+            <div className="notifications-dropdown" ref={notifRef}>
               <div className="notifications-dropdown-header">
                 <span>Notificaciones</span>
                 <div className="notif-actions">
                   {notifications.length > 0 && (
-                    <button className="notif-clear-btn" onClick={() => deleteAllNotifications(user?.uid || '')}>
+                    <button className="notif-clear-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleClearAll(); }}>
                       Limpiar todo
                     </button>
                   )}
@@ -377,7 +428,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                     <p className="notif-title">{notif.title}</p>
                     <p className="notif-message">{notif.message}</p>
                   </div>
-                  <button className="notif-delete-btn" onClick={() => deleteNotification(notif.id)} title="Eliminar">
+                  <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title="Eliminar">
                     ✕
                   </button>
                 </div>
@@ -393,7 +444,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile">
+        <div className="topbar-user" id="user-profile" ref={userMenuRef}>
           {user ? (
             <>
               <div
@@ -449,7 +500,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               {unreadCount > 0 && <span className="topbar-notif-dot" />}
             </button>
             {showNotifications && (
-              <div className="notifications-dropdown mobile-notif-dropdown">
+              <div className="notifications-dropdown mobile-notif-dropdown" ref={notifRef}>
                 <div className="notifications-dropdown-header">
                   <span>Notificaciones</span>
                   {unreadCount > 0 && (
@@ -465,7 +516,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
                       <p className="notif-title">{notif.title}</p>
                       <p className="notif-message">{notif.message}</p>
                     </div>
-                    <button className="notif-delete-btn" onClick={() => deleteNotification(notif.id)} title="Eliminar">
+                    <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title="Eliminar">
                       ✕
                     </button>
                   </div>
@@ -479,11 +530,14 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           </div>
 
           {/* Avatar con dropdown */}
-          <div
-            className="topbar-avatar"
-            onClick={() => setShowUserMenu(!showUserMenu)}
-          >
-            {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+          <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
+            <div className="topbar-avatar">
+              {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+            </div>
+            <div className="mobile-user-text">
+              <span className="mobile-user-name">{user?.displayName || 'Usuario'}</span>
+              <span className="mobile-user-email">{user?.email}</span>
+            </div>
           </div>
           {showUserMenu && (
             <div className="user-dropdown mobile-user-dropdown">
@@ -552,7 +606,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
               </button>
             </div>
             <nav className="mobile-menu-nav">
-              <Link href="/dashboard" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconDashboard /> Dashboard
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
@@ -573,7 +627,7 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
             </nav>
 
              <div className="mobile-menu-footer">
-               <Link href="/" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
+               <Link href="/inicio" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                  Ir al Inicio
                </Link>
@@ -613,28 +667,28 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
       {/* Estilos inline */}
       <style>{`
         .mobile-menu-btn { display: none; }
-        .desktop-actions { display: flex; align-items: center; gap: 8px; }
+        .desktop-actions { display: flex; align-items: center; gap: 12px; z-index: 100; }
         .mobile-menu-overlay {
           position: fixed;
           inset: 0;
           background: rgba(0,0,0,0.6);
           backdrop-filter: blur(4px);
-          z-index: 1000;
+          z-index: 1002;
           display: flex;
           justify-content: flex-start;
+          animation: fadeIn 0.25s ease;
         }
         .mobile-menu {
-          width: 100vw;
-          height: 100vh;
-          max-height: none;
-          overflow-y: auto;
+          width: 400px;
+          max-width: 85vw;
+          height: 100%;
+          min-height: 100dvh;
           background: #ffffff;
           display: flex;
           flex-direction: column;
-          box-shadow: none;
-          position: fixed;
-          top: 0;
-          left: 0;
+          box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
+          animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          overflow-y: auto;
         }
         [data-theme="dark"] .mobile-menu {
           background: #0a1628;
@@ -787,6 +841,11 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           gap: 10px;
           flex-shrink: 0;
         }
+        /* Base: ocultar elementos móviles en desktop */
+        .mobile-menu-btn { display: none; }
+        .mobile-user-actions { display: none; align-items: center; gap: 6px; margin-left: auto; padding-right: 4px; position: relative; z-index: 1001; }
+        /* Base: mostrar acciones desktop */
+        .desktop-actions { display: flex; align-items: center; gap: 12px; position: relative; z-index: 100; }
         .topbar-logo-link {
           display: flex;
           align-items: center;
@@ -938,8 +997,9 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           color: var(--text-secondary);
         }
         @media (max-width: 1024px) {
-          .mobile-menu-btn { display: flex !important; }
-          .desktop-actions { display: none; }
+          .mobile-menu-btn { display: flex; }
+          .mobile-user-actions { display: flex; }
+          .desktop-actions { display: none !important; }
           .topbar-collapse-btn { display: none; }
           .topbar-title-dynamic { max-width: 120px; font-size: 0.8125rem; }
         }
@@ -1072,12 +1132,13 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           top: calc(100% + 12px);
           right: 0;
           width: 260px;
+          max-height: 80vh;
+          overflow-y: auto;
           background: #ffffff;
           border: 1px solid var(--border-default);
           border-radius: var(--radius-xl);
           box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
           z-index: 10000;
-          overflow: hidden;
           animation: fadeInUp 0.2s ease;
         }
         [data-theme="dark"] .user-dropdown {
@@ -1169,18 +1230,30 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         .topbar-login-btn svg { width: 16px; height: 16px; }
 
         /* Mobile user actions (notif + avatar) */
-        .mobile-user-actions {
-          display: none;
-          align-items: center;
-          gap: 4px;
-          margin-left: auto;
-          padding-right: 8px;
+        .mobile-user-name {
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          white-space: nowrap;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .mobile-user-text {
+          display: flex;
+          flex-direction: column;
+          line-height: 1.15;
+        }
+        .mobile-user-email {
+          font-size: 0.625rem;
+          color: var(--text-secondary);
+          white-space: nowrap;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .mobile-user-dropdown {
-          right: 0 !important;
-          left: auto !important;
-          bottom: 0 !important;
-          top: auto !important;
+          z-index: 10002 !important;
         }
         .mobile-notif-wrapper {
           position: relative;
@@ -1193,14 +1266,40 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
         }
         /* Responsive */
         @media (max-width: 768px) {
-          .topbar-search { max-width: 180px; }
+          .topbar-search { max-width: 140px; }
           .topbar-search-shortcut { display: none; }
-          .topbar-user-info { display: none; }
-          .notifications-dropdown { width: 280px; right: -8px; }
-          .user-dropdown { width: 220px; }
+          .notifications-dropdown { 
+            position: fixed;
+            top: 64px;
+            left: 16px;
+            right: 16px;
+            width: auto;
+            max-height: 80vh;
+            overflow-y: auto;
+          }
+          .user-dropdown:not(.mobile-user-dropdown) { 
+            position: fixed;
+            top: 64px;
+            left: 16px;
+            right: 16px;
+            width: auto;
+            max-height: 80vh;
+            overflow-y: auto;
+          }
+          .user-dropdown.mobile-user-dropdown {
+            position: fixed !important;
+            bottom: 0 !important;
+            top: auto !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            border-radius: 20px 20px 0 0 !important;
+            max-height: 80vh !important;
+            overflow-y: auto !important;
+            animation: fadeInUp 0.3s ease;
+          }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
-          .mobile-user-actions { display: flex; }
         }
 
         /* Mobile notifications */
@@ -1224,10 +1323,19 @@ export function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: Topba
           .topbar-search input { padding: 6px 10px 6px 30px; font-size: 0.8125rem; }
           .topbar-icon-btn { width: 32px; height: 32px; }
           .topbar-avatar { width: 28px; height: 28px; font-size: 0.6875rem; }
+          .mobile-user-name { font-size: 0.7rem; max-width: 70px; }
+          .mobile-user-email { font-size: 0.5625rem; max-width: 70px; }
+          .mobile-user-text { display: none; }
+          .mobile-user-actions { gap: 2px; padding-right: 2px; }
           .notifications-dropdown { width: 260px; }
-          .mobile-menu { width: 100%; max-width: 100%; }
+          .mobile-menu { width: 100%; max-width: 100%; min-height: 100dvh; }
+          .user-dropdown.mobile-user-dropdown {
+            max-height: 70vh !important;
+          }
         }
       `}</style>
     </header>
   );
-}
+});
+
+

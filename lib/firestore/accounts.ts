@@ -129,55 +129,6 @@ export async function getTotalBalance(ownerId: string): Promise<number> {
   return accounts.reduce((sum, acc) => sum + acc.balance, 0);
 }
 
-// Crear cuentas por defecto para un usuario
-// Solo crea las que no existen (evita duplicados)
-export async function createDefaultAccounts(ownerId: string) {
-  const existingAccounts = await getAccountsByOwnerId(ownerId);
-  const existingTypes = new Set(existingAccounts.map(a => a.type));
-
-  const defaultAccounts: Omit<FinancialAccount, 'id'>[] = [
-    {
-      ownerId,
-      name: 'Cuenta Corriente',
-      type: 'checking',
-      balance: 0,
-      currency: 'BS',
-      icon: '🏦',
-      color: '#3B82F6',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    },
-    {
-      ownerId,
-      name: 'Cuenta de Ahorro',
-      type: 'savings',
-      balance: 0,
-      currency: 'USD',
-      icon: '💰',
-      color: '#3DCC8E',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    },
-    {
-      ownerId,
-      name: 'Efectivo',
-      type: 'cash',
-      balance: 0,
-      currency: 'BS',
-      icon: '💵',
-      color: '#F59E0B',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    },
-  ];
-
-  for (const acc of defaultAccounts) {
-    if (!existingTypes.has(acc.type)) {
-      await addDoc(collection(db, COLLECTION), acc);
-    }
-  }
-}
-
 // ============================================================
 // GESTIÓN CONTABLE AVANZADA
 // ============================================================
