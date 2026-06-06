@@ -525,16 +525,14 @@ export default function ConfiguracionPage() {
                         label="Alertas de Precio"
                         desc="En desarrollo"
                         checked={priceAlerts}
-                        onChange={() => {}}
-                        disabled
+                        onChange={() => setPriceAlerts(!priceAlerts)}
                       />
                       <ToggleRow
                         icon="💰"
                         label="Alertas de Presupuesto"
                         desc="En desarrollo"
                         checked={budgetAlerts}
-                        onChange={() => {}}
-                        disabled
+                        onChange={() => setBudgetAlerts(!budgetAlerts)}
                       />
                       <ToggleRow
                         icon="📋"

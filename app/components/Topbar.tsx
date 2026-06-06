@@ -410,7 +410,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 <span>Notificaciones</span>
                 <div className="notif-actions">
                   {notifications.length > 0 && (
-                    <button className="notif-clear-btn" onClick={handleClearAll}>
+                    <button className="notif-clear-btn" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); handleClearAll(); }}>
                       Limpiar todo
                     </button>
                   )}
@@ -425,7 +425,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <p className="notif-title">{notif.title}</p>
                     <p className="notif-message">{notif.message}</p>
                   </div>
-                  <button className="notif-delete-btn" onClick={() => handleDeleteNotif(notif.id)} title="Eliminar">
+                  <button className="notif-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); handleDeleteNotif(notif.id); }} title="Eliminar">
                     ✕
                   </button>
                 </div>
@@ -513,7 +513,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       <p className="notif-title">{notif.title}</p>
                       <p className="notif-message">{notif.message}</p>
                     </div>
-                    <button className="notif-delete-btn" onClick={() => handleDeleteNotif(notif.id)} title="Eliminar">
+                    <button className="notif-delete-btn" onMouseDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); handleDeleteNotif(notif.id); }} title="Eliminar">
                       ✕
                     </button>
                   </div>

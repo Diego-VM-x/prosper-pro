@@ -157,6 +157,8 @@ export interface Notification {
 
 export interface NotificationPreferences {
   pushEnabled: boolean;
+  priceAlerts: boolean;
+  budgetAlerts: boolean;
   planInvite: boolean;
   planContribution: boolean;
   planReminder: boolean;
