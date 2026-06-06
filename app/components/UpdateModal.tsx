@@ -11,14 +11,11 @@ interface UpdateModalProps {
 export function UpdateModal({
   version = "0.9.0",
   notes = [
-    { emoji: "🔔", text: "Sistema de notificaciones mejorado: ahora puedes eliminar notificaciones individuales o limpiar todas de una vez." },
-    { emoji: "📊", text: "Dashboard más organizado: los widgets principales ahora muestran su contenido en una sola línea para que veas todo de un vistazo." },
-    { emoji: "💱", text: "Tasas de cambio P2P: ahora puedes elegir entre la tasa oficial del BCV o el precio real del mercado P2P (Binance) para calcular tus saldos en bolívares." },
-    { emoji: "📝", text: "Historial de movimientos: en lugar de ver todos tus movimientos de golpe, ahora se muestran de 5 en 5 con un botón de 'Ver más'." },
-    { emoji: "🧹", text: "Se quitó la sección de Ahorro del Dashboard y las gráficas para mantener solo la información esencial de ingresos y gastos." },
-    { emoji: "🎯", text: "Mejoras en los planes financieros: el widget de Progreso General ahora cuenta correctamente todas tus metas y planes, incluyendo los compartidos." },
-    { emoji: "📱", text: "La app ahora se ve mucho mejor en celular: arreglamos varios problemas de diseño en pantallas pequeñas." },
-    { emoji: "🔒", text: "Correcciones de seguridad y estabilidad general para que todo funcione más fluido." },
+    { emoji: "💱", text: "Nueva opción de tasas P2P: elige entre la tasa oficial del BCV o el precio real del mercado (Binance) para ver tus saldos en bolívares." },
+    { emoji: "🔔", text: "Notificaciones mejoradas: ahora puedes borrarlas una a una o limpiar todas de golpe." },
+    { emoji: "📝", text: "En Finanzas, el historial de movimientos ahora carga de 5 en 5 para que la página no se sienta lenta." },
+    { emoji: "📱", text: "Mejoras visuales en celular: botones, tablas y menús ahora se adaptan mejor a pantallas pequeñas." },
+    { emoji: "🧹", text: "Dashboard limpiado: quitamos la sección de Ahorro para dejar solo lo esencial: ingresos, gastos y balance." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first

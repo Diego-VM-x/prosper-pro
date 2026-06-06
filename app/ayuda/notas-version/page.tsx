@@ -6,6 +6,14 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.0', date: '2026-06-06', notes: [
+      'Tasas P2P: ahora puedes elegir entre la tasa oficial del BCV o el precio real del mercado (Binance) al ver tus saldos en bolívares.',
+      'Notificaciones mejoradas: borra notificaciones una por una o limpia todas de una vez.',
+      'Historial de movimientos en Finanzas carga de 5 en 5 para mejor velocidad.',
+      'Diseño adaptado a celular: botones, tablas y menús se ven mejor en pantallas pequeñas.',
+      'Dashboard simplificado: se quitó la sección de Ahorro para enfocarse en ingresos, gastos y balance.',
+      'Stats del dashboard ahora muestran 3 indicadores en una sola fila.',
+    ], preRelease: false },
     { version: '0.8.9 BETA', date: '2026-05-30', notes: [
       'Dashboard funciona correctamente en móvil: CSS movido a archivo propio (dashboard.css), conflictos resueltos con globals.css.',
       'Widget Progreso General completamente funcional: ahora contabiliza metas y planes, incluyendo planes compartidos.',
