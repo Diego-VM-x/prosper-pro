@@ -9,14 +9,13 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.8.9 BETA",
+  version = "0.9.1",
   notes = [
-    { emoji: "📱", text: "Dashboard ahora funciona correctamente en móvil: CSS movido a archivo propio, conflictos resueltos con globals.css." },
-    { emoji: "🎯", text: "Widget Progreso General completamente funcional: contabiliza metas y planes, incluyendo planes compartidos." },
-    { emoji: "🔄", text: "Animaciones con fallback prefers-reduced-motion para que ningún elemento quede invisible." },
-    { emoji: "📐", text: "Stats-grid colapsa a 2 columnas en tablets (1280px) donde antes se forzaban 4." },
-    { emoji: "🛠️", text: "Corregido stroke-dashoffset en anillo de progreso que mostraba barra pre-llenada." },
-    { emoji: "💻", text: "Código más limpio: 27KB de CSS inline extraído a dashboard.css." },
+    { emoji: "🚀", text: "Rendimiento mejorado: carga más rápida con división de código (code-splitting) y optimización de imágenes." },
+    { emoji: "💱", text: "Nuevas criptos P2P: ahora soportamos Bitcoin (BTC) y USD Coin (USDC) con precios reales de Binance." },
+    { emoji: "🎨", text: "Landing page renovada: diseño más moderno con testimonios, FAQ interactivo y tutoriales paso a paso." },
+    { emoji: "⚡", text: "Animaciones optimizadas: transiciones más fluidas y menos consumo de CPU en dispositivos de gama baja." },
+    { emoji: "🛡️", text: "Redirección inteligente: la página /inicio ahora redirige automáticamente a la home unificada." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first

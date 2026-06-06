@@ -5,7 +5,6 @@
  * Based on: https://github.com/jp72924/vepay-api
  */
 
-import { createWorker } from 'tesseract.js';
 import { parseMultipleOcrTexts } from '@/lib/vepay-core';
 import type {
   VEPayReceipt,

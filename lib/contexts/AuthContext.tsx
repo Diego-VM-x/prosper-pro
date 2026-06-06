@@ -6,7 +6,7 @@ import { onAuthStateChanged, signOut, updateCurrentUser, type User } from 'fireb
 import { auth } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
-import { seedUserData } from '@/lib/seed';
+
 import type { CurrencyCode } from '@/types';
 
 
@@ -136,13 +136,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email: u.email,
             photoURL: u.photoURL,
             createdAt: Date.now(),
-            isSeeded: false,
             currency: 'USD' as CurrencyCode,
             showProfile: true,
           });
-          try { await seedUserData(u.uid); } catch {}
         }
-        
+
         // Send welcome notification for every login (new and existing users)
         try {
           const { notifyWelcome } = await import('@/lib/firestore/notifications');
@@ -213,11 +211,9 @@ function clearStoredTokens() {
           email: tokens.email || null,
           photoURL: tokens.photoUrl || null,
           createdAt: Date.now(),
-          isSeeded: false,
           currency: 'USD' as CurrencyCode,
           showProfile: true,
         });
-        try { await seedUserData(tokens.localId); } catch {}
       }
     } catch {}
   }
@@ -270,7 +266,6 @@ function clearStoredTokens() {
         email: email,
         photoURL: null,
         createdAt: Date.now(),
-        isSeeded: false,
         currency: currency || 'USD',
         showProfile: true,
       });
@@ -318,8 +313,6 @@ function clearStoredTokens() {
     try {
       const { wipeAllUserData } = await import('@/lib/firestore/accounts');
       const result = await wipeAllUserData(user.uid);
-      const { createDefaultAccounts } = await import('@/lib/firestore/accounts');
-      await createDefaultAccounts(user.uid);
       return { success: true, wiped: result.wiped, errors: result.errors };
     } catch (e: any) {
       return { success: false, error: e?.message || 'Error desconocido al borrar datos.' };

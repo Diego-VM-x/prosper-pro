@@ -6,6 +6,22 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.1', date: '2026-06-06', notes: [
+      'Optimización de rendimiento: carga de código dividida (dynamic imports) para reducir el bundle inicial.',
+      'Imágenes optimizadas por Next.js (formatos WebP/AVIF automáticos).',
+      'Nuevas criptomonedas P2P: Bitcoin (BTC) y USD Coin (USDC) con precios reales de Binance.',
+      'Landing page completamente renovada con testimonios, FAQ interactivo, barra de confianza y tutoriales.',
+      'Redirección inteligente: /inicio redirige a / para evitar duplicación de landing pages.',
+      'Animaciones CSS optimizadas: menor consumo de CPU en dispositivos de gama baja.',
+    ], preRelease: false },
+    { version: '0.9.0', date: '2026-06-06', notes: [
+      'Tasas P2P: ahora puedes elegir entre la tasa oficial del BCV o el precio real del mercado (Binance) al ver tus saldos en bolívares.',
+      'Notificaciones mejoradas: borra notificaciones una por una o limpia todas de una vez.',
+      'Historial de movimientos en Finanzas carga de 5 en 5 para mejor velocidad.',
+      'Diseño adaptado a celular: botones, tablas y menús se ven mejor en pantallas pequeñas.',
+      'Dashboard simplificado: se quitó la sección de Ahorro para enfocarse en ingresos, gastos y balance.',
+      'Stats del dashboard ahora muestran 3 indicadores en una sola fila.',
+    ], preRelease: false },
     { version: '0.8.9 BETA', date: '2026-05-30', notes: [
       'Dashboard funciona correctamente en móvil: CSS movido a archivo propio (dashboard.css), conflictos resueltos con globals.css.',
       'Widget Progreso General completamente funcional: ahora contabiliza metas y planes, incluyendo planes compartidos.',
@@ -39,6 +55,7 @@ export default function NotasVersionPage() {
       'Etiquetas "En Desarrollo" agregadas en Idiomas, Sesiones Activas y contacto por Email.',
     ], preRelease: true },
     { version: '0.8.0', date: '2026-05-26', notes: ['Actualización a BETA 0.8.0 con mejoras de rendimiento.', 'Nuevas herramientas de análisis financiero.'], preRelease: true },
+    { version: '0.8.2', date: '2026-05-27', notes: ['Actualización a BETA 0.8.2 con mejoras de rendimiento y nuevas funcionalidades.', 'Nuevas herramientas de análisis financiero y reporte avanzado.'], preRelease: true },
   ];
 
   return (
@@ -59,7 +76,7 @@ export default function NotasVersionPage() {
             {versions.map((v, i) => (
               <div key={i} className="notas-item" style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--color-prosper-green)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                  <img src="/logo-icon.png" alt="Prosper" width={24} height={24} style={{ marginRight: '12px' }} />
+                  <img src="/logo-icon.png" alt="Prosper" width={24} height={24} loading="lazy" style={{ marginRight: '12px' }} />
                   <div>
                     <strong style={{ color: 'var(--color-prosper-green)' }}>{v.version}</strong>
                     {v.preRelease && <span style={{ background: 'var(--color-prosper-green)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', marginLeft: '8px' }}>PRE-release</span>}

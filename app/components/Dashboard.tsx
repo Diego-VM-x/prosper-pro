@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useRef, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -26,6 +26,7 @@ import { getPlanSummary } from '@/lib/firestore/plans';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
 import { createTransaction } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
+import { getAccountRates, convertCurrency } from '@/lib/currency';
 
 const FinancialStatusChart = lazy(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
@@ -57,12 +58,12 @@ function getDaysUntil(dateStr: string): number {
 
 
 
-export function Dashboard() {
+export const Dashboard = memo(function Dashboard() {
   const router = useRouter();
   const { query } = useSearch();
   const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
-  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode } = useCurrency();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthlyRecurring, setMonthlyRecurring] = useState(0);
@@ -98,12 +99,12 @@ export function Dashboard() {
 
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
-      return sum + convertBetween(acc.balance, acc.currency || 'USD', displayCurrency);
+      return sum + convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode));
     }, 0);
-  }, [accounts, displayCurrency, convertBetween]);
+  }, [accounts, displayCurrency, rates, p2pMode]);
 
   const monthlySavings = useMemo(() => {
-    const savings = transactions.filter((t) => t.type === 'saving');
+    const savings = transactions.filter((t) => t.type === 'saving' && t.category !== 'Transferencia');
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     return savings
@@ -303,7 +304,7 @@ export function Dashboard() {
   const strokeDashoffset = circumference * (1 - progressPct / 100);
 
   const recentTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => (b.date || 0) - (a.date || 0)).slice(0, 5);
+    return [...transactions].sort((a, b) => (b.date || 0) - (a.date || 0)).slice(0, 4);
   }, [transactions]);
 
   const startOfMonth = useMemo(() => {
@@ -313,7 +314,7 @@ export function Dashboard() {
 
   const monthlyIncome = useMemo(() => {
     return transactions
-      .filter(t => t.type === 'income' && t.date >= startOfMonth)
+      .filter(t => t.type === 'income' && t.category !== 'Transferencia' && t.date >= startOfMonth)
       .reduce((sum, t) => {
         const account = accounts.find(a => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
@@ -323,7 +324,7 @@ export function Dashboard() {
 
   const monthlyExpenses = useMemo(() => {
     return transactions
-      .filter(t => t.type === 'expense' && t.date >= startOfMonth)
+      .filter(t => t.type === 'expense' && t.category !== 'Transferencia' && t.date >= startOfMonth)
       .reduce((sum, t) => {
         const account = accounts.find(a => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
@@ -436,14 +437,7 @@ export function Dashboard() {
 
         {/* Stats Pills - Grid visible */}
         <div className="stats-grid dash-stagger">
-          <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/finanzas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(59,130,246,0.15)' }}>📈</div>
-            <div className="stat-pill-info">
-              <span className="stat-pill-label">Ahorro Mensual</span>
-              <span className="stat-pill-value">{formatInCurrency(monthlySavings, displayCurrency)}</span>
-            </div>
-          </div>
-          <div className="stat-pill dash-item" style={{animationDelay: '0.11s'}} onClick={() => router.push('/metas')}>
+          <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">Ahorro en Planes</span>
@@ -655,7 +649,7 @@ export function Dashboard() {
                       </span>
                       {showBalances && acc.currency !== displayCurrency && (
                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
-                          ≈ {formatInCurrency(convertBetween(acc.balance, acc.currency, displayCurrency), displayCurrency)}
+                          ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
                         </span>
                       )}
                     </div>
@@ -945,6 +939,6 @@ export function Dashboard() {
 
     </DashboardLayout>
   );
-}
+});
 
 

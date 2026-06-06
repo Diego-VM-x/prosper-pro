@@ -23,7 +23,6 @@ interface ChartDataPoint {
   label: string;
   income: number;
   expense: number;
-  saving: number;
 }
 
 const TIME_RANGES: { key: TimeRange; label: string }[] = [
@@ -33,7 +32,7 @@ const TIME_RANGES: { key: TimeRange; label: string }[] = [
   { key: 'year', label: 'Año' },
 ];
 
-function CustomTooltip({ active, payload, label, formatter }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string }) {
+function CustomTooltip({ active, payload, label, formatter, showAmounts }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string; showAmounts?: boolean }) {
   const fmt = formatter || ((v: number) => `$${v}`);
   if (active && payload && payload.length) {
     return (
@@ -45,11 +44,13 @@ function CustomTooltip({ active, payload, label, formatter }: { active?: boolean
         boxShadow: 'var(--shadow-md)',
       }}>
         <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</p>
-        {payload.map((p) => (
+        {showAmounts ? payload.map((p) => (
           <p key={p.dataKey} style={{ margin: '2px 0', fontSize: '12px', color: p.color }}>
-            {p.dataKey === 'income' ? '📥 Ingresos' : p.dataKey === 'expense' ? '📤 Gastos' : '💰 Ahorro'}: {fmt(p.value)}
+            {p.dataKey === 'income' ? '📥 Ingresos' : '📤 Gastos'}: {fmt(p.value)}
           </p>
-        ))}
+        )) : (
+          <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-tertiary)' }}>Montos ocultos</p>
+        )}
       </div>
     );
   }
@@ -154,7 +155,8 @@ export function FinancialStatusChart() {
   }, []);
 
   const chartData = useMemo((): ChartDataPoint[] => {
-    if (transactions.length === 0) return [];
+    const nonTransferTxs = transactions.filter(t => t.category !== 'Transferencia');
+    if (nonTransferTxs.length === 0) return [];
 
     const now = new Date();
     const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -207,7 +209,7 @@ export function FinancialStatusChart() {
     }
 
     return periods.map((period) => {
-      const periodTxs = transactions.filter((t) => {
+      const periodTxs = nonTransferTxs.filter((t) => {
         const txDate = new Date(t.date);
         return txDate >= period.start && txDate <= period.end;
       });
@@ -222,28 +224,26 @@ export function FinancialStatusChart() {
         label: period.label,
         income: periodTxs.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0),
         expense: periodTxs.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0),
-        saving: periodTxs.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0),
       };
     });
   }, [transactions, selectedRange, accounts, displayCurrency, convertBetween]);
 
   const totals = useMemo(() => {
+    const nonTransferTxs = transactions.filter(t => t.category !== 'Transferencia');
     const convertTx = (t: Transaction) => {
       const account = accounts.find((a) => a.id === t.accountId);
       const txCurrency = account?.currency || 'USD';
       return convertBetween(t.amount, txCurrency, displayCurrency);
     };
-    const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0);
-    const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0);
-    const saving = transactions.filter(t => t.type === 'saving').reduce((s, t) => s + convertTx(t), 0);
-    return { income, expense, saving, balance: income - expense - saving };
+    const income = nonTransferTxs.filter(t => t.type === 'income').reduce((s, t) => s + convertTx(t), 0);
+    const expense = nonTransferTxs.filter(t => t.type === 'expense').reduce((s, t) => s + convertTx(t), 0);
+    return { income, expense, balance: income - expense };
   }, [transactions, accounts, displayCurrency, convertBetween]);
 
   const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altTotals = useMemo(() => ({
     income: convertBetween(totals.income, displayCurrency, altCurrency),
     expense: convertBetween(totals.expense, displayCurrency, altCurrency),
-    saving: convertBetween(totals.saving, displayCurrency, altCurrency),
     balance: convertBetween(totals.balance, displayCurrency, altCurrency),
   }), [totals, displayCurrency, altCurrency, convertBetween]);
 
@@ -268,7 +268,7 @@ export function FinancialStatusChart() {
             Flujo Financiero
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Ingresos vs Gastos vs Ahorro
+            Ingresos vs Gastos
           </p>
         </div>
 
@@ -343,7 +343,6 @@ export function FinancialStatusChart() {
         }}>
           <SummaryCard label="Ingresos" value={totals.income} color="var(--color-prosper-green)" showAmounts={showAmounts} altValue={altTotals.income} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
           <SummaryCard label="Gastos" value={totals.expense} color="var(--color-error)" showAmounts={showAmounts} altValue={altTotals.expense} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-          <SummaryCard label="Ahorro" value={totals.saving} color="var(--color-pine-500)" showAmounts={showAmounts} altValue={altTotals.saving} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
           <SummaryCard label="Balance" value={totals.balance} color={totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} altValue={altTotals.balance} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} isBalance />
         </div>
 
@@ -374,7 +373,7 @@ export function FinancialStatusChart() {
       {/* Chart */}
       {loading ? (
         <SkeletonChart />
-      ) : chartData.length === 0 ? (
+      ) : chartData.length === 0 || chartData.every(d => d.income === 0 && d.expense === 0) ? (
         <div style={{
           height: `${chartHeight}px`,
           display: 'flex',
@@ -402,18 +401,13 @@ export function FinancialStatusChart() {
               tickFormatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : `${value}`}
               width={40}
             />
-            <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} />} />
+            <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} showAmounts={showAmounts} />} />
             <Legend
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
-              formatter={(value) => value === 'income' ? '📥 Ingresos' : value === 'expense' ? '📤 Gastos' : '💰 Ahorro'}
+              formatter={(value) => value === 'income' ? '📥 Ingresos' : '📤 Gastos'}
             />
-            {showAmounts && (
-              <>
-                <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="saving" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-              </>
-            )}
+            <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       )}

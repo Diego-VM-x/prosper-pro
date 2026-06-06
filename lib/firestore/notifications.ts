@@ -72,13 +72,23 @@ export async function getUnreadCount(ownerId: string): Promise<number> {
 }
 
 export async function deleteNotification(notificationId: string) {
-  await deleteDoc(doc(db, COLLECTION, notificationId));
+  try {
+    await deleteDoc(doc(db, COLLECTION, notificationId));
+  } catch (err) {
+    console.error('deleteNotification error:', err);
+    throw err;
+  }
 }
 
 export async function deleteAllNotifications(ownerId: string) {
-  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  const snapshot = await getDocs(q);
-  await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
+  try {
+    const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+    const snapshot = await getDocs(q);
+    await Promise.all(snapshot.docs.map((d) => deleteDoc(d.ref)));
+  } catch (err) {
+    console.error('deleteAllNotifications error:', err);
+    throw err;
+  }
 }
 
 export async function markAllNotificationsRead(ownerId: string) {

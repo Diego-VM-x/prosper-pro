@@ -12,8 +12,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail, user } = useAuth();
+  const { loginWithGoogle, loginWithEmail, user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/');
+    }
+  }, [user, authLoading, router]);
 
   const sendWelcomeNotification = (userName: string) => {
     const title = '🎉 ¡Bienvenido/a a Prosper!';
@@ -171,7 +177,7 @@ export default function LoginPage() {
               ¿No tienes una cuenta? <Link href="/register">Regístrate gratis</Link>
             </div>
             <div className="auth-footer">
-              <Link href="/" className="home-btn">Ir al inicio</Link>
+              <Link href="/inicio" className="home-btn">Ir al inicio</Link>
             </div>
           </div>
         </div>

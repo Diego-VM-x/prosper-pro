@@ -46,11 +46,9 @@
 .page-content h2 { animation-delay: 0.15s; }
 .page-content h3 { animation-delay: 0.2s; }
 
-/* --- Párrafos y Textos Descriptivos --- */
-.page-content p,
+/* --- Párrafos y Textos Descriptivos (optimizado: sin animación genérica para reducir repintado) --- */
 .page-content .text-secondary,
-.page-content .text-sm,
-.page-content label {
+.page-content .text-sm {
   animation: softFadeIn 0.6s ease both;
   animation-delay: 0.15s;
 }
@@ -131,13 +129,11 @@
   filter: brightness(0.95);
 }
 
-/* --- Inputs, Selects, Textareas --- */
+/* --- Inputs, Selects, Textareas (optimizado: sin animación de entrada, solo transiciones de interacción) --- */
 .page-content input,
 .page-content select,
 .page-content textarea,
 .page-content .custom-select-trigger {
-  animation: softFadeIn 0.5s ease both;
-  animation-delay: 0.15s;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -147,23 +143,11 @@
   box-shadow: 0 0 0 3px rgba(61, 204, 142, 0.15);
 }
 
-/* --- Tablas --- */
+/* --- Tablas (optimizado: sin animación por fila para evitar recálculos masivos en tablas grandes) --- */
 .page-content table {
   animation: softFadeIn 0.6s ease both;
   animation-delay: 0.15s;
 }
-
-.page-content tbody tr {
-  animation: softSlideUp 0.5s var(--anim-ease-out-expo) both;
-}
-.page-content tbody tr:nth-child(1) { animation-delay: 0.08s; }
-.page-content tbody tr:nth-child(2) { animation-delay: 0.12s; }
-.page-content tbody tr:nth-child(3) { animation-delay: 0.16s; }
-.page-content tbody tr:nth-child(4) { animation-delay: 0.2s; }
-.page-content tbody tr:nth-child(5) { animation-delay: 0.24s; }
-.page-content tbody tr:nth-child(6) { animation-delay: 0.28s; }
-.page-content tbody tr:nth-child(7) { animation-delay: 0.32s; }
-.page-content tbody tr:nth-child(8) { animation-delay: 0.36s; }
 
 /* --- Gráficos y Charts --- */
 .page-content .chart-card,
@@ -401,13 +385,12 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-page-entrance,
   .page-content h1, .page-content h2, .page-content h3,
-  .page-content p, .page-content .text-secondary, .page-content .text-sm, .page-content label,
+  .page-content .text-secondary, .page-content .text-sm,
   .page-content .stat-card, .page-content .stat-pill,
   .page-content .card, .page-content .content-card, .page-content .plan-card,
   .page-content .account-card, .page-content .course-card, .page-content .feature-card,
   .page-content .btn, .page-content button[class*="btn"],
-  .page-content input, .page-content select, .page-content textarea,
-  .page-content table, .page-content tbody tr,
+  .page-content table,
   .page-content .chart-card, .page-content .chart-container,
   .page-content .badge, .page-content .tag, .page-content .filter-btn, .page-content .filter-chip,
   .page-content section, .page-content .section-header,

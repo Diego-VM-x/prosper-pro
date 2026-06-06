@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import type { CurrencyCode } from '@/types';
@@ -14,7 +15,14 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
-  const { loginWithGoogle, registerWithEmail } = useAuth();
+  const { loginWithGoogle, registerWithEmail, user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/');
+    }
+  }, [user, authLoading, router]);
 
   const handleGoogleLogin = async () => {
     try {

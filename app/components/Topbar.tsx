@@ -146,19 +146,36 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     await markNotificationRead(id);
   }, []);
 
+  const notificationsRef = useRef(notifications);
+  notificationsRef.current = notifications;
+
   const handleDeleteNotif = useCallback(async (id: string) => {
-    await deleteNotification(id);
+    const prev = notificationsRef.current;
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await deleteNotification(id);
+    } catch (e) {
+      console.error('Error al eliminar notificación:', e);
+      setNotifications(prev);
+    }
   }, []);
 
   const handleClearAll = useCallback(async () => {
     if (!user?.uid) return;
-    await deleteAllNotifications(user.uid);
+    const prev = notificationsRef.current;
+    setNotifications([]);
+    try {
+      await deleteAllNotifications(user.uid);
+    } catch (e) {
+      console.error('Error al limpiar notificaciones:', e);
+      setNotifications(prev);
+    }
   }, [user?.uid]);
 
   // Rutas disponibles para búsqueda
   const searchRoutes = [
     { name: 'Inicio', route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
-    { name: 'Dashboard', route: '/dashboard', icon: '📊', keywords: 'dashboard inicio principal' },
+    { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
     { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
     { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
     { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
@@ -204,7 +221,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     <header className="topbar" id="main-topbar">
       {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
-        <Link href="/dashboard" className="topbar-logo-link">
+        <Link href="/" className="topbar-logo-link">
           <img
             src="/logo-icon.png"
             alt="Prosper Logo"
@@ -396,7 +413,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 <span>Notificaciones</span>
                 <div className="notif-actions">
                   {notifications.length > 0 && (
-                    <button className="notif-clear-btn" onClick={handleClearAll}>
+                    <button className="notif-clear-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleClearAll(); }}>
                       Limpiar todo
                     </button>
                   )}
@@ -411,7 +428,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <p className="notif-title">{notif.title}</p>
                     <p className="notif-message">{notif.message}</p>
                   </div>
-                  <button className="notif-delete-btn" onClick={() => handleDeleteNotif(notif.id)} title="Eliminar">
+                  <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title="Eliminar">
                     ✕
                   </button>
                 </div>
@@ -499,7 +516,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       <p className="notif-title">{notif.title}</p>
                       <p className="notif-message">{notif.message}</p>
                     </div>
-                    <button className="notif-delete-btn" onClick={() => handleDeleteNotif(notif.id)} title="Eliminar">
+                    <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title="Eliminar">
                       ✕
                     </button>
                   </div>
@@ -589,7 +606,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               </button>
             </div>
             <nav className="mobile-menu-nav">
-              <Link href="/dashboard" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+              <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconDashboard /> Dashboard
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
@@ -610,7 +627,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             </nav>
 
              <div className="mobile-menu-footer">
-               <Link href="/" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
+               <Link href="/inicio" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                  Ir al Inicio
                </Link>

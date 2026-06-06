@@ -1,12 +1,14 @@
-import { UpdateModal } from '@/app/components/UpdateModal';
-import ProtectedRoute from '@/app/components/ProtectedRoute';
-import { Dashboard } from '@/app/components/Dashboard';
+'use client';
 
-export default function DashboardPage() {
-  return (
-    <ProtectedRoute>
-      <UpdateModal />
-      <Dashboard />
-    </ProtectedRoute>
-  );
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function DashboardRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/');
+  }, [router]);
+
+  return null;
 }
