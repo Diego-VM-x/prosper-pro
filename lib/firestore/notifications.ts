@@ -115,14 +115,23 @@ export function requestNotificationPermission(): Promise<boolean> {
  * @param body  - Cuerpo del mensaje
  * @param channel - Canal Android (general | plans | finance | calendar | updates)
  */
+/** Detecta Safari en iOS que no soporta new Notification() */
+function isSafariIOS(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) && /WebKit/.test(ua) && !/(CriOS|FxiOS|OPiOS|mercury)/.test(ua);
+}
+
 export function sendBrowserNotification(
   title: string,
   body: string,
   channel: string = 'general'
 ) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
   try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    // Safari iOS no soporta new Notification() en absoluto
+    if (isSafariIOS()) return;
     new Notification(title, {
       body,
       icon: '/logo-icon.png',
@@ -131,19 +140,7 @@ export function sendBrowserNotification(
       silent: false,
     });
   } catch {
-    // Safari iOS y algunos Android no soportan new Notification()
-    // Intentar via ServiceWorker si está disponible
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.ready.then((reg) => {
-        reg.showNotification(title, {
-          body,
-          icon: '/logo-icon.png',
-          badge: '/logo-icon.png',
-          tag: `prosper-${channel}-${Date.now()}`,
-          silent: false,
-        }).catch(() => {});
-      }).catch(() => {});
-    }
+    // Ignorar silenciosamente cualquier error de notificaciones
   }
 }
 
