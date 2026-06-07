@@ -931,157 +931,115 @@ const FinanzasPage = memo(function FinanzasPage() {
             </div>
           </div>
 
-          {/* Tasas de cambio */}
-          <div className="summary-section" style={{ marginBottom: '16px' }}>
-            <div className="summary-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🇺🇸 USD → 🇻🇪 BS
-                </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.source === 'api' ? (
-                    <span>1 USD = {rates.rates.USD.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando tasa...</span>
-                  )}
-                </span>
+          {/* Tasas de cambio - Tablas compactas */}
+          <div className="rates-tables-wrapper">
+            {/* Tabla Monedas Fiduciarias */}
+            <div className="rates-table-container">
+              <div className="rates-table-header">
+                <span className="rates-table-title">💱 Monedas</span>
+                <span className="rates-table-subtitle">Tasas oficiales</span>
               </div>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🇪🇺 EUR → 🇻🇪 BS
-                </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.source === 'api' && rates.rates.EUR ? (
-                    <span>1 EUR = {rates.rates.EUR.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
-                  )}
-                </span>
-              </div>
-              <div className="summary-card" style={{ padding: '12px 16px' }}>
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🇨🇴 COP → 🇻🇪 BS
-                </span>
-                <span className="summary-value" style={{ fontSize: '1.125rem', color: 'var(--color-prosper-green)' }}>
-                  {rates.source === 'api' && rates.rates.COP ? (
-                    <span>1 COP = {rates.rates.COP.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</span>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
-                  )}
-                </span>
-              </div>
-              <div
-                className="summary-card"
-                onClick={() => setP2pMode(!p2pMode)}
-                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDT ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
-                title="Clic para alternar entre tasa Oficial y P2P"
-              >
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  💎 USDT → 🇻🇪 BS
-                  {p2pMode && rates.p2pRates?.USDT && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                  {rates.rates.USDT && (
-                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.USDT ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.USDT ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 USDT = {rates.rates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
-                    </span>
-                  )}
-                  {rates.p2pRates?.USDT && (
-                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
-                    </span>
-                  )}
-                  {!rates.rates.USDT && !rates.p2pRates?.USDT && (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Cargando...</span>
-                  )}
+              <table className="rates-table">
+                <thead>
+                  <tr>
+                    <th>Moneda</th>
+                    <th>Tasa (Bs.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <span className="rates-currency-flag">🇺🇸</span>
+                      <span className="rates-currency-code">USD</span>
+                    </td>
+                    <td className="rates-value">
+                      {rates.source === 'api' && rates.rates.USD
+                        ? rates.rates.USD.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        : '—'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="rates-currency-flag">🇪🇺</span>
+                      <span className="rates-currency-code">EUR</span>
+                    </td>
+                    <td className="rates-value">
+                      {rates.source === 'api' && rates.rates.EUR
+                        ? rates.rates.EUR.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        : '—'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span className="rates-currency-flag">🇨🇴</span>
+                      <span className="rates-currency-code">COP</span>
+                    </td>
+                    <td className="rates-value">
+                      {rates.source === 'api' && rates.rates.COP
+                        ? rates.rates.COP.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+                        : '—'}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Tabla Cryptos */}
+            <div className="rates-table-container">
+              <div className="rates-table-header">
+                <div className="rates-table-header-left">
+                  <span className="rates-table-title">💎 Cryptos</span>
+                  <span className="rates-table-subtitle">Oficial vs P2P</span>
                 </div>
+                <button
+                  className="rates-p2p-toggle"
+                  onClick={() => setP2pMode(!p2pMode)}
+                  title={p2pMode ? 'Mostrar tasas oficiales' : 'Mostrar tasas P2P'}
+                >
+                  <span className={`rates-p2p-dot ${p2pMode ? 'active' : ''}`} />
+                  <span className="rates-p2p-label">P2P</span>
+                </button>
               </div>
-              <div
-                className="summary-card"
-                onClick={() => setP2pMode(!p2pMode)}
-                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.SOL ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
-                title="Clic para alternar entre tasa Oficial y P2P"
-              >
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  ☀️ SOL → 🇻🇪 BS
-                  {p2pMode && rates.p2pRates?.SOL && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                  {rates.rates.SOL && (
-                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.SOL ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.SOL ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 SOL = {rates.rates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
-                    </span>
-                  )}
-                  {rates.p2pRates?.SOL && (
-                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
-                    </span>
-                  )}
-                  {!rates.rates.SOL && !rates.p2pRates?.SOL && (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
-                  )}
-                </div>
-              </div>
-              <div
-                className="summary-card"
-                onClick={() => setP2pMode(!p2pMode)}
-                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.BTC ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
-                title="Clic para alternar entre tasa Oficial y P2P"
-              >
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🟠 BTC → 🇻🇪 BS
-                  {p2pMode && rates.p2pRates?.BTC && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                  {rates.rates.BTC && (
-                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.BTC ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.BTC ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 BTC = {rates.rates.BTC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
-                    </span>
-                  )}
-                  {rates.p2pRates?.BTC && (
-                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 BTC = {rates.p2pRates.BTC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
-                    </span>
-                  )}
-                  {!rates.rates.BTC && !rates.p2pRates?.BTC && (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
-                  )}
-                </div>
-              </div>
-              <div
-                className="summary-card"
-                onClick={() => setP2pMode(!p2pMode)}
-                style={{ padding: '12px 16px', border: p2pMode && rates.p2pRates?.USDC ? '2px solid #4edea3' : '1px solid var(--border-default)', cursor: 'pointer', transition: 'border-color 0.2s' }}
-                title="Clic para alternar entre tasa Oficial y P2P"
-              >
-                <span className="summary-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  💠 USDC → 🇻🇪 BS
-                  {p2pMode && rates.p2pRates?.USDC && <span style={{ fontSize: '9px', background: '#4edea3', color: '#003824', padding: '1px 5px', borderRadius: '4px', fontWeight: 700, marginLeft: '4px' }}>ACTIVO</span>}
-                </span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                  {rates.rates.USDC && (
-                    <span className="summary-value" style={{ fontSize: p2pMode && rates.p2pRates?.USDC ? '0.875rem' : '1.125rem', color: 'var(--color-prosper-green)', opacity: p2pMode && rates.p2pRates?.USDC ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 USDC = {rates.rates.USDC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: 'rgba(61,204,142,0.15)', color: 'var(--color-prosper-green)', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>Oficial</span>
-                    </span>
-                  )}
-                  {rates.p2pRates?.USDC && (
-                    <span className="summary-value" style={{ fontSize: p2pMode ? '1.125rem' : '0.875rem', color: '#4edea3', fontWeight: p2pMode ? 700 : 400, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>1 USDC = {rates.p2pRates.USDC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} Bs.</span>
-                      <span style={{ fontSize: '9px', background: p2pMode ? '#4edea3' : 'rgba(78,222,163,0.2)', color: p2pMode ? '#003824' : '#4edea3', padding: '2px 5px', borderRadius: '4px', fontWeight: 600 }}>P2P</span>
-                    </span>
-                  )}
-                  {!rates.rates.USDC && !rates.p2pRates?.USDC && (
-                    <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>No disponible</span>
-                  )}
-                </div>
-              </div>
+              <table className="rates-table">
+                <thead>
+                  <tr>
+                    <th>Crypto</th>
+                    <th>Oficial</th>
+                    <th>P2P</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { code: 'USDT', flag: '💎' },
+                    { code: 'SOL', flag: '☀️' },
+                    { code: 'BTC', flag: '🟠' },
+                    { code: 'USDC', flag: '💠' },
+                  ].map(({ code, flag }) => {
+                    const official = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                    const p2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
+                    const isActive = p2pMode && p2p;
+                    return (
+                      <tr key={code} className={isActive ? 'rates-row-p2p-active' : ''}>
+                        <td>
+                          <span className="rates-currency-flag">{flag}</span>
+                          <span className="rates-currency-code">{code}</span>
+                          {isActive && <span className="rates-p2p-badge">P2P</span>}
+                        </td>
+                        <td className={`rates-value ${isActive ? 'rates-dimmed' : ''}`}>
+                          {official
+                            ? official.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : '—'}
+                        </td>
+                        <td className={`rates-value ${isActive ? 'rates-highlight' : ''}`}>
+                          {p2p
+                            ? p2p.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+                            : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -2100,7 +2058,32 @@ const FinanzasPage = memo(function FinanzasPage() {
           .account-balance { font-size: 1.375rem; font-weight: 800; }
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
 
-          /* Summary */
+          /* Rates Tables */
+          .rates-tables-wrapper { display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin-bottom: 20px; }
+          .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
+          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-input); border-bottom: 1px solid var(--border-default); }
+          .rates-table-header-left { display: flex; align-items: center; gap: 10px; }
+          .rates-table-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+          .rates-table-subtitle { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
+          .rates-table { width: 100%; border-collapse: collapse; }
+          .rates-table th { text-align: left; padding: 8px 16px; font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; background: var(--bg-card); border-bottom: 1px solid var(--border-default); }
+          .rates-table td { padding: 10px 16px; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); }
+          .rates-table tr:last-child td { border-bottom: none; }
+          .rates-table tr:hover td { background: var(--bg-input); }
+          .rates-currency-flag { font-size: 1rem; margin-right: 8px; }
+          .rates-currency-code { font-weight: 700; font-size: 0.8125rem; }
+          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; }
+          .rates-dimmed { opacity: 0.45; color: var(--text-secondary); }
+          .rates-highlight { color: #4edea3; font-weight: 700; }
+          .rates-row-p2p-active { background: rgba(78, 222, 163, 0.04); }
+          .rates-row-p2p-active .rates-currency-code { color: #4edea3; }
+          .rates-p2p-badge { font-size: 0.5625rem; font-weight: 700; background: #4edea3; color: #003824; padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
+          .rates-p2p-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+          .rates-p2p-toggle:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+          .rates-p2p-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); transition: background 0.2s; }
+          .rates-p2p-dot.active { background: #4edea3; box-shadow: 0 0 6px rgba(78, 222, 163, 0.5); }
+
+          /* Summary (legacy) */
           .summary-section { position: relative; margin-bottom: 24px; }
           .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
           .summary-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
@@ -2381,6 +2364,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           @media (max-width: 1024px) {
             .accounts-grid { grid-template-columns: repeat(2, 1fr); }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .rates-tables-wrapper { grid-template-columns: 1fr 1fr; }
             .page-header-actions { flex-wrap: wrap; }
             .page-header-actions .btn { flex: 1; min-width: 140px; }
           }
@@ -2407,6 +2391,10 @@ const FinanzasPage = memo(function FinanzasPage() {
             .accounting-btn-desc { font-size: 0.5625rem; }
             .accounting-account-card { padding: 8px; }
             .accounting-mini-btn { padding: 4px 4px; font-size: 0.5625rem; }
+            .rates-tables-wrapper { grid-template-columns: 1fr; }
+            .rates-table td { padding: 8px 12px; font-size: 0.75rem; }
+            .rates-table th { padding: 6px 12px; }
+            .rates-value { font-size: 0.75rem; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-value { font-size: 1.25rem; }
