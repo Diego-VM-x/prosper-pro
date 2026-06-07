@@ -807,8 +807,8 @@ export const Dashboard = memo(function Dashboard() {
                       </div>
                     </div>
                   ))}
-                  {/* Cuentas sin grupo */}
-                  {groupedAccounts.ungrouped.length > 0 && (
+                  {/* Cuentas sin grupo - solo mostrar si hay cuentas realmente sin grupo */}
+                  {groupedAccounts.ungrouped.length > 0 && accountGroups.length === 0 && (
                     <div className="account-group-items">
                       {groupedAccounts.ungrouped.slice(0, 3).map((acc) => {
                         const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
