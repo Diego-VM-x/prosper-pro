@@ -1,5 +1,5 @@
 // Prosper Pro - Service Worker para PWA v2
-const CACHE_VERSION = 'prosper-pro-v2';
+const CACHE_VERSION = 'prosper-pro-v3';
 const STATIC_ASSETS = [
   '/',
   '/login',

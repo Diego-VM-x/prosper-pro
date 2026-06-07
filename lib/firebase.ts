@@ -2,14 +2,24 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 
 const isBrowser = typeof window !== 'undefined';
 
+const HARDCODED_CONFIG = {
+  apiKey: 'AIzaSyDUGxu2cfgxVrgSS1xamE0NaVUOv7TnX2E',
+  authDomain: 'prospeweb.firebaseapp.com',
+  projectId: 'prospeweb',
+  storageBucket: 'prospeweb.firebasestorage.app',
+  messagingSenderId: '144762699678',
+  appId: '1:144762699678:web:e7ce0d3bc2533b2175e08f',
+  measurementId: 'G-R7D5M4J5L5',
+};
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || HARDCODED_CONFIG.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || HARDCODED_CONFIG.authDomain,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || HARDCODED_CONFIG.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || HARDCODED_CONFIG.storageBucket,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || HARDCODED_CONFIG.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || HARDCODED_CONFIG.appId,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || HARDCODED_CONFIG.measurementId,
 };
 
 // Validación de variables de entorno (solo en cliente para evitar ruido en build)
