@@ -150,20 +150,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://ve.dolarapi.com" />
         <link rel="dns-prefetch" href="https://ve.dolarapi.com" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem('prosper-pro-theme');
-                  if (theme === 'dark' || theme === 'light') {
-                    document.documentElement.setAttribute('data-theme', theme);
-                  }
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
+        {/* Theme se maneja via next-themes para evitar hydration mismatch */}
         {/* Captura global de errores para diagnóstico */}
         <script
           dangerouslySetInnerHTML={{

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme as useNextTheme, ThemeProvider as NextThemesProvider } from 'next-themes';
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 
 type Theme = 'light' | 'dark' | 'amoled';
 
@@ -23,6 +23,11 @@ export function useTheme(): ThemeContextType {
 
 function ThemeProviderInner({ children }: { children: React.ReactNode }) {
   const { theme: nextTheme, setTheme: nextSetTheme } = useNextTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const setTheme = useCallback((t: Theme) => {
     nextSetTheme(t);
@@ -35,6 +40,15 @@ function ThemeProviderInner({ children }: { children: React.ReactNode }) {
     const next = themes[(idx + 1) % themes.length];
     nextSetTheme(next);
   }, [nextTheme, nextSetTheme]);
+
+  // Evitar hydration mismatch: no renderizar children hasta que el cliente esté listo
+  if (!mounted) {
+    return (
+      <ThemeContext.Provider value={{ theme: 'light', setTheme, toggleTheme }}>
+        <div style={{ visibility: 'hidden' }}>{children}</div>
+      </ThemeContext.Provider>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={{ theme: (nextTheme as Theme) || 'light', setTheme, toggleTheme }}>
