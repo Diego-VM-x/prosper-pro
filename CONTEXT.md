@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (6 de Junio, 2026 - v0.9.0)
+## Estado Actual (7 de Junio, 2026 - v0.9.1)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -9,7 +9,7 @@
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
-- **Versión actual**: 0.9.0 (publicada en test-deploy y main).
+- **Versión actual**: 0.9.1 (publicada en test-deploy y master).
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -63,6 +63,11 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **Fix Crítico: "Algo salió mal" en Navegación Privada y Móviles (07/06/2026 - v0.9.1)**: Solucionado el error "Algo salió mal" que aparecía en ciertos dispositivos móviles y PCs (especialmente Safari iOS en modo privado, navegadores sandboxed y cuando el almacenamiento local está lleno). La causa raíz era que `localStorage` y `sessionStorage` no están disponibles en esos entornos, y múltiples componentes accedían a ellos sin `try/catch`, lanzando excepciones no capturadas que el `ErrorBoundary` mostraba como crash. Cambios aplicados:
+  - **Nueva utilidad `lib/utils/safeStorage.ts`**: Wrapper con polyfill en memoria que detecta si `localStorage`/`sessionStorage` están disponibles. Si no lo están, usa almacenamiento en memoria para que la app funcione sin persistencia pero sin crashear.
+  - **`lib/firebase.ts`**: Reemplazado el polyfill antiguo de `sessionStorage` por uno robusto que también cubre `localStorage`, usando `configurable: true` y `writable: true` para mayor compatibilidad con navegadores restrictivos.
+  - **Archivos protegidos con `safeStorage`**: `UpdateModal.tsx`, `DashboardLayout.tsx`, `Dashboard.tsx`, `finanzas/page.tsx`, `configuracion/page.tsx`, `CurrencyContext.tsx` — todos los accesos a `localStorage`/`sessionStorage` ahora usan la utilidad segura con fallback en memoria.
+  - **Build verificado**: `npm run build` exitoso, 17/17 páginas generadas sin errores.
 - ✅ **Fix Dropdowns y Animaciones Fluidas (25/05/2026)**: Corregido el bug del componente CustomSelect (listas desplegables cortadas) dentro de Modales eliminando el transform residual de la animacion de entrada del modal en finanzas y metas. Se añadió una animación de salida suave (opacidad) al CustomSelect usando transition y pointerEvents. Además, se implementó stagger-item con animationDelay para un renderizado secuencial suave de cuentas, transacciones y planes financieros.
 - ✅ **Sistema de Animaciones y Micro-interacciones Premium (25/05/2026)**: Creado el archivo de animaciones en `app/animations.css` e importado de forma nativa en `app/layout.tsx` para garantizar la resolución del compilador de Next.js. El archivo reúne keyframes e interactividades premium a 60 FPS aceleradas por hardware (`transform`, `opacity`, `filter`, `will-change`) evitando Layout Shifts. Cuenta con transiciones de página elásticas, micro-pulsaciones en hover/active de botones, esqueletos loaders shimmer adaptables a temas (Claro/Oscuro/AMOLED), modales elásticos, toasts y dropdowns fluidos, efectos de elevación con glow neón en tarjetas financieras, y retardos secuenciales (stagger). Se ajustó la regla de accesibilidad `prefers-reduced-motion` a un formato sutil no destructivo para evitar que apague los transforms y delays de la landing page y el dashboard en sistemas con esa opción activa. Además, se optimizó la animación de transición global `.animate-page-entrance` para que use únicamente opacidad (fade-in), solucionando de raíz el bug de "containing block" en CSS que descentraba y cortaba los modales flotantes fixed de la app (como "Transferir" o "Nueva Meta").
 - ✅ **Entrada Fluida Global en DashboardLayout (25/05/2026)**: Integrada la clase `.animate-page-entrance` de forma global en el Root Layout (`layout.tsx`) e implementada en el contenedor de contenido principal en `DashboardLayout.tsx`. Esto garantiza que todas las vistas de la aplicación bajo el dashboard realicen una transición de entrada suave, elástica y premium al navegar, libre de bugs visuales o de redibujado.

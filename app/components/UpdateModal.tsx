@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { safeLocalStorage, safeSessionStorage } from '@/lib/utils/safeStorage';
 interface UpdateNote {
   emoji: string;
   text: string;
@@ -32,32 +33,39 @@ export function UpdateModal({
 
   // Session-based tracking: show once per session unless forced
   useEffect(() => {
-    const seenInSession = sessionStorage.getItem('prosper_update_seen_session');
-    const shouldShow = !seenInSession && localStorage.getItem('prosper_show_update_modal') !== 'false';
-    
-    if (shouldShow) {
-      const seenVersion = localStorage.getItem('prosper_update_seen');
-      if (seenVersion !== version) {
-        setTimeout(() => setIsOpen(true), 600);
+    try {
+      const seenInSession = safeSessionStorage.getItem('prosper_update_seen_session');
+      const shouldShow = !seenInSession && safeLocalStorage.getItem('prosper_show_update_modal') !== 'false';
+      
+      if (shouldShow) {
+        const seenVersion = safeLocalStorage.getItem('prosper_update_seen');
+        if (seenVersion !== version) {
+          setTimeout(() => setIsOpen(true), 600);
+        }
       }
-    }
+    } catch {}
   }, [version]);
 
   // Mark as seen in session when opened
   useEffect(() => {
     if (isOpen) {
-      sessionStorage.setItem('prosper_update_seen_session', 'true');
+      try { safeSessionStorage.setItem('prosper_update_seen_session', 'true'); } catch {}
     }
   }, [isOpen]);
 
   // added function
   const handleNeverShow = () => {
-    localStorage.setItem('prosper_show_update_modal', 'false');
+    try { safeLocalStorage.setItem('prosper_show_update_modal', 'false'); } catch {}
     setIsOpen(false);
   };
 
   // Check session flag or localStorage preference
-  if (!isOpen || sessionStorage.getItem('prosper_update_seen_session') === 'true' && localStorage.getItem('prosper_show_update_modal') === 'false') return null;
+  const shouldHide = (() => {
+    try {
+      return safeSessionStorage.getItem('prosper_update_seen_session') === 'true' && safeLocalStorage.getItem('prosper_show_update_modal') === 'false';
+    } catch { return false; }
+  })();
+  if (!isOpen || shouldHide) return null;
 
   return (
     <>

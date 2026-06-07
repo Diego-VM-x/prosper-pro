@@ -16,6 +16,7 @@ import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '
 import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
 import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPAY_BANKS } from '@/lib/vepay';
 import { getAccountRates, convertCurrency } from '@/lib/currency';
+import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import type { Transaction, FinancialAccount, AccountType, CurrencyCode } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
@@ -167,14 +168,16 @@ const FinanzasPage = memo(function FinanzasPage() {
     };
   }, [transactions, accounts, displayCurrency, convertBetween]);
   const [showAmounts, setShowAmounts] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('finanzas-show-amounts') === 'true';
-    }
+    try {
+      if (typeof window !== 'undefined') {
+        return safeLocalStorage.getItem('finanzas-show-amounts') === 'true';
+      }
+    } catch {}
     return false;
   });
   const [showConversion, setShowConversion] = useState(() => {
     try {
-      return localStorage.getItem('finanzas-show-conversion') === 'true';
+      return safeLocalStorage.getItem('finanzas-show-conversion') === 'true';
     } catch {
       return false;
     }
@@ -388,7 +391,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const toggleShowAmounts = () => {
     const newVal = !showAmounts;
     setShowAmounts(newVal);
-    localStorage.setItem('finanzas-show-amounts', String(newVal));
+    try { safeLocalStorage.setItem('finanzas-show-amounts', String(newVal)); } catch {}
   };
 
   const handleVepayUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1115,7 +1118,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
             </div>
             <button
-              onClick={() => { const next = !showConversion; setShowConversion(next); try { localStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
+              onClick={() => { const next = !showConversion; setShowConversion(next); try { safeLocalStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
               className={`conversion-toggle ${showConversion ? 'active' : ''}`}
               title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
             >

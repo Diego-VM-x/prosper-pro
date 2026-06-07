@@ -8,6 +8,7 @@ import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
+import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import type { UserProfile, CurrencyCode } from '@/types';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
@@ -53,8 +54,10 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     const uid = user?.uid as string;
     if (!uid) return;
     // Load update modal preference
-    const stored = localStorage.getItem('prosper_show_update_modal');
-    setShowUpdateModalPref(stored !== 'false');
+    try {
+      const stored = safeLocalStorage.getItem('prosper_show_update_modal');
+      setShowUpdateModalPref(stored !== 'false');
+    } catch { setShowUpdateModalPref(true); }
 
     async function loadProfile() {
       try {
@@ -488,7 +491,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         onClick={() => {
                           const newVal = !showUpdateModalPref;
                           setShowUpdateModalPref(newVal);
-                          localStorage.setItem('prosper_show_update_modal', newVal ? 'true' : 'false');
+                          try { safeLocalStorage.setItem('prosper_show_update_modal', newVal ? 'true' : 'false'); } catch {}
                         }}
                       >
                         {showUpdateModalPref ? '✅ Sí' : '❌ No'}

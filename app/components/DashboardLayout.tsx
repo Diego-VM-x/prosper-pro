@@ -6,6 +6,7 @@ import { ThemeProvider } from './ThemeProvider';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { UpdateModal } from './UpdateModal';
+import { safeLocalStorage } from '@/lib/utils/safeStorage';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,15 +16,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebarCollapsed');
-      return saved !== null ? JSON.parse(saved) : false;
-    }
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = safeLocalStorage.getItem('sidebarCollapsed');
+        return saved !== null ? JSON.parse(saved) : false;
+      }
+    } catch {}
     return false;
   });
 
   useEffect(() => {
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed));
+    try { safeLocalStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed)); } catch {}
   }, [sidebarCollapsed]);
 
   return (

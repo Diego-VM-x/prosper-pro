@@ -50,23 +50,45 @@ if (isBrowser) {
   }
 }
 
-// Polyfill de sessionStorage para modo privado / sandbox
+// Polyfill de localStorage/sessionStorage para modo privado / sandbox
+const memoryStore: Record<string, string> = {};
+function createMemoryStorage(): Storage {
+  return {
+    getItem(key: string): string | null { return memoryStore[key] ?? null; },
+    setItem(key: string, value: string): void { memoryStore[key] = value; },
+    removeItem(key: string): void { delete memoryStore[key]; },
+    clear(): void { Object.keys(memoryStore).forEach((k) => delete memoryStore[k]); },
+    key(index: number): string | null { return Object.keys(memoryStore)[index] ?? null; },
+    get length() { return Object.keys(memoryStore).length; },
+  };
+}
+
 if (isBrowser) {
+  try {
+    localStorage.getItem('__test');
+  } catch {
+    try {
+      Object.defineProperty(window, 'localStorage', {
+        value: createMemoryStorage(),
+        configurable: true,
+        writable: true,
+      });
+    } catch {
+      // Some browsers don't allow redefining window.localStorage
+    }
+  }
   try {
     sessionStorage.getItem('__test');
   } catch {
-    const store: Record<string, string> = {};
-    Object.defineProperty(window, 'sessionStorage', {
-      value: {
-        getItem: (k: string) => store[k] ?? null,
-        setItem: (k: string, v: string) => { store[k] = v; },
-        removeItem: (k: string) => { delete store[k]; },
-        clear: () => { Object.keys(store).forEach(k => delete store[k]); },
-        key: (i: number) => Object.keys(store)[i] ?? null,
-        get length() { return Object.keys(store).length; },
-      },
-      configurable: true,
-    });
+    try {
+      Object.defineProperty(window, 'sessionStorage', {
+        value: createMemoryStorage(),
+        configurable: true,
+        writable: true,
+      });
+    } catch {
+      // Some browsers don't allow redefining window.sessionStorage
+    }
   }
 }
 

@@ -18,6 +18,7 @@ import {
   IconZap,
   IconReceipt,
 } from './icons';
+import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
@@ -73,7 +74,7 @@ export const Dashboard = memo(function Dashboard() {
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
   const [showBalances, setShowBalances] = useState(() => {
     try {
-      const saved = localStorage.getItem('dashboard-show-balances');
+      const saved = safeLocalStorage.getItem('dashboard-show-balances');
       return saved !== 'false';
     } catch {
       return true;
@@ -620,7 +621,7 @@ export const Dashboard = memo(function Dashboard() {
                 <h2 className="content-card-title">Mis Cuentas</h2>
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { localStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? 'Ocultar saldos' : 'Mostrar saldos'} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { safeLocalStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? 'Ocultar saldos' : 'Mostrar saldos'} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
                   {showBalances ? ' Ocultar' : '👁️ Mostrar'}
                 </button>
                 <button className="content-card-action" onClick={() => router.push('/finanzas')}>

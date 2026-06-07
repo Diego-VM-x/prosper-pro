@@ -12,6 +12,7 @@ import {
 } from '@/lib/currency';
 import { notifyDollarChange, notifyDailyBalance, notifyAppUpdate } from '@/lib/firestore/notifications';
 import { getAccountsByOwnerId } from '@/lib/firestore/accounts';
+import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import type { CurrencyCode, ExchangeRates } from '@/types';
 
 // ============================================================
@@ -81,7 +82,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [apiRates, setApiRates] = useState<ExchangeRates | null>(null);
   const [p2pMode, setP2pModeState] = useState<boolean>(() => {
-    try { return localStorage.getItem(P2P_MODE_KEY) === 'true'; } catch { return false; }
+    try { return safeLocalStorage.getItem(P2P_MODE_KEY) === 'true'; } catch { return false; }
   });
   const apiRatesRef = React.useRef<ExchangeRates | null>(null);
 
@@ -92,7 +93,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // Load display currency from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(DISPLAY_CURRENCY_KEY) as CurrencyCode | null;
+      const saved = safeLocalStorage.getItem(DISPLAY_CURRENCY_KEY) as CurrencyCode | null;
       if (saved && CURRENCY_LIST.includes(saved)) {
         setDisplayCurrencyState(saved);
       }
@@ -143,7 +144,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
         // If no saved display currency, default to user's base currency
         try {
-          const saved = localStorage.getItem(DISPLAY_CURRENCY_KEY);
+          const saved = safeLocalStorage.getItem(DISPLAY_CURRENCY_KEY);
           if (!saved) {
             setDisplayCurrencyState(userCurrency);
           }
@@ -158,7 +159,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // Load cached rates from localStorage then fetch fresh
   useEffect(() => {
     try {
-      const cached = localStorage.getItem('prosper_exchange_rates');
+      const cached = safeLocalStorage.getItem('prosper_exchange_rates');
       if (cached) {
         const parsed = JSON.parse(cached) as ExchangeRates;
         setApiRates(parsed);
@@ -277,7 +278,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
           if (prev.source === 'manual') return prev;
           return fetched;
         });
-        try { localStorage.setItem('prosper_exchange_rates', JSON.stringify(fetched)); } catch {}
+        try { safeLocalStorage.setItem('prosper_exchange_rates', JSON.stringify(fetched)); } catch {}
       } catch (err) {
         console.error('Failed to fetch exchange rates:', err);
       }
@@ -291,7 +292,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const setDisplayCurrency = useCallback((code: CurrencyCode) => {
     setDisplayCurrencyState(code);
     try {
-      localStorage.setItem(DISPLAY_CURRENCY_KEY, code);
+      safeLocalStorage.setItem(DISPLAY_CURRENCY_KEY, code);
     } catch {}
   }, []);
 
@@ -299,7 +300,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const setP2pMode = useCallback((v: boolean) => {
     setP2pModeState(v);
     try {
-      localStorage.setItem(P2P_MODE_KEY, String(v));
+      safeLocalStorage.setItem(P2P_MODE_KEY, String(v));
     } catch {}
   }, []);
 
@@ -348,7 +349,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // Dollar rate change notification
   useEffect(() => {
     if (!user?.uid || !rates?.rates?.USD || rates.source !== 'api') return;
-    const lastNotifiedRate = Number(localStorage.getItem('prosper_last_usd_rate') || 0);
+    const lastNotifiedRate = Number(safeLocalStorage.getItem('prosper_last_usd_rate') || 0);
     if (lastNotifiedRate > 0) {
       const diff = Math.abs(rates.rates.USD - lastNotifiedRate);
       const pct = diff / lastNotifiedRate;
@@ -356,7 +357,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         notifyDollarChange(user.uid, lastNotifiedRate, rates.rates.USD).catch(console.error);
       }
     }
-    localStorage.setItem('prosper_last_usd_rate', String(rates.rates.USD));
+    safeLocalStorage.setItem('prosper_last_usd_rate', String(rates.rates.USD));
   }, [rates?.rates?.USD, rates?.source, user?.uid]);
 
   // Daily balance notification (at 12:00 local time)
@@ -365,7 +366,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     const checkDailyBalance = () => {
       const now = new Date();
       const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const lastSent = localStorage.getItem('prosper_daily_balance_sent');
+      const lastSent = safeLocalStorage.getItem('prosper_daily_balance_sent');
       if (lastSent === todayKey) return;
       if (now.getHours() >= 12) {
         getAccountsByOwnerId(user.uid)
@@ -373,7 +374,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             const totalUSD = accounts.filter((a) => a.currency === 'USD').reduce((s, a) => s + a.balance, 0);
             const totalBS = accounts.filter((a) => a.currency === 'BS').reduce((s, a) => s + a.balance, 0);
             notifyDailyBalance(user.uid, totalUSD, totalBS).catch(console.error);
-            localStorage.setItem('prosper_daily_balance_sent', todayKey);
+            safeLocalStorage.setItem('prosper_daily_balance_sent', todayKey);
           })
           .catch(console.error);
       }
@@ -387,11 +388,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.uid) return;
     const APP_VERSION = '0.9.0';
-    const lastVersion = localStorage.getItem('prosper_app_version');
+    const lastVersion = safeLocalStorage.getItem('prosper_app_version');
     if (lastVersion && lastVersion !== APP_VERSION) {
       notifyAppUpdate(user.uid, APP_VERSION, 'Nueva versión disponible con mejoras y correcciones.').catch(console.error);
     }
-    localStorage.setItem('prosper_app_version', APP_VERSION);
+    safeLocalStorage.setItem('prosper_app_version', APP_VERSION);
   }, [user?.uid]);
 
   const value = useMemo(
