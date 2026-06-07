@@ -141,6 +141,23 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [groupFormLoading, setGroupFormLoading] = useState(false);
   const [showAssignGroupModal, setShowAssignGroupModal] = useState<string | null>(null);
 
+  // Collapsed groups (persisted in localStorage)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    try {
+      const saved = safeLocalStorage.getItem('finanzas-collapsed-groups');
+      return saved ? new Set(JSON.parse(saved)) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
+  const toggleGroupCollapse = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      try { safeLocalStorage.setItem('finanzas-collapsed-groups', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+
   // P2P rates come from CurrencyContext now (rates.p2pRates)
 
   // Calcular balance total reactivamente
@@ -1218,22 +1235,26 @@ const FinanzasPage = memo(function FinanzasPage() {
                   {accountGroups.map((group) => {
                     const groupAccs = grouped[group.id] || [];
                     if (groupAccs.length === 0) return null;
+                    const isCollapsed = collapsedGroups.has(group.id);
                     return (
                       <div key={group.id} className="account-group">
-                        <div className="account-group-header">
+                        <div className="account-group-header" onClick={() => toggleGroupCollapse(group.id)} style={{ cursor: 'pointer' }}>
                           <div className="account-group-title" style={{ color: group.color || 'var(--text-primary)' }}>
+                            <span className="account-group-chevron">{isCollapsed ? '▸' : '▾'}</span>
                             <span className="account-group-dot" style={{ background: group.color || 'var(--text-primary)' }} />
                             {group.name}
                             <span className="account-group-count">{groupAccs.length}</span>
                           </div>
-                          <div className="account-group-actions">
+                          <div className="account-group-actions" onClick={(e) => e.stopPropagation()}>
                             <button className="account-group-btn" onClick={() => openGroupModal(group)} title="Editar">✏️</button>
                             <button className="account-group-btn" onClick={() => handleDeleteGroup(group)} title="Eliminar">🗑️</button>
                           </div>
                         </div>
-                        <div className="accounts-grid">
-                          {groupAccs.map((acc, i) => renderAccountCard(acc, i))}
-                        </div>
+                        {!isCollapsed && (
+                          <div className="accounts-grid">
+                            {groupAccs.map((acc, i) => renderAccountCard(acc, i))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -2336,8 +2357,10 @@ const FinanzasPage = memo(function FinanzasPage() {
           .accounts-section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
           .account-group { margin-bottom: 20px; }
           .account-group:last-child { margin-bottom: 0; }
-          .account-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 4px; }
-          .account-group-title { display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em; }
+          .account-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 6px 4px; border-radius: 8px; transition: background 0.15s; }
+          .account-group-header:hover { background: var(--bg-input); }
+          .account-group-title { display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em; user-select: none; }
+          .account-group-chevron { font-size: 0.625rem; color: var(--text-tertiary); width: 12px; text-align: center; transition: transform 0.2s; }
           .account-group-dot { width: 8px; height: 8px; border-radius: 50%; }
           .account-group-count { font-size: 0.625rem; font-weight: 600; color: var(--text-tertiary); background: var(--bg-input); padding: 2px 8px; border-radius: var(--radius-full); }
           .account-group-actions { display: flex; gap: 4px; }
