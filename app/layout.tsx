@@ -164,6 +164,49 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* Captura global de errores para diagnóstico */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var errors = [];
+                var MAX_ERRORS = 5;
+                function showError(msg, source, line, col, err) {
+                  if (errors.length >= MAX_ERRORS) return;
+                  errors.push({msg: msg, source: source, line: line, col: col, err: err && (err.stack || err.message)});
+                  var existing = document.getElementById('__pp_fatal_errors');
+                  if (!existing) {
+                    var div = document.createElement('div');
+                    div.id = '__pp_fatal_errors';
+                    div.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#1a1a2e;color:#fff;font-family:system-ui,sans-serif;padding:20px;overflow:auto;';
+                    div.innerHTML = '<h2 style="margin:0 0 12px 0;color:#3DCC8E;font-size:1.2rem;">⚠️ Prosper Pro - Error de carga</h2><p style="margin:0 0 12px 0;color:#aaa;font-size:0.85rem;">La app no pudo cargar. Envía esta captura al soporte:</p><pre id="__pp_err_pre" style="background:#0f0f1a;padding:12px;border-radius:8px;font-size:0.75rem;white-space:pre-wrap;word-break:break-all;color:#ff6b6b;"></pre><button onclick="location.reload()" style="margin-top:16px;padding:10px 20px;background:#3DCC8E;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Recargar página</button>';
+                    document.body ? document.body.appendChild(div) : setTimeout(function(){ document.body && document.body.appendChild(div); }, 100);
+                  }
+                  var pre = document.getElementById('__pp_err_pre');
+                  if (pre) {
+                    pre.textContent = errors.map(function(e, i) {
+                      return '#' + (i+1) + ': ' + e.msg + (e.source ? '\\n  at ' + e.source + ':' + e.line + ':' + e.col : '') + (e.err ? '\\n  Stack: ' + e.err : '');
+                    }).join('\\n\\n');
+                  }
+                }
+                window.onerror = function(msg, source, line, col, err) {
+                  showError(String(msg), source, line, col, err);
+                  return false;
+                };
+                window.addEventListener('unhandledrejection', function(e) {
+                  showError('Unhandled Promise: ' + (e.reason && e.reason.message || String(e.reason)), '', 0, 0, e.reason);
+                });
+                // Detectar si React no monta en 10 segundos
+                setTimeout(function() {
+                  var root = document.getElementById('__next');
+                  if (!root || root.children.length === 0) {
+                    showError('React no montó el DOM en 10s. Posible error silencioso.', '', 0, 0, null);
+                  }
+                }, 10000);
+              })();
+            `,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
