@@ -30,14 +30,16 @@ export function UpdateModal({
 
   const [isOpen, setIsOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [shouldHide, setShouldHide] = useState(false);
 
   // Session-based tracking: show once per session unless forced
   useEffect(() => {
     try {
       const seenInSession = safeSessionStorage.getItem('prosper_update_seen_session');
-      const shouldShow = !seenInSession && safeLocalStorage.getItem('prosper_show_update_modal') !== 'false';
+      const modalDisabled = safeLocalStorage.getItem('prosper_show_update_modal') === 'false';
+      setShouldHide(seenInSession === 'true' && modalDisabled);
       
-      if (shouldShow) {
+      if (!seenInSession && !modalDisabled) {
         const seenVersion = safeLocalStorage.getItem('prosper_update_seen');
         if (seenVersion !== version) {
           setTimeout(() => setIsOpen(true), 600);
@@ -53,18 +55,11 @@ export function UpdateModal({
     }
   }, [isOpen]);
 
-  // added function
   const handleNeverShow = () => {
     try { safeLocalStorage.setItem('prosper_show_update_modal', 'false'); } catch {}
     setIsOpen(false);
   };
 
-  // Check session flag or localStorage preference
-  const shouldHide = (() => {
-    try {
-      return safeSessionStorage.getItem('prosper_update_seen_session') === 'true' && safeLocalStorage.getItem('prosper_show_update_modal') === 'false';
-    } catch { return false; }
-  })();
   if (!isOpen || shouldHide) return null;
 
   return (

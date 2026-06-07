@@ -81,9 +81,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<ExchangeRates>(DEFAULT_RATES);
   const [loading, setLoading] = useState(true);
   const [apiRates, setApiRates] = useState<ExchangeRates | null>(null);
-  const [p2pMode, setP2pModeState] = useState<boolean>(() => {
-    try { return safeLocalStorage.getItem(P2P_MODE_KEY) === 'true'; } catch { return false; }
-  });
+  const [p2pMode, setP2pModeState] = useState<boolean>(false);
   const apiRatesRef = React.useRef<ExchangeRates | null>(null);
 
   useEffect(() => {
@@ -97,6 +95,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       if (saved && CURRENCY_LIST.includes(saved)) {
         setDisplayCurrencyState(saved);
       }
+    } catch {}
+  }, []);
+
+  // Load P2P mode from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = safeLocalStorage.getItem(P2P_MODE_KEY);
+      if (saved === 'true') setP2pModeState(true);
     } catch {}
   }, []);
 

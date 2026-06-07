@@ -15,15 +15,14 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
     try {
-      if (typeof window !== 'undefined') {
-        const saved = safeLocalStorage.getItem('sidebarCollapsed');
-        return saved !== null ? JSON.parse(saved) : false;
-      }
+      const saved = safeLocalStorage.getItem('sidebarCollapsed');
+      if (saved !== null) setSidebarCollapsed(JSON.parse(saved));
     } catch {}
-    return false;
-  });
+  }, []);
 
   useEffect(() => {
     try { safeLocalStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed)); } catch {}
