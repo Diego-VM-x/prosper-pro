@@ -170,9 +170,11 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
+  secondaryText?: string;
   variant?: 'danger' | 'warning' | 'info';
   onConfirm: () => void;
   onCancel: () => void;
+  onSecondary?: () => void;
 }
 
 export function ConfirmDialog({
@@ -181,9 +183,11 @@ export function ConfirmDialog({
   message,
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
+  secondaryText,
   variant = 'info',
   onConfirm,
   onCancel,
+  onSecondary,
 }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
@@ -207,6 +211,11 @@ export function ConfirmDialog({
         </div>
         <div className="confirm-footer">
           <button className="confirm-btn confirm-btn-cancel" onClick={onCancel}>{cancelText}</button>
+          {onSecondary && secondaryText && (
+            <button className="confirm-btn confirm-btn-secondary" onClick={onSecondary}>
+              {secondaryText}
+            </button>
+          )}
           <button className="confirm-btn confirm-btn-confirm" style={{ background: colors.btn }} onClick={onConfirm}>
             {confirmText}
           </button>
@@ -246,6 +255,8 @@ export function ConfirmDialog({
         }
         .confirm-btn-cancel { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-default); }
         .confirm-btn-cancel:hover { background: var(--border-default); }
+        .confirm-btn-secondary { background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-default); }
+        .confirm-btn-secondary:hover { background: var(--bg-input); color: var(--text-primary); border-color: var(--color-prosper-green); }
         .confirm-btn-confirm { color: white; }
         .confirm-btn-confirm:hover { filter: brightness(1.1); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

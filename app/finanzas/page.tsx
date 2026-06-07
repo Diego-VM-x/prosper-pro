@@ -130,7 +130,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; color: string } | null>(null);
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
-  const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
+  const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string; secondaryText?: string; onSecondary?: () => void }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
 
   // Account groups
   const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([]);
@@ -417,30 +417,41 @@ const FinanzasPage = memo(function FinanzasPage() {
 
     const txAccount = accounts.find((a) => a.id === tx.accountId);
     const txCurrency = txAccount?.currency || 'USD';
+    const hasAccount = !!tx.accountId;
 
     setConfirmState({
       isOpen: true,
       title: 'Eliminar Transacción',
-      message: `¿Eliminar "${tx.description || tx.category}" por ${formatInCurrency(tx.amount, txCurrency)}? El balance de la cuenta se ajustará.`,
+      message: `¿Eliminar "${tx.description || tx.category}" por ${formatInCurrency(tx.amount, txCurrency)}?${hasAccount ? '\n\n• Eliminar y ajustar: recalcula el balance de la cuenta\n• Solo del historial: elimina el registro sin tocar el balance' : ''}`,
       variant: 'danger',
-      confirmText: 'Eliminar',
+      confirmText: hasAccount ? 'Eliminar y ajustar' : 'Eliminar',
+      secondaryText: hasAccount ? 'Solo del historial' : undefined,
       onConfirm: async () => {
+        // Eliminar y recalcular balance
         try {
           await deleteTransaction(txId);
-
-          // Revertir balance si tenía cuenta
           if (tx.accountId) {
             const delta = tx.type === 'income' ? -tx.amount : tx.amount;
             await updateAccountBalance(tx.accountId, delta);
           }
-
           await loadTransactions();
-          success('Transacción eliminada');
+          success('Transacción eliminada y balance ajustado');
         } catch (e: any) {
           error(`Error al eliminar: ${e?.message || 'Error desconocido'}`);
         }
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
+      onSecondary: hasAccount ? async () => {
+        // Solo eliminar del historial, sin tocar balance
+        try {
+          await deleteTransaction(txId);
+          await loadTransactions();
+          success('Transacción eliminada del historial');
+        } catch (e: any) {
+          error(`Error al eliminar: ${e?.message || 'Error desconocido'}`);
+        }
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      } : undefined,
     });
   };
 
@@ -2339,7 +2350,9 @@ const FinanzasPage = memo(function FinanzasPage() {
             message={confirmState.message}
             variant={confirmState.variant}
             confirmText={confirmState.confirmText || 'Confirmar'}
+            secondaryText={confirmState.secondaryText}
             onConfirm={confirmState.onConfirm}
+            onSecondary={confirmState.onSecondary}
             onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
           />
         </div>
