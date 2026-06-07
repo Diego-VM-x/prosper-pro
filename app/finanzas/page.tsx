@@ -2958,15 +2958,21 @@ const FinanzasPage = memo(function FinanzasPage() {
               width: 56px;
               height: 56px;
               border-radius: 16px;
-              background: var(--color-prosper-green);
+              background: #3DCC8E;
               color: white;
-              border: none;
+              border: 2px solid rgba(255,255,255,0.15);
               display: flex;
               align-items: center;
               justify-content: center;
               cursor: pointer;
               box-shadow: 0 4px 20px rgba(61,204,142,0.5), 0 0 0 4px rgba(61,204,142,0.15);
               transition: all 0.2s ease;
+            }
+            [data-theme="dark"] .mobile-fab-main,
+            [data-theme="amoled"] .mobile-fab-main {
+              background: #3DCC8E;
+              border-color: rgba(255,255,255,0.2);
+              box-shadow: 0 4px 24px rgba(61,204,142,0.6), 0 0 0 4px rgba(61,204,142,0.2);
             }
             .mobile-fab-main:active {
               transform: scale(0.92);
@@ -2991,18 +2997,24 @@ const FinanzasPage = memo(function FinanzasPage() {
               display: flex;
               align-items: center;
               gap: 10px;
-              background: var(--bg-card);
-              border: 1px solid var(--border-default);
+              background: #1a2a3a;
+              border: 1px solid rgba(255,255,255,0.1);
               border-radius: 999px;
               padding: 10px 16px 10px 12px;
               font-size: 0.875rem;
               font-weight: 600;
-              color: var(--text-primary);
+              color: #fff;
               cursor: pointer;
               white-space: nowrap;
-              box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+              box-shadow: 0 4px 16px rgba(0,0,0,0.4);
               transition: all 0.15s ease;
               font-family: inherit;
+            }
+            [data-theme="dark"] .mobile-fab-item,
+            [data-theme="amoled"] .mobile-fab-item {
+              background: #1a2a3a;
+              border-color: rgba(255,255,255,0.12);
+              color: #fff;
             }
             .mobile-fab-item:active {
               transform: scale(0.95);
