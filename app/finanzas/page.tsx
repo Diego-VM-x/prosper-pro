@@ -1460,7 +1460,9 @@ const FinanzasPage = memo(function FinanzasPage() {
           </div>
 
           {/* Gráfico */}
-          <FinancialStatusChart />
+          <div className="chart-wrapper">
+            <FinancialStatusChart />
+          </div>
 
           {/* Filtros - Compact Visual Design */}
           <div className="tx-filters">
@@ -2482,13 +2484,14 @@ const FinanzasPage = memo(function FinanzasPage() {
           .rates-bs-p2p { color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 500; }
 
           /* Summary (legacy) */
-          .summary-section { position: relative; margin-bottom: 24px; }
+          .summary-section { position: relative; margin-bottom: 32px; }
+          .chart-wrapper { margin-bottom: 24px; }
           .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
           .summary-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
           .summary-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
           .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
           .summary-alt { font-size: 0.75rem; color: var(--text-secondary); opacity: 0.8; margin-top: 2px; }
-          .conversion-toggle { position: absolute; top: 0; right: 0; padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--text-secondary); background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all var(--transition-fast); }
+          .conversion-toggle { position: absolute; top: 0; right: 0; padding: 6px 12px; font-size: 11px; font-weight: 500; color: var(--text-secondary); background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all var(--transition-fast); margin-bottom: 8px; }
           .conversion-toggle.active { color: var(--color-prosper-green); background: rgba(61,204,142,0.1); border-color: var(--color-prosper-green); }
           .summary-income { border-left: 4px solid var(--color-prosper-green); }
           .summary-expense { border-left: 4px solid var(--color-error); }
@@ -2838,6 +2841,8 @@ const FinanzasPage = memo(function FinanzasPage() {
             .rates-table-icon { width: 32px; height: 32px; font-size: 1.125rem; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
+            .summary-section { margin-bottom: 24px; }
+            .chart-wrapper { margin-bottom: 20px; }
             .summary-value { font-size: 1.25rem; }
             .summary-alt { font-size: 0.6875rem; }
             .conversion-toggle { font-size: 10px; padding: 4px 8px; }
@@ -2872,6 +2877,8 @@ const FinanzasPage = memo(function FinanzasPage() {
             .page-title { font-size: 1.25rem; }
             .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
             .summary-card { padding: 10px 8px; }
+            .summary-section { margin-bottom: 20px; }
+            .chart-wrapper { margin-bottom: 16px; }
             .summary-label { font-size: 0.625rem; }
             .summary-value { font-size: 1.125rem; }
             .summary-alt { font-size: 0.625rem; }
@@ -3012,6 +3019,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               z-index: 9998;
               backdrop-filter: blur(2px);
               animation: fadeIn 0.2s ease;
+              touch-action: none;
             }
             @keyframes fadeIn {
               from { opacity: 0; }
