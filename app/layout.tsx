@@ -150,7 +150,21 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://ve.dolarapi.com" />
         <link rel="dns-prefetch" href="https://ve.dolarapi.com" />
-        {/* next-themes maneja el tema sin hydration mismatch */}
+        {/* next-themes theme sync script - evita flash de tema incorrecto */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('prosper-pro-theme');
+                  if (theme === 'dark' || theme === 'light' || theme === 'amoled') {
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
