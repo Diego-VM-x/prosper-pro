@@ -176,8 +176,21 @@ const FinanzasPage = memo(function FinanzasPage() {
       balance: income - expenses
     };
   }, [transactions, accounts, displayCurrency, convertBetween]);
-  const [showAmounts, setShowAmounts] = useState(false);
-  const [showConversion, setShowConversion] = useState(false);
+  const [showAmounts, setShowAmounts] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return safeLocalStorage.getItem('finanzas-show-amounts') === 'true';
+      }
+    } catch {}
+    return false;
+  });
+  const [showConversion, setShowConversion] = useState(() => {
+    try {
+      return safeLocalStorage.getItem('finanzas-show-conversion') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altSummary = useMemo(() => ({
     income: convertBetween(summary.income, displayCurrency, altCurrency),
@@ -201,16 +214,6 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [accountingLoading, setAccountingLoading] = useState(false);
 
   const uid = user?.uid;
-
-  // Cargar preferencias de localStorage
-  useEffect(() => {
-    try {
-      setShowAmounts(safeLocalStorage.getItem('finanzas-show-amounts') === 'true');
-    } catch {}
-    try {
-      setShowConversion(safeLocalStorage.getItem('finanzas-show-conversion') === 'true');
-    } catch {}
-  }, []);
 
   // Suscribirse a cuentas en tiempo real
   useEffect(() => {

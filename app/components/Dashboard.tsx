@@ -72,7 +72,14 @@ export const Dashboard = memo(function Dashboard() {
   const [customCats, setCustomCats] = useState<string[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
-  const [showBalances, setShowBalances] = useState(true);
+  const [showBalances, setShowBalances] = useState(() => {
+    try {
+      const saved = safeLocalStorage.getItem('dashboard-show-balances');
+      return saved !== 'false';
+    } catch {
+      return true;
+    }
+  });
   const [transferFrom, setTransferFrom] = useState('');
   const [transferTo, setTransferTo] = useState('');
   const [transferAmount, setTransferAmount] = useState('');
@@ -108,13 +115,6 @@ export const Dashboard = memo(function Dashboard() {
         return sum + convertBetween(t.amount, txCurrency, displayCurrency);
       }, 0);
   }, [transactions, accounts, displayCurrency, convertBetween]);
-
-  useEffect(() => {
-    try {
-      const saved = safeLocalStorage.getItem('dashboard-show-balances');
-      if (saved === 'false') setShowBalances(false);
-    } catch {}
-  }, []);
 
   useEffect(() => {
     const el = bottomScrollRef.current;
