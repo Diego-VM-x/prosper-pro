@@ -399,7 +399,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                             <span>✓</span>
                             <strong style={{ color: 'var(--text-primary)' }}>
-                              1 BTC = {(rates.rates.BTC / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              1 BTC = ${(rates.rates.BTC / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
                                 ≈ {rates.rates.BTC?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
                               </span>
