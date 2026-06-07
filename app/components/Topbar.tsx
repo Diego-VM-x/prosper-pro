@@ -64,6 +64,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   // Refs para click-outside
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
@@ -71,6 +72,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   // Cerrar dropdowns al hacer click fuera
   useClickOutside(notifRef, () => setShowNotifications(false), showNotifications);
   useClickOutside(userMenuRef, () => setShowUserMenu(false), showUserMenu);
+  useClickOutside(mobileUserMenuRef, () => setShowUserMenu(false), showUserMenu);
   useClickOutside(searchRef, () => setShowSearch(false), showSearch);
   useEscape(() => {
     setShowNotifications(false);
@@ -540,7 +542,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             </div>
           </div>
           {showUserMenu && (
-            <div className="user-dropdown mobile-user-dropdown">
+            <div className="user-dropdown mobile-user-dropdown" ref={mobileUserMenuRef}>
               <div className="user-dropdown-header">
                 <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
                 <p className="user-dropdown-email">{user?.email}</p>
