@@ -1089,50 +1089,6 @@ const FinanzasPage = memo(function FinanzasPage() {
               </button>
             </div>
 
-            {/* Mobile FAB - Fixed bottom-right */}
-            <div className={`mobile-fab-container ${fabOpen ? 'open' : ''}`}>
-              <div className="mobile-fab-menu">
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowModal(true); }}>
-                  <span className="mobile-fab-icon">💸</span>
-                  <span className="mobile-fab-label">Nueva Transacción</span>
-                </button>
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountModal(true); }}>
-                  <span className="mobile-fab-icon">💳</span>
-                  <span className="mobile-fab-label">Nueva Cuenta</span>
-                </button>
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowTransferModal(true); }}>
-                  <span className="mobile-fab-icon">🔄</span>
-                  <span className="mobile-fab-label">Transferir</span>
-                </button>
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowVepayModal(true); }}>
-                  <span className="mobile-fab-icon">📷</span>
-                  <span className="mobile-fab-label">Importar Captura</span>
-                </button>
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountingModal(true); }}>
-                  <span className="mobile-fab-icon">📊</span>
-                  <span className="mobile-fab-label">Gestión Contable</span>
-                </button>
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); toggleShowAmounts(); }}>
-                  <span className="mobile-fab-icon">{showAmounts ? '🙈' : '👁️'}</span>
-                  <span className="mobile-fab-label">{showAmounts ? 'Ocultar Saldos' : 'Mostrar Saldos'}</span>
-                </button>
-                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setP2pMode(!p2pMode); }}>
-                  <span className="mobile-fab-icon">💱</span>
-                  <span className="mobile-fab-label">Modo {p2pMode ? 'P2P' : 'Oficial'}</span>
-                </button>
-                <button className="mobile-fab-item mobile-fab-item-danger" onClick={() => { setFabOpen(false); handleClearAllHistory(); }}>
-                  <span className="mobile-fab-icon">🗑️</span>
-                  <span className="mobile-fab-label">Borrar Historial</span>
-                </button>
-              </div>
-              <button className="mobile-fab-main" onClick={() => setFabOpen(!fabOpen)} aria-label="Acciones">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
-                  <line x1="12" y1="5" x2="12" y2="19" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-              </button>
-            </div>
-            {fabOpen && <div className="mobile-fab-backdrop" onClick={() => setFabOpen(false)} />}
           </div>
 
           {/* Tasas de cambio - Collapsible */}
@@ -2831,10 +2787,6 @@ const FinanzasPage = memo(function FinanzasPage() {
           .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
           .accounting-info-text strong { color: var(--text-primary); }
 
-          /* Mobile FAB */
-          .mobile-fab-container { display: none; }
-          .mobile-fab-backdrop { display: none; }
-
           /* Responsive */
           @media (max-width: 1024px) {
             .accounts-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2855,53 +2807,6 @@ const FinanzasPage = memo(function FinanzasPage() {
             .page-subtitle { font-size: 0.8125rem; }
             /* Hide desktop buttons on mobile - use FAB instead */
             .desktop-only-actions { display: none !important; }
-            /* Mobile FAB */
-            .mobile-fab-container { display: flex; flex-direction: column; align-items: flex-end; position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
-            .mobile-fab-main {
-              width: 56px; height: 56px; border-radius: 50%;
-              background: var(--color-prosper-green);
-              color: white; border: none;
-              display: flex; align-items: center; justify-content: center;
-              cursor: pointer; box-shadow: 0 4px 20px rgba(61,204,142,0.4), 0 0 0 4px rgba(61,204,142,0.1);
-              transition: all 0.3s ease;
-            }
-            .mobile-fab-main:active { transform: scale(0.92); }
-            .mobile-fab-menu {
-              display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
-              margin-bottom: 12px;
-              opacity: 0; transform: translateY(20px) scale(0.9);
-              pointer-events: none;
-              transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            }
-            .mobile-fab-container.open .mobile-fab-menu {
-              opacity: 1; transform: translateY(0) scale(1);
-              pointer-events: auto;
-            }
-            .mobile-fab-item {
-              display: flex; align-items: center; gap: 10px;
-              background: var(--bg-card);
-              border: 1px solid var(--border-default);
-              border-radius: 999px;
-              padding: 10px 16px 10px 12px;
-              font-size: 0.875rem; font-weight: 600; color: var(--text-primary);
-              cursor: pointer; white-space: nowrap;
-              box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-              transition: all 0.2s ease;
-              font-family: inherit;
-            }
-            .mobile-fab-item:active { transform: scale(0.95); }
-            .mobile-fab-item:hover { border-color: var(--color-prosper-green); }
-            .mobile-fab-item-danger { color: var(--color-error); border-color: rgba(239,68,68,0.3); }
-            .mobile-fab-item-danger:hover { border-color: var(--color-error); background: rgba(239,68,68,0.08); }
-            .mobile-fab-icon { font-size: 1.125rem; }
-            .mobile-fab-label { font-size: 0.8125rem; }
-            .mobile-fab-backdrop {
-              display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-              z-index: 9998; backdrop-filter: blur(2px);
-              animation: fadeIn 0.2s ease;
-            }
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
@@ -3011,7 +2916,154 @@ const FinanzasPage = memo(function FinanzasPage() {
             .transactions-table { min-width: 550px; font-size: 0.75rem; }
             .modal-content { padding: 14px 10px; }
           }
+
+          /* Mobile FAB - Always fixed bottom-right */
+          .mobile-fab-container {
+            display: none;
+          }
+          .mobile-fab-backdrop {
+            display: none;
+          }
+          @media (max-width: 768px) {
+            .mobile-fab-container {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              position: fixed;
+              bottom: 20px;
+              right: 20px;
+              z-index: 9999;
+            }
+            .mobile-fab-main {
+              width: 56px;
+              height: 56px;
+              border-radius: 16px;
+              background: var(--color-prosper-green);
+              color: white;
+              border: none;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              box-shadow: 0 4px 20px rgba(61,204,142,0.5), 0 0 0 4px rgba(61,204,142,0.15);
+              transition: all 0.2s ease;
+            }
+            .mobile-fab-main:active {
+              transform: scale(0.92);
+            }
+            .mobile-fab-menu {
+              display: flex;
+              flex-direction: column;
+              align-items: flex-end;
+              gap: 8px;
+              margin-bottom: 12px;
+              opacity: 0;
+              transform: translateY(16px) scale(0.95);
+              pointer-events: none;
+              transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .mobile-fab-container.open .mobile-fab-menu {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+              pointer-events: auto;
+            }
+            .mobile-fab-item {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              background: var(--bg-card);
+              border: 1px solid var(--border-default);
+              border-radius: 999px;
+              padding: 10px 16px 10px 12px;
+              font-size: 0.875rem;
+              font-weight: 600;
+              color: var(--text-primary);
+              cursor: pointer;
+              white-space: nowrap;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+              transition: all 0.15s ease;
+              font-family: inherit;
+            }
+            .mobile-fab-item:active {
+              transform: scale(0.95);
+            }
+            .mobile-fab-item:hover {
+              border-color: var(--color-prosper-green);
+            }
+            .mobile-fab-item-danger {
+              color: var(--color-error);
+              border-color: rgba(239,68,68,0.3);
+            }
+            .mobile-fab-item-danger:hover {
+              border-color: var(--color-error);
+              background: rgba(239,68,68,0.08);
+            }
+            .mobile-fab-icon {
+              font-size: 1.125rem;
+            }
+            .mobile-fab-label {
+              font-size: 0.8125rem;
+            }
+            .mobile-fab-backdrop {
+              display: block;
+              position: fixed;
+              inset: 0;
+              background: rgba(0,0,0,0.4);
+              z-index: 9998;
+              backdrop-filter: blur(2px);
+              animation: fadeIn 0.2s ease;
+            }
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+          }
         `}</style>
+
+        {/* Mobile FAB - Fixed at bottom of page */}
+        <div className={`mobile-fab-container ${fabOpen ? 'open' : ''}`}>
+          <div className="mobile-fab-menu">
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowModal(true); }}>
+              <span className="mobile-fab-icon">💸</span>
+              <span className="mobile-fab-label">Nueva Transacción</span>
+            </button>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountModal(true); }}>
+              <span className="mobile-fab-icon">💳</span>
+              <span className="mobile-fab-label">Nueva Cuenta</span>
+            </button>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowTransferModal(true); }}>
+              <span className="mobile-fab-icon">🔄</span>
+              <span className="mobile-fab-label">Transferir</span>
+            </button>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowVepayModal(true); }}>
+              <span className="mobile-fab-icon">📷</span>
+              <span className="mobile-fab-label">Importar Captura</span>
+            </button>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountingModal(true); }}>
+              <span className="mobile-fab-icon">📊</span>
+              <span className="mobile-fab-label">Gestión Contable</span>
+            </button>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); toggleShowAmounts(); }}>
+              <span className="mobile-fab-icon">{showAmounts ? '🙈' : '👁️'}</span>
+              <span className="mobile-fab-label">{showAmounts ? 'Ocultar Saldos' : 'Mostrar Saldos'}</span>
+            </button>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setP2pMode(!p2pMode); }}>
+              <span className="mobile-fab-icon">💱</span>
+              <span className="mobile-fab-label">Modo {p2pMode ? 'P2P' : 'Oficial'}</span>
+            </button>
+            <button className="mobile-fab-item mobile-fab-item-danger" onClick={() => { setFabOpen(false); handleClearAllHistory(); }}>
+              <span className="mobile-fab-icon">🗑️</span>
+              <span className="mobile-fab-label">Borrar Historial</span>
+            </button>
+          </div>
+          <button className="mobile-fab-main" onClick={() => setFabOpen(!fabOpen)} aria-label="Acciones">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
+        {fabOpen && <div className="mobile-fab-backdrop" onClick={() => setFabOpen(false)} />}
       </DashboardLayout>
     </ProtectedRoute>
   );
