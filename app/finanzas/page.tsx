@@ -2066,24 +2066,24 @@ const FinanzasPage = memo(function FinanzasPage() {
           /* Rates Tables */
           .rates-tables-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; align-items: start; }
           .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
-          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(180deg, rgba(255,255,255,0.03), var(--bg-input)); border-bottom: 1px solid var(--border-default); }
+          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.03), var(--bg-input)); border-bottom: 1px solid var(--border-default); }
           .rates-table-header-left { display: flex; align-items: center; gap: 12px; }
           .rates-table-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; }
           .rates-table-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
           .rates-table-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
           .rates-table { width: 100%; border-collapse: collapse; flex: 1; }
-          .rates-table th { text-align: left; padding: 10px 18px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg-card); border-bottom: 1px solid var(--border-default); }
-          .rates-table th.rates-th-value { text-align: right; }
+          .rates-table th { text-align: left; padding: 10px 12px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg-card); border-bottom: 1px solid var(--border-default); }
+          .rates-table th.rates-th-value { text-align: right; width: 1%; white-space: nowrap; }
           .rates-table td { padding: 0; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); height: 56px; }
           .rates-table tr:last-child td { border-bottom: none; }
           .rates-table tbody tr { transition: background 0.15s ease; }
           .rates-table tbody tr:hover { background: var(--bg-input); }
-          .rates-currency-cell { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 100%; }
-          .rates-currency-flag { font-size: 1.25rem; flex-shrink: 0; }
+          .rates-currency-cell { display: flex; align-items: center; gap: 10px; padding: 0 12px; height: 100%; }
+          .rates-currency-flag { font-size: 1.125rem; flex-shrink: 0; }
           .rates-currency-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
           .rates-currency-code { font-weight: 700; font-size: 0.8125rem; color: var(--text-primary); }
           .rates-currency-name { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
-          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; padding: 0 18px; height: 56px; line-height: 56px; font-size: 0.8125rem; white-space: nowrap; }
+          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; padding: 0 12px; height: 56px; line-height: 56px; font-size: 0.8125rem; white-space: nowrap; }
           .rates-dimmed { opacity: 0.4; color: var(--text-secondary); }
           .rates-highlight { color: #4edea3; font-weight: 700; }
           .rates-row-p2p-active { background: rgba(78, 222, 163, 0.05) !important; }
