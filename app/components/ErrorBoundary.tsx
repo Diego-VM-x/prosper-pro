@@ -83,10 +83,10 @@ export class ErrorBoundary extends Component<Props, State> {
               Ir al inicio
             </button>
           </div>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details style={{ marginTop: '24px', textAlign: 'left', maxWidth: '500px' }}>
+          {this.state.error && (
+            <details style={{ marginTop: '24px', textAlign: 'left', maxWidth: '500px' }} open>
               <summary style={{ cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
-                Detalles del error (solo desarrollo)
+                Detalles del error
               </summary>
               <pre style={{
                 fontSize: '0.6875rem',
@@ -98,6 +98,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 color: 'var(--color-error, #EF4444)',
               }}>
                 {this.state.error.message}
+                {'\n\nStack:\n'}
+                {this.state.error.stack || 'No disponible'}
               </pre>
             </details>
           )}
