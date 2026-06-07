@@ -96,6 +96,15 @@ const FinanzasPage = memo(function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
+
+  /** Formatea monto para tabla: crypto (BTC/ETH) se muestra en USD, resto en su moneda nativa */
+  const formatTableAmount = useCallback((amount: number, currency: CurrencyCode) => {
+    if (currency === 'BTC' || currency === 'ETH') {
+      const usdAmount = convertBetween(amount, currency, 'USD');
+      return formatInCurrency(usdAmount, 'USD');
+    }
+    return formatInCurrency(amount, currency);
+  }, [convertBetween, formatInCurrency]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -1197,9 +1206,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                           <>
                             <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
                               {tx.type === 'expense' ? '-' : '+'}
-                              {formatInCurrency(tx.amount, txCurrency)}
+                              {formatTableAmount(tx.amount, txCurrency)}
                             </div>
-                            {txCurrency !== displayCurrency && (
+                            {txCurrency !== displayCurrency && txCurrency !== 'BTC' && txCurrency !== 'ETH' && (
                               <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
                                 ≈ {tx.type === 'expense' ? '-' : '+'}
                                 {formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
