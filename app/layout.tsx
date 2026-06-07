@@ -115,6 +115,32 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        {/* Polyfill crítico: localStorage/sessionStorage para modo privado / sandbox */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var mem = {};
+                function makeStore() {
+                  return {
+                    getItem: function(k) { return mem[k] === undefined ? null : mem[k]; },
+                    setItem: function(k, v) { mem[k] = String(v); },
+                    removeItem: function(k) { delete mem[k]; },
+                    clear: function() { mem = {}; },
+                    key: function(i) { return Object.keys(mem)[i] || null; },
+                    get length() { return Object.keys(mem).length; }
+                  };
+                }
+                try { localStorage.getItem('__t'); } catch(e) {
+                  try { window.localStorage = makeStore(); } catch(e2) {}
+                }
+                try { sessionStorage.getItem('__t'); } catch(e) {
+                  try { window.sessionStorage = makeStore(); } catch(e2) {}
+                }
+              })();
+            `,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />

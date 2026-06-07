@@ -51,43 +51,57 @@ if (isBrowser) {
 }
 
 // Polyfill de localStorage/sessionStorage para modo privado / sandbox
-const memoryStore: Record<string, string> = {};
-function createMemoryStorage(): Storage {
+const memoryStoreLS: Record<string, string> = {};
+const memoryStoreSS: Record<string, string> = {};
+
+function createMemoryStorage(store: Record<string, string>): Storage {
   return {
-    getItem(key: string): string | null { return memoryStore[key] ?? null; },
-    setItem(key: string, value: string): void { memoryStore[key] = value; },
-    removeItem(key: string): void { delete memoryStore[key]; },
-    clear(): void { Object.keys(memoryStore).forEach((k) => delete memoryStore[k]); },
-    key(index: number): string | null { return Object.keys(memoryStore)[index] ?? null; },
-    get length() { return Object.keys(memoryStore).length; },
+    getItem(key: string): string | null { return store[key] ?? null; },
+    setItem(key: string, value: string): void { store[key] = value; },
+    removeItem(key: string): void { delete store[key]; },
+    clear(): void { Object.keys(store).forEach((k) => delete store[k]); },
+    key(index: number): string | null { return Object.keys(store)[index] ?? null; },
+    get length() { return Object.keys(store).length; },
   };
 }
 
 if (isBrowser) {
+  // Polyfill localStorage
   try {
-    localStorage.getItem('__test');
+    const test = localStorage.getItem('__test');
+    void test;
   } catch {
     try {
-      Object.defineProperty(window, 'localStorage', {
-        value: createMemoryStorage(),
-        configurable: true,
-        writable: true,
-      });
+      (window as any).localStorage = createMemoryStorage(memoryStoreLS);
     } catch {
-      // Some browsers don't allow redefining window.localStorage
+      try {
+        Object.defineProperty(window, 'localStorage', {
+          value: createMemoryStorage(memoryStoreLS),
+          configurable: true,
+          writable: true,
+        });
+      } catch {
+        // Fallback: some browsers block all storage access
+      }
     }
   }
+  // Polyfill sessionStorage
   try {
-    sessionStorage.getItem('__test');
+    const test = sessionStorage.getItem('__test');
+    void test;
   } catch {
     try {
-      Object.defineProperty(window, 'sessionStorage', {
-        value: createMemoryStorage(),
-        configurable: true,
-        writable: true,
-      });
+      (window as any).sessionStorage = createMemoryStorage(memoryStoreSS);
     } catch {
-      // Some browsers don't allow redefining window.sessionStorage
+      try {
+        Object.defineProperty(window, 'sessionStorage', {
+          value: createMemoryStorage(memoryStoreSS),
+          configurable: true,
+          writable: true,
+        });
+      } catch {
+        // Fallback: some browsers block all storage access
+      }
     }
   }
 }
@@ -117,25 +131,35 @@ let app: FirebaseApp;
 let db: any;
 let auth: any = null;
 
-if (isBrowser) {
-  console.log('[Firebase DEBUG] apiKey starts with:', firebaseConfig.apiKey?.slice(0, 8));
-  console.log('[Firebase DEBUG] projectId:', firebaseConfig.projectId);
-  console.log('[Firebase DEBUG] appId:', firebaseConfig.appId);
+const hasCriticalVars = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
+
+function safeLog(...args: any[]) {
+  try { console.log(...args); } catch {}
+}
+function safeWarn(...args: any[]) {
+  try { console.warn(...args); } catch {}
+}
+function safeError(...args: any[]) {
+  try { console.error(...args); } catch {}
 }
 
-const hasCriticalVars = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
+if (isBrowser) {
+  safeLog('[Firebase DEBUG] apiKey starts with:', firebaseConfig.apiKey?.slice(0, 8));
+  safeLog('[Firebase DEBUG] projectId:', firebaseConfig.projectId);
+  safeLog('[Firebase DEBUG] appId:', firebaseConfig.appId);
+}
 
 try {
   if (hasCriticalVars) {
-    console.log('[Firebase DEBUG] hasCriticalVars = true, initializing...');
+    safeLog('[Firebase DEBUG] hasCriticalVars = true, initializing...');
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-    console.log('[Firebase DEBUG] app initialized, name:', app.name);
+    safeLog('[Firebase DEBUG] app initialized, name:', app.name);
 
     if (isBrowser) {
-      console.log('[Firebase DEBUG] Browser mode, loading Firestore + Auth...');
+      safeLog('[Firebase DEBUG] Browser mode, loading Firestore + Auth...');
       db = getFirestore(app);
       auth = getAuth(app);
-      console.log('[Firebase DEBUG] auth object:', auth ? 'present' : 'NULL');
+      safeLog('[Firebase DEBUG] auth object:', auth ? 'present' : 'NULL');
 
       // Limpiar sessionStorage de firebase en cada inicio (evita conflictos con tabs)
       try {
@@ -145,12 +169,12 @@ try {
         }
       } catch {}
     } else {
-      console.log('[Firebase DEBUG] SSR mode, using mocks');
+      safeLog('[Firebase DEBUG] SSR mode, using mocks');
       db = createFirestoreMock();
       auth = null;
     }
   } else if (isBrowser) {
-    console.warn('[Firebase] Configuración incompleta. La app funcionará sin datos de Firebase.');
+    safeWarn('[Firebase] Configuración incompleta. La app funcionará sin datos de Firebase.');
     app = !getApps().length
       ? initializeApp({ apiKey: 'dummy', projectId: 'dummy', appId: 'dummy' })
       : getApp();
@@ -160,7 +184,7 @@ try {
     db = createFirestoreMock();
   }
 } catch (e) {
-  console.error('[Firebase] Error al inicializar:', e);
+  safeError('[Firebase] Error al inicializar:', e);
   if (isBrowser) {
     try {
       app = !getApps().length
