@@ -35,7 +35,7 @@ const ACCOUNT_COLORS = [
   '#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899',
   '#06B6D4', '#6366F1', '#F97316', '#84CC16', '#14B8A6', '#A855F7',
   '#E11D48', '#0EA5E9', '#10B981', '#D946EF', '#F43F5E', '#22C55E',
-  '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444', '#3B82F6', '#3DCC8E',
+  '#64748B', '#C026D3', '#0891B2', '#B45309', '#1D4ED8', '#15803D',
 ];
 
 const TYPE_ICONS: Record<string, string> = { income: '📥', expense: '📤', saving: '💰' };
