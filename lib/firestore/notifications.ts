@@ -122,13 +122,29 @@ export function sendBrowserNotification(
 ) {
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
-  new Notification(title, {
-    body,
-    icon: '/logo-icon.png',
-    badge: '/logo-icon.png',
-    tag: `prosper-${channel}-${Date.now()}`,
-    silent: false,
-  });
+  try {
+    new Notification(title, {
+      body,
+      icon: '/logo-icon.png',
+      badge: '/logo-icon.png',
+      tag: `prosper-${channel}-${Date.now()}`,
+      silent: false,
+    });
+  } catch {
+    // Safari iOS y algunos Android no soportan new Notification()
+    // Intentar via ServiceWorker si está disponible
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.showNotification(title, {
+          body,
+          icon: '/logo-icon.png',
+          badge: '/logo-icon.png',
+          tag: `prosper-${channel}-${Date.now()}`,
+          silent: false,
+        }).catch(() => {});
+      }).catch(() => {});
+    }
+  }
 }
 
 // ─── Helpers por tipo de notificación ───────────────────────────────────────
