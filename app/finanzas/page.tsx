@@ -2539,6 +2539,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             padding: 14px 18px; background: var(--bg-card);
             border: 1px solid var(--border-default); border-radius: var(--radius-lg);
             cursor: pointer; transition: all 0.15s ease; user-select: none;
+            margin-bottom: 16px;
           }
           .rates-section-header:hover { border-color: rgba(61,204,142,0.3); }
           .rates-section-header-left { display: flex; align-items: center; gap: 12px; }
