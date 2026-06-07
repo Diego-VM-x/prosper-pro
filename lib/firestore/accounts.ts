@@ -14,9 +14,10 @@ import {
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { FinancialAccount } from '@/types';
+import type { FinancialAccount, AccountGroup } from '@/types';
 
 const COLLECTION = 'accounts';
+const GROUPS_COLLECTION = 'account_groups';
 
 // Suscribirse a cuentas del usuario
 export function subscribeToAccounts(ownerId: string, callback: (accounts: FinancialAccount[]) => void) {
@@ -383,4 +384,62 @@ export async function wipeAllUserData(ownerId: string): Promise<{ wiped: string[
   }
 
   return { wiped, errors };
+}
+
+// ============================================================
+// ACCOUNT GROUPS
+// ============================================================
+
+export function subscribeToAccountGroups(ownerId: string, callback: (groups: AccountGroup[]) => void) {
+  const q = query(collection(db, GROUPS_COLLECTION), where('ownerId', '==', ownerId));
+  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const groups: AccountGroup[] = [];
+    snapshot.forEach((docSnap) => {
+      groups.push({ id: docSnap.id, ...docSnap.data() } as AccountGroup);
+    });
+    groups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    callback(groups);
+  }, (error) => {
+    console.error('subscribeToAccountGroups error:', error);
+    callback([]);
+  });
+}
+
+export async function getAccountGroupsByOwnerId(ownerId: string): Promise<AccountGroup[]> {
+  const q = query(collection(db, GROUPS_COLLECTION), where('ownerId', '==', ownerId));
+  const snapshot = await getDocs(q);
+  const groups: AccountGroup[] = [];
+  snapshot.forEach((docSnap) => {
+    groups.push({ id: docSnap.id, ...docSnap.data() } as AccountGroup);
+  });
+  groups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return groups;
+}
+
+export async function createAccountGroup(group: Omit<AccountGroup, 'id'>): Promise<string> {
+  const now = Date.now();
+  const docRef = await addDoc(collection(db, GROUPS_COLLECTION), {
+    ...group,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return docRef.id;
+}
+
+export async function updateAccountGroup(groupId: string, updates: Partial<AccountGroup>) {
+  await updateDoc(doc(db, GROUPS_COLLECTION, groupId), {
+    ...updates,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function deleteAccountGroup(groupId: string) {
+  await deleteDoc(doc(db, GROUPS_COLLECTION, groupId));
+}
+
+export async function moveAccountToGroup(accountId: string, groupId: string | null) {
+  await updateDoc(doc(db, COLLECTION, accountId), {
+    groupId: groupId ?? null,
+    updatedAt: Date.now(),
+  });
 }

@@ -8,6 +8,8 @@ export type CurrencyCode = 'USD' | 'BS' | 'EUR' | 'USDT' | 'SOL' | 'BTC' | 'ETH'
 export interface ExchangeRates {
   rates: Record<CurrencyCode, number>;
   p2pRates?: Record<string, number>;
+  /** Crypto prices in USD (from CoinGecko) */
+  cryptoPrices?: Record<string, number>;
   updatedAt: number;
   source: string;
 }
@@ -26,6 +28,18 @@ export interface FinancialAccount {
   color?: string;
   /** Preferred rate mode for this account (only relevant for USDT/SOL/BTC/USDC) */
   rateMode?: 'official' | 'p2p';
+  /** Group this account belongs to */
+  groupId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AccountGroup {
+  id: string;
+  ownerId: string;
+  name: string;
+  color?: string;
+  order?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -100,6 +114,8 @@ export interface FinancialPlan {
   shareAmount?: number;
   accountId?: string;
   contributions?: Record<string, number>;
+  /** Currency for this plan's target/current amounts */
+  currency?: CurrencyCode;
   createdAt: number;
   updatedAt: number;
 }

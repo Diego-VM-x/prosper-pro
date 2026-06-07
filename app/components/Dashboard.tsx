@@ -539,7 +539,7 @@ export const Dashboard = memo(function Dashboard() {
                       </div>
                       <div className="plan-progress-info">
                         <span className="plan-progress-pct" style={{ color: typeColors[plan.type] }}>{Math.round(pct)}%</span>
-                        <span className="plan-progress-amounts">{formatAmount(plan.current)} / {formatAmount(plan.target)}</span>
+                        <span className="plan-progress-amounts">{formatInCurrency(plan.current, plan.currency || displayCurrency)} / {formatInCurrency(plan.target, plan.currency || displayCurrency)}</span>
                       </div>
                     </div>
                   </div>

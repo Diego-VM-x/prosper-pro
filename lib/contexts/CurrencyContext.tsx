@@ -242,6 +242,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         let btcRate = 4500000;
         let ethRate = 135000;
         let usdcRate = oficialRate;
+        const cryptoPrices: Record<string, number> = { USDT: 1.0, SOL: 200.0, BTC: 100000.0, ETH: 3000.0, USDC: 1.0 };
         if (cryptoRes.status === 'fulfilled' && cryptoRes.value.ok) {
           const data = await cryptoRes.value.json();
           const usdtUsd = data?.tether?.usd;
@@ -249,11 +250,26 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
           const btcUsd = data?.bitcoin?.usd;
           const ethUsd = data?.ethereum?.usd;
           const usdcUsd = data?.['usd-coin']?.usd;
-          if (usdtUsd && usdtUsd > 0) usdtRate = Number((usdtUsd * oficialRate).toFixed(2));
-          if (solUsd && solUsd > 0) solRate = Number((solUsd * oficialRate).toFixed(2));
-          if (btcUsd && btcUsd > 0) btcRate = Number((btcUsd * oficialRate).toFixed(2));
-          if (ethUsd && ethUsd > 0) ethRate = Number((ethUsd * oficialRate).toFixed(2));
-          if (usdcUsd && usdcUsd > 0) usdcRate = Number((usdcUsd * oficialRate).toFixed(2));
+          if (usdtUsd && usdtUsd > 0) {
+            usdtRate = Number((usdtUsd * oficialRate).toFixed(2));
+            cryptoPrices.USDT = usdtUsd;
+          }
+          if (solUsd && solUsd > 0) {
+            solRate = Number((solUsd * oficialRate).toFixed(2));
+            cryptoPrices.SOL = solUsd;
+          }
+          if (btcUsd && btcUsd > 0) {
+            btcRate = Number((btcUsd * oficialRate).toFixed(2));
+            cryptoPrices.BTC = btcUsd;
+          }
+          if (ethUsd && ethUsd > 0) {
+            ethRate = Number((ethUsd * oficialRate).toFixed(2));
+            cryptoPrices.ETH = ethUsd;
+          }
+          if (usdcUsd && usdcUsd > 0) {
+            usdcRate = Number((usdcUsd * oficialRate).toFixed(2));
+            cryptoPrices.USDC = usdcUsd;
+          }
         }
 
         const p2pRates: Record<string, number> = {};
@@ -275,6 +291,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             COP: copRate,
           },
           p2pRates,
+          cryptoPrices,
           updatedAt,
           source: 'api',
         };

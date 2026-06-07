@@ -264,8 +264,8 @@
 
 /* Plans List */
 .plans-list { display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto; }
-.plans-card .plans-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 10px; }
-.plans-card .plan-item { min-width: 150px; flex: 0 0 auto; }
+.plans-card .plans-list { flex-direction: column; overflow-x: hidden; overflow-y: auto; gap: 10px; max-height: none; }
+.plans-card .plan-item { width: 100%; flex: 0 0 auto; }
 .plan-item { cursor: pointer; transition: all var(--transition-fast); }
 .plan-item:hover { opacity: 0.85; }
 .plan-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -308,7 +308,7 @@
 .widgets-grid .content-card {
   min-width: 0;
 }
-.widgets-grid .plans-card { grid-column: span 1; }
+.widgets-grid .plans-card { grid-column: span 2; }
 .widgets-grid .progress-section { grid-column: span 1; }
 .widgets-grid .deadlines-section { grid-column: span 1; }
 .widgets-grid .accounts-section { grid-column: span 2; }
@@ -478,6 +478,7 @@ select.form-input { cursor: pointer; }
   .welcome-title { font-size: 1.5rem; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .widgets-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .widgets-grid .plans-card { grid-column: span 2; }
   .widgets-grid .accounts-section { grid-column: span 2; }
   .chart-card { min-height: auto; }
 }
@@ -488,6 +489,7 @@ select.form-input { cursor: pointer; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .stat-pill { padding: 14px 16px; }
   .widgets-grid { grid-template-columns: 1fr; gap: 14px; }
+  .widgets-grid .plans-card { grid-column: span 1; }
   .widgets-grid .accounts-section { grid-column: span 1; }
   .widgets-grid .content-card { min-width: 0; }
   .content-card { padding: 16px; }
@@ -508,6 +510,7 @@ select.form-input { cursor: pointer; }
   .stat-pill-value { font-size: 0.875rem; word-break: break-word; line-height: 1.2; }
   .stat-pill-label { font-size: 0.5625rem; }
   .widgets-grid { grid-template-columns: 1fr; gap: 12px; }
+  .widgets-grid .plans-card { grid-column: span 1; }
   .widgets-grid .accounts-section { grid-column: span 1; }
   .content-card { padding: 16px; border-radius: var(--radius-lg); }
   .quick-actions-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }

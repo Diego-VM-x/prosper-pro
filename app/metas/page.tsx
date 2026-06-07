@@ -17,7 +17,8 @@ import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRe
 import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '../components/icons';
-import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest } from '@/types';
+import { CURRENCY_LIST } from '@/lib/currency';
+import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest, CurrencyCode } from '@/types';
 
 const PLAN_TYPES: { value: PlanType; label: string; icon: string; color: string; desc: string }[] = [
   { value: 'savings', label: 'Plan de Ahorro', icon: '💰', color: '#3DCC8E', desc: 'Ahorra para una meta' },
@@ -93,7 +94,7 @@ const MetasPage = memo(function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, formatInCurrency } = useCurrency();
   const uid = user?.uid || '';
 
   const [filter, setFilter] = useState<PlanType | 'all'>('all');
@@ -116,6 +117,7 @@ const MetasPage = memo(function MetasPage() {
   const [formDeadline, setFormDeadline] = useState(todayISO());
   const [formFrequency, setFormFrequency] = useState<RecurringFrequency>('monthly');
   const [formAccountId, setFormAccountId] = useState('');
+  const [formCurrency, setFormCurrency] = useState<CurrencyCode>(displayCurrency);
   const [formSharedEmail, setFormSharedEmail] = useState('');
   const [formShareAmount, setFormShareAmount] = useState('');
   const [formShareMessage, setFormShareMessage] = useState('');
@@ -194,6 +196,7 @@ const MetasPage = memo(function MetasPage() {
     setFormDeadline(todayISO());
     setFormFrequency('monthly');
     setFormAccountId('');
+    setFormCurrency(displayCurrency);
     setFormSharedEmail('');
     setFormShareAmount('');
     setFormShareMessage('');
@@ -227,6 +230,7 @@ const MetasPage = memo(function MetasPage() {
         sharedWith: [],
         shareAmount: formShareAmount ? Number(formShareAmount) : 0,
         totalPaid: 0,
+        currency: formCurrency,
       };
 
       // Solo agregar campos opcionales si tienen valor
@@ -268,6 +272,7 @@ const MetasPage = memo(function MetasPage() {
         frequency: formType === 'recurring' ? formFrequency : editingPlan.frequency,
         nextDueDate: formType === 'recurring' ? formDeadline : editingPlan.nextDueDate,
         accountId: formAccountId || undefined,
+        currency: formCurrency,
       });
       success(`"${formTitle}" actualizado`);
       setEditingPlan(null);
@@ -531,6 +536,7 @@ const MetasPage = memo(function MetasPage() {
     setFormDeadline(plan.deadline || todayISO());
     setFormFrequency(plan.frequency || 'monthly');
     setFormAccountId(plan.accountId || '');
+    setFormCurrency(plan.currency || displayCurrency);
     setShowNewModal(true);
   };
 
@@ -678,9 +684,9 @@ const MetasPage = memo(function MetasPage() {
                       {plan.description && <p className="plan-card-desc">{plan.description}</p>}
 
                       <div className="plan-card-amounts">
-                        <span className="plan-card-current">{formatAmount(plan.current)}</span>
+                        <span className="plan-card-current">{formatInCurrency(plan.current, plan.currency || displayCurrency)}</span>
                         <span className="plan-card-separator">/</span>
-                        <span className="plan-card-target">{formatAmount(plan.target)}</span>
+                        <span className="plan-card-target">{formatInCurrency(plan.target, plan.currency || displayCurrency)}</span>
                       </div>
 
                       <div className="plan-card-progress">
@@ -711,7 +717,7 @@ const MetasPage = memo(function MetasPage() {
                         <div className="plan-card-contributions">
                           {Object.entries(plan.contributions).map(([contribUid, contribAmount]) => (
                             <span key={contribUid} className="plan-card-meta-item plan-card-contrib-item">
-                              {contribUid === uid ? 'Tu aporte' : 'Otro usuario'}: {formatAmount(contribAmount)}
+                              {contribUid === uid ? 'Tu aporte' : 'Otro usuario'}: {formatInCurrency(contribAmount, plan.currency || displayCurrency)}
                             </span>
                           ))}
                         </div>
@@ -799,26 +805,36 @@ const MetasPage = memo(function MetasPage() {
                   </div>
 
                   <div className="plan-field-row">
-<div className="plan-field">
-  <label className="plan-label">Categoría</label>
-  <div className="plan-category-group">
-    {PLAN_CATEGORIES.map(category => (
-      <button
-        key={category.value}
-        className={`plan-category-btn ${formCategory === category.value ? 'active' : ''}`}
-        onClick={() => setFormCategory(category.value)}
-      >
-        {category.icon} {category.value}
-      </button>
-    ))}
-  </div>
-</div>
                     <div className="plan-field">
-                      <label className="plan-label">Monto *</label>
-                      <div className="plan-input-wrap">
-                        <span className="plan-currency">{currencyMap[displayCurrency].symbol}</span>
-                        <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder="0.00" value={formTarget} onChange={e => setFormTarget(e.target.value)} />
+                      <label className="plan-label">Categoría</label>
+                      <div className="plan-category-group">
+                        {PLAN_CATEGORIES.map(category => (
+                          <button
+                            key={category.value}
+                            className={`plan-category-btn ${formCategory === category.value ? 'active' : ''}`}
+                            onClick={() => setFormCategory(category.value)}
+                          >
+                            {category.icon} {category.value}
+                          </button>
+                        ))}
                       </div>
+                    </div>
+                    <div className="plan-field">
+                      <label className="plan-label">Moneda</label>
+                      <CustomSelect
+                        value={formCurrency}
+                        onChange={v => setFormCurrency(v as CurrencyCode)}
+                        options={CURRENCY_LIST.map(c => ({ value: c, label: `${currencyMap[c].flag} ${c}`, icon: currencyMap[c].flag }))}
+                        placeholder="Seleccionar..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="plan-field">
+                    <label className="plan-label">Monto *</label>
+                    <div className="plan-input-wrap">
+                      <span className="plan-currency">{currencyMap[formCurrency].symbol}</span>
+                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'} placeholder="0.00" value={formTarget} onChange={e => setFormTarget(e.target.value)} />
                     </div>
                   </div>
 
@@ -873,7 +889,7 @@ const MetasPage = memo(function MetasPage() {
                     <label className="plan-label">Monto</label>
                     <div className="plan-input-wrap">
                       <span className="plan-currency">{currencyMap[displayCurrency].symbol}</span>
-                      <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder="0.00" value={addAmount} onChange={e => setAddAmount(e.target.value)} autoFocus />
+                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(showAddFundsModal?.currency || displayCurrency) ? '0.00000001' : '0.01'} placeholder="0.00" value={addAmount} onChange={e => setAddAmount(e.target.value)} autoFocus />
                     </div>
                   </div>
                   <div className="plan-field">

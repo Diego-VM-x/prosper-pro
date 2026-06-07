@@ -9,7 +9,7 @@ import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
@@ -17,7 +17,7 @@ import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
 import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPAY_BANKS } from '@/lib/vepay';
 import { getAccountRates, convertCurrency } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
-import type { Transaction, FinancialAccount, AccountType, CurrencyCode } from '@/types';
+import type { Transaction, FinancialAccount, AccountType, CurrencyCode, AccountGroup } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
   income: ['💰 Salario', '💼 Freelance', '📊 Inversiones', '🏢 Negocio', '📌 Otro'],
@@ -30,6 +30,13 @@ const ACCOUNT_TYPE_COLORS: Record<string, string> = {
   savings: '#3DCC8E',
   cash: '#F59E0B',
 };
+
+const ACCOUNT_COLORS = [
+  '#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899',
+  '#06B6D4', '#6366F1', '#F97316', '#84CC16', '#14B8A6', '#A855F7',
+  '#E11D48', '#0EA5E9', '#10B981', '#D946EF', '#F43F5E', '#22C55E',
+  '#F59E0B', '#8B5CF6', '#06B6D4', '#EF4444', '#3B82F6', '#3DCC8E',
+];
 
 const TYPE_ICONS: Record<string, string> = { income: '📥', expense: '📤', saving: '💰' };
 
@@ -97,14 +104,15 @@ const FinanzasPage = memo(function FinanzasPage() {
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
 
-  /** Formatea monto para tabla: crypto (BTC/ETH) se muestra en USD, resto en su moneda nativa */
+  /** Formatea monto para tabla: crypto muestra USD + BS, resto en su moneda nativa */
   const formatTableAmount = useCallback((amount: number, currency: CurrencyCode) => {
-    if (currency === 'BTC' || currency === 'ETH') {
-      const usdAmount = convertBetween(amount, currency, 'USD');
-      return formatInCurrency(usdAmount, 'USD');
-    }
     return formatInCurrency(amount, currency);
-  }, [convertBetween, formatInCurrency]);
+  }, [formatInCurrency]);
+
+  /** Devuelve precio en USD de una crypto */
+  const getCryptoUsdPrice = useCallback((currency: CurrencyCode): number | null => {
+    return rates.cryptoPrices?.[currency] ?? null;
+  }, [rates.cryptoPrices]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -123,6 +131,15 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
+
+  // Account groups
+  const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([]);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<AccountGroup | null>(null);
+  const [groupFormName, setGroupFormName] = useState('');
+  const [groupFormColor, setGroupFormColor] = useState(ACCOUNT_COLORS[0]);
+  const [groupFormLoading, setGroupFormLoading] = useState(false);
+  const [showAssignGroupModal, setShowAssignGroupModal] = useState<string | null>(null);
 
   // P2P rates come from CurrencyContext now (rates.p2pRates)
 
@@ -220,6 +237,15 @@ const FinanzasPage = memo(function FinanzasPage() {
     if (!uid) return;
     const unsub = subscribeToAccounts(uid, (accs) => {
       setAccounts(accs);
+    });
+    return () => unsub();
+  }, [uid]);
+
+  // Suscribirse a grupos de cuentas en tiempo real
+  useEffect(() => {
+    if (!uid) return;
+    const unsub = subscribeToAccountGroups(uid, (groups) => {
+      setAccountGroups(groups);
     });
     return () => unsub();
   }, [uid]);
@@ -591,6 +617,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         description: `Transferencia a: ${toAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(convertedAmount, toCurrency)})` : ''}`,
         date: Date.now(),
         accountId: transfer.fromAccountId,
+        currency: fromCurrency,
       };
       await createTransaction(txDataOut);
 
@@ -602,6 +629,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         description: `Transferencia recibida de: ${fromAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(amount, fromCurrency)})` : ''}`,
         date: Date.now(),
         accountId: transfer.toAccountId,
+        currency: toCurrency,
       };
       await createTransaction(txDataIn);
 
@@ -650,6 +678,96 @@ const FinanzasPage = memo(function FinanzasPage() {
     success('Cuenta actualizada');
     setShowEditAccountModal(false);
     setEditingAccount(null);
+  };
+
+  // ── Account Groups Handlers ──
+  const handleCreateGroup = async () => {
+    if (!groupFormName.trim() || !uid) return;
+    setGroupFormLoading(true);
+    try {
+      await createAccountGroup({
+        ownerId: uid,
+        name: groupFormName.trim(),
+        color: groupFormColor,
+        order: accountGroups.length,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      success(`Grupo "${groupFormName.trim()}" creado`);
+      setShowGroupModal(false);
+      setGroupFormName('');
+      setGroupFormColor(ACCOUNT_COLORS[0]);
+    } catch (e: any) {
+      error(`Error: ${e?.message}`);
+    } finally {
+      setGroupFormLoading(false);
+    }
+  };
+
+  const handleEditGroup = async () => {
+    if (!editingGroup || !groupFormName.trim() || !uid) return;
+    setGroupFormLoading(true);
+    try {
+      await updateAccountGroup(editingGroup.id, {
+        name: groupFormName.trim(),
+        color: groupFormColor,
+        updatedAt: Date.now(),
+      });
+      success(`Grupo "${groupFormName.trim()}" actualizado`);
+      setShowGroupModal(false);
+      setEditingGroup(null);
+      setGroupFormName('');
+      setGroupFormColor(ACCOUNT_COLORS[0]);
+    } catch (e: any) {
+      error(`Error: ${e?.message}`);
+    } finally {
+      setGroupFormLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = (group: AccountGroup) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Eliminar Grupo',
+      message: `¿Eliminar "${group.name}"? Las cuentas del grupo pasarán a "Sin grupo".`,
+      variant: 'danger',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          // Unassign accounts from this group first
+          const groupAccounts = accounts.filter(a => a.groupId === group.id);
+          await Promise.all(groupAccounts.map(a => moveAccountToGroup(a.id, null)));
+          await deleteAccountGroup(group.id);
+          success('Grupo eliminado');
+        } catch (e: any) {
+          error(`Error: ${e?.message}`);
+        }
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const openGroupModal = (group?: AccountGroup) => {
+    if (group) {
+      setEditingGroup(group);
+      setGroupFormName(group.name);
+      setGroupFormColor(group.color || ACCOUNT_COLORS[0]);
+    } else {
+      setEditingGroup(null);
+      setGroupFormName('');
+      setGroupFormColor(ACCOUNT_COLORS[0]);
+    }
+    setShowGroupModal(true);
+  };
+
+  const handleAssignGroup = async (accountId: string, groupId: string | null) => {
+    try {
+      await moveAccountToGroup(accountId, groupId);
+      success(groupId ? 'Cuenta movida al grupo' : 'Cuenta removida del grupo');
+      setShowAssignGroupModal(null);
+    } catch (e: any) {
+      error(`Error: ${e?.message}`);
+    }
   };
 
   const openEditAccount = (acc: FinancialAccount) => {
@@ -997,17 +1115,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                   <span className="rates-table-icon">💎</span>
                   <div>
                     <span className="rates-table-title">Cryptos</span>
-                    <span className="rates-table-subtitle">Oficial vs P2P</span>
+                    <span className="rates-table-subtitle">USD vs BS</span>
                   </div>
                 </div>
-                <button
-                  className={`rates-p2p-toggle ${p2pMode ? 'active' : ''}`}
-                  onClick={() => setP2pMode(!p2pMode)}
-                  title={p2pMode ? 'Mostrar tasas oficiales' : 'Mostrar tasas P2P'}
-                >
-                  <span className={`rates-p2p-dot ${p2pMode ? 'active' : ''}`} />
-                  <span className="rates-p2p-label">P2P</span>
-                </button>
               </div>
               <div className="rates-list">
                 {[
@@ -1016,26 +1126,32 @@ const FinanzasPage = memo(function FinanzasPage() {
                   { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
                   { code: 'USDC', name: 'USD Coin', flag: '💠' },
                 ].map(({ code, name, flag }) => {
-                  const official = rates.rates[code as keyof typeof rates.rates] as number | undefined;
-                  const p2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
-                  const isActive = p2pMode && p2p;
+                  const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
+                  const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                  const bsP2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
                   return (
-                    <div key={code} className={`rates-row ${isActive ? 'rates-row-p2p-active' : ''}`}>
+                    <div key={code} className="rates-row">
                       <div className="rates-row-left">
                         <span className="rates-row-flag">{flag}</span>
                         <div className="rates-row-info">
                           <span className="rates-row-code">{code}</span>
                           <span className="rates-row-name">{name}</span>
-                          {isActive && <span className="rates-p2p-badge">P2P</span>}
                         </div>
                       </div>
                       <div className="rates-row-values">
-                        <span className={`rates-row-val ${isActive ? 'rates-dimmed' : ''}`} title="Tasa oficial">
-                          {official ? formatCompact(official) : '—'}
+                        <span className="rates-row-val rates-usd-val" title="Precio en USD">
+                          {usdPrice ? `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                         </span>
-                        <span className={`rates-row-val ${isActive ? 'rates-highlight' : ''}`} title="Tasa P2P">
-                          {p2p ? formatCompact(p2p) : '—'}
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                          <span className="rates-row-val rates-bs-official" title="Tasa oficial BS">
+                            {bsOfficial ? `Bs. ${formatCompact(bsOfficial)}` : '—'}
+                          </span>
+                          {bsP2p && (
+                            <span className="rates-row-val rates-bs-p2p" title="Tasa P2P BS">
+                              P2P: {formatCompact(bsP2p)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1044,40 +1160,109 @@ const FinanzasPage = memo(function FinanzasPage() {
             </div>
           </div>
 
-          {/* Cuentas */}
-          <div className="accounts-grid">
-            {accounts.map((acc, index) => (
-              <div key={acc.id} className="account-card stagger-item" style={{ borderLeftColor: acc.color, animationDelay: `${index * 0.05}s` }}>
-                <div className="account-card-header">
-                  <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
-                  <div className="account-info">
-                    <span className="account-name">{acc.name}</span>
-                    <span className="account-type">
-                      {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
-                    </span>
+          {/* Cuentas agrupadas */}
+          <div className="accounts-section">
+            {/* Header de sección con botón de grupos */}
+            <div className="accounts-section-header">
+              <h3 className="accounts-section-title">🏦 Mis Cuentas</h3>
+              <button className="btn btn-outline btn-sm" onClick={() => openGroupModal()}>
+                <IconPlus width={12} /> Nuevo Grupo
+              </button>
+            </div>
+
+            {(() => {
+              // Agrupar cuentas
+              const grouped: Record<string, FinancialAccount[]> = {};
+              const ungrouped: FinancialAccount[] = [];
+              accounts.forEach(acc => {
+                if (acc.groupId) {
+                  if (!grouped[acc.groupId]) grouped[acc.groupId] = [];
+                  grouped[acc.groupId].push(acc);
+                } else {
+                  ungrouped.push(acc);
+                }
+              });
+
+              const renderAccountCard = (acc: FinancialAccount, index: number) => (
+                <div key={acc.id} className="account-card stagger-item" style={{ borderLeftColor: acc.color, animationDelay: `${index * 0.05}s` }}>
+                  <div className="account-card-header">
+                    <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
+                    <div className="account-info">
+                      <span className="account-name">{acc.name}</span>
+                      <span className="account-type">
+                        {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
+                      </span>
+                    </div>
+                    <div className="account-actions-group">
+                      <button className="account-action" onClick={() => setShowAssignGroupModal(acc.id)} title="Mover de grupo">📁</button>
+                      <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
+                      <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
+                    </div>
                   </div>
-                  <div className="account-actions-group">
-                    <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
-                    <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
+                  <div className="account-balance-group">
+                    <div className="account-balance" style={{ color: acc.color }}>
+                      {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                    </div>
+                    {showAmounts && acc.currency !== displayCurrency && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
+                        ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="account-balance-group">
-                  <div className="account-balance" style={{ color: acc.color }}>
-                    {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                  </div>
-                  {showAmounts && acc.currency !== displayCurrency && (
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                      ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
+              );
+
+              return (
+                <>
+                  {/* Grupos */}
+                  {accountGroups.map((group) => {
+                    const groupAccs = grouped[group.id] || [];
+                    if (groupAccs.length === 0) return null;
+                    return (
+                      <div key={group.id} className="account-group">
+                        <div className="account-group-header">
+                          <div className="account-group-title" style={{ color: group.color || 'var(--text-primary)' }}>
+                            <span className="account-group-dot" style={{ background: group.color || 'var(--text-primary)' }} />
+                            {group.name}
+                            <span className="account-group-count">{groupAccs.length}</span>
+                          </div>
+                          <div className="account-group-actions">
+                            <button className="account-group-btn" onClick={() => openGroupModal(group)} title="Editar">✏️</button>
+                            <button className="account-group-btn" onClick={() => handleDeleteGroup(group)} title="Eliminar">🗑️</button>
+                          </div>
+                        </div>
+                        <div className="accounts-grid">
+                          {groupAccs.map((acc, i) => renderAccountCard(acc, i))}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Sin grupo */}
+                  {ungrouped.length > 0 && (
+                    <div className="account-group">
+                      <div className="account-group-header">
+                        <div className="account-group-title">
+                          <span className="account-group-dot" style={{ background: 'var(--text-tertiary)' }} />
+                          Sin grupo
+                          <span className="account-group-count">{ungrouped.length}</span>
+                        </div>
+                      </div>
+                      <div className="accounts-grid">
+                        {ungrouped.map((acc, i) => renderAccountCard(acc, i))}
+                      </div>
                     </div>
                   )}
-                </div>
-              </div>
-            ))}
-            {accounts.length === 0 && (
-              <div className="empty-accounts">
-                <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
-            </div>
-          )}
+
+                  {accounts.length === 0 && (
+                    <div className="empty-accounts">
+                      <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
 
           {/* Modal Editar Cuenta */}
           {showEditAccountModal && editingAccount && (
@@ -1098,7 +1283,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   <div className="tx-field">
                     <label className="tx-label">Color</label>
                     <div className="color-picker-row">
-                      {['#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'].map((c) => (
+                      {ACCOUNT_COLORS.map((c) => (
                         <button
                           key={c}
                           className={`color-dot ${editingAccount.color === c ? 'active' : ''}`}
@@ -1117,7 +1302,84 @@ const FinanzasPage = memo(function FinanzasPage() {
             </div>
           )}
 
-          </div>
+          {/* Modal Grupo (Crear/Editar) */}
+          {showGroupModal && (
+            <div className="modal-overlay" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">{editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'}</h2>
+                    <p className="modal-subtitle">Organiza tus cuentas</p>
+                  </div>
+                  <button className="modal-close" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="tx-field">
+                    <label className="tx-label">Nombre *</label>
+                    <input className="tx-input" type="text" placeholder="Ej: Bancos, Criptos, Efectivo" value={groupFormName} onChange={(e) => setGroupFormName(e.target.value)} autoFocus />
+                  </div>
+                  <div className="tx-field">
+                    <label className="tx-label">Color</label>
+                    <div className="color-picker-row">
+                      {ACCOUNT_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          className={`color-dot ${groupFormColor === c ? 'active' : ''}`}
+                          style={{ background: c }}
+                          onClick={() => setGroupFormColor(c)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={editingGroup ? handleEditGroup : handleCreateGroup} disabled={groupFormLoading || !groupFormName.trim()}>
+                    {groupFormLoading ? 'Guardando...' : editingGroup ? 'Guardar' : 'Crear'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Asignar Grupo */}
+          {showAssignGroupModal && (
+            <div className="modal-overlay" onClick={() => setShowAssignGroupModal(null)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 360 }}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">Mover a Grupo</h2>
+                    <p className="modal-subtitle">Selecciona un grupo para esta cuenta</p>
+                  </div>
+                  <button className="modal-close" onClick={() => setShowAssignGroupModal(null)}>✕</button>
+                </div>
+                <div className="modal-body">
+                  <div className="group-assign-list">
+                    <button
+                      className="group-assign-item"
+                      onClick={() => handleAssignGroup(showAssignGroupModal, null)}
+                    >
+                      <span className="group-assign-dot" style={{ background: 'var(--text-tertiary)' }} />
+                      <span className="group-assign-name">Sin grupo</span>
+                    </button>
+                    {accountGroups.map((g) => (
+                      <button
+                        key={g.id}
+                        className="group-assign-item"
+                        onClick={() => handleAssignGroup(showAssignGroupModal, g.id)}
+                      >
+                        <span className="group-assign-dot" style={{ background: g.color || 'var(--text-primary)' }} />
+                        <span className="group-assign-name">{g.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={() => setShowAssignGroupModal(null)}>Cancelar</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Resumen mensual */}
           <div className="summary-section">
@@ -1208,7 +1470,31 @@ const FinanzasPage = memo(function FinanzasPage() {
                               {tx.type === 'expense' ? '-' : '+'}
                               {formatTableAmount(tx.amount, txCurrency)}
                             </div>
-                            {txCurrency !== displayCurrency && txCurrency !== 'BTC' && txCurrency !== 'ETH' && (
+                            {/* Para cryptos: mostrar USD y BS simultáneamente */}
+                            {(['BTC', 'ETH', 'SOL', 'USDT', 'USDC'] as CurrencyCode[]).includes(txCurrency) && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: '2px' }}>
+                                {(() => {
+                                  const usdPrice = getCryptoUsdPrice(txCurrency);
+                                  if (usdPrice) {
+                                    const usdAmount = tx.amount * usdPrice;
+                                    const bsAmount = convertBetween(tx.amount, txCurrency, 'BS');
+                                    return (
+                                      <>
+                                        <span style={{ fontSize: '10px', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
+                                          {tx.type === 'expense' ? '-' : '+'}${usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                                        </span>
+                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                                          ≈ {tx.type === 'expense' ? '-' : '+'}{formatInCurrency(bsAmount, 'BS')}
+                                        </span>
+                                      </>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+                            )}
+                            {/* Para no-cryptos: mostrar conversión a displayCurrency */}
+                            {![ 'BTC', 'ETH', 'SOL', 'USDT', 'USDC' ].includes(txCurrency) && txCurrency !== displayCurrency && (
                               <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
                                 ≈ {tx.type === 'expense' ? '-' : '+'}
                                 {formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
@@ -1283,7 +1569,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                         className="tx-input tx-input-amount"
                         type="number"
                         min="0"
-                        step="0.01"
+                        step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(accounts.find(a => a.id === newTx.accountId)?.currency || displayCurrency) ? '0.00000001' : '0.01'}
                         placeholder="0.00"
                         value={newTx.amount}
                         onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })}
@@ -1593,13 +1879,13 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <label className="tx-label">Balance Inicial</label>
                     <div className="tx-input-wrap">
                       <span className="tx-currency">{currencyMap[newAccount.currency || 'BS'].symbol}</span>
-                      <input className="tx-input tx-input-amount" type="number" min="0" placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
+                      <input className="tx-input tx-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(newAccount.currency) ? '0.00000001' : '0.01'} placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
                     </div>
                   </div>
                   <div className="tx-field">
                     <label className="tx-label">Color (opcional)</label>
                     <div className="color-picker-row">
-                      {['#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1'].map((c) => (
+                      {ACCOUNT_COLORS.map((c) => (
                         <button
                           key={c}
                           className={`color-dot ${newAccount.color === c ? 'active' : ''}`}
@@ -2044,8 +2330,20 @@ const FinanzasPage = memo(function FinanzasPage() {
           }
           .delete-tx-btn:hover { color: var(--color-error); background: rgba(239,68,68,0.1); }
 
-          /* Accounts */
-          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+          /* Accounts Section with Groups */
+          .accounts-section { margin-bottom: 24px; }
+          .accounts-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+          .accounts-section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+          .account-group { margin-bottom: 20px; }
+          .account-group:last-child { margin-bottom: 0; }
+          .account-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 4px; }
+          .account-group-title { display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em; }
+          .account-group-dot { width: 8px; height: 8px; border-radius: 50%; }
+          .account-group-count { font-size: 0.625rem; font-weight: 600; color: var(--text-tertiary); background: var(--bg-input); padding: 2px 8px; border-radius: var(--radius-full); }
+          .account-group-actions { display: flex; gap: 4px; }
+          .account-group-btn { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 6px; font-size: 0.75rem; transition: all 0.15s; }
+          .account-group-btn:hover { background: var(--bg-input); color: var(--text-primary); }
+          .accounts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
           .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
           .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
           .account-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -2058,6 +2356,13 @@ const FinanzasPage = memo(function FinanzasPage() {
           .account-action:hover { color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
           .account-balance { font-size: 1.375rem; font-weight: 800; }
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
+
+          /* Group Assign Modal */
+          .group-assign-list { display: flex; flex-direction: column; gap: 4px; }
+          .group-assign-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border-default); cursor: pointer; transition: all 0.15s; font-family: inherit; width: 100%; }
+          .group-assign-item:hover { border-color: var(--color-prosper-green); background: rgba(61,204,142,0.06); }
+          .group-assign-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+          .group-assign-name { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
 
           /* Rates Tables */
           .rates-tables-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; align-items: start; }
@@ -2078,20 +2383,11 @@ const FinanzasPage = memo(function FinanzasPage() {
           .rates-row-code { font-weight: 700; font-size: 0.8125rem; color: var(--text-primary); }
           .rates-row-name { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
           .rates-row-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); font-size: 0.875rem; white-space: nowrap; flex-shrink: 0; }
-          .rates-row-values { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+          .rates-row-values { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
           .rates-row-val { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; font-size: 0.8125rem; white-space: nowrap; min-width: 70px; text-align: right; }
-          .rates-row-val[title="Tasa oficial"] { color: var(--color-prosper-green); }
-          .rates-row-val[title="Tasa P2P"] { color: var(--text-secondary); }
-          .rates-dimmed { opacity: 0.4 !important; }
-          .rates-highlight { color: #4edea3 !important; font-weight: 700; }
-          .rates-row-p2p-active { background: rgba(78, 222, 163, 0.05); }
-          .rates-row-p2p-active .rates-row-code { color: #4edea3; }
-          .rates-p2p-badge { font-size: 0.5625rem; font-weight: 700; background: #4edea3; color: #003824; padding: 1px 5px; border-radius: 4px; margin-left: 6px; display: inline-block; }
-          .rates-p2p-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-          .rates-p2p-toggle:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
-          .rates-p2p-toggle.active { border-color: #4edea3; background: rgba(78,222,163,0.1); color: #4edea3; }
-          .rates-p2p-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); transition: all 0.2s; }
-          .rates-p2p-dot.active { background: #4edea3; box-shadow: 0 0 8px rgba(78, 222, 163, 0.6); }
+          .rates-usd-val { color: #3B82F6; font-weight: 700; font-size: 0.875rem; }
+          .rates-bs-official { color: var(--color-prosper-green); }
+          .rates-bs-p2p { color: var(--text-tertiary); font-size: 0.6875rem; font-weight: 500; }
 
           /* Summary (legacy) */
           .summary-section { position: relative; margin-bottom: 24px; }

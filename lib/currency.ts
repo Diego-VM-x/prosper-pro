@@ -19,11 +19,11 @@ export const CURRENCY_MAP: Record<CurrencyCode, CurrencyConfig> = {
   BS: { code: 'BS', symbol: 'Bs.', name: 'Bolívar', flag: '🇻🇪', locale: 'es-VE', decimals: 2 },
   USD: { code: 'USD', symbol: '$', name: 'Dólar', flag: '🇺🇸', locale: 'en-US', decimals: 2 },
   EUR: { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', locale: 'de-DE', decimals: 2 },
-  USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💎', locale: 'en-US', decimals: 2 },
-  SOL: { code: 'SOL', symbol: '◎', name: 'Solana', flag: '☀️', locale: 'en-US', decimals: 2 },
-  BTC: { code: 'BTC', symbol: '₿', name: 'Bitcoin', flag: '🟠', locale: 'en-US', decimals: 2 },
-  ETH: { code: 'ETH', symbol: 'Ξ', name: 'Ethereum', flag: '💠', locale: 'en-US', decimals: 2 },
-  USDC: { code: 'USDC', symbol: '$', name: 'USD Coin', flag: '💠', locale: 'en-US', decimals: 2 },
+  USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💎', locale: 'en-US', decimals: 8 },
+  SOL: { code: 'SOL', symbol: '◎', name: 'Solana', flag: '☀️', locale: 'en-US', decimals: 8 },
+  BTC: { code: 'BTC', symbol: '₿', name: 'Bitcoin', flag: '🟠', locale: 'en-US', decimals: 8 },
+  ETH: { code: 'ETH', symbol: 'Ξ', name: 'Ethereum', flag: '💠', locale: 'en-US', decimals: 8 },
+  USDC: { code: 'USDC', symbol: '$', name: 'USD Coin', flag: '💠', locale: 'en-US', decimals: 8 },
   COP: { code: 'COP', symbol: '$', name: 'Peso Colombiano', flag: '🇨🇴', locale: 'es-CO', decimals: 0 },
 };
 
@@ -48,6 +48,13 @@ export const DEFAULT_RATES: ExchangeRates = {
     COP: 0.0105,  // 1 COP ≈ 0.0105 BS (fallback)
   },
   p2pRates: {},
+  cryptoPrices: {
+    USDT: 1.0,
+    SOL: 200.0,
+    BTC: 100000.0,
+    ETH: 3000.0,
+    USDC: 1.0,
+  },
   updatedAt: Date.now(),
   source: 'api',
 };
@@ -84,7 +91,9 @@ export function convertCurrency(
   const converted = amount * (rSource / rTarget);
   const decimals = CURRENCY_MAP[target]?.decimals ?? 2;
 
-  return Number(converted.toFixed(decimals));
+  // Use higher precision for crypto currencies
+  const precision = decimals > 2 ? decimals : 2;
+  return Number(converted.toFixed(precision));
 }
 
 /**
