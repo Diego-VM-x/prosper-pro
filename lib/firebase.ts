@@ -30,7 +30,7 @@ const firebaseConfig = {
   measurementId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, HARDCODED_CONFIG.measurementId, (v) => v.startsWith('G-')),
 };
 
-// Validación de variables de entorno (solo en cliente para evitar ruido en build)
+// Validación silenciosa de variables de entorno (solo en cliente, sin console.error)
 if (isBrowser) {
   const requiredEnvVars = [
     'NEXT_PUBLIC_FIREBASE_API_KEY',
@@ -42,11 +42,7 @@ if (isBrowser) {
   ];
   const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
   if (missingVars.length > 0) {
-    console.error(
-      '[Firebase] Variables de entorno faltantes:',
-      missingVars.join(', '),
-      '\nAsegúrate de configurarlas en Vercel Dashboard → Settings → Environment Variables.'
-    );
+    // Silencio: los fallbacks hardcoded ya están activos
   }
 }
 

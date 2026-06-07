@@ -227,7 +227,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             alt="Prosper Logo"
             width={32}
             height={32}
-            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0 }}
+            style={{ borderRadius: 'var(--radius-md)', flexShrink: 0, objectFit: 'contain' }}
           />
         </Link>
         {/* Botón colapsar para desktop */}

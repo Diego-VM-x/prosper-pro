@@ -13,7 +13,8 @@ import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory,
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
-import { FinancialStatusChart } from '@/app/components/FinancialStatusChart';
+import dynamic from 'next/dynamic';
+const FinancialStatusChart = dynamic(() => import('@/app/components/FinancialStatusChart').then(m => ({ default: m.FinancialStatusChart })), { ssr: false });
 import { parseReceipt, mapReceiptToTransaction, VEPayReceipt, VEPAY_BANKS } from '@/lib/vepay';
 import { getAccountRates, convertCurrency } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
@@ -1233,7 +1234,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           <div className="accounts-section">
             {/* Header de sección con botón de grupos */}
             <div className="accounts-section-header">
-              <h3 className="accounts-section-title">🏦 Mis Cuentas</h3>
+              <h2 className="accounts-section-title">🏦 Mis Cuentas</h2>
               <button className="btn btn-outline btn-sm" onClick={() => openGroupModal()}>
                 <IconPlus width={12} /> Nuevo Grupo
               </button>
@@ -1535,11 +1536,11 @@ const FinanzasPage = memo(function FinanzasPage() {
             <table className="transactions-table">
               <thead>
                 <tr>
-                  <th>Descripción</th>
-                  <th>Categoría</th>
-                  <th>Estado</th>
-                  <th>Monto</th>
-                  <th></th>
+                  <th scope="col">Descripción</th>
+                  <th scope="col">Categoría</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Monto</th>
+                  <th scope="col">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -2083,7 +2084,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                 {/* Receipts detected */}
                 {vepayReceipts.length > 0 && (
                   <div className="vepay-receipts">
-                    <h3 className="vepay-receipts-title">Recibos detectados ({vepayReceipts.length})</h3>
+                    <h2 className="vepay-receipts-title">Recibos detectados ({vepayReceipts.length})</h2>
                     {vepayReceipts.map((receipt, idx) => {
                       const key = receipt.transaction_key || String(idx);
                       const override = vepayOverrides[key] || { flow: 'expense', accountId: '', bank: '', date: todayISO() };
@@ -2220,7 +2221,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                 <div className="modal-body">
                   {/* Sección: Acciones Globales */}
                   <div className="accounting-section">
-                    <h3 className="accounting-section-title"> Acciones Globales</h3>
+                    <h2 className="accounting-section-title"> Acciones Globales</h2>
                     <p className="accounting-section-desc">Afectan a TODAS las cuentas</p>
                     <div className="accounting-actions">
                       <button className="accounting-btn accounting-btn-danger" onClick={handleWipeAllUserTransactions} disabled={accountingLoading}>
@@ -2264,7 +2265,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   {/* Sección: Por Cuenta */}
                   {accounts.length > 0 && (
                     <div className="accounting-section">
-                      <h3 className="accounting-section-title">🏦 Por Cuenta</h3>
+                      <h2 className="accounting-section-title">🏦 Por Cuenta</h2>
                       <p className="accounting-section-desc">Acciones específicas por cuenta</p>
                       <div className="accounting-accounts-list">
                         {accounts.map(acc => (
@@ -2309,7 +2310,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   {/* Sección: Editar Cuentas */}
                   {accounts.length > 0 && (
                     <div className="accounting-section">
-                      <h3 className="accounting-section-title">️ Editar Cuentas</h3>
+                      <h2 className="accounting-section-title">️ Editar Cuentas</h2>
                       <p className="accounting-section-desc">Cambiar nombre, color, moneda o eliminar</p>
                       <div className="accounting-accounts-list">
                         {accounts.map(acc => (

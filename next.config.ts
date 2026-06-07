@@ -29,6 +29,10 @@ const nextConfig: NextConfig = {
             key: 'X-DNS-Prefetch-Control',
             value: 'on',
           },
+          {
+            key: 'X-Robots-Tag',
+            value: 'index, follow',
+          },
         ],
       },
     ];
