@@ -5,6 +5,11 @@
   transform: none;
 }
 
+/* Secciones colapsables - ocultar con display:none en lugar de desmontar de React */
+.dash-section-collapsed {
+  display: none !important;
+}
+
 @media (min-width: 1025px) {
   .cursor-glow {
     position: fixed;

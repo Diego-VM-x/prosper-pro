@@ -625,8 +625,7 @@ export const Dashboard = memo(function Dashboard() {
             collapsed={collapsed.acciones}
             onToggle={() => toggle('acciones')}
           />
-          {!collapsed.acciones && (
-            <div className="widgets-grid dash-stagger">
+          <div className={`widgets-grid dash-stagger ${collapsed.acciones ? 'dash-section-collapsed' : ''}`}>
               {/* Acciones Rápidas */}
               <div className="content-card quick-actions-card dash-item" style={{animationDelay: '0.6s'}}>
                 <div className="content-card-header">
@@ -686,7 +685,6 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -700,8 +698,7 @@ export const Dashboard = memo(function Dashboard() {
             collapsed={collapsed.finanzas}
             onToggle={() => toggle('finanzas')}
           />
-          {!collapsed.finanzas && (
-            <div className="widgets-grid dash-stagger">
+          <div className={`widgets-grid dash-stagger ${collapsed.finanzas ? 'dash-section-collapsed' : ''}`}>
               {/* Resumen del Mes */}
               <div className="content-card summary-card dash-item" style={{animationDelay: '0.35s'}}>
                 <div className="content-card-header">
@@ -934,7 +931,6 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -948,8 +944,7 @@ export const Dashboard = memo(function Dashboard() {
             collapsed={collapsed.metas}
             onToggle={() => toggle('metas')}
           />
-          {!collapsed.metas && (
-            <div className="widgets-grid dash-stagger">
+          <div className={`widgets-grid dash-stagger ${collapsed.metas ? 'dash-section-collapsed' : ''}`}>
               {/* Planes Activos */}
               <div className="content-card plans-card dash-item" style={{animationDelay: '0.35s'}}>
                 <div className="content-card-header">
@@ -1037,7 +1032,6 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -1050,8 +1044,7 @@ export const Dashboard = memo(function Dashboard() {
             collapsed={collapsed.mercado}
             onToggle={() => toggle('mercado')}
           />
-          {!collapsed.mercado && (
-            <div className="widgets-grid dash-stagger">
+          <div className={`widgets-grid dash-stagger ${collapsed.mercado ? 'dash-section-collapsed' : ''}`}>
               {/* Tasas de Cambio */}
               <WidgetTasasCambio rates={rates} p2pMode={p2pMode} />
 
@@ -1071,7 +1064,6 @@ export const Dashboard = memo(function Dashboard() {
                 </Suspense>
               </div>
             </div>
-          )}
         </div>
       </div>
 
