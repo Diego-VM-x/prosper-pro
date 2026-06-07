@@ -2083,7 +2083,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           .rates-currency-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
           .rates-currency-code { font-weight: 700; font-size: 0.8125rem; color: var(--text-primary); }
           .rates-currency-name { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
-          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; padding: 0 18px; height: 100%; display: table-cell; vertical-align: middle; font-size: 0.8125rem; }
+          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; padding: 0 18px; height: 56px; line-height: 56px; font-size: 0.8125rem; white-space: nowrap; }
           .rates-dimmed { opacity: 0.4; color: var(--text-secondary); }
           .rates-highlight { color: #4edea3; font-weight: 700; }
           .rates-row-p2p-active { background: rgba(78, 222, 163, 0.05) !important; }
