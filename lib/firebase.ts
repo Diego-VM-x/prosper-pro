@@ -12,14 +12,20 @@ const HARDCODED_CONFIG = {
   measurementId: 'G-R7D5M4J5L5',
 };
 
+function pickValidEnv(envVal: string | undefined, fallback: string, validator: (v: string) => boolean): string {
+  const trimmed = envVal?.trim();
+  if (trimmed && validator(trimmed)) return trimmed;
+  return fallback;
+}
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || HARDCODED_CONFIG.apiKey,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || HARDCODED_CONFIG.authDomain,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || HARDCODED_CONFIG.projectId,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || HARDCODED_CONFIG.storageBucket,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || HARDCODED_CONFIG.messagingSenderId,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || HARDCODED_CONFIG.appId,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || HARDCODED_CONFIG.measurementId,
+  apiKey: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_API_KEY, HARDCODED_CONFIG.apiKey, (v) => v.startsWith('AIza')),
+  authDomain: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, HARDCODED_CONFIG.authDomain, (v) => v.includes('.')),
+  projectId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, HARDCODED_CONFIG.projectId, (v) => v.length > 2),
+  storageBucket: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, HARDCODED_CONFIG.storageBucket, (v) => v.includes('.')),
+  messagingSenderId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, HARDCODED_CONFIG.messagingSenderId, (v) => /^\d+$/.test(v)),
+  appId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_APP_ID, HARDCODED_CONFIG.appId, (v) => v.includes(':')),
+  measurementId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, HARDCODED_CONFIG.measurementId, (v) => v.startsWith('G-')),
 };
 
 // Validación de variables de entorno (solo en cliente para evitar ruido en build)
@@ -87,18 +93,27 @@ let app: FirebaseApp;
 let db: any;
 let auth: any = null;
 
+if (isBrowser) {
+  console.log('[Firebase DEBUG] apiKey starts with:', firebaseConfig.apiKey?.slice(0, 8));
+  console.log('[Firebase DEBUG] projectId:', firebaseConfig.projectId);
+  console.log('[Firebase DEBUG] appId:', firebaseConfig.appId);
+}
+
 const hasCriticalVars = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
 
 try {
   if (hasCriticalVars) {
+    console.log('[Firebase DEBUG] hasCriticalVars = true, initializing...');
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    console.log('[Firebase DEBUG] app initialized, name:', app.name);
 
     if (isBrowser) {
-      // Cliente: inicializar Firestore y Auth normalmente
+      console.log('[Firebase DEBUG] Browser mode, loading Firestore + Auth...');
       const { getFirestore } = require('firebase/firestore');
       const { getAuth } = require('firebase/auth');
       db = getFirestore(app);
       auth = getAuth(app);
+      console.log('[Firebase DEBUG] auth object:', auth ? 'present' : 'NULL');
 
       // Limpiar sessionStorage de firebase en cada inicio (evita conflictos con tabs)
       try {
@@ -108,12 +123,11 @@ try {
         }
       } catch {}
     } else {
-      // SSR: usar mocks para evitar que el SDK web de Firestore falle en Node.js
+      console.log('[Firebase DEBUG] SSR mode, using mocks');
       db = createFirestoreMock();
       auth = null;
     }
   } else if (isBrowser) {
-    // Cliente sin config válida: app funciona sin datos de Firebase
     console.warn('[Firebase] Configuración incompleta. La app funcionará sin datos de Firebase.');
     app = !getApps().length
       ? initializeApp({ apiKey: 'dummy', projectId: 'dummy', appId: 'dummy' })
@@ -121,7 +135,6 @@ try {
     const { getFirestore } = require('firebase/firestore');
     db = getFirestore(app);
   } else {
-    // SSR sin config válida: usar mocks
     app = {} as FirebaseApp;
     db = createFirestoreMock();
   }
