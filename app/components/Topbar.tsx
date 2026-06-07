@@ -678,7 +678,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           z-index: 1002;
           display: flex;
           justify-content: flex-start;
-          animation: fadeIn 0.25s ease;
+          animation: none;
         }
         .mobile-menu {
           width: 400px;
@@ -689,7 +689,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           display: flex;
           flex-direction: column;
           box-shadow: 4px 0 32px rgba(0, 0, 0, 0.5), 0 0 48px rgba(61, 204, 142, 0.08);
-          animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: none;
           overflow-y: auto;
         }
         [data-theme="dark"] .mobile-menu {
@@ -920,7 +920,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           z-index: 10000;
           max-height: 360px;
           overflow-y: auto;
-          animation: fadeInUp 0.2s ease;
+          animation: none;
         }
         [data-theme="dark"] .search-results-dropdown {
           background: #0a1628;
@@ -1020,7 +1020,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           z-index: 10000;
           max-height: 400px;
           overflow-y: auto;
-          animation: fadeInUp 0.2s ease;
+          animation: none;
         }
         [data-theme="dark"] .notifications-dropdown {
           background: #0a1628;
@@ -1141,7 +1141,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           border-radius: var(--radius-xl);
           box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
           z-index: 10000;
-          animation: fadeInUp 0.2s ease;
+          animation: none;
         }
         [data-theme="dark"] .user-dropdown {
           background: #0a1628;
@@ -1298,7 +1298,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             border-radius: 20px 20px 0 0 !important;
             max-height: 80vh !important;
             overflow-y: auto !important;
-            animation: fadeInUp 0.3s ease;
+            animation: none;
           }
           .topbar-login-btn span { display: none; }
           .topbar-login-btn { padding: 8px; }
