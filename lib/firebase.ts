@@ -1,4 +1,6 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -109,8 +111,6 @@ try {
 
     if (isBrowser) {
       console.log('[Firebase DEBUG] Browser mode, loading Firestore + Auth...');
-      const { getFirestore } = require('firebase/firestore');
-      const { getAuth } = require('firebase/auth');
       db = getFirestore(app);
       auth = getAuth(app);
       console.log('[Firebase DEBUG] auth object:', auth ? 'present' : 'NULL');
@@ -132,7 +132,6 @@ try {
     app = !getApps().length
       ? initializeApp({ apiKey: 'dummy', projectId: 'dummy', appId: 'dummy' })
       : getApp();
-    const { getFirestore } = require('firebase/firestore');
     db = getFirestore(app);
   } else {
     app = {} as FirebaseApp;
@@ -145,7 +144,6 @@ try {
       app = !getApps().length
         ? initializeApp({ apiKey: 'invalid', projectId: 'invalid', appId: 'invalid' })
         : getApp();
-      const { getFirestore } = require('firebase/firestore');
       db = getFirestore(app);
     } catch {
       app = {} as FirebaseApp;
