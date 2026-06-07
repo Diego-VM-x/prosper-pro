@@ -50,6 +50,13 @@ function isoToTimestamp(iso: string): number {
   return new Date(iso + 'T12:00:00').getTime();
 }
 
+function formatCompact(n: number): string {
+  if (n >= 1_000_000_000) return (n / 1_000_000_000).toLocaleString('es-VE', { maximumFractionDigits: 2 }) + 'B';
+  if (n >= 1_000_000) return (n / 1_000_000).toLocaleString('es-VE', { maximumFractionDigits: 2 }) + 'M';
+  if (n >= 1_000) return n.toLocaleString('es-VE', { maximumFractionDigits: 2 });
+  return n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+}
+
 interface SummaryWidgetProps {
   label: string;
   value: number;
@@ -931,9 +938,9 @@ const FinanzasPage = memo(function FinanzasPage() {
             </div>
           </div>
 
-          {/* Tasas de cambio - Tablas compactas */}
+          {/* Tasas de cambio */}
           <div className="rates-tables-wrapper">
-            {/* Tabla Monedas Fiduciarias */}
+            {/* Monedas Fiduciarias */}
             <div className="rates-table-container">
               <div className="rates-table-header">
                 <div className="rates-table-header-left">
@@ -944,44 +951,34 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                 </div>
               </div>
-              <table className="rates-table">
-                <thead>
-                  <tr>
-                    <th>Moneda</th>
-                    <th className="rates-th-value">1 unidad = Bs.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
-                    { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-                    { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
-                  ].map(({ code, name, flag }) => {
-                    const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
-                    return (
-                      <tr key={code}>
-                        <td>
-                          <div className="rates-currency-cell">
-                            <span className="rates-currency-flag">{flag}</span>
-                            <div className="rates-currency-info">
-                              <span className="rates-currency-code">{code}</span>
-                              <span className="rates-currency-name">{name}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="rates-value">
-                          {rates.source === 'api' && value
-                            ? value.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })
-                            : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="rates-list">
+                {[
+                  { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
+                  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+                  { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
+                ].map(({ code, name, flag }) => {
+                  const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                  return (
+                    <div key={code} className="rates-row">
+                      <div className="rates-row-left">
+                        <span className="rates-row-flag">{flag}</span>
+                        <div className="rates-row-info">
+                          <span className="rates-row-code">{code}</span>
+                          <span className="rates-row-name">{name}</span>
+                        </div>
+                      </div>
+                      <span className="rates-row-value">
+                        {rates.source === 'api' && value
+                          ? `Bs. ${value.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })}`
+                          : '—'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Tabla Cryptos */}
+            {/* Cryptos */}
             <div className="rates-table-container">
               <div className="rates-table-header">
                 <div className="rates-table-header-left">
@@ -1000,51 +997,38 @@ const FinanzasPage = memo(function FinanzasPage() {
                   <span className="rates-p2p-label">P2P</span>
                 </button>
               </div>
-              <table className="rates-table">
-                <thead>
-                  <tr>
-                    <th>Crypto</th>
-                    <th className="rates-th-value">Oficial</th>
-                    <th className="rates-th-value">P2P</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { code: 'USDT', name: 'Tether', flag: '💎' },
-                    { code: 'SOL', name: 'Solana', flag: '☀️' },
-                    { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-                    { code: 'USDC', name: 'USD Coin', flag: '💠' },
-                  ].map(({ code, name, flag }) => {
-                    const official = rates.rates[code as keyof typeof rates.rates] as number | undefined;
-                    const p2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
-                    const isActive = p2pMode && p2p;
-                    return (
-                      <tr key={code} className={isActive ? 'rates-row-p2p-active' : ''}>
-                        <td>
-                          <div className="rates-currency-cell">
-                            <span className="rates-currency-flag">{flag}</span>
-                            <div className="rates-currency-info">
-                              <span className="rates-currency-code">{code}</span>
-                              <span className="rates-currency-name">{name}</span>
-                              {isActive && <span className="rates-p2p-badge">P2P</span>}
-                            </div>
-                          </div>
-                        </td>
-                        <td className={`rates-value ${isActive ? 'rates-dimmed' : ''}`}>
-                          {official
-                            ? official.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                            : '—'}
-                        </td>
-                        <td className={`rates-value ${isActive ? 'rates-highlight' : ''}`}>
-                          {p2p
-                            ? p2p.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 })
-                            : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="rates-list">
+                {[
+                  { code: 'USDT', name: 'Tether', flag: '💎' },
+                  { code: 'SOL', name: 'Solana', flag: '☀️' },
+                  { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
+                  { code: 'USDC', name: 'USD Coin', flag: '💠' },
+                ].map(({ code, name, flag }) => {
+                  const official = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                  const p2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
+                  const isActive = p2pMode && p2p;
+                  return (
+                    <div key={code} className={`rates-row ${isActive ? 'rates-row-p2p-active' : ''}`}>
+                      <div className="rates-row-left">
+                        <span className="rates-row-flag">{flag}</span>
+                        <div className="rates-row-info">
+                          <span className="rates-row-code">{code}</span>
+                          <span className="rates-row-name">{name}</span>
+                          {isActive && <span className="rates-p2p-badge">P2P</span>}
+                        </div>
+                      </div>
+                      <div className="rates-row-values">
+                        <span className={`rates-row-val ${isActive ? 'rates-dimmed' : ''}`} title="Tasa oficial">
+                          {official ? formatCompact(official) : '—'}
+                        </span>
+                        <span className={`rates-row-val ${isActive ? 'rates-highlight' : ''}`} title="Tasa P2P">
+                          {p2p ? formatCompact(p2p) : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -2065,30 +2049,32 @@ const FinanzasPage = memo(function FinanzasPage() {
 
           /* Rates Tables */
           .rates-tables-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; align-items: start; }
-          .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
-          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.03), var(--bg-input)); border-bottom: 1px solid var(--border-default); }
+          .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
+          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: linear-gradient(180deg, rgba(255,255,255,0.03), var(--bg-input)); border-bottom: 1px solid var(--border-default); }
           .rates-table-header-left { display: flex; align-items: center; gap: 12px; }
           .rates-table-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; }
           .rates-table-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
           .rates-table-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
-          .rates-table { width: 100%; border-collapse: collapse; flex: 1; }
-          .rates-table th { text-align: left; padding: 10px 12px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg-card); border-bottom: 1px solid var(--border-default); }
-          .rates-table th.rates-th-value { text-align: right; width: 1%; white-space: nowrap; }
-          .rates-table td { padding: 0; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); height: 56px; }
-          .rates-table tr:last-child td { border-bottom: none; }
-          .rates-table tbody tr { transition: background 0.15s ease; }
-          .rates-table tbody tr:hover { background: var(--bg-input); }
-          .rates-currency-cell { display: flex; align-items: center; gap: 10px; padding: 0 12px; height: 100%; }
-          .rates-currency-flag { font-size: 1.125rem; flex-shrink: 0; }
-          .rates-currency-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-          .rates-currency-code { font-weight: 700; font-size: 0.8125rem; color: var(--text-primary); }
-          .rates-currency-name { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
-          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; padding: 0 12px; height: 56px; line-height: 56px; font-size: 0.8125rem; white-space: nowrap; }
-          .rates-dimmed { opacity: 0.4; color: var(--text-secondary); }
-          .rates-highlight { color: #4edea3; font-weight: 700; }
-          .rates-row-p2p-active { background: rgba(78, 222, 163, 0.05) !important; }
-          .rates-row-p2p-active .rates-currency-code { color: #4edea3; }
-          .rates-p2p-badge { font-size: 0.5625rem; font-weight: 700; background: #4edea3; color: #003824; padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: middle; display: inline-block; }
+
+          .rates-list { display: flex; flex-direction: column; }
+          .rates-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border-default); transition: background 0.15s ease; min-height: 56px; }
+          .rates-row:last-child { border-bottom: none; }
+          .rates-row:hover { background: var(--bg-input); }
+          .rates-row-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex-shrink: 0; }
+          .rates-row-flag { font-size: 1.25rem; flex-shrink: 0; }
+          .rates-row-info { display: flex; flex-direction: column; gap: 1px; }
+          .rates-row-code { font-weight: 700; font-size: 0.8125rem; color: var(--text-primary); }
+          .rates-row-name { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
+          .rates-row-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); font-size: 0.875rem; white-space: nowrap; flex-shrink: 0; }
+          .rates-row-values { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+          .rates-row-val { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; font-size: 0.8125rem; white-space: nowrap; min-width: 70px; text-align: right; }
+          .rates-row-val[title="Tasa oficial"] { color: var(--color-prosper-green); }
+          .rates-row-val[title="Tasa P2P"] { color: var(--text-secondary); }
+          .rates-dimmed { opacity: 0.4 !important; }
+          .rates-highlight { color: #4edea3 !important; font-weight: 700; }
+          .rates-row-p2p-active { background: rgba(78, 222, 163, 0.05); }
+          .rates-row-p2p-active .rates-row-code { color: #4edea3; }
+          .rates-p2p-badge { font-size: 0.5625rem; font-weight: 700; background: #4edea3; color: #003824; padding: 1px 5px; border-radius: 4px; margin-left: 6px; display: inline-block; }
           .rates-p2p-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
           .rates-p2p-toggle:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
           .rates-p2p-toggle.active { border-color: #4edea3; background: rgba(78,222,163,0.1); color: #4edea3; }
@@ -2377,10 +2363,10 @@ const FinanzasPage = memo(function FinanzasPage() {
             .accounts-grid { grid-template-columns: repeat(2, 1fr); }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
             .rates-tables-wrapper { grid-template-columns: 1fr 1fr; gap: 12px; }
-            .rates-table td { height: 52px; }
-            .rates-currency-cell { padding: 0 14px; gap: 10px; }
-            .rates-value { padding: 0 14px; }
-            .rates-table th { padding: 8px 14px; }
+            .rates-row { padding: 12px 14px; min-height: 52px; }
+            .rates-row-value { font-size: 0.8125rem; }
+            .rates-row-val { font-size: 0.75rem; min-width: 60px; }
+            .rates-row-values { gap: 12px; }
             .rates-table-header { padding: 12px 14px; }
             .page-header-actions { flex-wrap: wrap; }
             .page-header-actions .btn { flex: 1; min-width: 140px; }
@@ -2409,10 +2395,10 @@ const FinanzasPage = memo(function FinanzasPage() {
             .accounting-account-card { padding: 8px; }
             .accounting-mini-btn { padding: 4px 4px; font-size: 0.5625rem; }
             .rates-tables-wrapper { grid-template-columns: 1fr; }
-            .rates-table td { height: 52px; }
-            .rates-currency-cell { padding: 0 14px; }
-            .rates-value { padding: 0 14px; font-size: 0.8125rem; }
-            .rates-table th { padding: 8px 14px; }
+            .rates-row { padding: 12px 14px; min-height: 52px; }
+            .rates-row-value { font-size: 0.8125rem; }
+            .rates-row-val { font-size: 0.75rem; min-width: 60px; }
+            .rates-row-values { gap: 14px; }
             .rates-table-header { padding: 12px 14px; }
             .rates-table-icon { width: 32px; height: 32px; font-size: 1.125rem; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
