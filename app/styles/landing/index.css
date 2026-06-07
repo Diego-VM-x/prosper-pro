@@ -1,0 +1,19 @@
+/* ============================================
+   LANDING PAGE - STYLES ENTRY POINT
+   Modular CSS architecture for the landing page
+   ============================================ */
+
+@import './variables.css';
+@import './base.css';
+@import './header.css';
+@import './buttons.css';
+@import './hero.css';
+@import './trust.css';
+@import './features.css';
+@import './tutorials.css';
+@import './how-it-works.css';
+@import './testimonials.css';
+@import './faq.css';
+@import './cta.css';
+@import './footer.css';
+@import './responsive.css';

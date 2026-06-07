@@ -1,0 +1,89 @@
+/* ============================================
+   LANDING PAGE - CTA SECTION
+   ============================================ */
+
+.landing-cta-section {
+  position: relative;
+  z-index: 1;
+  padding: var(--lp-section-py) var(--lp-section-px);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.cta-card {
+  position: relative;
+  background: linear-gradient(135deg, #162a4d 0%, #0d2b1e 50%, #0a1628 100%);
+  border-radius: var(--lp-radius-xl);
+  padding: 72px 56px;
+  text-align: center;
+  overflow: hidden;
+  border: 1px solid var(--lp-border-accent);
+  box-shadow:
+    var(--lp-shadow-lg),
+    0 0 80px rgba(61, 204, 142, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cta-bg-shapes {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cta-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.15;
+}
+
+.cta-shape-1 {
+  width: 350px;
+  height: 350px;
+  background: var(--lp-accent);
+  top: -120px;
+  right: -60px;
+}
+
+.cta-shape-2 {
+  width: 250px;
+  height: 250px;
+  background: var(--lp-blue);
+  bottom: -100px;
+  left: -60px;
+}
+
+.cta-content {
+  position: relative;
+  z-index: 1;
+}
+
+.cta-content h2 {
+  font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  margin: 0 0 18px 0;
+  letter-spacing: -0.5px;
+  color: var(--lp-text-primary);
+}
+
+.cta-content p {
+  font-size: 1.125rem;
+  color: var(--lp-text-muted);
+  margin: 0 0 36px 0;
+  line-height: 1.6;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cta-note {
+  font-size: 0.8125rem;
+  color: var(--lp-text-dim);
+  margin: 0;
+  letter-spacing: 0.3px;
+}

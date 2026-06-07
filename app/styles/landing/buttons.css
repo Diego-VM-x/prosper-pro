@@ -1,0 +1,106 @@
+/* ============================================
+   LANDING PAGE - BUTTONS
+   ============================================ */
+
+.btn {
+  padding: 10px 22px;
+  border-radius: var(--lp-radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--lp-transition-fast);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity var(--lp-transition-fast);
+}
+
+.btn:hover::after {
+  opacity: 1;
+}
+
+/* ── Primary ── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--lp-accent), var(--lp-accent-dark));
+  color: white;
+  box-shadow: var(--lp-shadow-accent);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lp-shadow-accent-hover);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ── Ghost ── */
+.btn-ghost {
+  background: transparent;
+  color: var(--lp-text-secondary);
+  border: 1px solid var(--lp-border-light);
+}
+
+.btn-ghost:hover {
+  border-color: var(--lp-accent);
+  color: var(--lp-accent);
+  background: rgba(61, 204, 142, 0.05);
+}
+
+/* ── Outline ── */
+.btn-outline {
+  background: transparent;
+  color: var(--lp-text-secondary);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-outline:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--lp-text-primary);
+}
+
+/* ── White ── */
+.btn-white {
+  background: white;
+  color: var(--lp-bg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-white:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Sizes ── */
+.btn-xl {
+  padding: 16px 32px;
+  font-size: 1rem;
+  border-radius: var(--lp-radius-lg);
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 0.9375rem;
+  border-radius: var(--lp-radius-lg);
+}
+
+/* ── Icon Button ── */
+.btn-icon {
+  padding: 10px;
+  border-radius: var(--lp-radius-sm);
+}

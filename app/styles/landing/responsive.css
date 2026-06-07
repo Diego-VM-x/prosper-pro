@@ -1,0 +1,287 @@
+/* ============================================
+   LANDING PAGE - RESPONSIVE BREAKPOINTS
+   ============================================ */
+
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) {
+  :root {
+    --lp-section-py: 80px;
+  }
+
+  .landing-hero {
+    grid-template-columns: 1fr;
+    padding-top: 140px;
+    min-height: auto;
+    gap: 48px;
+    text-align: center;
+  }
+
+  .landing-hero-content {
+    align-items: center;
+  }
+
+  .landing-hero-subtitle {
+    max-width: 100%;
+  }
+
+  .landing-hero-cta {
+    justify-content: center;
+  }
+
+  .landing-hero-stats {
+    justify-content: center;
+  }
+
+  .trust-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .features-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .feature-card-large {
+    grid-column: span 2;
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card-visual {
+    order: -1;
+  }
+
+  .tutorial-panel {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .tutorial-visual {
+    order: -1;
+  }
+
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .footer-newsletter {
+    grid-column: span 2;
+  }
+
+  .step-connector::after {
+    display: none;
+  }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  :root {
+    --lp-section-py: 64px;
+    --lp-section-px: 20px;
+  }
+
+  .landing-header {
+    padding: 14px 20px;
+  }
+
+  .landing-header.scrolled {
+    padding: 10px 20px;
+  }
+
+  .landing-nav,
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .landing-hero {
+    padding: 120px 20px 60px;
+    gap: 40px;
+  }
+
+  .landing-hero-title {
+    font-size: 2.5rem;
+  }
+
+  .landing-hero-stats {
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .hero-stat-divider {
+    display: none;
+  }
+
+  .trust-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .trust-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .features-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card-large {
+    grid-column: span 1;
+  }
+
+  .feature-visual-accounts {
+    flex-direction: column;
+  }
+
+  .feature-card {
+    padding: 28px;
+  }
+
+  .tutorials-tabs {
+    gap: 8px;
+  }
+
+  .tutorial-tab {
+    padding: 12px 18px;
+    font-size: 0.8125rem;
+  }
+
+  .tutorial-panel {
+    padding: 28px;
+    gap: 32px;
+  }
+
+  .steps-container {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step-card {
+    width: 100%;
+  }
+
+  .step-connector {
+    width: 2px;
+    height: 32px;
+    background: linear-gradient(to bottom, var(--lp-accent-glow), transparent);
+    margin: 8px auto;
+  }
+
+  .step-connector::before {
+    display: none;
+  }
+
+  .cta-card {
+    padding: 48px 28px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+  }
+
+  .landing-footer-inner {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .footer-newsletter {
+    grid-column: span 1;
+  }
+
+  .footer-links {
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .footer-newsletter-form {
+    flex-direction: column;
+  }
+
+  .section-title {
+    font-size: 1.875rem;
+  }
+
+  .section-desc {
+    font-size: 1rem;
+  }
+
+  .mockup-rate-float {
+    position: static;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* ── Small Mobile (≤480px) ── */
+@media (max-width: 480px) {
+  .landing-hero-title {
+    font-size: 2rem;
+  }
+
+  .landing-hero-subtitle {
+    font-size: 0.9375rem;
+  }
+
+  .btn-xl {
+    padding: 14px 24px;
+    font-size: 0.9375rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .landing-hero-cta {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .mockup-stat-row {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-card {
+    padding: 24px;
+  }
+
+  .step-card {
+    padding: 28px 20px;
+  }
+
+  .trust-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tutorial-panel {
+    padding: 20px;
+  }
+
+  .cta-card {
+    padding: 36px 20px;
+  }
+
+  .section-header {
+    margin-bottom: 48px;
+  }
+}
+
+/* ── Large Desktop (≥1440px) ── */
+@media (min-width: 1440px) {
+  :root {
+    --lp-container-max: 1320px;
+  }
+
+  .landing-hero {
+    gap: 100px;
+    padding-top: 200px;
+  }
+}

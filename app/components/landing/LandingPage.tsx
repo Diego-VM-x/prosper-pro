@@ -185,10 +185,14 @@ export function LandingPage() {
         </section>
 
         {/* Trust Bar */}
-        <TrustBar />
+        <section className="lp-section">
+          <div className="lp-container">
+            <TrustBar />
+          </div>
+        </section>
 
         {/* Features Section */}
-        <section id="features" className="landing-features-section">
+        <section id="features" className="landing-features-section lp-section">
           <AnimatedSection animationType="fade-up" delay={0}>
             <div className="section-header">
               <span className="section-tag">Funciones</span>
@@ -208,7 +212,7 @@ export function LandingPage() {
         <TutorialTabs />
 
         {/* How It Works */}
-        <section id="how-it-works" className="landing-how-section">
+        <section id="how-it-works" className="landing-how-section lp-section">
           <AnimatedSection animationType="fade-up" delay={0}>
             <div className="section-header">
               <span className="section-tag">Cómo Funciona</span>
@@ -264,7 +268,7 @@ export function LandingPage() {
         <FaqAccordion />
 
         {/* CTA Section */}
-        <section className="landing-cta-section">
+        <section className="landing-cta-section lp-section">
           <AnimatedSection animationType="fade-up" delay={0}>
             <div className="cta-card">
               <div className="cta-bg-shapes">

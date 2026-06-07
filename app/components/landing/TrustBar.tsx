@@ -13,7 +13,7 @@ const TRUST_ITEMS = [
 
 export function TrustBar() {
   return (
-    <section className="landing-trust-section">
+    <div className="landing-trust-section">
       <div className="landing-trust-inner">
         <AnimatedSection animationType="fade-up" delay={0}>
           <div className="trust-grid">
@@ -29,6 +29,6 @@ export function TrustBar() {
           </div>
         </AnimatedSection>
       </div>
-    </section>
+    </div>
   );
 }

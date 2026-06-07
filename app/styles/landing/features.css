@@ -1,0 +1,228 @@
+/* ============================================
+   LANDING PAGE - FEATURES SECTION
+   ============================================ */
+
+.landing-features-section {
+  position: relative;
+  z-index: 1;
+  padding: var(--lp-section-py) var(--lp-section-px);
+  max-width: var(--lp-container-max);
+  margin: 0 auto;
+}
+
+/* ── Section Header ── */
+.section-header {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 72px;
+}
+
+.section-tag {
+  display: inline-block;
+  padding: 8px 18px;
+  background: rgba(61, 204, 142, 0.08);
+  border: 1px solid var(--lp-border-accent);
+  border-radius: var(--lp-radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--lp-accent);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: var(--lp-section-title);
+  font-weight: 800;
+  margin: 0 0 18px 0;
+  letter-spacing: -0.5px;
+  line-height: 1.12;
+  color: var(--lp-text-primary);
+}
+
+.section-desc {
+  font-size: 1.125rem;
+  color: var(--lp-text-muted);
+  margin: 0;
+  line-height: 1.7;
+}
+
+/* ── Features Grid ── */
+.features-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.features-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ── Feature Card ── */
+.feature-card {
+  background: var(--lp-bg-card);
+  border: 1px solid var(--lp-border-subtle);
+  border-radius: var(--lp-radius-lg);
+  padding: 36px;
+  transition: all var(--lp-transition-slow);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--lp-accent-glow), transparent);
+  opacity: 0;
+  transition: opacity var(--lp-transition-base);
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 0%, rgba(61, 204, 142, 0.04), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--lp-transition-slow);
+  pointer-events: none;
+}
+
+.feature-card:hover {
+  background: var(--lp-bg-card-hover);
+  border-color: var(--lp-border-accent);
+  transform: translateY(-6px);
+  box-shadow: var(--lp-shadow-md), var(--lp-shadow-glow);
+}
+
+.feature-card:hover::before {
+  opacity: 1;
+}
+
+.feature-card:hover::after {
+  opacity: 1;
+}
+
+/* ── Large Card ── */
+.feature-card-large {
+  grid-column: span 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.feature-card-visual {
+  position: relative;
+}
+
+/* ── Account Cards Visual ── */
+.feature-visual-accounts {
+  display: flex;
+  gap: 16px;
+}
+
+.feature-account-card {
+  flex: 1;
+  padding: 28px 24px;
+  border-radius: var(--lp-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: white;
+  transition: all var(--lp-transition-base);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.feature-account-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+}
+
+.feature-account-icon {
+  font-size: 1.5rem;
+}
+
+.feature-account-name {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.feature-account-balance {
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+/* ── Icon Wrapper ── */
+.feature-icon-wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--lp-radius-md);
+  background: rgba(61, 204, 142, 0.1);
+  border: 1px solid var(--lp-border-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  transition: all var(--lp-transition-base);
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  background: rgba(61, 204, 142, 0.15);
+  border-color: var(--lp-border-accent-hover);
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(61, 204, 142, 0.1);
+}
+
+.feature-icon {
+  font-size: 1.5rem;
+}
+
+/* ── Card Content ── */
+.feature-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: var(--lp-text-primary);
+}
+
+.feature-card p {
+  font-size: 0.9375rem;
+  color: var(--lp-text-muted);
+  margin: 0 0 20px 0;
+  line-height: 1.65;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feature-list li {
+  font-size: 0.8125rem;
+  color: var(--lp-text-muted);
+  padding-left: 22px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.feature-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--lp-accent);
+  font-weight: 700;
+  font-size: 0.875rem;
+}

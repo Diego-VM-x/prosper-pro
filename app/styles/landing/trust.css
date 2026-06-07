@@ -1,0 +1,62 @@
+/* ============================================
+   LANDING PAGE - TRUST BAR
+   ============================================ */
+
+.landing-trust-section {
+  position: relative;
+  z-index: 1;
+  padding: 48px var(--lp-section-px);
+  border-top: 1px solid var(--lp-border-subtle);
+  border-bottom: 1px solid var(--lp-border-subtle);
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+}
+
+.landing-trust-inner {
+  max-width: var(--lp-container-max);
+  margin: 0 auto;
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 28px;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--lp-radius-md);
+  background: transparent;
+  transition: all var(--lp-transition-base);
+}
+
+.trust-item:hover {
+  background: var(--lp-bg-card);
+  transform: translateY(-2px);
+}
+
+.trust-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.trust-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.trust-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--lp-text-primary);
+}
+
+.trust-desc {
+  font-size: 0.75rem;
+  color: var(--lp-text-dim);
+  line-height: 1.4;
+}
