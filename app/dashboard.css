@@ -211,7 +211,7 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
   margin-bottom: 16px;
   user-select: none;
 }
@@ -252,7 +252,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: all 0.15s ease;
 }
 .dash-section-toggle:hover {
   background: var(--bg-input);
@@ -328,8 +328,13 @@
 
 /* Grid column spans */
 .widgets-grid .content-card { min-width: 0; }
-.widgets-grid .plans-card { grid-column: span 2; }
-.widgets-grid .deadlines-section { grid-column: span 2; }
+.widgets-grid .plans-card { grid-column: span 1; }
+.widgets-grid .deadlines-section { grid-column: span 1; }
+/* Metas section - horizontal symmetric layout */
+.dash-section:has(.plans-card) .widgets-grid,
+.dash-section:has(.deadlines-section) .widgets-grid {
+  grid-template-columns: 1fr 1fr;
+}
 .widgets-grid .accounts-section { grid-column: span 2; }
 .widgets-grid .summary-card { grid-column: span 1; }
 .widgets-grid .recent-tx-card { grid-column: span 1; }
@@ -645,8 +650,8 @@ select.form-input { cursor: pointer; }
   .welcome-title { font-size: 1.5rem; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .widgets-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .widgets-grid .plans-card { grid-column: span 2; }
-  .widgets-grid .deadlines-section { grid-column: span 2; }
+  .widgets-grid .plans-card { grid-column: span 1; }
+  .widgets-grid .deadlines-section { grid-column: span 1; }
   .widgets-grid .accounts-section { grid-column: span 2; }
   .widgets-grid .chart-card { grid-column: span 2; }
   .chart-card { min-height: auto; }

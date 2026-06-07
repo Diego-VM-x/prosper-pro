@@ -238,6 +238,9 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [txLoading, setTxLoading] = useState(false);
   const [showVepayModal, setShowVepayModal] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
+  const [ratesCollapsed, setRatesCollapsed] = useState(() => {
+    try { return safeLocalStorage.getItem('finanzas-rates-collapsed') === 'true'; } catch { return false; }
+  });
   const [vepayProcessing, setVepayProcessing] = useState(false);
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
@@ -1086,7 +1089,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               </button>
             </div>
 
-            {/* Mobile FAB */}
+            {/* Mobile FAB - Fixed bottom-right */}
             <div className={`mobile-fab-container ${fabOpen ? 'open' : ''}`}>
               <div className="mobile-fab-menu">
                 <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowModal(true); }}>
@@ -1132,97 +1135,131 @@ const FinanzasPage = memo(function FinanzasPage() {
             {fabOpen && <div className="mobile-fab-backdrop" onClick={() => setFabOpen(false)} />}
           </div>
 
-          {/* Tasas de cambio */}
-          <div className="rates-tables-wrapper">
-            {/* Monedas Fiduciarias */}
-            <div className="rates-table-container">
-              <div className="rates-table-header">
-                <div className="rates-table-header-left">
-                  <span className="rates-table-icon">💱</span>
-                  <div>
-                    <span className="rates-table-title">Monedas</span>
-                    <span className="rates-table-subtitle">Tasas oficiales BCV</span>
-                  </div>
+          {/* Tasas de cambio - Collapsible */}
+          <div className="rates-section">
+            <div 
+              className={`rates-section-header ${ratesCollapsed ? 'collapsed' : ''}`}
+              onClick={() => setRatesCollapsed(!ratesCollapsed)}
+            >
+              <div className="rates-section-header-left">
+                <span className="rates-section-icon">💱</span>
+                <div>
+                  <span className="rates-section-title">Mercado de Divisas</span>
+                  <span className="rates-section-subtitle">Tasas en tiempo real</span>
                 </div>
               </div>
-              <div className="rates-list">
-                {[
-                  { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
-                  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-                  { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
-                ].map(({ code, name, flag }) => {
-                  const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
-                  return (
-                    <div key={code} className="rates-row">
-                      <div className="rates-row-left">
-                        <span className="rates-row-flag">{flag}</span>
-                        <div className="rates-row-info">
-                          <span className="rates-row-code">{code}</span>
-                          <span className="rates-row-name">{name}</span>
-                        </div>
-                      </div>
-                      <span className="rates-row-value">
-                        {rates.source === 'api' && value
-                          ? `Bs. ${value.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })}`
-                          : '—'}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ 
+                  transform: ratesCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', 
+                  transition: 'transform 0.2s ease',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </div>
-
-            {/* Cryptos */}
-            <div className="rates-table-container">
-              <div className="rates-table-header">
-                <div className="rates-table-header-left">
-                  <span className="rates-table-icon">💎</span>
-                  <div>
-                    <span className="rates-table-title">Cryptos</span>
-                    <span className="rates-table-subtitle">USD vs BS</span>
-                  </div>
-                </div>
-              </div>
-              <div className="rates-list">
-                {[
-                  { code: 'USDT', name: 'Tether', flag: '💎' },
-                  { code: 'SOL', name: 'Solana', flag: '☀️' },
-                  { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-                  { code: 'ETH', name: 'Ethereum', flag: '💠' },
-                  { code: 'USDC', name: 'USD Coin', flag: '🔷' },
-                ].map(({ code, name, flag }) => {
-                  const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
-                  const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
-                  const bsP2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
-                  return (
-                    <div key={code} className="rates-row">
-                      <div className="rates-row-left">
-                        <span className="rates-row-flag">{flag}</span>
-                        <div className="rates-row-info">
-                          <span className="rates-row-code">{code}</span>
-                          <span className="rates-row-name">{name}</span>
-                        </div>
+            
+            {!ratesCollapsed && (
+              <div className="rates-tables-wrapper">
+                {/* Monedas Fiduciarias */}
+                <div className="rates-table-container">
+                  <div className="rates-table-header">
+                    <div className="rates-table-header-left">
+                      <span className="rates-table-icon">💱</span>
+                      <div>
+                        <span className="rates-table-title">Monedas</span>
+                        <span className="rates-table-subtitle">Tasas oficiales BCV</span>
                       </div>
-                      <div className="rates-row-values">
-                        <span className="rates-row-val rates-usd-val" title="Precio en USD">
-                          {usdPrice ? `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                          <span className="rates-row-val rates-bs-official" title="Tasa oficial BS">
-                            {bsOfficial ? `Bs. ${formatCompact(bsOfficial)}` : '—'}
+                    </div>
+                  </div>
+                  <div className="rates-list">
+                    {[
+                      { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
+                      { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+                      { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
+                    ].map(({ code, name, flag }) => {
+                      const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                      return (
+                        <div key={code} className="rates-row">
+                          <div className="rates-row-left">
+                            <span className="rates-row-flag">{flag}</span>
+                            <div className="rates-row-info">
+                              <span className="rates-row-code">{code}</span>
+                              <span className="rates-row-name">{name}</span>
+                            </div>
+                          </div>
+                          <span className="rates-row-value">
+                            {rates.source === 'api' && value
+                              ? `Bs. ${value.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })}`
+                              : '—'}
                           </span>
-                          {bsP2p && (
-                            <span className="rates-row-val rates-bs-p2p" title="Tasa P2P BS">
-                              P2P: {formatCompact(bsP2p)}
-                            </span>
-                          )}
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Cryptos */}
+                <div className="rates-table-container">
+                  <div className="rates-table-header">
+                    <div className="rates-table-header-left">
+                      <span className="rates-table-icon">💎</span>
+                      <div>
+                        <span className="rates-table-title">Cryptos</span>
+                        <span className="rates-table-subtitle">USD vs BS</span>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                  <div className="rates-list">
+                    {[
+                      { code: 'USDT', name: 'Tether', flag: '💎' },
+                      { code: 'SOL', name: 'Solana', flag: '☀️' },
+                      { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
+                      { code: 'ETH', name: 'Ethereum', flag: '💠' },
+                      { code: 'USDC', name: 'USD Coin', flag: '🔷' },
+                    ].map(({ code, name, flag }) => {
+                      const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
+                      const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                      const bsP2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
+                      return (
+                        <div key={code} className="rates-row">
+                          <div className="rates-row-left">
+                            <span className="rates-row-flag">{flag}</span>
+                            <div className="rates-row-info">
+                              <span className="rates-row-code">{code}</span>
+                              <span className="rates-row-name">{name}</span>
+                            </div>
+                          </div>
+                          <div className="rates-row-values">
+                            <span className="rates-row-val rates-usd-val" title="Precio en USD">
+                              {usdPrice ? `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
+                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                              <span className="rates-row-val rates-bs-official" title="Tasa oficial BS">
+                                {bsOfficial ? `Bs. ${formatCompact(bsOfficial)}` : '—'}
+                              </span>
+                              {bsP2p && (
+                                <span className="rates-row-val rates-bs-p2p" title="Tasa P2P BS">
+                                  P2P: {formatCompact(bsP2p)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Cuentas agrupadas */}
@@ -1469,31 +1506,59 @@ const FinanzasPage = memo(function FinanzasPage() {
           {/* Gráfico */}
           <FinancialStatusChart />
 
-          {/* Filtros */}
-          <div className="filter-bar">
-            <CustomSelect
-              value={selectedAccount}
-              onChange={(val) => setSelectedAccount(val)}
-              options={[
-                { value: 'all', label: 'Todas las cuentas', icon: '📊' },
-                ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
-              ]}
-              placeholder="Seleccionar cuenta..."
-            />
-            {['Todos', 'income', 'expense', 'saving'].map((t) => (
-              <button key={t} className={`filter-btn ${filterType === t ? 'active' : ''}`} onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}>
-                {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]} ${TYPE_LABELS[t]}`}
-              </button>
-            ))}
-            <CustomSelect
-              value={filterCategory}
-              onChange={(val) => setFilterCategory(val)}
-              options={[
-                { value: 'Todas', label: 'Todas las categorías', icon: '📋' },
-                ...categories.map((c) => ({ value: c, label: c })),
-              ]}
-              placeholder="Seleccionar categoría..."
-            />
+          {/* Filtros - Compact Visual Design */}
+          <div className="tx-filters">
+            <div className="tx-filters-row">
+              <div className="tx-filter-group">
+                <span className="tx-filter-label">📊 Cuenta</span>
+                <CustomSelect
+                  value={selectedAccount}
+                  onChange={(val) => setSelectedAccount(val)}
+                  options={[
+                    { value: 'all', label: 'Todas', icon: '📊' },
+                    ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+                  ]}
+                  placeholder="Todas"
+                />
+              </div>
+              <div className="tx-filter-group">
+                <span className="tx-filter-label">📋 Tipo</span>
+                <div className="tx-filter-pills">
+                  {['Todos', 'income', 'expense', 'saving'].map((t) => (
+                    <button 
+                      key={t} 
+                      className={`tx-filter-pill ${filterType === t ? 'active' : ''}`} 
+                      onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}
+                    >
+                      {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="tx-filter-group tx-filter-group-wide">
+                <span className="tx-filter-label">🏷️ Categoría</span>
+                <CustomSelect
+                  value={filterCategory}
+                  onChange={(val) => setFilterCategory(val)}
+                  options={[
+                    { value: 'Todas', label: 'Todas', icon: '📋' },
+                    ...categories.map((c) => ({ value: c, label: c })),
+                  ]}
+                  placeholder="Todas"
+                />
+              </div>
+            </div>
+            <div className="tx-filters-summary">
+              <span className="tx-filters-count">{filteredTx.length} transacción{filteredTx.length !== 1 ? 'es' : ''}</span>
+              {(selectedAccount !== 'all' || filterType !== 'Todos' || filterCategory !== 'Todas') && (
+                <button 
+                  className="tx-filters-clear" 
+                  onClick={() => { setSelectedAccount('all'); setFilterType('Todos'); setFilterCategory('Todas'); }}
+                >
+                  Limpiar filtros
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Tabla de transacciones */}
@@ -2474,11 +2539,40 @@ const FinanzasPage = memo(function FinanzasPage() {
           .summary-saving { border-left: 4px solid var(--color-pine-500); }
           .summary-balance { border-left: 4px solid var(--color-gold-500); }
 
-          /* Filters */
-          .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
-          .filter-btn { padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-card); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; }
-          .filter-btn.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
-          .filter-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+          /* Transaction Filters - Compact Visual Design */
+          .tx-filters { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 20px; }
+          .tx-filters-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+          .tx-filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+          .tx-filter-group-wide { flex: 1; min-width: 200px; }
+          .tx-filter-label { font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+          .tx-filter-pills { display: flex; gap: 4px; }
+          .tx-filter-pill {
+            padding: 8px 14px; border-radius: var(--radius-full);
+            background: var(--bg-input); border: 1px solid var(--border-default);
+            color: var(--text-secondary); font-size: 0.875rem;
+            font-weight: 600; cursor: pointer; transition: all 0.15s ease;
+            font-family: inherit;
+          }
+          .tx-filter-pill:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
+          .tx-filter-pill.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
+          .tx-filters-summary { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-default); }
+          .tx-filters-count { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
+          .tx-filters-clear { background: none; border: none; color: var(--color-prosper-green); font-size: 0.75rem; font-weight: 600; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all 0.15s; }
+          .tx-filters-clear:hover { background: rgba(61,204,142,0.1); }
+
+          /* Rates Section - Collapsible */
+          .rates-section { margin-bottom: 20px; }
+          .rates-section-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; background: var(--bg-card);
+            border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+            cursor: pointer; transition: all 0.15s ease; user-select: none;
+          }
+          .rates-section-header:hover { border-color: rgba(61,204,142,0.3); }
+          .rates-section-header-left { display: flex; align-items: center; gap: 12px; }
+          .rates-section-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; }
+          .rates-section-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+          .rates-section-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
 
           /* Table */
           .transactions-table-wrapper { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -2824,7 +2918,14 @@ const FinanzasPage = memo(function FinanzasPage() {
             /* Force rates tables to show on mobile */
             .rates-tables-wrapper { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; margin-bottom: 20px !important; visibility: visible !important; }
             .rates-table-container { display: block !important; visibility: visible !important; }
+            .rates-section-header { padding: 12px 14px; }
             .rates-row { padding: 12px 14px; min-height: 52px; }
+            .tx-filters { padding: 12px; }
+            .tx-filters-row { flex-direction: column; align-items: stretch; gap: 10px; }
+            .tx-filter-group { min-width: 0; }
+            .tx-filter-group-wide { min-width: 0; }
+            .tx-filter-pills { justify-content: center; }
+            .tx-filters-summary { margin-top: 10px; padding-top: 10px; }
             .rates-row-value { font-size: 0.8125rem; }
             .rates-row-val { font-size: 0.75rem; min-width: 60px; }
             .rates-row-values { gap: 14px; }
@@ -2859,6 +2960,10 @@ const FinanzasPage = memo(function FinanzasPage() {
             .desktop-only-actions { display: none !important; }
             .page-header-actions { grid-template-columns: 1fr; }
             .page-header-actions .btn-primary { grid-column: auto; }
+            .tx-filters { padding: 10px; border-radius: 10px; }
+            .tx-filter-pill { padding: 6px 10px; font-size: 0.8125rem; }
+            .rates-section-header { padding: 10px 12px; }
+            .rates-section-icon { width: 32px; height: 32px; font-size: 1.125rem; }
             .page-title { font-size: 1.25rem; }
             .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
             .summary-card { padding: 10px 8px; }
