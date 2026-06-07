@@ -237,6 +237,7 @@ const FinanzasPage = memo(function FinanzasPage() {
 
   const [txLoading, setTxLoading] = useState(false);
   const [showVepayModal, setShowVepayModal] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
   const [vepayProcessing, setVepayProcessing] = useState(false);
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
@@ -1034,7 +1035,8 @@ const FinanzasPage = memo(function FinanzasPage() {
               <h1 className="page-title">Finanzas</h1>
               <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
             </div>
-            <div className="page-header-actions">
+            {/* Desktop actions */}
+            <div className="page-header-actions desktop-only-actions">
               <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
                 <IconPlus width={14} /> Nueva Cuenta
               </button>
@@ -1083,6 +1085,51 @@ const FinanzasPage = memo(function FinanzasPage() {
                 <IconPlus width={14} /> Nueva Transacción
               </button>
             </div>
+
+            {/* Mobile FAB */}
+            <div className={`mobile-fab-container ${fabOpen ? 'open' : ''}`}>
+              <div className="mobile-fab-menu">
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowModal(true); }}>
+                  <span className="mobile-fab-icon">💸</span>
+                  <span className="mobile-fab-label">Nueva Transacción</span>
+                </button>
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountModal(true); }}>
+                  <span className="mobile-fab-icon">💳</span>
+                  <span className="mobile-fab-label">Nueva Cuenta</span>
+                </button>
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowTransferModal(true); }}>
+                  <span className="mobile-fab-icon">🔄</span>
+                  <span className="mobile-fab-label">Transferir</span>
+                </button>
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowVepayModal(true); }}>
+                  <span className="mobile-fab-icon">📷</span>
+                  <span className="mobile-fab-label">Importar Captura</span>
+                </button>
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountingModal(true); }}>
+                  <span className="mobile-fab-icon">📊</span>
+                  <span className="mobile-fab-label">Gestión Contable</span>
+                </button>
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); toggleShowAmounts(); }}>
+                  <span className="mobile-fab-icon">{showAmounts ? '🙈' : '👁️'}</span>
+                  <span className="mobile-fab-label">{showAmounts ? 'Ocultar Saldos' : 'Mostrar Saldos'}</span>
+                </button>
+                <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setP2pMode(!p2pMode); }}>
+                  <span className="mobile-fab-icon">💱</span>
+                  <span className="mobile-fab-label">Modo {p2pMode ? 'P2P' : 'Oficial'}</span>
+                </button>
+                <button className="mobile-fab-item mobile-fab-item-danger" onClick={() => { setFabOpen(false); handleClearAllHistory(); }}>
+                  <span className="mobile-fab-icon">🗑️</span>
+                  <span className="mobile-fab-label">Borrar Historial</span>
+                </button>
+              </div>
+              <button className="mobile-fab-main" onClick={() => setFabOpen(!fabOpen)} aria-label="Acciones">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+            </div>
+            {fabOpen && <div className="mobile-fab-backdrop" onClick={() => setFabOpen(false)} />}
           </div>
 
           {/* Tasas de cambio */}
@@ -2690,6 +2737,10 @@ const FinanzasPage = memo(function FinanzasPage() {
           .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
           .accounting-info-text strong { color: var(--text-primary); }
 
+          /* Mobile FAB */
+          .mobile-fab-container { display: none; }
+          .mobile-fab-backdrop { display: none; }
+
           /* Responsive */
           @media (max-width: 1024px) {
             .accounts-grid { grid-template-columns: repeat(2, 1fr); }
@@ -2708,14 +2759,58 @@ const FinanzasPage = memo(function FinanzasPage() {
             .page-header-left { text-align: center; }
             .page-title { font-size: 1.375rem; }
             .page-subtitle { font-size: 0.8125rem; }
-            .page-header-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-            .page-header-actions .btn { justify-content: center; min-width: 0; padding: 10px 8px; font-size: 0.75rem; }
-            .page-header-actions .btn-primary { grid-column: 1 / -1; }
+            /* Hide desktop buttons on mobile - use FAB instead */
+            .desktop-only-actions { display: none !important; }
+            /* Mobile FAB */
+            .mobile-fab-container { display: flex; flex-direction: column; align-items: flex-end; position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+            .mobile-fab-main {
+              width: 56px; height: 56px; border-radius: 50%;
+              background: var(--color-prosper-green);
+              color: white; border: none;
+              display: flex; align-items: center; justify-content: center;
+              cursor: pointer; box-shadow: 0 4px 20px rgba(61,204,142,0.4), 0 0 0 4px rgba(61,204,142,0.1);
+              transition: all 0.3s ease;
+            }
+            .mobile-fab-main:active { transform: scale(0.92); }
+            .mobile-fab-menu {
+              display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+              margin-bottom: 12px;
+              opacity: 0; transform: translateY(20px) scale(0.9);
+              pointer-events: none;
+              transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            }
+            .mobile-fab-container.open .mobile-fab-menu {
+              opacity: 1; transform: translateY(0) scale(1);
+              pointer-events: auto;
+            }
+            .mobile-fab-item {
+              display: flex; align-items: center; gap: 10px;
+              background: var(--bg-card);
+              border: 1px solid var(--border-default);
+              border-radius: 999px;
+              padding: 10px 16px 10px 12px;
+              font-size: 0.875rem; font-weight: 600; color: var(--text-primary);
+              cursor: pointer; white-space: nowrap;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+              transition: all 0.2s ease;
+              font-family: inherit;
+            }
+            .mobile-fab-item:active { transform: scale(0.95); }
+            .mobile-fab-item:hover { border-color: var(--color-prosper-green); }
+            .mobile-fab-item-danger { color: var(--color-error); border-color: rgba(239,68,68,0.3); }
+            .mobile-fab-item-danger:hover { border-color: var(--color-error); background: rgba(239,68,68,0.08); }
+            .mobile-fab-icon { font-size: 1.125rem; }
+            .mobile-fab-label { font-size: 0.8125rem; }
+            .mobile-fab-backdrop {
+              display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+              z-index: 9998; backdrop-filter: blur(2px);
+              animation: fadeIn 0.2s ease;
+            }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
-            .page-header-actions .btn-p2p-toggle { display: flex; width: 100%; }
-            .page-header-actions .btn-p2p-toggle button { flex: 1; justify-content: center; padding: 10px 8px; font-size: 0.75rem; }
             .modal-accounting { max-width: none; }
             .accounting-actions { grid-template-columns: 1fr 1fr; }
             .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
@@ -2726,7 +2821,9 @@ const FinanzasPage = memo(function FinanzasPage() {
             .accounting-btn-desc { font-size: 0.5625rem; }
             .accounting-account-card { padding: 8px; }
             .accounting-mini-btn { padding: 4px 4px; font-size: 0.5625rem; }
-            .rates-tables-wrapper { grid-template-columns: 1fr; }
+            /* Force rates tables to show on mobile */
+            .rates-tables-wrapper { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; margin-bottom: 20px !important; visibility: visible !important; }
+            .rates-table-container { display: block !important; visibility: visible !important; }
             .rates-row { padding: 12px 14px; min-height: 52px; }
             .rates-row-value { font-size: 0.8125rem; }
             .rates-row-val { font-size: 0.75rem; min-width: 60px; }
@@ -2759,6 +2856,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .vepay-receipt-card { padding: 12px; }
           }
           @media (max-width: 480px) {
+            .desktop-only-actions { display: none !important; }
             .page-header-actions { grid-template-columns: 1fr; }
             .page-header-actions .btn-primary { grid-column: auto; }
             .page-title { font-size: 1.25rem; }
