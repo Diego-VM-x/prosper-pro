@@ -289,10 +289,11 @@ export async function notifyDollarChange(
   newRate: number
 ) {
   const diff = newRate - oldRate;
-  const pct = Math.abs(((diff / oldRate) * 100)).toFixed(1);
+  const pct = Math.abs(((diff / oldRate) * 100)).toFixed(2);
   const direction = diff > 0 ? '⬆' : '⬇';
-  const title = `${direction} Cambio en el Dólar BCV`;
-  const body = `El dólar pasó de ${oldRate.toFixed(2)} a ${newRate.toFixed(2)} Bs (${diff > 0 ? '+' : ''}${pct}%)`;
+  const sign = diff > 0 ? '+' : '';
+  const title = `${direction} Dólar BCV: ${newRate.toFixed(2)} Bs`;
+  const body = `Actualización: ${newRate.toFixed(2)} Bs (${sign}${diff.toFixed(2)} / ${sign}${pct}%)`;
   await addNotification({
     ownerId,
     title,

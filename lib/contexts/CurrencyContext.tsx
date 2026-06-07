@@ -368,18 +368,19 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   // ── Notification Triggers ────────────────────────────────────
 
-  // Dollar rate change notification
+  // Dollar rate update notification - notify on every update with current value
   useEffect(() => {
     if (!user?.uid || !rates?.rates?.USD || rates.source !== 'api') return;
     const lastNotifiedRate = Number(safeLocalStorage.getItem('prosper_last_usd_rate') || 0);
-    if (lastNotifiedRate > 0) {
-      const diff = Math.abs(rates.rates.USD - lastNotifiedRate);
-      const pct = diff / lastNotifiedRate;
-      if (pct >= 0.005) {
-        notifyDollarChange(user.uid, lastNotifiedRate, rates.rates.USD).catch(console.error);
-      }
+    const currentRate = rates.rates.USD;
+    if (lastNotifiedRate > 0 && lastNotifiedRate !== currentRate) {
+      const diff = currentRate - lastNotifiedRate;
+      const pct = Math.abs((diff / lastNotifiedRate) * 100).toFixed(2);
+      const direction = diff > 0 ? '⬆' : '⬇';
+      const sign = diff > 0 ? '+' : '';
+      notifyDollarChange(user.uid, lastNotifiedRate, currentRate).catch(console.error);
     }
-    safeLocalStorage.setItem('prosper_last_usd_rate', String(rates.rates.USD));
+    safeLocalStorage.setItem('prosper_last_usd_rate', String(currentRate));
   }, [rates?.rates?.USD, rates?.source, user?.uid]);
 
   // Daily balance notification (at 12:00 local time)

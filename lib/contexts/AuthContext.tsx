@@ -141,14 +141,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
         }
 
-        // Send welcome notification for every login (new and existing users)
-        try {
-          const { notifyWelcome } = await import('@/lib/firestore/notifications');
-          await notifyWelcome(u.uid, u.displayName || 'Usuario');
-        } catch (error) {
-          console.error('Failed to send welcome notification:', error);
-        }
-        
+        // Request notification permission
         try {
           const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
           await requestNotificationPermission();
