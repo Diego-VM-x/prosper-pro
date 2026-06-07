@@ -124,6 +124,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
               USDT: customRates['USDT'] ?? prev.rates.USDT,
               SOL: customRates['SOL'] ?? prev.rates.SOL,
               BTC: customRates['BTC'] ?? prev.rates.BTC,
+              ETH: customRates['ETH'] ?? prev.rates.ETH,
               USDC: customRates['USDC'] ?? prev.rates.USDC,
               COP: customRates['COP'] ?? prev.rates.COP,
             },
@@ -239,16 +240,19 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         let usdtRate = oficialRate;
         let solRate = 9000;
         let btcRate = 4500000;
+        let ethRate = 135000;
         let usdcRate = oficialRate;
         if (cryptoRes.status === 'fulfilled' && cryptoRes.value.ok) {
           const data = await cryptoRes.value.json();
           const usdtUsd = data?.tether?.usd;
           const solUsd = data?.solana?.usd;
           const btcUsd = data?.bitcoin?.usd;
+          const ethUsd = data?.ethereum?.usd;
           const usdcUsd = data?.['usd-coin']?.usd;
           if (usdtUsd && usdtUsd > 0) usdtRate = Number((usdtUsd * oficialRate).toFixed(2));
           if (solUsd && solUsd > 0) solRate = Number((solUsd * oficialRate).toFixed(2));
           if (btcUsd && btcUsd > 0) btcRate = Number((btcUsd * oficialRate).toFixed(2));
+          if (ethUsd && ethUsd > 0) ethRate = Number((ethUsd * oficialRate).toFixed(2));
           if (usdcUsd && usdcUsd > 0) usdcRate = Number((usdcUsd * oficialRate).toFixed(2));
         }
 
@@ -266,6 +270,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
             USDT: usdtRate,
             SOL: solRate,
             BTC: btcRate,
+            ETH: ethRate,
             USDC: usdcRate,
             COP: copRate,
           },

@@ -22,11 +22,12 @@ export const CURRENCY_MAP: Record<CurrencyCode, CurrencyConfig> = {
   USDT: { code: 'USDT', symbol: '₮', name: 'Tether', flag: '💎', locale: 'en-US', decimals: 2 },
   SOL: { code: 'SOL', symbol: '◎', name: 'Solana', flag: '☀️', locale: 'en-US', decimals: 2 },
   BTC: { code: 'BTC', symbol: '₿', name: 'Bitcoin', flag: '🟠', locale: 'en-US', decimals: 2 },
+  ETH: { code: 'ETH', symbol: 'Ξ', name: 'Ethereum', flag: '💠', locale: 'en-US', decimals: 2 },
   USDC: { code: 'USDC', symbol: '$', name: 'USD Coin', flag: '💠', locale: 'en-US', decimals: 2 },
   COP: { code: 'COP', symbol: '$', name: 'Peso Colombiano', flag: '🇨🇴', locale: 'es-CO', decimals: 0 },
 };
 
-export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL', 'BTC', 'USDC'];
+export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL', 'BTC', 'ETH', 'USDC'];
 
 // ============================================================
 // DEFAULT EXCHANGE RATES (fallback / initial values)
@@ -42,6 +43,7 @@ export const DEFAULT_RATES: ExchangeRates = {
     USDT: 45.00,  // 1 USDT ≈ 1 USD (fallback)
     SOL: 9000.00, // 1 SOL ≈ 200 USD * 45 BS (fallback)
     BTC: 4500000.00, // 1 BTC ≈ 100000 USD * 45 BS (fallback)
+    ETH: 135000.00, // 1 ETH ≈ 3000 USD * 45 BS (fallback)
     USDC: 45.00,  // 1 USDC ≈ 1 USD (fallback)
     COP: 0.0105,  // 1 COP ≈ 0.0105 BS (fallback)
   },
@@ -101,6 +103,7 @@ export function getAccountRates(
     if (rates.p2pRates.USDT) r.USDT = rates.p2pRates.USDT;
     if (rates.p2pRates.SOL) r.SOL = rates.p2pRates.SOL;
     if (rates.p2pRates.BTC) r.BTC = rates.p2pRates.BTC;
+    if (rates.p2pRates.ETH) r.ETH = rates.p2pRates.ETH;
     if (rates.p2pRates.USDC) r.USDC = rates.p2pRates.USDC;
   }
   return r;
