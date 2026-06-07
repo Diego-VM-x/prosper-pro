@@ -455,8 +455,8 @@
    8. UTILIDADES DE DELAY Y STAGGER MANUAL
    ========================================================================== */
 .stagger-item {
-  opacity: 0;
-  animation: softSlideUp 0.4s var(--anim-ease-out-expo) both;
+  opacity: 1;
+  animation: none;
 }
 
 .stagger-1 { animation-delay: 0.05s; }

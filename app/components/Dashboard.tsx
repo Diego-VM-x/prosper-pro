@@ -500,6 +500,7 @@ export const Dashboard = memo(function Dashboard() {
   const groupedAccounts = useMemo(() => {
     const grouped: Record<string, { group: AccountGroup | null; accounts: FinancialAccount[] }> = {};
     const ungrouped: FinancialAccount[] = [];
+    const groupedIds = new Set<string>();
 
     accounts.forEach(acc => {
       if (acc.groupId) {
@@ -507,9 +508,20 @@ export const Dashboard = memo(function Dashboard() {
           const group = accountGroups.find(g => g.id === acc.groupId);
           grouped[acc.groupId] = { group: group || null, accounts: [] };
         }
-        grouped[acc.groupId].accounts.push(acc);
-      } else {
-        ungrouped.push(acc);
+        // Evitar duplicados dentro del mismo grupo
+        if (!groupedIds.has(acc.id)) {
+          grouped[acc.groupId].accounts.push(acc);
+          groupedIds.add(acc.id);
+        }
+      }
+    });
+
+    // Cuentas sin grupo: solo las que NO están en ningún grupo
+    accounts.forEach(acc => {
+      if (!acc.groupId || !groupedIds.has(acc.id)) {
+        if (!acc.groupId) {
+          ungrouped.push(acc);
+        }
       }
     });
 

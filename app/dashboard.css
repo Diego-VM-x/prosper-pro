@@ -1,8 +1,9 @@
 /* Animaciones desactivadas para widgets del dashboard */
-.dash-item {
-  animation: none;
-  opacity: 1;
-  transform: none;
+.dash-item,
+.dash-item.stagger-item {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
 }
 
 /* Secciones colapsables - ocultar con display:none en lugar de desmontar de React */
