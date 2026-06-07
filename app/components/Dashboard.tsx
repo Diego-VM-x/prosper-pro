@@ -500,23 +500,27 @@ export const Dashboard = memo(function Dashboard() {
   const groupedAccounts = useMemo(() => {
     const grouped: Record<string, { group: AccountGroup | null; accounts: FinancialAccount[] }> = {};
     const ungrouped: FinancialAccount[] = [];
-    const seenInGroup = new Set<string>();
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+
+    // Deduplicar cuentas por nombre primero (mismo nombre = misma cuenta)
+    const uniqueAccounts = accounts.filter(acc => {
+      if (seenIds.has(acc.id)) return false;
+      if (seenNames.has(acc.name)) return false;
+      seenIds.add(acc.id);
+      seenNames.add(acc.name);
+      return true;
+    });
 
     // Primero: agrupar cuentas que tienen groupId válido
-    accounts.forEach(acc => {
+    uniqueAccounts.forEach(acc => {
       if (acc.groupId && acc.groupId.trim() !== '') {
         if (!grouped[acc.groupId]) {
           const group = accountGroups.find(g => g.id === acc.groupId);
           grouped[acc.groupId] = { group: group || null, accounts: [] };
         }
         grouped[acc.groupId].accounts.push(acc);
-        seenInGroup.add(acc.id);
-      }
-    });
-
-    // Luego: cuentas sin grupo (solo las que no fueron asignadas a ningún grupo)
-    accounts.forEach(acc => {
-      if (!seenInGroup.has(acc.id)) {
+      } else {
         ungrouped.push(acc);
       }
     });
@@ -807,8 +811,8 @@ export const Dashboard = memo(function Dashboard() {
                       </div>
                     </div>
                   ))}
-                  {/* Cuentas sin grupo - solo mostrar si hay cuentas realmente sin grupo */}
-                  {groupedAccounts.ungrouped.length > 0 && accountGroups.length === 0 && (
+                  {/* Cuentas sin grupo */}
+                  {groupedAccounts.ungrouped.length > 0 && (
                     <div className="account-group-items">
                       {groupedAccounts.ungrouped.slice(0, 3).map((acc) => {
                         const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
