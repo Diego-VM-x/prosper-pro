@@ -500,28 +500,24 @@ export const Dashboard = memo(function Dashboard() {
   const groupedAccounts = useMemo(() => {
     const grouped: Record<string, { group: AccountGroup | null; accounts: FinancialAccount[] }> = {};
     const ungrouped: FinancialAccount[] = [];
-    const groupedIds = new Set<string>();
+    const seenInGroup = new Set<string>();
 
+    // Primero: agrupar cuentas que tienen groupId válido
     accounts.forEach(acc => {
-      if (acc.groupId) {
+      if (acc.groupId && acc.groupId.trim() !== '') {
         if (!grouped[acc.groupId]) {
           const group = accountGroups.find(g => g.id === acc.groupId);
           grouped[acc.groupId] = { group: group || null, accounts: [] };
         }
-        // Evitar duplicados dentro del mismo grupo
-        if (!groupedIds.has(acc.id)) {
-          grouped[acc.groupId].accounts.push(acc);
-          groupedIds.add(acc.id);
-        }
+        grouped[acc.groupId].accounts.push(acc);
+        seenInGroup.add(acc.id);
       }
     });
 
-    // Cuentas sin grupo: solo las que NO están en ningún grupo
+    // Luego: cuentas sin grupo (solo las que no fueron asignadas a ningún grupo)
     accounts.forEach(acc => {
-      if (!acc.groupId || !groupedIds.has(acc.id)) {
-        if (!acc.groupId) {
-          ungrouped.push(acc);
-        }
+      if (!seenInGroup.has(acc.id)) {
+        ungrouped.push(acc);
       }
     });
 
