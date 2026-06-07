@@ -936,50 +936,47 @@ const FinanzasPage = memo(function FinanzasPage() {
             {/* Tabla Monedas Fiduciarias */}
             <div className="rates-table-container">
               <div className="rates-table-header">
-                <span className="rates-table-title">💱 Monedas</span>
-                <span className="rates-table-subtitle">Tasas oficiales</span>
+                <div className="rates-table-header-left">
+                  <span className="rates-table-icon">💱</span>
+                  <div>
+                    <span className="rates-table-title">Monedas</span>
+                    <span className="rates-table-subtitle">Tasas oficiales BCV</span>
+                  </div>
+                </div>
               </div>
               <table className="rates-table">
                 <thead>
                   <tr>
                     <th>Moneda</th>
-                    <th>Tasa (Bs.)</th>
+                    <th className="rates-th-value">1 unidad = Bs.</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>
-                      <span className="rates-currency-flag">🇺🇸</span>
-                      <span className="rates-currency-code">USD</span>
-                    </td>
-                    <td className="rates-value">
-                      {rates.source === 'api' && rates.rates.USD
-                        ? rates.rates.USD.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                        : '—'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="rates-currency-flag">🇪🇺</span>
-                      <span className="rates-currency-code">EUR</span>
-                    </td>
-                    <td className="rates-value">
-                      {rates.source === 'api' && rates.rates.EUR
-                        ? rates.rates.EUR.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-                        : '—'}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <span className="rates-currency-flag">🇨🇴</span>
-                      <span className="rates-currency-code">COP</span>
-                    </td>
-                    <td className="rates-value">
-                      {rates.source === 'api' && rates.rates.COP
-                        ? rates.rates.COP.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })
-                        : '—'}
-                    </td>
-                  </tr>
+                  {[
+                    { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
+                    { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+                    { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
+                  ].map(({ code, name, flag }) => {
+                    const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
+                    return (
+                      <tr key={code}>
+                        <td>
+                          <div className="rates-currency-cell">
+                            <span className="rates-currency-flag">{flag}</span>
+                            <div className="rates-currency-info">
+                              <span className="rates-currency-code">{code}</span>
+                              <span className="rates-currency-name">{name}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="rates-value">
+                          {rates.source === 'api' && value
+                            ? value.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })
+                            : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -988,11 +985,14 @@ const FinanzasPage = memo(function FinanzasPage() {
             <div className="rates-table-container">
               <div className="rates-table-header">
                 <div className="rates-table-header-left">
-                  <span className="rates-table-title">💎 Cryptos</span>
-                  <span className="rates-table-subtitle">Oficial vs P2P</span>
+                  <span className="rates-table-icon">💎</span>
+                  <div>
+                    <span className="rates-table-title">Cryptos</span>
+                    <span className="rates-table-subtitle">Oficial vs P2P</span>
+                  </div>
                 </div>
                 <button
-                  className="rates-p2p-toggle"
+                  className={`rates-p2p-toggle ${p2pMode ? 'active' : ''}`}
                   onClick={() => setP2pMode(!p2pMode)}
                   title={p2pMode ? 'Mostrar tasas oficiales' : 'Mostrar tasas P2P'}
                 >
@@ -1004,26 +1004,31 @@ const FinanzasPage = memo(function FinanzasPage() {
                 <thead>
                   <tr>
                     <th>Crypto</th>
-                    <th>Oficial</th>
-                    <th>P2P</th>
+                    <th className="rates-th-value">Oficial</th>
+                    <th className="rates-th-value">P2P</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    { code: 'USDT', flag: '💎' },
-                    { code: 'SOL', flag: '☀️' },
-                    { code: 'BTC', flag: '🟠' },
-                    { code: 'USDC', flag: '💠' },
-                  ].map(({ code, flag }) => {
+                    { code: 'USDT', name: 'Tether', flag: '💎' },
+                    { code: 'SOL', name: 'Solana', flag: '☀️' },
+                    { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
+                    { code: 'USDC', name: 'USD Coin', flag: '💠' },
+                  ].map(({ code, name, flag }) => {
                     const official = rates.rates[code as keyof typeof rates.rates] as number | undefined;
                     const p2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
                     const isActive = p2pMode && p2p;
                     return (
                       <tr key={code} className={isActive ? 'rates-row-p2p-active' : ''}>
                         <td>
-                          <span className="rates-currency-flag">{flag}</span>
-                          <span className="rates-currency-code">{code}</span>
-                          {isActive && <span className="rates-p2p-badge">P2P</span>}
+                          <div className="rates-currency-cell">
+                            <span className="rates-currency-flag">{flag}</span>
+                            <div className="rates-currency-info">
+                              <span className="rates-currency-code">{code}</span>
+                              <span className="rates-currency-name">{name}</span>
+                              {isActive && <span className="rates-p2p-badge">P2P</span>}
+                            </div>
+                          </div>
                         </td>
                         <td className={`rates-value ${isActive ? 'rates-dimmed' : ''}`}>
                           {official
@@ -2059,29 +2064,36 @@ const FinanzasPage = memo(function FinanzasPage() {
           .empty-accounts { text-align: center; padding: 24px; color: var(--text-secondary); font-size: 0.875rem; grid-column: 1 / -1; }
 
           /* Rates Tables */
-          .rates-tables-wrapper { display: grid; grid-template-columns: 280px 1fr; gap: 16px; margin-bottom: 20px; }
-          .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
-          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-input); border-bottom: 1px solid var(--border-default); }
-          .rates-table-header-left { display: flex; align-items: center; gap: 10px; }
-          .rates-table-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
-          .rates-table-subtitle { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
-          .rates-table { width: 100%; border-collapse: collapse; }
-          .rates-table th { text-align: left; padding: 8px 16px; font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; background: var(--bg-card); border-bottom: 1px solid var(--border-default); }
-          .rates-table td { padding: 10px 16px; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); }
+          .rates-tables-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; align-items: start; }
+          .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
+          .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: linear-gradient(180deg, rgba(255,255,255,0.03), var(--bg-input)); border-bottom: 1px solid var(--border-default); }
+          .rates-table-header-left { display: flex; align-items: center; gap: 12px; }
+          .rates-table-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; }
+          .rates-table-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+          .rates-table-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
+          .rates-table { width: 100%; border-collapse: collapse; flex: 1; }
+          .rates-table th { text-align: left; padding: 10px 18px; font-size: 0.625rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg-card); border-bottom: 1px solid var(--border-default); }
+          .rates-table th.rates-th-value { text-align: right; }
+          .rates-table td { padding: 0; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); height: 56px; }
           .rates-table tr:last-child td { border-bottom: none; }
-          .rates-table tr:hover td { background: var(--bg-input); }
-          .rates-currency-flag { font-size: 1rem; margin-right: 8px; }
-          .rates-currency-code { font-weight: 700; font-size: 0.8125rem; }
-          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; }
-          .rates-dimmed { opacity: 0.45; color: var(--text-secondary); }
+          .rates-table tbody tr { transition: background 0.15s ease; }
+          .rates-table tbody tr:hover { background: var(--bg-input); }
+          .rates-currency-cell { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 100%; }
+          .rates-currency-flag { font-size: 1.25rem; flex-shrink: 0; }
+          .rates-currency-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+          .rates-currency-code { font-weight: 700; font-size: 0.8125rem; color: var(--text-primary); }
+          .rates-currency-name { font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
+          .rates-value { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-weight: 600; color: var(--color-prosper-green); text-align: right; padding: 0 18px; height: 100%; display: table-cell; vertical-align: middle; font-size: 0.8125rem; }
+          .rates-dimmed { opacity: 0.4; color: var(--text-secondary); }
           .rates-highlight { color: #4edea3; font-weight: 700; }
-          .rates-row-p2p-active { background: rgba(78, 222, 163, 0.04); }
+          .rates-row-p2p-active { background: rgba(78, 222, 163, 0.05) !important; }
           .rates-row-p2p-active .rates-currency-code { color: #4edea3; }
-          .rates-p2p-badge { font-size: 0.5625rem; font-weight: 700; background: #4edea3; color: #003824; padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
-          .rates-p2p-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+          .rates-p2p-badge { font-size: 0.5625rem; font-weight: 700; background: #4edea3; color: #003824; padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: middle; display: inline-block; }
+          .rates-p2p-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
           .rates-p2p-toggle:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
-          .rates-p2p-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); transition: background 0.2s; }
-          .rates-p2p-dot.active { background: #4edea3; box-shadow: 0 0 6px rgba(78, 222, 163, 0.5); }
+          .rates-p2p-toggle.active { border-color: #4edea3; background: rgba(78,222,163,0.1); color: #4edea3; }
+          .rates-p2p-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-tertiary); transition: all 0.2s; }
+          .rates-p2p-dot.active { background: #4edea3; box-shadow: 0 0 8px rgba(78, 222, 163, 0.6); }
 
           /* Summary (legacy) */
           .summary-section { position: relative; margin-bottom: 24px; }
@@ -2364,7 +2376,12 @@ const FinanzasPage = memo(function FinanzasPage() {
           @media (max-width: 1024px) {
             .accounts-grid { grid-template-columns: repeat(2, 1fr); }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
-            .rates-tables-wrapper { grid-template-columns: 1fr 1fr; }
+            .rates-tables-wrapper { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .rates-table td { height: 52px; }
+            .rates-currency-cell { padding: 0 14px; gap: 10px; }
+            .rates-value { padding: 0 14px; }
+            .rates-table th { padding: 8px 14px; }
+            .rates-table-header { padding: 12px 14px; }
             .page-header-actions { flex-wrap: wrap; }
             .page-header-actions .btn { flex: 1; min-width: 140px; }
           }
@@ -2392,9 +2409,12 @@ const FinanzasPage = memo(function FinanzasPage() {
             .accounting-account-card { padding: 8px; }
             .accounting-mini-btn { padding: 4px 4px; font-size: 0.5625rem; }
             .rates-tables-wrapper { grid-template-columns: 1fr; }
-            .rates-table td { padding: 8px 12px; font-size: 0.75rem; }
-            .rates-table th { padding: 6px 12px; }
-            .rates-value { font-size: 0.75rem; }
+            .rates-table td { height: 52px; }
+            .rates-currency-cell { padding: 0 14px; }
+            .rates-value { padding: 0 14px; font-size: 0.8125rem; }
+            .rates-table th { padding: 8px 14px; }
+            .rates-table-header { padding: 12px 14px; }
+            .rates-table-icon { width: 32px; height: 32px; font-size: 1.125rem; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-value { font-size: 1.25rem; }
