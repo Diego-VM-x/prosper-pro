@@ -496,43 +496,37 @@ export const Dashboard = memo(function Dashboard() {
       }, 0);
   }, [transactions, accounts, displayCurrency, convertBetween, startOfMonth]);
 
-  // Accounts grouped by groupId
+  // Accounts grouped by groupId - Lógica robusta y simple
   const groupedAccounts = useMemo(() => {
-    const grouped: Record<string, { group: AccountGroup | null; accounts: FinancialAccount[] }> = {};
+    // Mapa de grupoId -> { group, accounts[] }
+    const groupMap = new Map<string, { group: AccountGroup | null; accounts: FinancialAccount[] }>();
     const ungrouped: FinancialAccount[] = [];
-    const seenIds = new Set<string>();
-    const seenNames = new Set<string>();
 
-    // Deduplicar cuentas por nombre primero (mismo nombre = misma cuenta)
-    const uniqueAccounts = accounts.filter(acc => {
-      if (seenIds.has(acc.id)) return false;
-      if (seenNames.has(acc.name)) return false;
-      seenIds.add(acc.id);
-      seenNames.add(acc.name);
-      return true;
+    // Paso 1: Crear entradas para todos los grupos existentes (incluso vacíos)
+    accountGroups.forEach(g => {
+      groupMap.set(g.id, { group: g, accounts: [] });
     });
 
-    // Primero: agrupar cuentas que tienen groupId válido
-    uniqueAccounts.forEach(acc => {
-      if (acc.groupId && acc.groupId.trim() !== '') {
-        if (!grouped[acc.groupId]) {
-          const group = accountGroups.find(g => g.id === acc.groupId);
-          grouped[acc.groupId] = { group: group || null, accounts: [] };
-        }
-        grouped[acc.groupId].accounts.push(acc);
+    // Paso 2: Asignar cada cuenta a su grupo o a ungrouped
+    accounts.forEach(acc => {
+      const gid = acc.groupId?.trim();
+      if (gid && groupMap.has(gid)) {
+        groupMap.get(gid)!.accounts.push(acc);
+      } else if (gid && !groupMap.has(gid)) {
+        // groupId referencia un grupo que ya no existe -> cuenta huérfana
+        ungrouped.push(acc);
       } else {
+        // Sin groupId
         ungrouped.push(acc);
       }
     });
 
-    // Sort groups by order
-    const sortedGroups = Object.values(grouped).sort((a, b) => {
-      const orderA = a.group?.order ?? 999;
-      const orderB = b.group?.order ?? 999;
-      return orderA - orderB;
-    });
+    // Paso 3: Convertir a array y ordenar grupos
+    const grouped = Array.from(groupMap.values())
+      .filter(g => g.accounts.length > 0) // Solo grupos con cuentas
+      .sort((a, b) => (a.group?.order ?? 999) - (b.group?.order ?? 999));
 
-    return { grouped: sortedGroups, ungrouped };
+    return { grouped, ungrouped };
   }, [accounts, accountGroups]);
 
   // Helper: format crypto transaction with USD + BS
