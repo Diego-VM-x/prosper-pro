@@ -284,7 +284,16 @@ export const Dashboard = memo(function Dashboard() {
   useEffect(() => {
     const uid = user?.uid;
     if (!uid) return;
-    const unsub = subscribeToAccounts(uid, (accs) => setAccounts(accs));
+    const unsub = subscribeToAccounts(uid, (accs) => {
+      // Deduplicar cuentas por id (previene duplicados de Firestore)
+      const seen = new Set<string>();
+      const unique = accs.filter(acc => {
+        if (seen.has(acc.id)) return false;
+        seen.add(acc.id);
+        return true;
+      });
+      setAccounts(unique);
+    });
     return () => unsub();
   }, [user?.uid]);
 
