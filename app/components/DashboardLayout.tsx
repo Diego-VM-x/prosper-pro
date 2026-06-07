@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy } from 'react';
 import { usePathname } from 'next/navigation';
 import { ThemeProvider } from './ThemeProvider';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import { UpdateModal } from './UpdateModal';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
+
+const UpdateModal = lazy(() => import('./UpdateModal').then(m => ({ default: m.UpdateModal })));
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

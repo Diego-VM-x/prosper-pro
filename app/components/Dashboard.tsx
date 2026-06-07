@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, lazy, Suspense, useRef, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, Suspense, useRef, useMemo, useCallback, memo } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -28,8 +29,9 @@ import { createTransaction } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { getAccountRates, convertCurrency, CURRENCY_MAP } from '@/lib/currency';
 
-const FinancialStatusChart = lazy(() =>
-  import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart }))
+const FinancialStatusChart = dynamic(() =>
+  import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart })),
+  { ssr: false }
 );
 import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction, AccountGroup, CurrencyCode } from '@/types';
 
@@ -187,7 +189,7 @@ function SectionHeader({ icon, title, count, collapsed, onToggle }: {
           <span className="dash-section-count">{count}</span>
         )}
       </div>
-      <button className="dash-section-toggle" onClick={(e) => { e.stopPropagation(); onToggle(); }}>
+      <button className="dash-section-toggle" aria-label={collapsed ? 'Expandir sección' : 'Colapsar sección'} onClick={(e) => { e.stopPropagation(); onToggle(); }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>

@@ -305,9 +305,21 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to fetch exchange rates:', err);
       }
     }
-    fetchRates();
-    const interval = setInterval(fetchRates, 60000);
-    return () => clearInterval(interval);
+    // Deferir fetch de tasas para no bloquear el render inicial
+    const idleCallback = typeof window !== 'undefined' && 'requestIdleCallback' in window
+      ? window.requestIdleCallback(fetchRates, { timeout: 2000 })
+      : setTimeout(fetchRates, 500);
+    const interval = setInterval(fetchRates, 120000);
+    return () => {
+      if (typeof idleCallback === 'number') {
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.cancelIdleCallback(idleCallback);
+        } else {
+          clearTimeout(idleCallback);
+        }
+      }
+      clearInterval(interval);
+    };
   }, []);
 
   // Set display currency (persist to localStorage)

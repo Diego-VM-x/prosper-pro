@@ -103,7 +103,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     }
   }, [unreadCount, notifPermissioned]);
 
-  // Cargar cursos y transacciones para búsqueda
+  // Cargar transacciones para búsqueda (deferido para no bloquear render inicial)
   useEffect(() => {
     if (!user?.uid) return;
     const uid = user.uid;
@@ -118,11 +118,11 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           setTransactions(txData.slice(0, 50));
         }
       } catch (e) {
-        console.error('Search data load error:', e);
+        // Silenciar error de carga de datos de búsqueda
       }
     }
-    loadData();
-    return () => { cancelled = true; };
+    const timer = setTimeout(loadData, 1500);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [user?.uid]);
 
   useEffect(() => {
@@ -451,7 +451,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 className="topbar-avatar"
                 onClick={() => setShowUserMenu(!showUserMenu)}
               >
-                {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+                {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
               </div>
               <div className="topbar-user-info" onClick={() => setShowUserMenu(!showUserMenu)}>
                 <span className="topbar-user-name">{user?.displayName || 'Usuario'}</span>
@@ -532,7 +532,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           {/* Avatar con dropdown */}
           <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
             <div className="topbar-avatar">
-              {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+              {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
             </div>
             <div className="mobile-user-text">
               <span className="mobile-user-name">{user?.displayName || 'Usuario'}</span>
@@ -594,7 +594,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             <div className="mobile-menu-header">
               <div className="mobile-menu-user">
                 <div className="mobile-menu-avatar">
-                  {user?.photoURL ? <img src={user.photoURL} alt="Avatar" /> : userInitial}
+                  {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={40} height={40} loading="lazy" decoding="async" /> : userInitial}
                 </div>
                 <div>
                   <p className="mobile-menu-name">{user?.displayName || 'Usuario'}</p>

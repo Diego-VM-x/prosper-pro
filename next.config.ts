@@ -18,8 +18,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   experimental: {
-    optimizePackageImports: ["recharts", "firebase"],
+    optimizePackageImports: ["recharts", "firebase", "firebase-admin"],
   },
+  turbopack: {},
   async headers() {
     return [
       {

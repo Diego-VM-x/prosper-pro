@@ -1,10 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { UpdateModal } from '@/app/components/UpdateModal';
-import { Dashboard } from '@/app/components/Dashboard';
+
+const UpdateModal = lazy(() => import('@/app/components/UpdateModal').then(m => ({ default: m.UpdateModal })));
+const Dashboard = lazy(() => import('@/app/components/Dashboard').then(m => ({ default: m.Dashboard })));
+
+function LoadingHome() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+      color: 'var(--text-secondary)',
+    }}>
+      <div className="landing-spinner" style={{ width: 32, height: 32, marginRight: 12 }} />
+      <span>Cargando Prosper Pro...</span>
+    </div>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
@@ -17,24 +33,13 @@ export default function Home() {
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        color: 'var(--text-secondary)',
-      }}>
-        <div className="landing-spinner" style={{ width: 32, height: 32, marginRight: 12 }} />
-        <span>Cargando Prosper Pro...</span>
-      </div>
-    );
+    return <LoadingHome />;
   }
 
   return (
-    <>
+    <Suspense fallback={<LoadingHome />}>
       <UpdateModal />
       <Dashboard />
-    </>
+    </Suspense>
   );
 }

@@ -151,6 +151,12 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://ve.dolarapi.com" />
         <link rel="dns-prefetch" href="https://ve.dolarapi.com" />
+        <link rel="preconnect" href="https://api.coingecko.com" />
+        <link rel="dns-prefetch" href="https://api.coingecko.com" />
+        <link rel="preconnect" href="https://criptoya.com" />
+        <link rel="dns-prefetch" href="https://criptoya.com" />
+        <link rel="preconnect" href="https://api.exchangerate-api.com" />
+        <link rel="dns-prefetch" href="https://api.exchangerate-api.com" />
         {/* next-themes theme sync script - evita flash de tema incorrecto */}
         <script
           dangerouslySetInnerHTML={{
