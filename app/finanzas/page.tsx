@@ -1141,7 +1141,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                   { code: 'USDT', name: 'Tether', flag: '💎' },
                   { code: 'SOL', name: 'Solana', flag: '☀️' },
                   { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-                  { code: 'USDC', name: 'USD Coin', flag: '💠' },
+                  { code: 'ETH', name: 'Ethereum', flag: '💠' },
+                  { code: 'USDC', name: 'USD Coin', flag: '🔷' },
                 ].map(({ code, name, flag }) => {
                   const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
                   const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;

@@ -310,7 +310,7 @@
 }
 .widgets-grid .plans-card { grid-column: span 2; }
 .widgets-grid .progress-section { grid-column: span 1; }
-.widgets-grid .deadlines-section { grid-column: span 1; }
+.widgets-grid .deadlines-section { grid-column: span 2; }
 .widgets-grid .accounts-section { grid-column: span 2; }
 .widgets-grid .summary-card { grid-column: span 1; }
 .widgets-grid .recent-tx-card { grid-column: span 1; }
@@ -333,8 +333,8 @@
 
 /* Deadlines Section */
 .deadlines-list { display: flex; flex-direction: column; gap: 10px; }
-.deadlines-section .deadlines-list { flex-direction: row; overflow-x: auto; overflow-y: hidden; gap: 10px; }
-.deadlines-section .deadline-item { min-width: 180px; flex: 0 0 auto; }
+.deadlines-section .deadlines-list { flex-direction: column; overflow-x: hidden; overflow-y: auto; gap: 10px; }
+.deadlines-section .deadline-item { width: 100%; flex: 0 0 auto; }
 .deadline-item {
   display: flex;
   align-items: center;
