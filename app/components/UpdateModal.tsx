@@ -17,41 +17,46 @@ export function UpdateModal({
     { emoji: "⚡", text: "Gestión rápida desde Finanzas: activa o quita favoritos con un solo clic en cada cuenta." },
   ],
 }: UpdateModalProps) {
-  // Define handleClose first
+  const [isOpen, setIsOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [shouldHide, setShouldHide] = useState(false);
+
+  // Show modal when version changes (even in the same session)
+  useEffect(() => {
+    try {
+      const modalDisabled = safeLocalStorage.getItem('prosper_show_update_modal') === 'false';
+      if (modalDisabled) {
+        setShouldHide(true);
+        return;
+      }
+
+      const seenVersion = safeLocalStorage.getItem('prosper_update_seen');
+      if (seenVersion !== version) {
+        // Reset session flag so the new version is shown immediately
+        safeSessionStorage.removeItem('prosper_update_seen_session');
+        setTimeout(() => setIsOpen(true), 600);
+      }
+    } catch {}
+  }, [version]);
+
+  // Mark as seen when opened
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        safeSessionStorage.setItem('prosper_update_seen_session', 'true');
+        safeLocalStorage.setItem('prosper_update_seen', version);
+      } catch {}
+    }
+  }, [isOpen, version]);
+
   const handleClose = () => {
+    try { safeLocalStorage.setItem('prosper_update_seen', version); } catch {}
     setClosing(true);
     setTimeout(() => {
       setIsOpen(false);
       setClosing(false);
     }, 300);
   };
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [shouldHide, setShouldHide] = useState(false);
-
-  // Session-based tracking: show once per session unless forced
-  useEffect(() => {
-    try {
-      const seenInSession = safeSessionStorage.getItem('prosper_update_seen_session');
-      const modalDisabled = safeLocalStorage.getItem('prosper_show_update_modal') === 'false';
-      setShouldHide(seenInSession === 'true' && modalDisabled);
-      
-      if (!seenInSession && !modalDisabled) {
-        const seenVersion = safeLocalStorage.getItem('prosper_update_seen');
-        if (seenVersion !== version) {
-          setTimeout(() => setIsOpen(true), 600);
-        }
-      }
-    } catch {}
-  }, [version]);
-
-  // Mark as seen in session when opened
-  useEffect(() => {
-    if (isOpen) {
-      try { safeSessionStorage.setItem('prosper_update_seen_session', 'true'); } catch {}
-    }
-  }, [isOpen]);
 
   const handleNeverShow = () => {
     try { safeLocalStorage.setItem('prosper_show_update_modal', 'false'); } catch {}
