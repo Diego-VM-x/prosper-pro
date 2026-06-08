@@ -1,19 +1,4 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  getDoc,
-  updateDoc,
-  deleteDoc,
-  setDoc,
-  query,
-  where,
-  onSnapshot,
-  type QuerySnapshot,
-  type DocumentData,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, setDoc, query, where, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
 import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
 const COLLECTION = 'goals';

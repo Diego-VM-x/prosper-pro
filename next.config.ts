@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   serverExternalPackages: ["tesseract.js"],
@@ -18,9 +17,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   experimental: {
-    optimizePackageImports: ["recharts", "firebase", "firebase-admin"],
+    optimizePackageImports: ["recharts", "firebase", "firebase-admin", "date-fns", "moment"],
   },
-  turbopack: {},
+  turbopack: {
+    root: process.cwd(),
+  },
   async headers() {
     return [
       {

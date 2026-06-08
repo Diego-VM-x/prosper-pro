@@ -1,19 +1,4 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-  onSnapshot,
-  type QuerySnapshot,
-  type DocumentData,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
 import type { ExpenseRequest, RequestStatus } from '@/types';
 
 export interface FoundUser {

@@ -1,16 +1,4 @@
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc,
-  updateDoc,
-  setDoc,
-  onSnapshot,
-  arrayUnion,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, query, where, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot, arrayUnion } from '../firebase';
 import type { Course, UserCourseProgress, CourseModule } from '@/types';
 
 const COURSES_COLLECTION = 'courses';

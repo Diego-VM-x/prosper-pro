@@ -1,17 +1,4 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  onSnapshot,
-  type QuerySnapshot,
-  type DocumentData,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
 import type { RecurringPayment, FinancialPlan, RecurringFrequency } from '@/types';
 
 const COLLECTION = 'recurring_payments';

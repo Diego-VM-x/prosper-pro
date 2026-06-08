@@ -142,21 +142,13 @@ export default function RootLayout({
             `,
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        {/* Solo preconnects críticos para la carga inicial */}
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
         <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://ve.dolarapi.com" />
         <link rel="dns-prefetch" href="https://ve.dolarapi.com" />
-        <link rel="preconnect" href="https://api.coingecko.com" />
-        <link rel="dns-prefetch" href="https://api.coingecko.com" />
-        <link rel="preconnect" href="https://criptoya.com" />
-        <link rel="dns-prefetch" href="https://criptoya.com" />
-        <link rel="preconnect" href="https://api.exchangerate-api.com" />
-        <link rel="dns-prefetch" href="https://api.exchangerate-api.com" />
         {/* next-themes theme sync script - evita flash de tema incorrecto */}
         <script
           dangerouslySetInnerHTML={{
@@ -176,8 +168,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(regs) {
-                  regs.forEach(function(r) { r.unregister(); });
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                    console.log('[SW] Registered:', reg.scope);
+                  }).catch(function(err) {
+                    console.log('[SW] Registration failed:', err);
+                  });
                 });
               }
             `,

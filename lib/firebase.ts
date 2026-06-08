@@ -2,6 +2,34 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
+// Re-export firestore functions for centralized imports (better chunk deduplication)
+export {
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  onSnapshot,
+  increment,
+  orderBy,
+  limit,
+  arrayUnion,
+  type QuerySnapshot,
+  type DocumentData,
+} from 'firebase/firestore';
+
+export {
+  onAuthStateChanged,
+  signOut,
+  updateCurrentUser,
+  type User,
+} from 'firebase/auth';
+
 const isBrowser = typeof window !== 'undefined';
 
 const HARDCODED_CONFIG = {

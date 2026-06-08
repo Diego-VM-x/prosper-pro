@@ -2,8 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, updateCurrentUser, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, onAuthStateChanged, signOut, updateCurrentUser, type User } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 

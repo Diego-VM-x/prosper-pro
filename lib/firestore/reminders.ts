@@ -1,17 +1,4 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  onSnapshot,
-  type QuerySnapshot,
-  type DocumentData,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
 import type { Reminder } from '@/types';
 
 const COLLECTION = 'reminders';

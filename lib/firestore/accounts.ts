@@ -1,19 +1,4 @@
-import {
-  collection,
-  doc,
-  addDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  onSnapshot,
-  increment,
-  type QuerySnapshot,
-  type DocumentData,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, increment, type QuerySnapshot, type DocumentData } from '../firebase';
 import type { FinancialAccount, AccountGroup } from '@/types';
 
 const COLLECTION = 'accounts';
