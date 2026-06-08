@@ -6,6 +6,14 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.7', date: '2026-06-07', notes: [
+      'Cuentas favoritas: marca hasta 3 cuentas y el Dashboard mostrará solo esas cuentas para una vista más limpia.',
+      'Menú de perfil corregido: Configuración, cambio de tema y Cerrar sesión responden correctamente en PC y móvil.',
+      'Modal de novedades restaurado: ahora se muestra automáticamente cada vez que hay una nueva versión.',
+      'Optimizaciones de rendimiento: mejor puntuación en Lighthouse, carga más rápida y menos consumo de recursos.',
+      'Corrección de duplicados en el Dashboard: las cuentas ya no aparecen repetidas al sincronizar desde Firestore.',
+      'Eliminado el efecto de parpadeo al expandir secciones del Dashboard: transiciones más suaves y estables.',
+    ], preRelease: false },
     { version: '0.9.6', date: '2026-06-07', notes: [
       'Landing page completamente rediseñada para ser más interactiva, dinámica y sin espacios vacíos.',
       'Nueva Demo Interactiva en la landing: explora mockups del Dashboard, Finanzas, Metas, Calendario y Academia.',

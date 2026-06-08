@@ -10,11 +10,14 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.9.6",
+  version = "0.9.7",
   notes = [
-    { emoji: "🎨", text: "Landing page completamente rediseñada: más interactiva, sin espacios vacíos y con demo de todas las secciones de la app." },
-    { emoji: "🖥️", text: "Demo interactiva: explora mockups del Dashboard, Finanzas, Metas, Calendario y Academia sin salir de la landing." },
-    { emoji: "⭐", text: "Cuentas favoritas: sigue marcando hasta 3 cuentas para personalizar tu Dashboard." },
+    { emoji: "⭐", text: "Cuentas favoritas: marca hasta 3 cuentas y el Dashboard mostrará solo esas cuentas para una vista más limpia." },
+    { emoji: "🛠️", text: "Menú de perfil corregido: Configuración, cambio de tema y Cerrar sesión responden correctamente en PC y móvil." },
+    { emoji: "🔔", text: "Modal de novedades restaurado: ahora se muestra automáticamente cada vez que hay una nueva versión." },
+    { emoji: "🚀", text: "Optimizaciones de rendimiento: mejor puntuación en Lighthouse, carga más rápida y menos consumo de recursos." },
+    { emoji: "🐛", text: "Corrección de duplicados en el Dashboard: las cuentas ya no aparecen repetidas al sincronizar desde Firestore." },
+    { emoji: "✨", text: "Eliminado el efecto de parpadeo al expandir secciones del Dashboard: transiciones más suaves y estables." },
   ],
 }: UpdateModalProps) {
   const [isOpen, setIsOpen] = useState(false);
