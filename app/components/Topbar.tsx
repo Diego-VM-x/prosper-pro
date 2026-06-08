@@ -63,6 +63,8 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
   // Refs para click-outside
   const notifRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
@@ -70,8 +72,22 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const closeUserMenu = () => setShowUserMenu(false);
   const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
 
-  // Cerrar dropdowns al hacer click fuera
+  // Detect desktop viewport to enable only the correct click-outside hook
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 1025px)').matches;
+  });
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1025px)');
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Cerrar dropdowns al hacer click fuera (only one user menu hook active at a time)
   useClickOutside(notifRef, () => setShowNotifications(false), showNotifications);
+  useClickOutside(userMenuRef, () => setShowUserMenu(false), showUserMenu && isDesktop);
+  useClickOutside(mobileUserMenuRef, () => setShowUserMenu(false), showUserMenu && !isDesktop);
   useClickOutside(searchRef, () => setShowSearch(false), showSearch);
   useEscape(() => {
     setShowNotifications(false);
@@ -220,8 +236,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
   return (
     <header className="topbar" id="main-topbar">
-      {/* Overlay para cerrar el menú de usuario al hacer click fuera */}
-      {showUserMenu && <div className="user-menu-overlay" onClick={() => setShowUserMenu(false)} />}
+
       {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
         <Link href="/" className="topbar-logo-link">
@@ -447,7 +462,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile">
+        <div className="topbar-user" id="user-profile" ref={userMenuRef}>
           {user ? (
             <>
               <div
@@ -543,7 +558,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             </div>
           </div>
           {showUserMenu && (
-            <div className="user-dropdown mobile-user-dropdown">
+            <div className="user-dropdown mobile-user-dropdown" ref={mobileUserMenuRef}>
               <div className="user-dropdown-header">
                 <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
                 <p className="user-dropdown-email">{user?.email}</p>
@@ -1130,13 +1145,6 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         .topbar-user-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
         .topbar-user-email { font-size: 0.6875rem; color: var(--text-secondary); }
 
-        .user-menu-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.25);
-          z-index: 9998;
-          animation: fadeIn 0.2s ease;
-        }
         .user-dropdown {
           position: absolute;
           top: calc(100% + 12px);
