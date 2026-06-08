@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { DashboardLayout } from '../../components/DashboardLayout';
+import { DashboardLayout } from '@/app/components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
   getCourseById,

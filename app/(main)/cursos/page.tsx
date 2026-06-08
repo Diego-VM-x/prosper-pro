@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/DashboardLayout';
+import { DashboardLayout } from '@/app/components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getCourses, getUserProgressByOwnerId, seedCoursesIfEmpty } from '@/lib/firestore/courses';
 import type { Course, UserCourseProgress } from '@/types';

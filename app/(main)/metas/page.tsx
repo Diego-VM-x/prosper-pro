@@ -1,21 +1,21 @@
 'use client';
 
 import React, { useState, useEffect, memo } from 'react';
-import { DashboardLayout } from '../components/DashboardLayout';
-import ProtectedRoute from '../components/ProtectedRoute';
+import { DashboardLayout } from '@/app/components/DashboardLayout';
+import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
-import { CustomSelect } from '../components/CustomSelect';
+import { CustomSelect } from '@/app/components/CustomSelect';
 import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accounts';
 import { createTransaction } from '@/lib/firestore/transactions';
 import { db, getDoc, doc, updateDoc } from '@/lib/firebase';
 import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
 import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
-import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '../components/icons';
+import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '@/app/components/icons';
 import { CURRENCY_LIST } from '@/lib/currency';
 import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest, CurrencyCode } from '@/types';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/contexts/AuthContext';
+
 import { AnimatedSection } from '../AnimatedSection';
 import { LandingHeader } from './LandingHeader';
 import { HeroMockup } from './HeroMockup';
@@ -162,7 +162,7 @@ const FEATURES = [
 
 export function LandingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const user = null;
 
   return (
     <div className="landing-page">
