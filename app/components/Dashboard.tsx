@@ -23,7 +23,7 @@ import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
-import { subscribeToAccounts, getTotalBalance, updateAccountBalance, subscribeToAccountGroups } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, getTotalBalance, updateAccountBalance, subscribeToAccountGroups, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
 import { createTransaction } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
@@ -227,6 +227,15 @@ export const Dashboard = memo(function Dashboard() {
   const [transferring, setTransferring] = useState(false);
   const [transferMsg, setTransferMsg] = useState('');
   const transferMsgTimeout = useRef<number | null>(null);
+
+  const handleToggleFavorite = async (accountId: string) => {
+    const uid = user?.uid;
+    if (!uid) return;
+    const result = await toggleAccountFavorite(accountId, uid, accounts);
+    if (!result.success) {
+      alert(result.message || 'No se pudo actualizar favorito');
+    }
+  };
 
   const { collapsed, toggle } = useCollapsedSections();
 
@@ -750,7 +759,7 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
               </div>
 
-              {/* Mis Cuentas - con grupos */}
+              {/* Mis Cuentas - solo favoritas (max 3) */}
               <div className="content-card accounts-section dash-item" style={{animationDelay: '0.42s'}}>
                 <div className="content-card-header">
                   <div className="content-card-header-left">
@@ -767,78 +776,49 @@ export const Dashboard = memo(function Dashboard() {
                   </div>
                 </div>
                 <div className="accounts-list">
-                  {/* Cuentas agrupadas */}
-                  {groupedAccounts.grouped.map(({ group, accounts: groupAccs }) => (
-                    <div key={group?.id || 'unknown'} className="account-group-block">
-                      <div className="account-group-header" style={{ background: `${group?.color || '#3B82F6'}15` }}>
-                        <span className="account-group-dot" style={{ background: group?.color || '#3B82F6' }} />
-                        <span className="account-group-name">{group?.name || 'Sin grupo'}</span>
-                        <span className="account-group-count">{groupAccs.length}</span>
-                      </div>
-                      <div className="account-group-items">
-                        {groupAccs.slice(0, 3).map((acc) => {
-                          const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
-                          return (
-                            <div className="account-item" key={acc.id} onClick={() => router.push('/finanzas')}>
-                              <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
-                                {acc.icon || typeIcons[acc.type] || '💳'}
-                              </div>
-                              <div className="account-item-info">
-                                <span className="account-item-name">{acc.name}</span>
-                                <span className="account-item-type">
-                                  {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
-                                </span>
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                <span className="account-item-balance" style={{ color: showBalances ? (acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)', fontWeight: 600 }}>
-                                  {showBalances ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                                </span>
-                                {showBalances && acc.currency !== displayCurrency && (
-                                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
-                                    ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                  {/* Cuentas sin grupo */}
-                  {groupedAccounts.ungrouped.length > 0 && (
-                    <div className="account-group-items">
-                      {groupedAccounts.ungrouped.slice(0, 3).map((acc) => {
-                        const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
-                        return (
-                          <div className="account-item" key={acc.id} onClick={() => router.push('/finanzas')}>
-                            <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
-                              {acc.icon || typeIcons[acc.type] || '💳'}
-                            </div>
-                            <div className="account-item-info">
-                              <span className="account-item-name">{acc.name}</span>
-                              <span className="account-item-type">
-                                {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
-                              </span>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                              <span className="account-item-balance" style={{ color: showBalances ? (acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)', fontWeight: 600 }}>
-                                {showBalances ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                              </span>
-                              {showBalances && acc.currency !== displayCurrency && (
-                                <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
-                                  ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
-                                </span>
-                              )}
-                            </div>
+                  {(() => {
+                    const favoriteAccounts = accounts.filter((a) => a.favorite).slice(0, 3);
+                    if (favoriteAccounts.length === 0) {
+                      return (
+                        <p className="empty-msg" style={{ textAlign: 'center', padding: '16px 0' }}>
+                          No tienes cuentas favoritas. Marca hasta 3 cuentas en <strong>Finanzas</strong> para verlas aquí.
+                        </p>
+                      );
+                    }
+                    return favoriteAccounts.map((acc) => {
+                      const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
+                      return (
+                        <div className="account-item" key={acc.id}>
+                          <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
+                            {acc.icon || typeIcons[acc.type] || '💳'}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {accounts.length === 0 && (
-                    <p className="empty-msg">Sin cuentas configuradas</p>
-                  )}
+                          <div className="account-item-info">
+                            <span className="account-item-name">{acc.name}</span>
+                            <span className="account-item-type">
+                              {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                            <span className="account-item-balance" style={{ color: showBalances ? (acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)', fontWeight: 600 }}>
+                              {showBalances ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                            </span>
+                            {showBalances && acc.currency !== displayCurrency && (
+                              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
+                                ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
+                              </span>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }}
+                              title="Quitar de favoritos"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#F59E0B', padding: 0, lineHeight: 1 }}
+                            >
+                              ★
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 

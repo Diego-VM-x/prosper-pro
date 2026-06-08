@@ -443,3 +443,27 @@ export async function moveAccountToGroup(accountId: string, groupId: string | nu
     updatedAt: Date.now(),
   });
 }
+
+// Toggle favorite status for an account (max 3 favorites per user)
+export async function toggleAccountFavorite(
+  accountId: string,
+  ownerId: string,
+  currentAccounts: FinancialAccount[]
+): Promise<{ success: boolean; message?: string }> {
+  const account = currentAccounts.find((a) => a.id === accountId);
+  if (!account) return { success: false, message: 'Cuenta no encontrada' };
+
+  const isFavorite = account.favorite;
+  const favoriteCount = currentAccounts.filter((a) => a.favorite).length;
+
+  if (!isFavorite && favoriteCount >= 3) {
+    return { success: false, message: 'Solo puedes tener 3 cuentas favoritas' };
+  }
+
+  await updateDoc(doc(db, COLLECTION, accountId), {
+    favorite: !isFavorite,
+    updatedAt: Date.now(),
+  });
+
+  return { success: true };
+}

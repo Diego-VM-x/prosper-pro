@@ -30,6 +30,8 @@ export interface FinancialAccount {
   rateMode?: 'official' | 'p2p';
   /** Group this account belongs to */
   groupId?: string;
+  /** Favorite accounts appear on the Dashboard (max 3) */
+  favorite?: boolean;
   createdAt: number;
   updatedAt: number;
 }

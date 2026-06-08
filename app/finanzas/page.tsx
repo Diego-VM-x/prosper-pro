@@ -9,7 +9,7 @@ import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
@@ -251,6 +251,14 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [showAccountingModal, setShowAccountingModal] = useState(false);
   const [accountingAction, setAccountingAction] = useState<string>('');
   const [accountingLoading, setAccountingLoading] = useState(false);
+
+  const handleToggleFavorite = async (accountId: string) => {
+    if (!uid) return;
+    const result = await toggleAccountFavorite(accountId, uid, accounts);
+    if (!result.success) {
+      warning(result.message || 'No se pudo actualizar favorito');
+    }
+  };
 
   const uid = user?.uid;
 
@@ -1264,6 +1272,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                       </span>
                     </div>
                     <div className="account-actions-group">
+                      <button className="account-action" onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }} title={acc.favorite ? 'Quitar de favoritos' : 'Marcar como favorito'} style={{ color: acc.favorite ? '#F59E0B' : 'var(--text-tertiary)' }}>
+                        {acc.favorite ? '★' : '☆'}
+                      </button>
                       <button className="account-action" onClick={() => setShowAssignGroupModal(acc.id)} title="Mover de grupo">📁</button>
                       <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
                       <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
