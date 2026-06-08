@@ -10,11 +10,11 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.9.5",
+  version = "0.9.6",
   notes = [
-    { emoji: "⭐", text: "Cuentas favoritas: marca hasta 3 cuentas como favoritas y serán las únicas que aparecerán en tu Dashboard." },
-    { emoji: "🎯", text: "Dashboard más limpio: el widget de Mis Cuentas ahora muestra solo lo que realmente quieres ver." },
-    { emoji: "⚡", text: "Gestión rápida desde Finanzas: activa o quita favoritos con un solo clic en cada cuenta." },
+    { emoji: "🎨", text: "Landing page completamente rediseñada: más interactiva, sin espacios vacíos y con demo de todas las secciones de la app." },
+    { emoji: "🖥️", text: "Demo interactiva: explora mockups del Dashboard, Finanzas, Metas, Calendario y Academia sin salir de la landing." },
+    { emoji: "⭐", text: "Cuentas favoritas: sigue marcando hasta 3 cuentas para personalizar tu Dashboard." },
   ],
 }: UpdateModalProps) {
   const [isOpen, setIsOpen] = useState(false);

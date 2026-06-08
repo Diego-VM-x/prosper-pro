@@ -6,6 +6,16 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.6', date: '2026-06-07', notes: [
+      'Landing page completamente rediseñada para ser más interactiva, dinámica y sin espacios vacíos.',
+      'Nueva Demo Interactiva en la landing: explora mockups del Dashboard, Finanzas, Metas, Calendario y Academia.',
+      'Testimonios ahora en carrusel automático con navegación manual y más historias de usuarios.',
+      'Nueva sección de Seguridad con tarjetas interactivas que explican cómo protegemos tus datos.',
+      'Pasos de "Cómo Funciona" ahora son clickeables, con barra de progreso y detalles por paso.',
+      'Todas las tarjetas de funciones ahora incluyen visuales animados y efectos hover.',
+      'Contadores animados en la barra de confianza que se activan al hacer scroll.',
+      'Formulario de newsletter en el footer ahora es funcional con validación y mensajes de confirmación.',
+    ], preRelease: false },
     { version: '0.9.5', date: '2026-06-07', notes: [
       'Cuentas favoritas: ahora puedes marcar hasta 3 cuentas como favoritas desde la sección Finanzas.',
       'El widget "Mis Cuentas" del Dashboard se renovó para mostrar únicamente tus cuentas favoritas.',
