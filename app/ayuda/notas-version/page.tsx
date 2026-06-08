@@ -6,6 +6,13 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.5', date: '2026-06-07', notes: [
+      'Cuentas favoritas: ahora puedes marcar hasta 3 cuentas como favoritas desde la sección Finanzas.',
+      'El widget "Mis Cuentas" del Dashboard se renovó para mostrar únicamente tus cuentas favoritas.',
+      'Si no tienes favoritas, el Dashboard te indicará cómo agregarlas para personalizar tu vista principal.',
+      'Puedes quitar una cuenta de favoritos directamente desde el Dashboard o desde Finanzas con un solo clic.',
+      'Se mantiene el límite de 3 favoritas para mantener el Dashboard limpio y enfocado en lo más importante.',
+    ], preRelease: false },
     { version: '0.9.1', date: '2026-06-06', notes: [
       'Optimización de rendimiento: carga de código dividida (dynamic imports) para reducir el bundle inicial.',
       'Imágenes optimizadas por Next.js (formatos WebP/AVIF automáticos).',

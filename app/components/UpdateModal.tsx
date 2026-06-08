@@ -10,13 +10,11 @@ interface UpdateModalProps {
   notes?: UpdateNote[];
 }
 export function UpdateModal({
-  version = "0.9.1",
+  version = "0.9.5",
   notes = [
-    { emoji: "🚀", text: "Rendimiento mejorado: carga más rápida con división de código (code-splitting) y optimización de imágenes." },
-    { emoji: "💱", text: "Nuevas criptos P2P: ahora soportamos Bitcoin (BTC) y USD Coin (USDC) con precios reales de Binance." },
-    { emoji: "🎨", text: "Landing page renovada: diseño más moderno con testimonios, FAQ interactivo y tutoriales paso a paso." },
-    { emoji: "⚡", text: "Animaciones optimizadas: transiciones más fluidas y menos consumo de CPU en dispositivos de gama baja." },
-    { emoji: "🛡️", text: "Redirección inteligente: /dashboard redirige automáticamente a la home unificada." },
+    { emoji: "⭐", text: "Cuentas favoritas: marca hasta 3 cuentas como favoritas y serán las únicas que aparecerán en tu Dashboard." },
+    { emoji: "🎯", text: "Dashboard más limpio: el widget de Mis Cuentas ahora muestra solo lo que realmente quieres ver." },
+    { emoji: "⚡", text: "Gestión rápida desde Finanzas: activa o quita favoritos con un solo clic en cada cuenta." },
   ],
 }: UpdateModalProps) {
   // Define handleClose first
