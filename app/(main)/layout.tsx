@@ -1,4 +1,3 @@
-'use client';
 import '../animations.css';
 
 import { Suspense } from 'react';
