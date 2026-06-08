@@ -63,16 +63,15 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
   // Refs para click-outside
   const notifRef = useRef<HTMLDivElement>(null);
-  const userMenuRef = useRef<HTMLDivElement>(null);
-  const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
 
+  const closeUserMenu = () => setShowUserMenu(false);
+  const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
+
   // Cerrar dropdowns al hacer click fuera
   useClickOutside(notifRef, () => setShowNotifications(false), showNotifications);
-  useClickOutside(userMenuRef, () => setShowUserMenu(false), showUserMenu);
-  useClickOutside(mobileUserMenuRef, () => setShowUserMenu(false), showUserMenu);
   useClickOutside(searchRef, () => setShowSearch(false), showSearch);
   useEscape(() => {
     setShowNotifications(false);
@@ -221,6 +220,8 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
   return (
     <header className="topbar" id="main-topbar">
+      {/* Overlay para cerrar el menú de usuario al hacer click fuera */}
+      {showUserMenu && <div className="user-menu-overlay" onClick={() => setShowUserMenu(false)} />}
       {/* Logo + colapsar + menú móvil */}
       <div className="topbar-left">
         <Link href="/" className="topbar-logo-link">
@@ -446,7 +447,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         <div className="topbar-divider" />
 
         {/* Usuario */}
-        <div className="topbar-user" id="user-profile" ref={userMenuRef}>
+        <div className="topbar-user" id="user-profile">
           {user ? (
             <>
               <div
@@ -461,12 +462,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               </div>
 
            {showUserMenu && (
-             <div className="user-dropdown mobile-user-dropdown">
+             <div className="user-dropdown">
                <div className="user-dropdown-header">
                  <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
                  <p className="user-dropdown-email">{user?.email}</p>
                </div>
-               <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+               <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
                  <IconSettings /> Configuración
                </Link>
                <div className="user-dropdown-divider" />
@@ -542,12 +543,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             </div>
           </div>
           {showUserMenu && (
-            <div className="user-dropdown mobile-user-dropdown" ref={mobileUserMenuRef}>
+            <div className="user-dropdown mobile-user-dropdown">
               <div className="user-dropdown-header">
                 <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
                 <p className="user-dropdown-email">{user?.email}</p>
               </div>
-              <Link href="/configuracion" className="user-dropdown-item" onClick={() => setShowUserMenu(false)}>
+              <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
                 <IconSettings /> Configuración
               </Link>
                <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
@@ -584,7 +585,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                >
                  <IconLogout width={20} height={20} /> Cerrar Sesión
                </button>
-            </div>
+              </div>
           )}
         </div>
       )}
@@ -1129,6 +1130,13 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         .topbar-user-name { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
         .topbar-user-email { font-size: 0.6875rem; color: var(--text-secondary); }
 
+        .user-menu-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.25);
+          z-index: 9998;
+          animation: fadeIn 0.2s ease;
+        }
         .user-dropdown {
           position: absolute;
           top: calc(100% + 12px);
