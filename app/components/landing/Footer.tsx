@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { NewsletterForm } from './NewsletterForm';
 
 interface FooterProps {
   user: { uid: string } | null;
@@ -24,9 +25,9 @@ export function Footer({ user }: FooterProps) {
           </div>
           <p>Tu plataforma de libertad financiera. Gestiona, ahorra, aprende y crece con nosotros.</p>
           <div className="footer-socials">
-            <a href="#" aria-label="Twitter" className="footer-social">𝕏</a>
-            <a href="#" aria-label="Instagram" className="footer-social">📸</a>
-            <a href="#" aria-label="LinkedIn" className="footer-social">💼</a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter" className="footer-social">𝕏</a>
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="footer-social">📸</a>
+            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="footer-social">💼</a>
           </div>
         </div>
 
@@ -34,12 +35,14 @@ export function Footer({ user }: FooterProps) {
           <div className="footer-col">
             <h4>Producto</h4>
             <button onClick={() => scrollTo('features')}>Funciones</button>
+            <button onClick={() => scrollTo('demo')}>Demo</button>
             <button onClick={() => scrollTo('tutoriales')}>Tutoriales</button>
             <button onClick={() => scrollTo('how-it-works')}>Cómo Funciona</button>
           </div>
           <div className="footer-col">
             <h4>Recursos</h4>
             <button onClick={() => scrollTo('faq')}>Preguntas Frecuentes</button>
+            <button onClick={() => scrollTo('seguridad')}>Seguridad</button>
             <button onClick={() => router.push('/ayuda')}>Centro de Ayuda</button>
             <button onClick={() => router.push('/ayuda/notas-version')}>Notas de Versión</button>
           </div>
@@ -64,10 +67,7 @@ export function Footer({ user }: FooterProps) {
         <div className="footer-newsletter">
           <h4>Recibe consejos financieros</h4>
           <p>Tips mensuales para mejorar tus finanzas personales.</p>
-          <div className="footer-newsletter-form">
-            <input type="email" placeholder="tu@email.com" className="footer-input" />
-            <button className="btn btn-primary">Suscribirme</button>
-          </div>
+          <NewsletterForm />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { AnimatedSection } from '../AnimatedSection';
 
 interface FeatureCardProps {
@@ -22,22 +22,29 @@ export function FeatureCard({
   large = false,
   delay = 0,
 }: FeatureCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <AnimatedSection animationType="fade-up" delay={delay}>
-      <div className={`feature-card ${large ? 'feature-card-large' : ''}`}>
-        {visual && <div className="feature-card-visual">{visual}</div>}
+      <div
+        className={`feature-card ${large ? 'feature-card-large' : ''} ${isHovered ? 'hovered' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {visual && <div className={`feature-card-visual ${isHovered ? 'active' : ''}`}>{visual}</div>}
         <div className="feature-card-content">
           <div className="feature-icon-wrapper">
             <span className="feature-icon">{icon}</span>
           </div>
           <h3>{title}</h3>
           <p>{description}</p>
-          <ul className="feature-list">
+          <ul className={`feature-list ${isHovered ? 'expanded' : ''}`}>
             {features.map((f) => (
               <li key={f}>{f}</li>
             ))}
           </ul>
         </div>
+        <div className="feature-card-shine" />
       </div>
     </AnimatedSection>
   );

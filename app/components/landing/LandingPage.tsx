@@ -7,8 +7,11 @@ import { LandingHeader } from './LandingHeader';
 import { HeroMockup } from './HeroMockup';
 import { TrustBar } from './TrustBar';
 import { FeatureCard } from './FeatureCard';
+import { ProductDemo } from './ProductDemo';
 import { TutorialTabs } from './TutorialTabs';
-import { Testimonials } from './TestimonialCard';
+import { InteractiveSteps } from './InteractiveSteps';
+import { TestimonialCarousel } from './TestimonialCarousel';
+import { SecuritySection } from './SecuritySection';
 import { FaqAccordion } from './FaqAccordion';
 import { Footer } from './Footer';
 
@@ -45,6 +48,18 @@ const FEATURES = [
     title: 'Planes Financieros',
     description: 'Crea planes de ahorro, gastos planificados y pagos recurrentes. Sigue tu progreso visualmente.',
     features: ['Metas con fecha límite', 'Pagos recurrentes automáticos', 'Compartir gastos con otros'],
+    visual: (
+      <div className="feature-visual-goals">
+        <div className="feature-goal-mini">
+          <span>🚗 Auto</span>
+          <div className="feature-goal-bar"><div className="feature-goal-fill" style={{ width: '65%' }} /></div>
+        </div>
+        <div className="feature-goal-mini">
+          <span>🏖️ Vacaciones</span>
+          <div className="feature-goal-bar"><div className="feature-goal-fill blue" style={{ width: '42%' }} /></div>
+        </div>
+      </div>
+    ),
     delay: 100,
   },
   {
@@ -52,6 +67,13 @@ const FEATURES = [
     title: 'Análisis Visual',
     description: 'Gráficos interactivos que muestran tus ingresos, gastos y ahorro por período.',
     features: ['Gráficas por día, semana, mes o año', 'Conversión entre monedas al instante', 'Resumen financiero detallado'],
+    visual: (
+      <div className="feature-visual-chart">
+        {[35, 55, 40, 70, 50, 85, 60].map((h, i) => (
+          <div key={i} className="feature-chart-bar" style={{ height: `${h}%` }} />
+        ))}
+      </div>
+    ),
     delay: 200,
   },
   {
@@ -59,6 +81,13 @@ const FEATURES = [
     title: 'Tasas en Tiempo Real',
     description: 'Tasas BCV oficial para monedas fiduciarias y P2P Binance para criptomonedas.',
     features: ['BCV, EUR, COP actualizados', 'P2P para USDT, SOL, BTC, USDC', 'Modo oficial vs P2P por cuenta'],
+    visual: (
+      <div className="feature-visual-rates">
+        <div className="feature-rate-pill"><span>USD/BS</span><span>45.20</span></div>
+        <div className="feature-rate-pill active"><span>USDT/BS</span><span>46.80</span></div>
+        <div className="feature-rate-pill"><span>EUR/BS</span><span>49.10</span></div>
+      </div>
+    ),
     delay: 300,
   },
   {
@@ -66,6 +95,13 @@ const FEATURES = [
     title: 'Calendario Inteligente',
     description: 'Organiza recordatorios, fechas de pago y vencimientos de tus planes financieros.',
     features: ['Recordatorios personalizables', 'Integración con transacciones', 'Alertas de vencimiento'],
+    visual: (
+      <div className="feature-visual-calendar">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className={`feature-cal-day ${[2, 7, 10].includes(i) ? 'event' : ''}`}>{i + 1}</div>
+        ))}
+      </div>
+    ),
     delay: 400,
   },
   {
@@ -73,6 +109,18 @@ const FEATURES = [
     title: 'Academia Financiera',
     description: 'Cursos prácticos para mejorar tu educación financiera desde cero hasta avanzado.',
     features: ['Cursos con progreso guardado', 'Contenido práctico y aplicable', 'Aprende a tu ritmo'],
+    visual: (
+      <div className="feature-visual-courses">
+        <div className="feature-course-mini">
+          <span>📘 Presupuesto</span>
+          <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '75%' }} /></div>
+        </div>
+        <div className="feature-course-mini">
+          <span>📗 Ahorro</span>
+          <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '30%' }} /></div>
+        </div>
+      </div>
+    ),
     delay: 500,
   },
   {
@@ -80,6 +128,16 @@ const FEATURES = [
     title: 'VEPay OCR',
     description: 'Captura comprobantes bancarios venezolanos y extrae datos automáticamente.',
     features: ['20+ bancos soportados', 'Extracción de monto, ref. y fecha', 'Procesamiento en lote'],
+    visual: (
+      <div className="feature-visual-ocr">
+        <div className="feature-ocr-receipt">
+          <div className="feature-ocr-row"><span>Banco</span><span>Banesco</span></div>
+          <div className="feature-ocr-row"><span>Monto</span><span>$120.00</span></div>
+          <div className="feature-ocr-row"><span>Ref.</span><span>00992344</span></div>
+          <div className="feature-ocr-status">✓ Verificado</div>
+        </div>
+      </div>
+    ),
     delay: 600,
   },
   {
@@ -87,6 +145,17 @@ const FEATURES = [
     title: 'Compartir Gastos',
     description: 'Divide gastos con amigos, familia o compañeros de trabajo directamente en la app.',
     features: ['Invitaciones por email', 'Solicitudes de pago', 'Notificaciones en tiempo real'],
+    visual: (
+      <div className="feature-visual-share">
+        <div className="feature-share-avatars">
+          <span className="feature-share-avatar">M</span>
+          <span className="feature-share-avatar">C</span>
+          <span className="feature-share-avatar">A</span>
+          <span className="feature-share-avatar">+2</span>
+        </div>
+        <div className="feature-share-pill">$450 / 5 personas</div>
+      </div>
+    ),
     delay: 700,
   },
 ];
@@ -191,78 +260,39 @@ export function LandingPage() {
           </div>
         </section>
 
+        {/* Product Demo - Interactive */}
+        <ProductDemo />
+
         {/* Features Section */}
         <section id="features" className="landing-features-section lp-section">
-          <AnimatedSection animationType="fade-up" delay={0}>
-            <div className="section-header">
-              <span className="section-tag">Funciones</span>
-              <h2 className="section-title">Todo lo que necesitas para crecer financieramente</h2>
-              <p className="section-desc">Herramientas poderosas diseñadas para simplificar tu vida financiera.</p>
-            </div>
-          </AnimatedSection>
+          <div className="lp-container">
+            <AnimatedSection animationType="fade-up" delay={0}>
+              <div className="section-header">
+                <span className="section-tag">Funciones</span>
+                <h2 className="section-title">Todo lo que necesitas para crecer financieramente</h2>
+                <p className="section-desc">Herramientas poderosas diseñadas para simplificar tu vida financiera.</p>
+              </div>
+            </AnimatedSection>
 
-          <div className="features-grid features-grid-3">
-            {FEATURES.map((f) => (
-              <FeatureCard key={f.title} {...f} />
-            ))}
+            <div className="features-grid features-grid-3">
+              {FEATURES.map((f) => (
+                <FeatureCard key={f.title} {...f} />
+              ))}
+            </div>
           </div>
         </section>
 
         {/* Tutorials */}
         <TutorialTabs />
 
-        {/* How It Works */}
-        <section id="how-it-works" className="landing-how-section lp-section">
-          <AnimatedSection animationType="fade-up" delay={0}>
-            <div className="section-header">
-              <span className="section-tag">Cómo Funciona</span>
-              <h2 className="section-title">Empieza en 3 simples pasos</h2>
-              <p className="section-desc">Sin configuraciones complicadas. Regístrate y comienza en segundos.</p>
-            </div>
-          </AnimatedSection>
+        {/* How It Works - Interactive */}
+        <InteractiveSteps />
 
-          <div className="steps-container">
-            <AnimatedSection animationType="fade-up" delay={0}>
-              <div className="step-card">
-                <div className="step-number">1</div>
-                <h3>Crea tu cuenta</h3>
-                <p>Regístrate gratis con Google o email. Elige tu moneda preferida.</p>
-                <div className="step-visual">
-                  <div className="step-icon-step">🚀</div>
-                </div>
-              </div>
-            </AnimatedSection>
+        {/* Testimonials Carousel */}
+        <TestimonialCarousel />
 
-            <div className="step-connector" />
-
-            <AnimatedSection animationType="fade-up" delay={200}>
-              <div className="step-card">
-                <div className="step-number">2</div>
-                <h3>Agrega tus cuentas</h3>
-                <p>Crea tus cuentas financieras, registra ingresos y gastos. Todo se sincroniza al instante.</p>
-                <div className="step-visual">
-                  <div className="step-icon-step">💳</div>
-                </div>
-              </div>
-            </AnimatedSection>
-
-            <div className="step-connector" />
-
-            <AnimatedSection animationType="fade-up" delay={400}>
-              <div className="step-card">
-                <div className="step-number">3</div>
-                <h3>Alcanza tus metas</h3>
-                <p>Crea planes de ahorro, sigue tu progreso y visualiza tu crecimiento financiero.</p>
-                <div className="step-visual">
-                  <div className="step-icon-step">🎯</div>
-                </div>
-              </div>
-            </AnimatedSection>
-          </div>
-        </section>
-
-        {/* Testimonials */}
-        <Testimonials />
+        {/* Security Section */}
+        <SecuritySection />
 
         {/* FAQ */}
         <FaqAccordion />

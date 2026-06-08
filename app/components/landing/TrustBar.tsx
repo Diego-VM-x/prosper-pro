@@ -1,6 +1,7 @@
 'use client';
 
 import { AnimatedSection } from '../AnimatedSection';
+import { AnimatedCounter } from './AnimatedCounter';
 
 const TRUST_ITEMS = [
   { icon: '💱', label: '8 Monedas', desc: 'USD, BS, EUR, COP, USDT, SOL, BTC, USDC' },
@@ -9,6 +10,13 @@ const TRUST_ITEMS = [
   { icon: '🎓', label: 'Academia', desc: 'Cursos de finanzas gratis' },
   { icon: '🔒', label: 'Privado', desc: 'Solo tú ves tus datos' },
   { icon: '⚡', label: '100% Gratis', desc: 'Sin anuncios ni límites' },
+];
+
+const COUNTERS = [
+  { icon: '💰', end: 8, suffix: '', label: 'Monedas soportadas' },
+  { icon: '🏦', end: 20, suffix: '+', label: 'Bancos en VEPay OCR' },
+  { icon: '📚', end: 15, suffix: '+', label: 'Cursos disponibles' },
+  { icon: '🌍', end: 100, suffix: '%', label: 'Gratis para siempre' },
 ];
 
 export function TrustBar() {
@@ -25,6 +33,14 @@ export function TrustBar() {
                   <span className="trust-desc">{item.desc}</span>
                 </div>
               </div>
+            ))}
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection animationType="fade-up" delay={150}>
+          <div className="trust-counters">
+            {COUNTERS.map((c) => (
+              <AnimatedCounter key={c.label} {...c} />
             ))}
           </div>
         </AnimatedSection>
