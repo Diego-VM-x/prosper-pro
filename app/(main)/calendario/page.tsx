@@ -1,4 +1,5 @@
 'use client';
+import '@/app/dashboard.css';
 
 import React, { useState, useMemo, useEffect, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
@@ -533,7 +534,7 @@ const CalendarioPage = memo(function CalendarioPage() {
           .cal-modal-close { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; display: flex; transition: color var(--transition-fast); }
           .cal-modal-close:hover { color: var(--text-primary); }
           .cal-modal-date { padding: 12px 20px 0; font-size: 0.8125rem; font-weight: 600; color: var(--color-prosper-green); text-transform: uppercase; letter-spacing: 0.05em; margin: 0; }
-          .cal-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: 60vh; }
+          .cal-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; max-height: 60dvh; }
           .cal-form-label { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
           .cal-form-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border-default); padding: 10px 14px; border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-primary); outline: none; transition: border-color var(--transition-fast); font-family: inherit; }
           .cal-form-input:focus { border-color: var(--color-prosper-green); box-shadow: 0 0 0 2px rgba(61,204,142,0.1); }

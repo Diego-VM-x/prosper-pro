@@ -1,4 +1,5 @@
 'use client';
+import '../animations.css';
 
 import { Suspense } from 'react';
 import { AuthProvider } from '@/lib/contexts/AuthContext';

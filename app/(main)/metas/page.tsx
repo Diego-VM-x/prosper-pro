@@ -1,4 +1,5 @@
 'use client';
+import '@/app/dashboard.css';
 
 import React, { useState, useEffect, memo } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';

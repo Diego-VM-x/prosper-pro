@@ -1150,7 +1150,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           top: calc(100% + 12px);
           right: 0;
           width: 260px;
-          max-height: 80vh;
+          max-height: 80dvh;
           overflow-y: auto;
           background: #ffffff;
           border: 1px solid var(--border-default);
@@ -1292,7 +1292,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             left: 16px;
             right: 16px;
             width: auto;
-            max-height: 80vh;
+            max-height: 80dvh;
             overflow-y: auto;
           }
           .user-dropdown:not(.mobile-user-dropdown) { 
@@ -1301,7 +1301,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             left: 16px;
             right: 16px;
             width: auto;
-            max-height: 80vh;
+            max-height: 80dvh;
             overflow-y: auto;
           }
           .user-dropdown.mobile-user-dropdown {
@@ -1312,7 +1312,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             right: 0 !important;
             width: 100% !important;
             border-radius: 20px 20px 0 0 !important;
-            max-height: 80vh !important;
+            max-height: 80dvh !important;
             overflow-y: auto !important;
             animation: none;
           }
