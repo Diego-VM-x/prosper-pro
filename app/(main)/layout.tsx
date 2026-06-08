@@ -1,7 +1,6 @@
 import '../animations.css';
 
 import { Suspense } from 'react';
-import { AuthProvider } from '@/lib/contexts/AuthContext';
 import { SearchProvider } from '@/lib/contexts/SearchContext';
 import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 import { CurrencyProvider } from '@/lib/contexts/CurrencyContext';
@@ -40,18 +39,16 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <CurrencyProvider>
-        <GoalsProvider>
-          <SearchProvider>
-            <ToastProvider>
-              <Suspense fallback={<LoadingSkeleton />}>
-                {children}
-              </Suspense>
-            </ToastProvider>
-          </SearchProvider>
-        </GoalsProvider>
-      </CurrencyProvider>
-    </AuthProvider>
+    <CurrencyProvider>
+      <GoalsProvider>
+        <SearchProvider>
+          <ToastProvider>
+            <Suspense fallback={<LoadingSkeleton />}>
+              {children}
+            </Suspense>
+          </ToastProvider>
+        </SearchProvider>
+      </GoalsProvider>
+    </CurrencyProvider>
   );
 }

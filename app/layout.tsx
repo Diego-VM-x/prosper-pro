@@ -4,6 +4,7 @@ import './globals.css';
 import './animations.css';
 import { ThemeProvider } from './components/ThemeProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthProvider } from '@/lib/contexts/AuthContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -149,7 +150,9 @@ export default function RootLayout({
       <body className={inter.variable}>
         <ErrorBoundary>
           <ThemeProvider>
-            {children}
+            <AuthProvider>
+              {children}
+            </AuthProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>
