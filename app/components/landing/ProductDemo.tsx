@@ -13,7 +13,7 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
         <div className="demo-nav-item">💳 Finanzas</div>
         <div className="demo-nav-item">🎯 Metas</div>
         <div className="demo-nav-item">📅 Calendario</div>
-        <div className="demo-nav-item">🎓 Cursos</div>
+
       </div>
       <div className="demo-main">
         <div className="demo-topbar">
@@ -139,36 +139,6 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
         <div className="demo-cal-event"><span className="demo-dot green" /> 5 - Salario</div>
         <div className="demo-cal-event"><span className="demo-dot red" /> 12 - Alquiler</div>
         <div className="demo-cal-event"><span className="demo-dot blue" /> 15 - Revisar metas</div>
-      </div>
-    </div>
-  ),
-  cursos: (
-    <div className="demo-mockup demo-cursos">
-      <div className="demo-course-card">
-        <div className="demo-course-cover" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
-          <span>📘 Presupuesto Inteligente</span>
-        </div>
-        <div className="demo-course-body">
-          <div className="demo-course-progress"><div className="demo-course-fill" style={{ width: '75%' }} /></div>
-          <span className="demo-course-pct">75% completado</span>
-        </div>
-      </div>
-      <div className="demo-course-card">
-        <div className="demo-course-cover" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
-          <span>📗 Ahorro de Emergencia</span>
-        </div>
-        <div className="demo-course-body">
-          <div className="demo-course-progress"><div className="demo-course-fill" style={{ width: '30%' }} /></div>
-          <span className="demo-course-pct">30% completado</span>
-        </div>
-      </div>
-      <div className="demo-course-card locked">
-        <div className="demo-course-cover" style={{ background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' }}>
-          <span>🔒 Inversión para Principiantes</span>
-        </div>
-        <div className="demo-course-body">
-          <span className="demo-course-lock">Completa el curso anterior para desbloquear</span>
-        </div>
       </div>
     </div>
   ),

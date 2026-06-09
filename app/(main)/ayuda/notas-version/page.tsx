@@ -6,6 +6,13 @@ import ProtectedRoute from '@/app/components/ProtectedRoute';
 
 export default function NotasVersionPage() {
   const versions = [
+    { version: '0.9.8', date: '2026-06-09', notes: [
+      'Soporte completo de internacionalización (i18n) en inglés y español.',
+      'Modo Invitado (Guest) para explorar la app sin necesidad de iniciar sesión.',
+      'Frecuencia diaria añadida a los planes financieros recurrentes.',
+      'Notificaciones de cambio de tasa BCV en tiempo real.',
+      'Mejoras en la landing page: rendimiento, accesibilidad y animaciones.',
+    ], preRelease: false },
     { version: '0.9.7', date: '2026-06-07', notes: [
       'Cuentas favoritas: marca hasta 3 cuentas y el Dashboard mostrará solo esas cuentas para una vista más limpia.',
       'Menú de perfil corregido: Configuración, cambio de tema y Cerrar sesión responden correctamente en PC y móvil.',

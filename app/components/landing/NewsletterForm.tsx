@@ -2,21 +2,27 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { subscribeToAppNotifications } from '@/lib/firestore/notifications';
 
 export function NewsletterForm() {
   const { t } = useTranslation('landing');
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'success' | 'error' | 'loading'>('idle');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       setStatus('error');
       return;
     }
-    // Simulamos el envío; en producción aquí iría la integración real
-    setStatus('success');
-    setEmail('');
+    setStatus('loading');
+    try {
+      await subscribeToAppNotifications(email);
+      setStatus('success');
+      setEmail('');
+    } catch {
+      setStatus('error');
+    }
     setTimeout(() => setStatus('idle'), 4000);
   };
 
@@ -27,13 +33,14 @@ export function NewsletterForm() {
         placeholder={t('newsletter.placeholder')}
         className="footer-input"
         value={email}
+        disabled={status === 'loading'}
         onChange={(e) => {
           setEmail(e.target.value);
           if (status === 'error') setStatus('idle');
         }}
       />
-      <button type="submit" className="btn btn-primary">
-        {t('newsletter.subscribe')}
+      <button type="submit" className="btn btn-primary" disabled={status === 'loading'}>
+        {status === 'loading' ? '...' : t('newsletter.subscribe')}
       </button>
       {status === 'success' && <span className="newsletter-status success">{t('newsletter.success')}</span>}
       {status === 'error' && <span className="newsletter-status error">{t('newsletter.error')}</span>}

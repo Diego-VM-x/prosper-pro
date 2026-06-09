@@ -83,6 +83,7 @@
 .footer-links {
   display: flex;
   gap: 56px;
+  flex-wrap: wrap;
 }
 
 .footer-col h4 {

@@ -58,9 +58,9 @@ const FEATURE_VISUALS = [
   ),
   (
     <div className="feature-visual-rates">
-      <div className="feature-rate-pill"><span>USD/BS</span><span>45.20</span></div>
-      <div className="feature-rate-pill active"><span>USDT/BS</span><span>46.80</span></div>
-      <div className="feature-rate-pill"><span>EUR/BS</span><span>49.10</span></div>
+      <div className="feature-rate-pill"><span>USD/BS</span><span>567.00</span></div>
+      <div className="feature-rate-pill active"><span>USDT/BS</span><span>569.50</span></div>
+      <div className="feature-rate-pill"><span>EUR/BS</span><span>612.00</span></div>
     </div>
   ),
   (
@@ -68,18 +68,6 @@ const FEATURE_VISUALS = [
       {Array.from({ length: 12 }).map((_, i) => (
         <div key={i} className={`feature-cal-day ${[2, 7, 10].includes(i) ? 'event' : ''}`}>{i + 1}</div>
       ))}
-    </div>
-  ),
-  (
-    <div className="feature-visual-courses">
-      <div className="feature-course-mini">
-        <span>📘 Presupuesto</span>
-        <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '75%' }} /></div>
-      </div>
-      <div className="feature-course-mini">
-        <span>📗 Ahorro</span>
-        <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '30%' }} /></div>
-      </div>
     </div>
   ),
   (

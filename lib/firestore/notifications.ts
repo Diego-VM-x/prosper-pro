@@ -374,3 +374,23 @@ export async function notifyWelcome(
     sendBrowserNotification(title, body, 'general');
   }
 }
+
+// ── App Notification Subscribers ────────────────────────────────────────────────
+const SUBSCRIBERS_COLLECTION = 'notificationSubscribers';
+
+export async function subscribeToAppNotifications(email: string): Promise<void> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const q = query(
+    collection(db, SUBSCRIBERS_COLLECTION),
+    where('email', '==', normalizedEmail)
+  );
+  const snapshot = await getDocs(q);
+  if (!snapshot.empty) {
+    return; // Already subscribed
+  }
+  await addDoc(collection(db, SUBSCRIBERS_COLLECTION), {
+    email: normalizedEmail,
+    createdAt: Date.now(),
+    source: 'landing',
+  });
+}

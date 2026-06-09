@@ -49,14 +49,13 @@
       { "icon": "💱", "label": "8 Currencies", "desc": "USD, BS, EUR, COP, USDT, SOL, BTC, USDC" },
       { "icon": "📊", "label": "Live rates", "desc": "Official BCV + Binance P2P" },
       { "icon": "📸", "label": "VEPay OCR", "desc": "20+ Venezuelan banks" },
-      { "icon": "🎓", "label": "Academy", "desc": "Free finance courses" },
+
       { "icon": "🔒", "label": "Private", "desc": "Only you see your data" },
       { "icon": "⚡", "label": "100% Free", "desc": "No ads or limits" }
     ],
     "counters": [
       { "icon": "💰", "end": 8, "suffix": "", "label": "Supported currencies" },
       { "icon": "🏦", "end": 20, "suffix": "+", "label": "Banks in VEPay OCR" },
-      { "icon": "📚", "end": 15, "suffix": "+", "label": "Available courses" },
       { "icon": "🌍", "end": 100, "suffix": "%", "label": "Free forever" }
     ]
   },
@@ -68,8 +67,7 @@
       { "id": "dashboard", "icon": "📊", "label": "Dashboard", "title": "Your financial overview at a glance", "description": "View income, expenses, monthly balance, goals in progress, and quick access to all your tools." },
       { "id": "finanzas", "icon": "💳", "label": "Finances", "title": "Total control of your accounts and transactions", "description": "Manage multiple currencies, record movements, transfer between accounts, and import receipts with OCR." },
       { "id": "metas", "icon": "🎯", "label": "Goals", "title": "Financial plans you actually achieve", "description": "Create savings plans, planned expenses, and recurring payments. Share expenses and track visual progress." },
-      { "id": "calendario", "icon": "📅", "label": "Calendar", "title": "Never miss an important date again", "description": "View due dates, reminders, recurring payments, and plans with deadlines in a clear interface." },
-      { "id": "cursos", "icon": "🎓", "label": "Academy", "title": "Learn personal finance step by step", "description": "Practical courses with saved progress. From basic budgeting to investing and financial freedom." }
+      { "id": "calendario", "icon": "📅", "label": "Calendar", "title": "Never miss an important date again", "description": "View due dates, reminders, recurring payments, and plans with deadlines in a clear interface." }
     ]
   },
   "features": {
@@ -82,7 +80,7 @@
       { "icon": "📈", "title": "Visual Analytics", "description": "Interactive charts showing your income, expenses, and savings by period.", "features": ["Charts by day, week, month, or year", "Instant currency conversion", "Detailed financial summary"] },
       { "icon": "⚡", "title": "Real-Time Rates", "description": "Official BCV rates for fiat currencies and Binance P2P for cryptocurrencies.", "features": ["Updated BCV, EUR, COP", "P2P for USDT, SOL, BTC, USDC", "Official vs P2P mode per account"] },
       { "icon": "📅", "title": "Smart Calendar", "description": "Organize reminders, payment dates, and deadlines for your financial plans.", "features": ["Customizable reminders", "Transaction integration", "Due date alerts"] },
-      { "icon": "🎓", "title": "Financial Academy", "description": "Practical courses to improve your financial education from beginner to advanced.", "features": ["Courses with saved progress", "Practical and applicable content", "Learn at your own pace"], "visual": { "courses": [{"name":"Budget","pct":"75%"},{"name":"Savings","pct":"30%"}] } },
+
       { "icon": "📸", "title": "VEPay OCR", "description": "Capture Venezuelan bank receipts and extract data automatically.", "features": ["20+ supported banks", "Amount, ref. and date extraction", "Batch processing"] },
       { "icon": "🤝", "title": "Expense Sharing", "description": "Split expenses with friends, family, or coworkers directly in the app.", "features": ["Email invitations", "Payment requests", "Real-time notifications"] }
     ]
@@ -117,7 +115,7 @@
     "items": [
       { "name": "Mariana R.", "role": "Freelancer", "avatar": "👩‍💻", "content": "Prosper helped me organize my income in USD and BS. The real-time rates are accurate and the dashboard is super clear.", "stars": 5 },
       { "name": "Carlos G.", "role": "Entrepreneur", "avatar": "👨‍💼", "content": "VEPay OCR saves me hours every week. I upload my payment screenshots and Prosper extracts everything automatically.", "stars": 5 },
-      { "name": "Andrea P.", "role": "Student", "avatar": "👩‍🎓", "content": "The Academy courses are practical and short. For the first time I understand how to manage my money.", "stars": 5 },
+      { "name": "Andrea P.", "role": "Student", "avatar": "👩‍🎓", "content": "For the first time I have total control of my finances. The dashboard and savings plans changed my life.", "stars": 5 },
       { "name": "Luis M.", "role": "Engineer", "avatar": "👨‍🔧", "content": "Sharing expenses with my family has never been easier. Everyone sees their share and I have total control.", "stars": 5 },
       { "name": "Sofía T.", "role": "Accountant", "avatar": "👩‍💼", "content": "I recommend Prosper to all my clients. The multi-currency and due date calendar are indispensable.", "stars": 5 },
       { "name": "Daniel K.", "role": "Trader", "avatar": "👨‍💻", "content": "The P2P mode for crypto is accurate. Compared to other apps, Prosper has the most updated market rates.", "stars": 5 }
@@ -199,8 +197,8 @@
       }
     },
     "newsletter": {
-      "title": "Get financial tips",
-      "description": "Monthly tips to improve your personal finances."
+      "title": "Get app notifications",
+      "description": "BCV rate alerts, new features and important updates."
     },
     "copyright": "© 2026 Prosper Pro. All rights reserved."
   },
