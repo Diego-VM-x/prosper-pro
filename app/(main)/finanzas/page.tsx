@@ -2633,7 +2633,6 @@ const FinanzasPage = memo(function FinanzasPage() {
               z-index: 9998;
               backdrop-filter: blur(2px);
               animation: fadeIn 0.2s ease;
-              touch-action: none;
             }
             @keyframes fadeIn {
               from { opacity: 0; }
