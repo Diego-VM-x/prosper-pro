@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import './animations.css';
 import { ThemeProvider } from './components/ThemeProvider';
+import { I18nProvider } from './components/I18nProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 
@@ -150,9 +151,11 @@ export default function RootLayout({
       <body className={inter.variable}>
         <ErrorBoundary>
           <ThemeProvider>
-            <AuthProvider>
+            <I18nProvider>
+          <AuthProvider>
               {children}
             </AuthProvider>
+          </I18nProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

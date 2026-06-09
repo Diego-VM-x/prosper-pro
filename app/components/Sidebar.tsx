@@ -13,6 +13,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getGoalsByOwnerId } from '@/lib/firestore/goals';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   IconDashboard,
   IconTasks,
@@ -42,6 +43,7 @@ interface SidebarProps {
  * promocional de enlace a la academia Prosper en el footer.
  */
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
+  const { t } = useTranslation('common');
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, isGuest } = useAuth();
@@ -90,7 +92,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
           <button
             className="sidebar-close-btn"
             onClick={onClose}
-            aria-label="Cerrar menú"
+            aria-label={t('sidebar.closeMenu')}
           >
             <IconX width={16} height={16} />
           </button>
@@ -98,30 +100,30 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
 
         {/* Navegación Principal */}
         <nav className="sidebar-nav">
-          {!isCollapsed && <p className="sidebar-label">Menú</p>}
-          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? 'Dashboard' : undefined}>
-            <IconDashboard /> {!isCollapsed && 'Dashboard'}
+          {!isCollapsed && <p className="sidebar-label">{t('sidebar.menu')}</p>}
+          <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`} id="nav-dashboard" title={isCollapsed ? t('sidebar.dashboard') : undefined}>
+            <IconDashboard /> {!isCollapsed && t('sidebar.dashboard')}
           </Link>
-          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? 'Planes' : undefined}>
-            <IconTasks /> {!isCollapsed && <>Planes Financieros{activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}</>}
+          <Link href="/metas" className={`nav-item ${isActive('/metas') ? 'active' : ''}`} id="nav-tasks" title={isCollapsed ? t('sidebar.planes') : undefined}>
+            <IconTasks /> {!isCollapsed && <>{t('sidebar.planes')}{activeGoalsCount > 0 && <span className="nav-badge">{activeGoalsCount}</span>}</>}
             {isCollapsed && activeGoalsCount > 0 && <span className="nav-badge nav-badge-collapsed">{activeGoalsCount}</span>}
           </Link>
-          <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar" title={isCollapsed ? 'Calendario' : undefined}>
-            <IconCalendar /> {!isCollapsed && 'Calendario'}
+          <Link href="/calendario" className={`nav-item ${isActive('/calendario') ? 'active' : ''}`} id="nav-calendar" title={isCollapsed ? t('sidebar.calendario') : undefined}>
+            <IconCalendar /> {!isCollapsed && t('sidebar.calendario')}
           </Link>
-          <Link href="/finanzas" className={`nav-item ${isActive('/finanzas') ? 'active' : ''}`} id="nav-analytics" title={isCollapsed ? 'Finanzas' : undefined}>
-            <IconAnalytics /> {!isCollapsed && 'Finanzas'}
+          <Link href="/finanzas" className={`nav-item ${isActive('/finanzas') ? 'active' : ''}`} id="nav-analytics" title={isCollapsed ? t('sidebar.finanzas') : undefined}>
+            <IconAnalytics /> {!isCollapsed && t('sidebar.finanzas')}
           </Link>
 
-          {!isCollapsed && <p className="sidebar-label">General</p>}
-          <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings" title={isCollapsed ? 'Configuración' : undefined}>
-            <IconSettings /> {!isCollapsed && 'Configuración'}
+          {!isCollapsed && <p className="sidebar-label">{t('sidebar.general')}</p>}
+          <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings" title={isCollapsed ? t('sidebar.configuracion') : undefined}>
+            <IconSettings /> {!isCollapsed && t('sidebar.configuracion')}
           </Link>
-          <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help" title={isCollapsed ? 'Ayuda' : undefined}>
-            <IconHelp /> {!isCollapsed && 'Ayuda'}
+          <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help" title={isCollapsed ? t('sidebar.ayuda') : undefined}>
+            <IconHelp /> {!isCollapsed && t('sidebar.ayuda')}
           </Link>
-          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }} title={isCollapsed ? (isGuest ? 'Salir' : 'Cerrar Sesión') : undefined}>
-            <IconLogout /> {!isCollapsed && (isGuest ? 'Salir del modo invitado' : 'Cerrar Sesión')}
+          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }} title={isCollapsed ? (isGuest ? t('sidebar.logoutGuest') : t('sidebar.logout')) : undefined}>
+            <IconLogout /> {!isCollapsed && (isGuest ? t('sidebar.logoutGuest') : t('sidebar.logout'))}
           </div>
         </nav>
 
@@ -133,12 +135,12 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
             </div>
           ) : (
             <div className="sidebar-promo-card">
-              <p className="promo-title">Prosper.</p>
+              <p className="promo-title">{t('sidebar.promoTitle')}</p>
               <p className="promo-sub">
-                Tu camino hacia la libertad financiera.
+                {t('sidebar.promoSubtitle')}
               </p>
               <button className="promo-btn" id="promo-cta" onClick={() => router.push('/inicio')}>
-                Visitar Web
+                {t('sidebar.promoBtn')}
               </button>
             </div>
           )}

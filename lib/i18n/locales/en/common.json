@@ -1,0 +1,61 @@
+{
+  "sidebar": {
+    "menu": "Menu",
+    "dashboard": "Dashboard",
+    "planes": "Financial Plans",
+    "calendario": "Calendar",
+    "finanzas": "Finances",
+    "general": "General",
+    "configuracion": "Settings",
+    "ayuda": "Help",
+    "logout": "Log Out",
+    "logoutGuest": "Exit Guest Mode",
+    "closeMenu": "Close menu",
+    "promoTitle": "Prosper.",
+    "promoSubtitle": "Your path to financial freedom.",
+    "promoBtn": "Visit Website"
+  },
+  "topbar": {
+    "search": "Search",
+    "searchPlaceholder": "Search transactions, plans...",
+    "searchShortcut": "Ctrl F",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all as read",
+    "clearAll": "Clear all",
+    "noNotifications": "No notifications",
+    "unread": "unread",
+    "profile": "Profile",
+    "settings": "Settings",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "amoled": "AMOLED",
+      "toggle": "Switch to {{mode}} mode"
+    },
+    "mobileMenu": "Menu",
+    "quickNav": "Quick Navigation",
+    "hello": "Hello, {{name}}"
+  },
+  "toast": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back"
+  },
+  "updateModal": {
+    "title": "New Version Available",
+    "description": "A new version of Prosper Pro is available. Update to get the latest improvements.",
+    "updateBtn": "Update Now",
+    "laterBtn": "Later"
+  }
+}

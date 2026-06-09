@@ -332,7 +332,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         {[
                           { value: 'es', label: 'Español', flag: '🇪🇸' },
                           { value: 'en', label: 'English', flag: '🇺🇸' },
-                          { value: 'pt', label: 'Português', flag: '🇧🇷' },
                         ].map(opt => (
                           <button
                             key={opt.value}
