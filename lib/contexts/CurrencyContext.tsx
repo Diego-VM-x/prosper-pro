@@ -380,17 +380,22 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   // ── Notification Triggers ────────────────────────────────────
 
-  // Dollar rate update notification - notify on every update with current value
+  // Dollar rate update notification - once per day or when rate changes significantly
   useEffect(() => {
     if (!user?.uid || !rates?.rates?.USD || rates.source !== 'api') return;
     const lastNotifiedRate = Number(safeLocalStorage.getItem('prosper_last_usd_rate') || 0);
+    const lastNotifDate = safeLocalStorage.getItem('prosper_last_notif_date') || '';
+    const today = new Date().toISOString().split('T')[0];
     const currentRate = rates.rates.USD;
-    if (lastNotifiedRate > 0 && lastNotifiedRate !== currentRate) {
-      const diff = currentRate - lastNotifiedRate;
-      const pct = Math.abs((diff / lastNotifiedRate) * 100).toFixed(2);
-      const direction = diff > 0 ? '⬆' : '⬇';
-      const sign = diff > 0 ? '+' : '';
-      notifyDollarChange(user.uid, lastNotifiedRate, currentRate).catch(console.error);
+
+    const hasNotifiedBefore = lastNotifiedRate > 0 && lastNotifDate !== '';
+    if (hasNotifiedBefore) {
+      const isNewDay = lastNotifDate !== today;
+      const rateChanged = Math.abs(currentRate - lastNotifiedRate) > 0.01;
+      if (isNewDay || rateChanged) {
+        notifyDollarChange(user.uid, lastNotifiedRate, currentRate).catch(console.error);
+        safeLocalStorage.setItem('prosper_last_notif_date', today);
+      }
     }
     safeLocalStorage.setItem('prosper_last_usd_rate', String(currentRate));
   }, [rates?.rates?.USD, rates?.source, user?.uid]);

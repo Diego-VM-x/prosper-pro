@@ -38,13 +38,13 @@ export const CURRENCY_LIST: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL',
 export const DEFAULT_RATES: ExchangeRates = {
   rates: {
     BS: 1.0,
-    USD: 45.00,   // 1 USD = 45.00 BS (fallback)
-    EUR: 48.50,   // 1 EUR = 48.50 BS (fallback)
-    USDT: 45.00,  // 1 USDT ≈ 1 USD (fallback)
-    SOL: 9000.00, // 1 SOL ≈ 200 USD * 45 BS (fallback)
-    BTC: 4500000.00, // 1 BTC ≈ 100000 USD * 45 BS (fallback)
-    ETH: 135000.00, // 1 ETH ≈ 3000 USD * 45 BS (fallback)
-    USDC: 45.00,  // 1 USDC ≈ 1 USD (fallback)
+    USD: 567.00,   // 1 USD = 567.00 BS (fallback)
+    EUR: 612.00,   // 1 EUR ≈ 48.50 BS @ 45 USD (fallback)
+    USDT: 567.00,  // 1 USDT ≈ 1 USD (fallback)
+    SOL: 113400.00, // 1 SOL ≈ 200 USD * 567 BS (fallback)
+    BTC: 56700000.00, // 1 BTC ≈ 100000 USD * 567 BS (fallback)
+    ETH: 1701000.00, // 1 ETH ≈ 3000 USD * 567 BS (fallback)
+    USDC: 567.00,  // 1 USDC ≈ 1 USD (fallback)
     COP: 0.0105,  // 1 COP ≈ 0.0105 BS (fallback)
   },
   p2pRates: {},
