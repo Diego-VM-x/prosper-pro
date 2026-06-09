@@ -381,6 +381,9 @@ html {
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   background: var(--bg-primary);
+  /* Permitir scroll nativo en móviles */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -898,7 +901,7 @@ ul, ol {
    ============================================================ */
 /* Wrapper que contiene topbar + contenido */
 .main-wrapper {
-  flex: 1;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -921,7 +924,7 @@ ul, ol {
 
 /* Contenido principal */
 .main-content {
-  flex: 1;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -1243,9 +1246,7 @@ ul, ol {
 .page-content {
   flex: 1;
   padding: 28px 24px;
-  overflow-y: auto;
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
   position: relative;
   z-index: 1;
 }
