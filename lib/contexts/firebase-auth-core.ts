@@ -141,7 +141,20 @@ export async function initAuth({
 export async function loginWithGoogleImpl() {
   if (!auth) throw new Error('Firebase Auth no está disponible.');
   const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
-  await signInWithPopup(auth, new GoogleAuthProvider());
+  const result = await signInWithPopup(auth, new GoogleAuthProvider());
+  if (result.user) {
+    const idToken = await result.user.getIdToken();
+    storeTokens({
+      localId: result.user.uid,
+      email: result.user.email || undefined,
+      displayName: result.user.displayName || undefined,
+      photoUrl: result.user.photoURL || undefined,
+      idToken,
+      refreshToken: (result.user as any).refreshToken || '',
+    });
+    await onUserReady(result.user);
+  }
+  return result.user;
 }
 
 export async function loginWithEmailImpl(email: string, pass: string) {

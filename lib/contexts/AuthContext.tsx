@@ -7,7 +7,7 @@ import type { CurrencyCode } from '@/types';
 interface AuthContextType {
   user: any | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<void>;
+  loginWithGoogle: () => Promise<any | null>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode) => Promise<void>;
   logout: () => Promise<void>;
@@ -19,7 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  loginWithGoogle: async () => {},
+  loginWithGoogle: async () => null,
   loginWithEmail: async () => {},
   registerWithEmail: async () => {},
   logout: async () => {},
@@ -122,7 +122,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(async () => {
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
-    await core.loginWithGoogleImpl();
+    const firebaseUser = await core.loginWithGoogleImpl();
+    if (firebaseUser) {
+      setUser(firebaseUser);
+    }
+    return firebaseUser;
   }, []);
 
   const loginWithEmail = useCallback(async (email: string, pass: string) => {
