@@ -43,7 +43,7 @@ interface SidebarProps {
  */
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isGuest } = useAuth();
   const [activeGoalsCount, setActiveGoalsCount] = useState(0);
 
   useEffect(() => {
@@ -119,8 +119,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
           <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help" title={isCollapsed ? 'Ayuda' : undefined}>
             <IconHelp /> {!isCollapsed && 'Ayuda'}
           </Link>
-          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }} title={isCollapsed ? 'Cerrar Sesión' : undefined}>
-            <IconLogout /> {!isCollapsed && 'Cerrar Sesión'}
+          <div className="nav-item" id="nav-logout" onClick={logout} style={{ cursor: 'pointer' }} title={isCollapsed ? (isGuest ? 'Salir' : 'Cerrar Sesión') : undefined}>
+            <IconLogout /> {!isCollapsed && (isGuest ? 'Salir del modo invitado' : 'Cerrar Sesión')}
           </div>
         </nav>
 

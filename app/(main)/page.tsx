@@ -25,15 +25,15 @@ function LoadingHome() {
 
 export default function Home() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isGuest) {
       router.replace('/inicio');
     }
-  }, [user, loading, router]);
+  }, [user, loading, isGuest, router]);
 
-  if (loading || !user) {
+  if (loading || (!user && !isGuest)) {
     return <LoadingHome />;
   }
 

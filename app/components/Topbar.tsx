@@ -49,7 +49,7 @@ interface TopbarProps {
  */
 export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
   const { theme, setTheme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, isGuest } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
   const { goals } = useGoals();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -67,7 +67,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : isGuest ? 'I' : 'U');
 
   const closeUserMenu = () => setShowUserMenu(false);
   const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
@@ -273,7 +273,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         </button>
         {/* Título dinámico */}
         <span className="topbar-title-dynamic">
-          {isCollapsed ? 'Navegación Rápida' : `Hola, ${user?.displayName || 'Usuario'}`}
+          {isCollapsed ? 'Navegación Rápida' : `Hola, ${user?.displayName || (isGuest ? 'Invitado' : 'Usuario')}`}
         </span>
       </div>
 
@@ -463,35 +463,38 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
         {/* Usuario */}
         <div className="topbar-user" id="user-profile" ref={userMenuRef}>
-          {user ? (
+          {user || isGuest ? (
             <>
               <div
                 className="topbar-avatar"
                 onClick={() => setShowUserMenu(!showUserMenu)}
+                style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}
               >
                 {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
               </div>
               <div className="topbar-user-info" onClick={() => setShowUserMenu(!showUserMenu)}>
-                <span className="topbar-user-name">{user?.displayName || 'Usuario'}</span>
-                <span className="topbar-user-email">{user?.email}</span>
+                <span className="topbar-user-name">{isGuest ? 'Invitado' : (user?.displayName || 'Usuario')}</span>
+                <span className="topbar-user-email">{isGuest ? 'Modo solo lectura' : user?.email}</span>
               </div>
 
            {showUserMenu && (
              <div className="user-dropdown">
                <div className="user-dropdown-header">
-                 <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                 <p className="user-dropdown-email">{user?.email}</p>
+                 <p className="user-dropdown-name">{isGuest ? 'Invitado' : (user?.displayName || 'Usuario')}</p>
+                 <p className="user-dropdown-email">{isGuest ? 'Modo solo lectura' : user?.email}</p>
                </div>
-               <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
-                 <IconSettings /> Configuración
-               </Link>
+               {!isGuest && (
+                 <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
+                   <IconSettings /> Configuración
+                 </Link>
+               )}
                <div className="user-dropdown-divider" />
                <button
                  className="user-dropdown-item user-dropdown-logout"
                  onClick={() => { setShowUserMenu(false); logout(); }}
                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
                >
-                 <IconLogout width={20} height={20} /> Cerrar Sesión
+                 <IconLogout width={20} height={20} /> {isGuest ? 'Salir del modo invitado' : 'Cerrar Sesión'}
                </button>
              </div>
            )}
@@ -505,7 +508,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
       </div>
 
       {/* Acciones móviles: Notificaciones + Avatar */}
-      {user && (
+      {(user || isGuest) && (
         <div className="mobile-user-actions">
           {/* Notificaciones móvil */}
           <div className="mobile-notif-wrapper">
@@ -549,23 +552,25 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
           {/* Avatar con dropdown */}
           <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
-            <div className="topbar-avatar">
+            <div className="topbar-avatar" style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}>
               {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
             </div>
             <div className="mobile-user-text">
-              <span className="mobile-user-name">{user?.displayName || 'Usuario'}</span>
-              <span className="mobile-user-email">{user?.email}</span>
+              <span className="mobile-user-name">{isGuest ? 'Invitado' : (user?.displayName || 'Usuario')}</span>
+              <span className="mobile-user-email">{isGuest ? 'Modo solo lectura' : user?.email}</span>
             </div>
           </div>
           {showUserMenu && (
             <div className="user-dropdown mobile-user-dropdown" ref={mobileUserMenuRef}>
               <div className="user-dropdown-header">
-                <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                <p className="user-dropdown-email">{user?.email}</p>
+                <p className="user-dropdown-name">{isGuest ? 'Invitado' : (user?.displayName || 'Usuario')}</p>
+                <p className="user-dropdown-email">{isGuest ? 'Modo solo lectura' : user?.email}</p>
               </div>
-              <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
-                <IconSettings /> Configuración
-              </Link>
+              {!isGuest && (
+                <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
+                  <IconSettings /> Configuración
+                </Link>
+              )}
                <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
                   <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Claro" aria-label="Tema Claro">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -598,7 +603,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                  onClick={() => { setShowUserMenu(false); logout(); }}
                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
                >
-                 <IconLogout width={20} height={20} /> Cerrar Sesión
+                 <IconLogout width={20} height={20} /> {isGuest ? 'Salir del modo invitado' : 'Cerrar Sesión'}
                </button>
               </div>
           )}
@@ -611,12 +616,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-header">
               <div className="mobile-menu-user">
-                <div className="mobile-menu-avatar">
+                <div className="mobile-menu-avatar" style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}>
                   {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={40} height={40} loading="lazy" decoding="async" /> : userInitial}
                 </div>
                 <div>
-                  <p className="mobile-menu-name">{user?.displayName || 'Usuario'}</p>
-                  <p className="mobile-menu-email">{user?.email}</p>
+                  <p className="mobile-menu-name">{isGuest ? 'Invitado' : (user?.displayName || 'Usuario')}</p>
+                  <p className="mobile-menu-email">{isGuest ? 'Modo solo lectura' : user?.email}</p>
                 </div>
               </div>
               <button className="mobile-menu-close" onClick={() => setShowMobileMenu(false)}>
@@ -636,9 +641,11 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               <Link href="/finanzas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconAnalytics /> Finanzas
               </Link>
-              <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconSettings /> Configuración
-              </Link>
+              {!isGuest && (
+                <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                  <IconSettings /> Configuración
+                </Link>
+              )}
               <Link href="/ayuda" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconHelp /> Ayuda
               </Link>
@@ -676,7 +683,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 </div>
                </div>
                <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
-                 <IconLogout width={20} height={20} /> Cerrar Sesión
+                 <IconLogout width={20} height={20} /> {isGuest ? 'Salir del modo invitado' : 'Cerrar Sesión'}
                </button>
           </div>
         </div>

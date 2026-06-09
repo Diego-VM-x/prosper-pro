@@ -7,6 +7,7 @@ import type { CurrencyCode } from '@/types';
 interface AuthContextType {
   user: any | null;
   loading: boolean;
+  isGuest: boolean;
   loginWithGoogle: () => Promise<any | null>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode) => Promise<void>;
@@ -14,11 +15,14 @@ interface AuthContextType {
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
   wipeAllData: () => Promise<{ success: boolean; wiped?: string[]; errors?: string[]; error?: string }>;
   enableNotifications: () => Promise<boolean>;
+  enterGuestMode: () => void;
+  exitGuestMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isGuest: false,
   loginWithGoogle: async () => null,
   loginWithEmail: async () => {},
   registerWithEmail: async () => {},
@@ -26,6 +30,8 @@ const AuthContext = createContext<AuthContextType>({
   deleteAccount: async () => ({ success: false, error: 'No disponible' }),
   wipeAllData: async () => ({ success: false, error: 'No disponible' }),
   enableNotifications: async () => false,
+  enterGuestMode: () => {},
+  exitGuestMode: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -80,12 +86,43 @@ function createUserObject(response: { localId: string; email?: string; displayNa
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const router = useRouter();
   const coreRef = useRef<any>(null);
   const unsubRef = useRef<(() => void) | null>(null);
 
+  const enterGuestMode = useCallback(() => {
+    setIsGuest(true);
+    setUser({
+      uid: null,
+      email: null,
+      displayName: 'Invitado',
+      photoURL: null,
+      isAnonymous: true,
+      metadata: {},
+      getIdToken: async () => '',
+    });
+    setLoading(false);
+    try { localStorage.setItem('prosper_guest', '1'); } catch {}
+  }, []);
+
+  const exitGuestMode = useCallback(() => {
+    setIsGuest(false);
+    setUser(null);
+    try { localStorage.removeItem('prosper_guest'); } catch {}
+  }, []);
+
   // Fast init: check localStorage synchronously, load Firebase only if needed
   useEffect(() => {
+    // Check for guest mode first
+    try {
+      const guestFlag = localStorage.getItem('prosper_guest');
+      if (guestFlag === '1') {
+        enterGuestMode();
+        return;
+      }
+    } catch {}
+
     const tokens = getStoredTokens();
     if (!tokens) {
       setLoading(false);
@@ -145,12 +182,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     clearStoredTokens();
+    exitGuestMode();
     setUser(null);
     if (coreRef.current) {
       try { await coreRef.current.logoutImpl(); } catch {}
     }
     router.push('/login');
-  }, [router]);
+  }, [router, exitGuestMode]);
 
   const deleteAccount = useCallback(async () => {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
@@ -181,6 +219,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user,
       loading,
+      isGuest,
       loginWithGoogle,
       loginWithEmail,
       registerWithEmail,
@@ -188,6 +227,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       deleteAccount,
       wipeAllData,
       enableNotifications,
+      enterGuestMode,
+      exitGuestMode,
     }}>
       {children}
     </AuthContext.Provider>

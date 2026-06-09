@@ -32,19 +32,19 @@ function AuthSkeleton() {
 }
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
   const router = useRouter();
   const redirecting = useRef(false);
 
   useEffect(() => {
     if (loading) return;
-    if (!user && !redirecting.current) {
+    if (!user && !isGuest && !redirecting.current) {
       redirecting.current = true;
       router.replace('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, isGuest, router]);
 
-  if (loading || !user) {
+  if (loading || (!user && !isGuest)) {
     return <AuthSkeleton />;
   }
 

@@ -13,14 +13,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { loginWithGoogle, loginWithEmail, user, loading: authLoading } = useAuth();
+  const { loginWithGoogle, loginWithEmail, user, loading: authLoading, isGuest, enterGuestMode } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && (user || isGuest)) {
       router.replace('/');
     }
-  }, [user, authLoading, router]);
+  }, [user, isGuest, authLoading, router]);
 
   const sendWelcomeNotification = (userName: string) => {
     const title = '🎉 ¡Bienvenido/a a Prosper!';
@@ -84,6 +84,11 @@ export default function LoginPage() {
           setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
       }
     }
+  };
+
+  const handleGuestMode = () => {
+    enterGuestMode();
+    router.replace('/');
   };
 
   return (
@@ -181,6 +186,15 @@ export default function LoginPage() {
 
             <div className="auth-footer">
               ¿No tienes una cuenta? <Link href="/register">Regístrate gratis</Link>
+            </div>
+            <div className="auth-footer" style={{ marginTop: 8 }}>
+              <button
+                onClick={handleGuestMode}
+                className="home-btn"
+                style={{ background: 'none', border: 'none', color: 'var(--color-prosper-green)', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}
+              >
+                👤 Entrar como invitado
+              </button>
             </div>
             <div className="auth-footer">
               <Link href="/" className="home-btn">Ir al inicio</Link>
