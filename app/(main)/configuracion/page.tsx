@@ -10,6 +10,8 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import type { UserProfile, CurrencyCode } from '@/types';
+import i18n from '@/lib/i18n/client';
+import { useTranslation } from 'react-i18next';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
@@ -46,6 +48,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [showWipeConfirm, setShowWipeConfirm] = useState(false);
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
+  const { t } = useTranslation(['configuracion', 'common']);
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -104,7 +107,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     setSuccessMsg('');
     try {
       await updateUserProfile(user.uid, {
-        displayName: displayName.trim() || user.email?.split('@')[0] || 'Usuario',
+        displayName: displayName.trim() || user.email?.split('@')[0] || t('fallbacks.userName'),
         bio: bio.trim(),
         language,
         currency,
@@ -125,62 +128,62 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       } as any);
       // Also update display currency in context
       setDisplayCurrency(currency);
-      setSuccessMsg('Perfil actualizado correctamente');
+      setSuccessMsg(t('messages.profileUpdated'));
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (e) {
       console.error(e);
-      setErrorMsg('Error al guardar los cambios');
+      setErrorMsg(t('messages.saveError'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== 'ELIMINAR') return;
+    if (deleteConfirmText !== t('seguridad.deleteAccount.placeholder')) return;
     setErrorMsg('');
     setDeleting(true);
     try {
       const result = await deleteAccount();
       if (result.needsReauth) {
-        setErrorMsg('Por seguridad, cierra sesión y vuelve a entrar antes de eliminar tu cuenta.');
+        setErrorMsg(t('messages.reauthRequired'));
       } else if (result.error) {
         setErrorMsg(result.error);
       }
     } catch {
-      setErrorMsg('Error al eliminar la cuenta. Intenta de nuevo.');
+      setErrorMsg(t('messages.deleteError'));
     } finally {
       setDeleting(false);
     }
   };
 
   const handleWipeAllData = async () => {
-    if (wipeConfirmText !== 'BORRAR') return;
+    if (wipeConfirmText !== t('seguridad.wipeData.placeholder')) return;
     setErrorMsg('');
     setWipingData(true);
     try {
       const result = await wipeAllData();
       if (result.success) {
-        setSuccessMsg('Todos tus datos han sido eliminados. La página se recargará.');
+        setSuccessMsg(t('messages.dataWiped'));
         setTimeout(() => window.location.reload(), 2000);
       } else {
-        setErrorMsg(result.error || 'Error al borrar los datos');
+        setErrorMsg(result.error || t('messages.wipeError'));
       }
     } catch {
-      setErrorMsg('Error al borrar los datos. Intenta de nuevo.');
+      setErrorMsg(t('messages.wipeErrorRetry'));
     } finally {
       setWipingData(false);
     }
   };
 
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
-  const userEmail = user?.email || 'sin-email@ejemplo.com';
+  const userEmail = user?.email || t('fallbacks.email');
   const photoURL = user?.photoURL;
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
-    { id: 'perfil', label: 'Perfil', icon: '👤' },
-    { id: 'preferencias', label: 'Preferencias', icon: '⚙️' },
-    { id: 'notificaciones', label: 'Alertas', icon: '🔔' },
-    { id: 'seguridad', label: 'Seguridad', icon: '🔒' },
+    { id: 'perfil', label: t('tabs.perfil'), icon: '👤' },
+    { id: 'preferencias', label: t('tabs.preferencias'), icon: '⚙️' },
+    { id: 'notificaciones', label: t('tabs.notificaciones'), icon: '🔔' },
+    { id: 'seguridad', label: t('tabs.seguridad'), icon: '🔒' },
   ];
 
   return (
@@ -194,8 +197,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
           {/* Header */}
           <div className="settings-header">
             <div>
-              <h1 className="settings-title">Configuración</h1>
-              <p className="settings-subtitle">Gestiona tu perfil, preferencias y seguridad.</p>
+              <h1 className="settings-title">{t('header.title')}</h1>
+              <p className="settings-subtitle">{t('header.subtitle')}</p>
             </div>
           </div>
 
@@ -235,8 +238,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Información Personal</h2>
-                      <p className="panel-desc">Tu identidad en Prosper</p>
+                      <h2 className="panel-title">{t('perfil.panelTitle')}</h2>
+                      <p className="panel-desc">{t('perfil.panelDesc')}</p>
                     </div>
 
                     <div className="profile-grid">
@@ -244,7 +247,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <div className="avatar-section">
                         <div className="avatar-circle">
                           {photoURL ? (
-                            <img src={photoURL} alt="Avatar" className="avatar-img" />
+                            <img src={photoURL} alt={t('perfil.avatarAlt')} className="avatar-img" />
                           ) : (
                             <span className="avatar-initial">{userInitial}</span>
                           )}
@@ -256,17 +259,17 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <div className="profile-fields">
                         <div className="field-grid">
                           <div className="field">
-                            <label className="field-label">Nombre</label>
+                            <label className="field-label">{t('perfil.nameLabel')}</label>
                             <input
                               className="field-input"
                               type="text"
                               value={displayName}
                               onChange={(e) => setDisplayName(e.target.value)}
-                              placeholder="Tu nombre"
+                              placeholder={t('perfil.namePlaceholder')}
                             />
                           </div>
                           <div className="field">
-                            <label className="field-label">Email</label>
+                            <label className="field-label">{t('perfil.emailLabel')}</label>
                             <input
                               className="field-input field-disabled"
                               type="email"
@@ -277,13 +280,13 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           </div>
                         </div>
                         <div className="field">
-                          <label className="field-label">Bio</label>
+                          <label className="field-label">{t('perfil.bioLabel')}</label>
                           <textarea
                             className="field-textarea"
                             rows={3}
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
-                            placeholder="Describe tu perfil financiero..."
+                            placeholder={t('perfil.bioPlaceholder')}
                           />
                         </div>
                       </div>
@@ -293,24 +296,24 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                   {/* Plan Card */}
                   <div className="panel-card plan-card">
                     <div className="plan-content">
-                      <div className="plan-badge">Free</div>
+                      <div className="plan-badge">{t('perfil.planBadge')}</div>
                       <div>
-                        <h3 className="plan-title">Plan Gratuito</h3>
-                        <p className="plan-desc">Acceso completo a Prosper</p>
+                        <h3 className="plan-title">{t('perfil.planTitle')}</h3>
+                        <p className="plan-desc">{t('perfil.planDesc')}</p>
                       </div>
                     </div>
                     <div className="plan-features">
                       <div className="plan-feature">
                         <span className="plan-feature-icon">🎯</span>
-                        <span>Metas ilimitadas</span>
+                        <span>{t('perfil.planFeatures.unlimitedGoals')}</span>
                       </div>
                       <div className="plan-feature">
                         <span className="plan-feature-icon">📊</span>
-                        <span>Dashboard completo</span>
+                        <span>{t('perfil.planFeatures.fullDashboard')}</span>
                       </div>
                       <div className="plan-feature">
                         <span className="plan-feature-icon">📚</span>
-                        <span>Cursos educativos</span>
+                        <span>{t('perfil.planFeatures.courses')}</span>
                       </div>
                     </div>
                   </div>
@@ -322,12 +325,12 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Idioma y Moneda</h2>
-                      <p className="panel-desc">Personaliza tu experiencia</p>
+                      <h2 className="panel-title">{t('preferencias.languageCurrencyTitle')}</h2>
+                      <p className="panel-desc">{t('preferencias.languageCurrencyDesc')}</p>
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Idioma de Interfaz <span style={{fontSize:'0.65rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>En Desarrollo</span></label>
+                      <label className="pref-label">{t('preferencias.languageLabel')} <span style={{fontSize:'0.65rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>{t('preferencias.inDevelopment')}</span></label>
                       <div className="option-grid">
                         {[
                           { value: 'es', label: 'Español', flag: '🇪🇸' },
@@ -336,7 +339,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           <button
                             key={opt.value}
                             className={`option-btn ${language === opt.value ? 'active' : ''}`}
-                            onClick={() => setLanguage(opt.value)}
+                            onClick={() => { setLanguage(opt.value); i18n.changeLanguage(opt.value); }}
                           >
                             <span className="option-flag">{opt.flag}</span>
                             <span className="option-text">{opt.label}</span>
@@ -346,7 +349,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">Moneda de Visualización</label>
+                      <label className="pref-label">{t('preferencias.currencyLabel')}</label>
                       <div className="option-grid currency-grid">
                         {CURRENCY_LIST.map(code => {
                           const cfg = CURRENCY_MAP[code];
@@ -377,7 +380,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
                     {rates.source === 'api' && (
                       <div className="pref-section">
-                        <label className="pref-label">Tasas de Cambio Activas</label>
+                        <label className="pref-label">{t('preferencias.ratesLabel')}</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span>✓</span>
@@ -467,8 +470,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Apariencia</h2>
-                      <p className="panel-desc">Tema visual de la aplicación</p>
+                      <h2 className="panel-title">{t('preferencias.appearanceTitle')}</h2>
+                      <p className="panel-desc">{t('preferencias.appearanceDesc')}</p>
                     </div>
 
                     <div className="theme-selector">
@@ -483,7 +486,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             <div className="theme-preview-block" />
                           </div>
                         </div>
-                        <span className="theme-label">Claro</span>
+                        <span className="theme-label">{t('preferencias.themes.light')}</span>
                       </button>
                       <button
                         className={`theme-option ${theme === 'dark' ? 'active' : ''}`}
@@ -496,7 +499,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             <div className="theme-preview-block" />
                           </div>
                         </div>
-                        <span className="theme-label">Oscuro</span>
+                        <span className="theme-label">{t('preferencias.themes.dark')}</span>
                       </button>
                       <button
                         className={`theme-option ${theme === 'amoled' ? 'active' : ''}`}
@@ -509,11 +512,11 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             <div className="theme-preview-block" />
                           </div>
                         </div>
-                        <span className="theme-label">AMOLED</span>
+                        <span className="theme-label">{t('preferencias.themes.amoled')}</span>
                       </button>
                     </div>
                     <div className="pref-section" style={{ marginTop: '1rem' }}>
-                      <label className="pref-label">Mostrar notas de actualización</label>
+                      <label className="pref-label">{t('preferencias.updateNotesLabel')}</label>
                       <button
                         className={`theme-option ${showUpdateModalPref ? 'active' : ''}`}
                         onClick={() => {
@@ -522,25 +525,25 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           try { safeLocalStorage.setItem('prosper_show_update_modal', newVal ? 'true' : 'false'); } catch {}
                         }}
                       >
-                        {showUpdateModalPref ? '✅ Sí' : '❌ No'}
+                        {showUpdateModalPref ? `✅ ${t('preferencias.yes')}` : `❌ ${t('preferencias.no')}`}
                       </button>
                     </div>
 
                     <div className="pref-section" style={{ marginTop: '1rem' }}>
-                      <label className="pref-label">Privacidad del Perfil</label>
+                      <label className="pref-label">{t('preferencias.privacyLabel')}</label>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                        Controla si otros usuarios pueden encontrarte al buscar por nombre para compartir planes.
+                        {t('preferencias.privacyHint')}
                       </p>
                       <button
                         className={`theme-option ${showProfile ? 'active' : ''}`}
                         onClick={() => setShowProfile(!showProfile)}
                       >
-                        {showProfile ? '🌐 Perfil Público' : '🔒 Perfil Privado'}
+                        {showProfile ? `🌐 ${t('preferencias.publicProfile')}` : `🔒 ${t('preferencias.privateProfile')}`}
                       </button>
                       <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '6px' }}>
                         {showProfile
-                          ? 'Otros usuarios pueden encontrarte por nombre o email al compartir planes.'
-                          : 'Solo te pueden encontrar por email exacto. Tu nombre no aparece en búsquedas.'}
+                          ? t('preferencias.publicDesc')
+                          : t('preferencias.privateDesc')}
                       </p>
                     </div>
                   </div>
@@ -552,15 +555,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Centro de Notificaciones <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
-                      <p className="panel-desc">Controla qué alertas recibes</p>
+                      <h2 className="panel-title">{t('notificaciones.panelTitle')} <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>{t('preferencias.inDevelopment')}</span></h2>
+                      <p className="panel-desc">{t('notificaciones.panelDesc')}</p>
                     </div>
 
                     <div className="toggle-list">
                       <ToggleRow
                         icon="🌐"
-                        label="Notificaciones Push"
-                        desc="Alertas en el navegador"
+                        label={t('notificaciones.toggles.push.label')}
+                        desc={t('notificaciones.toggles.push.desc')}
                         checked={notifEnabled}
                         onChange={async () => {
                           if (notifSaving) return;
@@ -573,71 +576,71 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       />
                       <ToggleRow
                         icon="📈"
-                        label="Alertas de Precio"
-                        desc="En desarrollo"
+                        label={t('notificaciones.toggles.priceAlerts.label')}
+                        desc={t('notificaciones.toggles.priceAlerts.desc')}
                         checked={priceAlerts}
                         onChange={() => setPriceAlerts(!priceAlerts)}
                       />
                       <ToggleRow
                         icon="💰"
-                        label="Alertas de Presupuesto"
-                        desc="En desarrollo"
+                        label={t('notificaciones.toggles.budgetAlerts.label')}
+                        desc={t('notificaciones.toggles.budgetAlerts.desc')}
                         checked={budgetAlerts}
                         onChange={() => setBudgetAlerts(!budgetAlerts)}
                       />
                       <ToggleRow
                         icon="📋"
-                        label="Invitaciones a Planes"
-                        desc="Cuando te inviten a colaborar"
+                        label={t('notificaciones.toggles.planInvite.label')}
+                        desc={t('notificaciones.toggles.planInvite.desc')}
                         checked={planInviteNotif}
                         onChange={() => setPlanInviteNotif(!planInviteNotif)}
                       />
                       <ToggleRow
                         icon="💚"
-                        label="Aportes a Planes"
-                        desc="Cuando alguien aporte a tu plan"
+                        label={t('notificaciones.toggles.planContribution.label')}
+                        desc={t('notificaciones.toggles.planContribution.desc')}
                         checked={planContributionNotif}
                         onChange={() => setPlanContributionNotif(!planContributionNotif)}
                       />
                       <ToggleRow
                         icon="⏰"
-                        label="Recordatorios de Planes"
-                        desc="Fechas límite próximas"
+                        label={t('notificaciones.toggles.planReminder.label')}
+                        desc={t('notificaciones.toggles.planReminder.desc')}
                         checked={planReminderNotif}
                         onChange={() => setPlanReminderNotif(!planReminderNotif)}
                       />
                       <ToggleRow
                         icon="❌"
-                        label="Planes Rechazados"
-                        desc="Cuando rechacen o eliminen tu plan"
+                        label={t('notificaciones.toggles.planRejected.label')}
+                        desc={t('notificaciones.toggles.planRejected.desc')}
                         checked={planRejectedNotif}
                         onChange={() => setPlanRejectedNotif(!planRejectedNotif)}
                       />
                       <ToggleRow
                         icon="💲"
-                        label="Cambio del Dólar"
-                        desc="Variación de la tasa BCV"
+                        label={t('notificaciones.toggles.dollarChange.label')}
+                        desc={t('notificaciones.toggles.dollarChange.desc')}
                         checked={dollarChangeNotif}
                         onChange={() => setDollarChangeNotif(!dollarChangeNotif)}
                       />
                       <ToggleRow
                         icon="📊"
-                        label="Balance Diario"
-                        desc="Resumen diario a las 12pm UTC"
+                        label={t('notificaciones.toggles.dailyBalance.label')}
+                        desc={t('notificaciones.toggles.dailyBalance.desc')}
                         checked={dailyBalanceNotif}
                         onChange={() => setDailyBalanceNotif(!dailyBalanceNotif)}
                       />
                       <ToggleRow
                         icon="🚀"
-                        label="Actualizaciones"
-                        desc="Nuevas versiones de la app"
+                        label={t('notificaciones.toggles.appUpdate.label')}
+                        desc={t('notificaciones.toggles.appUpdate.desc')}
                         checked={appUpdateNotif}
                         onChange={() => setAppUpdateNotif(!appUpdateNotif)}
                       />
                       <ToggleRow
                         icon="📅"
-                        label="Recordatorios de Calendario"
-                        desc="En desarrollo"
+                        label={t('notificaciones.toggles.calendarReminder.label')}
+                        desc={t('notificaciones.toggles.calendarReminder.desc')}
                         checked={calendarReminderNotif}
                         onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
                       />
@@ -651,17 +654,17 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">Sesiones Activas <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h2>
-                      <p className="panel-desc">Dispositivos conectados a tu cuenta</p>
+                      <h2 className="panel-title">{t('seguridad.sessionsTitle')} <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>{t('preferencias.inDevelopment')}</span></h2>
+                      <p className="panel-desc">{t('seguridad.sessionsDesc')}</p>
                     </div>
 
                     <div className="session-card">
                       <div className="session-icon">💻</div>
                       <div className="session-info">
-                        <span className="session-name">Este Dispositivo</span>
-                        <span className="session-detail">Chrome · Activo ahora</span>
+                        <span className="session-name">{t('seguridad.thisDevice')}</span>
+                        <span className="session-detail">{t('seguridad.sessionDetail')}</span>
                       </div>
-                      <span className="session-badge">Actual</span>
+                      <span className="session-badge">{t('seguridad.currentBadge')}</span>
                     </div>
                   </div>
 
@@ -670,8 +673,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <div className="danger-header">
                         <div className="danger-icon-wrap">⚠️</div>
                         <div>
-                          <h2 className="danger-title">Eliminar Cuenta</h2>
-                          <p className="danger-desc">Esta acción es irreversible. Se borrarán todos tus datos permanentemente.</p>
+                          <h2 className="danger-title">{t('seguridad.deleteAccount.title')}</h2>
+                          <p className="danger-desc">{t('seguridad.deleteAccount.desc')}</p>
                         </div>
                       </div>
                     </div>
@@ -681,33 +684,33 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         className="btn-danger"
                         onClick={() => setShowDeleteConfirm(true)}
                       >
-                        Eliminar mi cuenta
+                        {t('seguridad.deleteAccount.btn')}
                       </button>
                     ) : (
                       <div className="delete-confirm">
-                        <p className="delete-confirm-label">
-                          Escribe <strong>ELIMINAR</strong> para confirmar:
-                        </p>
+                        <p className="delete-confirm-label"
+                          dangerouslySetInnerHTML={{ __html: t('seguridad.deleteAccount.confirmLabel') }}
+                        />
                         <input
                           className="delete-confirm-input"
                           type="text"
                           value={deleteConfirmText}
                           onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
-                          placeholder="ELIMINAR"
+                          placeholder={t('seguridad.deleteAccount.placeholder')}
                         />
                         <div className="delete-confirm-actions">
                           <button
                             className="btn-cancel"
                             onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
                           >
-                            Cancelar
+                            {t('seguridad.deleteAccount.cancel')}
                           </button>
                           <button
                             className="btn-danger-confirm"
                             onClick={handleDeleteAccount}
-                            disabled={deleteConfirmText !== 'ELIMINAR' || deleting}
+                            disabled={deleteConfirmText !== t('seguridad.deleteAccount.placeholder') || deleting}
                           >
-                            {deleting ? 'Eliminando...' : 'Confirmar Eliminación'}
+                            {deleting ? t('seguridad.deleteAccount.deleting') : t('seguridad.deleteAccount.confirmBtn')}
                           </button>
                         </div>
                       </div>
@@ -719,8 +722,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <div className="warning-header">
                         <div className="warning-icon-wrap">🗑️</div>
                         <div>
-                          <h2 className="warning-title">Borrar Todos Mis Datos</h2>
-                          <p className="warning-desc">Elimina todas tus metas, transacciones, cuentas y configuraciones. Tu cuenta se mantendrá activa con cuentas por defecto.</p>
+                          <h2 className="warning-title">{t('seguridad.wipeData.title')}</h2>
+                          <p className="warning-desc">{t('seguridad.wipeData.desc')}</p>
                         </div>
                       </div>
                     </div>
@@ -730,33 +733,33 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         className="btn-warning"
                         onClick={() => setShowWipeConfirm(true)}
                       >
-                        Borrar todos mis datos
+                        {t('seguridad.wipeData.btn')}
                       </button>
                     ) : (
                       <div className="delete-confirm">
-                        <p className="delete-confirm-label">
-                          Escribe <strong>BORRAR</strong> para confirmar:
-                        </p>
+                        <p className="delete-confirm-label"
+                          dangerouslySetInnerHTML={{ __html: t('seguridad.wipeData.confirmLabel') }}
+                        />
                         <input
                           className="delete-confirm-input"
                           type="text"
                           value={wipeConfirmText}
                           onChange={(e) => setWipeConfirmText(e.target.value.toUpperCase())}
-                          placeholder="BORRAR"
+                          placeholder={t('seguridad.wipeData.placeholder')}
                         />
                         <div className="delete-confirm-actions">
                           <button
                             className="btn-cancel"
                             onClick={() => { setShowWipeConfirm(false); setWipeConfirmText(''); }}
                           >
-                            Cancelar
+                            {t('seguridad.wipeData.cancel')}
                           </button>
                           <button
                             className="btn-warning-confirm"
                             onClick={handleWipeAllData}
-                            disabled={wipeConfirmText !== 'BORRAR' || wipingData}
+                            disabled={wipeConfirmText !== t('seguridad.wipeData.placeholder') || wipingData}
                           >
-                            {wipingData ? 'Borrando...' : 'Confirmar Borrado'}
+                            {wipingData ? t('seguridad.wipeData.wiping') : t('seguridad.wipeData.confirmBtn')}
                           </button>
                         </div>
                       </div>
@@ -770,7 +773,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
           {/* Floating Save Bar */}
           <div className="settings-save-bar">
             <div className="settings-save-bar-inner">
-              <span className="settings-save-hint">Los cambios no se guardan automáticamente</span>
+              <span className="settings-save-hint">{t('saveBar.hint')}</span>
               <button
                 className="btn-save"
                 onClick={handleSaveProfile}
@@ -778,16 +781,16 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               >
                 {saving ? (
                   <span className="btn-loading">
-                    <span className="spinner" /> Guardando...
+                    <span className="spinner" /> {t('saveBar.saving')}
                   </span>
-                ) : 'Guardar Cambios'}
+                ) : t('saveBar.saveBtn')}
               </button>
             </div>
           </div>
 
           {/* Footer */}
           <div className="settings-footer">
-            Prosper Pro © 2026 — Inteligencia Financiera Encriptada
+            {t('footer')}
           </div>
 
           <style>{`

@@ -1,37 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
 
-const FAQS = [
-  {
-    q: '¿Prosper Pro es realmente gratis?',
-    a: 'Sí. Prosper Pro es 100% gratuito, sin anuncios y sin límites de cuentas o transacciones. Puedes usar todas las funciones desde el primer día.',
-  },
-  {
-    q: '¿Qué monedas soporta?',
-    a: 'Soportamos monedas fiduciarias (USD, BS, EUR, COP) y criptomonedas (USDT, SOL, BTC, USDC). Además puedes elegir tasa oficial o P2P para las criptos.',
-  },
-  {
-    q: '¿Cómo funciona VEPay?',
-    a: 'VEPay usa OCR para leer capturas de pantalla de apps bancarias venezolanas. Extrae automáticamente banco, monto, referencia, fecha y concepto, creando una transacción lista para guardar.',
-  },
-  {
-    q: '¿Mis datos están seguros?',
-    a: 'Sí. Tus datos se almacenan en Firebase con autenticación segura. Solo tú tienes acceso a tu información financiera.',
-  },
-  {
-    q: '¿Puedo compartir gastos con otras personas?',
-    a: 'Sí. En los planes de gasto compartido puedes invitar a otros usuarios por correo y dividir montos. Cada persona recibe notificaciones y puede aceptar o rechazar solicitudes.',
-  },
-  {
-    q: '¿Necesito tarjeta de crédito para registrarme?',
-    a: 'No. Solo necesitas un email o una cuenta de Google. No pedimos ni almacenamos información de pago.',
-  },
-];
+interface FaqItem {
+  q: string;
+  a: string;
+}
 
 export function FaqAccordion() {
-  const [open, setOpen] = useState<string | null>(FAQS[0].q);
+  const { t } = useTranslation('landing');
+  const FAQS = t('faq.items', { returnObjects: true }) as FaqItem[];
+  const [open, setOpen] = useState<string | null>(FAQS[0]?.q || null);
 
   return (
     <section id="faq" className="landing-faq-section">

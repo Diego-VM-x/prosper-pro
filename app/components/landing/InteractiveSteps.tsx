@@ -1,40 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
 
-const STEPS = [
-  {
-    n: 1,
-    title: 'Crea tu cuenta',
-    description: 'Regístrate gratis con Google o email. Elige tu moneda preferida y personaliza tu perfil en segundos.',
-    icon: '🚀',
-    details: ['Sin tarjeta de crédito', 'Verificación por email', 'Perfil personalizable'],
-  },
-  {
-    n: 2,
-    title: 'Agrega tus cuentas',
-    description: 'Crea cuentas en múltiples monedas, registra ingresos y gastos. Todo se sincroniza al instante en la nube.',
-    icon: '💳',
-    details: ['8 monedas soportadas', 'Transferencias entre cuentas', 'Importa comprobantes con OCR'],
-  },
-  {
-    n: 3,
-    title: 'Crea planes y metas',
-    description: 'Define objetivos de ahorro, gastos planificados y pagos recurrentes. Visualiza tu progreso día a día.',
-    icon: '🎯',
-    details: ['Metas con fecha límite', 'Pagos recurrentes', 'Comparte gastos con otros'],
-  },
-  {
-    n: 4,
-    title: 'Aprende y crece',
-    description: 'Completa cursos en la Academia, consulta el calendario de vencimientos y toma decisiones financieras inteligentes.',
-    icon: '🎓',
-    details: ['Cursos con progreso', 'Recordatorios inteligentes', 'Reportes visuales'],
-  },
-];
+interface StepItem {
+  n: number;
+  icon: string;
+  title: string;
+  description: string;
+  details: string[];
+}
 
 export function InteractiveSteps() {
+  const { t } = useTranslation('landing');
+  const STEPS = t('howItWorks.steps', { returnObjects: true }) as StepItem[];
   const [active, setActive] = useState(0);
 
   return (
@@ -80,7 +60,7 @@ export function InteractiveSteps() {
                 <div className="step-progress-bar">
                   <div className="step-progress-fill" style={{ width: `${((active + 1) / STEPS.length) * 100}%` }} />
                 </div>
-                <span>Paso {active + 1} de {STEPS.length}</span>
+                <span>{t('howItWorks.stepProgress', { current: active + 1, total: STEPS.length })}</span>
               </div>
             </div>
           </AnimatedSection>

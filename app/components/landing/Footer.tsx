@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { NewsletterForm } from './NewsletterForm';
 
 interface FooterProps {
@@ -8,6 +9,7 @@ interface FooterProps {
 }
 
 export function Footer({ user }: FooterProps) {
+  const { t } = useTranslation('landing');
   const router = useRouter();
 
   const scrollTo = (id: string) => {
@@ -23,56 +25,56 @@ export function Footer({ user }: FooterProps) {
             <img src="/logo-icon.png" alt="Prosper" width={28} height={28} />
             <span>Prosper<span className="footer-dot">.</span></span>
           </div>
-          <p>Tu plataforma de libertad financiera. Gestiona, ahorra, aprende y crece con nosotros.</p>
+          <p>{t('footer.description')}</p>
           <div className="footer-socials">
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label="Twitter" className="footer-social">𝕏</a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" className="footer-social">📸</a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn" className="footer-social">💼</a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.twitter')} className="footer-social">𝕏</a>
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.instagram')} className="footer-social">📸</a>
+            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.linkedin')} className="footer-social">💼</a>
           </div>
         </div>
 
         <div className="footer-links">
           <div className="footer-col">
-            <h4>Producto</h4>
-            <button onClick={() => scrollTo('features')}>Funciones</button>
-            <button onClick={() => scrollTo('demo')}>Demo</button>
-            <button onClick={() => scrollTo('tutoriales')}>Tutoriales</button>
-            <button onClick={() => scrollTo('how-it-works')}>Cómo Funciona</button>
+            <h4>{t('footer.columns.product.title')}</h4>
+            <button onClick={() => scrollTo('features')}>{t('footer.columns.product.features')}</button>
+            <button onClick={() => scrollTo('demo')}>{t('footer.columns.product.demo')}</button>
+            <button onClick={() => scrollTo('tutoriales')}>{t('footer.columns.product.tutorials')}</button>
+            <button onClick={() => scrollTo('how-it-works')}>{t('footer.columns.product.howItWorks')}</button>
           </div>
           <div className="footer-col">
-            <h4>Recursos</h4>
-            <button onClick={() => scrollTo('faq')}>Preguntas Frecuentes</button>
-            <button onClick={() => scrollTo('seguridad')}>Seguridad</button>
-            <button onClick={() => router.push('/ayuda')}>Centro de Ayuda</button>
-            <button onClick={() => router.push('/ayuda/notas-version')}>Notas de Versión</button>
+            <h4>{t('footer.columns.resources.title')}</h4>
+            <button onClick={() => scrollTo('faq')}>{t('footer.columns.resources.faq')}</button>
+            <button onClick={() => scrollTo('seguridad')}>{t('footer.columns.resources.security')}</button>
+            <button onClick={() => router.push('/ayuda')}>{t('footer.columns.resources.helpCenter')}</button>
+            <button onClick={() => router.push('/ayuda/notas-version')}>{t('footer.columns.resources.releaseNotes')}</button>
           </div>
           <div className="footer-col">
-            <h4>Cuenta</h4>
+            <h4>{t('footer.columns.account.title')}</h4>
             {user ? (
-              <button onClick={() => router.push('/')}>Dashboard</button>
+              <button onClick={() => router.push('/')}>{t('footer.columns.account.dashboard')}</button>
             ) : (
               <>
-                <button onClick={() => router.push('/login')}>Iniciar Sesión</button>
-                <button onClick={() => router.push('/register')}>Registrarse</button>
+                <button onClick={() => router.push('/login')}>{t('footer.columns.account.login')}</button>
+                <button onClick={() => router.push('/register')}>{t('footer.columns.account.register')}</button>
               </>
             )}
           </div>
           <div className="footer-col">
-            <h4>Legal</h4>
-            <button onClick={() => router.push('/ayuda')}>Términos de Uso</button>
-            <button onClick={() => router.push('/ayuda')}>Privacidad</button>
+            <h4>{t('footer.columns.legal.title')}</h4>
+            <button onClick={() => router.push('/ayuda')}>{t('footer.columns.legal.terms')}</button>
+            <button onClick={() => router.push('/ayuda')}>{t('footer.columns.legal.privacy')}</button>
           </div>
         </div>
 
         <div className="footer-newsletter">
-          <h4>Recibe consejos financieros</h4>
-          <p>Tips mensuales para mejorar tus finanzas personales.</p>
+          <h4>{t('footer.newsletter.title')}</h4>
+          <p>{t('footer.newsletter.description')}</p>
           <NewsletterForm />
         </div>
       </div>
 
       <div className="footer-bottom">
-        <p>© 2026 Prosper Pro. Todos los derechos reservados.</p>
+        <p>{t('footer.copyright')}</p>
       </div>
     </footer>
   );

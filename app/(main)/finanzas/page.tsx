@@ -2,6 +2,7 @@
 import '@/app/dashboard.css';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -105,6 +106,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const { user } = useAuth();
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
+  const { t } = useTranslation(['finanzas', 'common']);
 
   /** Formatea monto para tabla: crypto muestra USD + BS, resto en su moneda nativa */
   const formatTableAmount = useCallback((amount: number, currency: CurrencyCode) => {
@@ -252,7 +254,7 @@ const FinanzasPage = memo(function FinanzasPage() {
     if (!uid) return;
     const result = await toggleAccountFavorite(accountId, uid, accounts);
     if (!result.success) {
-      warning(result.message || 'No se pudo actualizar favorito');
+      warning(result.message || t('finanzas:toast.favoriteUpdated'));
     }
   };
 
@@ -339,9 +341,9 @@ const FinanzasPage = memo(function FinanzasPage() {
       return;
     }
     if (p2pMode) {
-      success('Modo P2P activado: conversiones usando precios P2P en tiempo real');
+      success(t('finanzas:toast.p2pEnabled'));
     } else {
-      warning('Modo Oficial activado: conversiones usando precios de mercado');
+      warning(t('finanzas:toast.officialEnabled'));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [p2pMode]);
@@ -361,11 +363,11 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleAddTransaction = async () => {
     const amount = Number(newTx.amount);
     if (!amount || amount <= 0) {
-      warning('Ingresa un monto válido mayor a 0.');
+      warning(t('finanzas:toast.invalidAmount'));
       return;
     }
     if (!uid) {
-      error('Debes iniciar sesión.');
+      error(t('finanzas:toast.loginRequired'));
       return;
     }
 
@@ -373,7 +375,7 @@ const FinanzasPage = memo(function FinanzasPage() {
     if ((newTx.type === 'expense' || newTx.type === 'saving') && newTx.accountId) {
       const acc = accounts.find(a => a.id === newTx.accountId);
       if (acc && acc.balance < amount) {
-        error(`Fondos insuficientes en "${acc.name}". Balance: ${formatInCurrency(acc.balance, acc.currency || 'USD')}`);
+        error(t('finanzas:toast.insufficientFunds', { name: acc.name, balance: formatInCurrency(acc.balance, acc.currency || 'USD') }));
         return;
       }
     }
@@ -406,12 +408,12 @@ const FinanzasPage = memo(function FinanzasPage() {
       const typeLabel = TYPE_LABELS[newTx.type];
       const account = accounts.find(a => a.id === newTx.accountId);
       const txCurrency = account?.currency || 'USD';
-      success(`${typeLabel} de ${formatInCurrency(amount, txCurrency)} registrado`);
+      success(t('finanzas:toast.transactionRegistered', { type: typeLabel, amount: formatInCurrency(amount, txCurrency) }));
       setShowModal(false);
       setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO() });
     } catch (e: any) {
       console.error(e);
-      error(`Error al registrar: ${e?.message || 'Error desconocido'}`);
+      error(t('finanzas:toast.registerError', { message: e?.message || 'Error desconocido' }));
     } finally {
       setTxLoading(false);
     }
@@ -426,11 +428,11 @@ const FinanzasPage = memo(function FinanzasPage() {
 
     setConfirmState({
       isOpen: true,
-      title: 'Eliminar Transacción',
-      message: `¿Eliminar "${tx.description || tx.category}" por ${formatInCurrency(tx.amount, txCurrency)}?${hasAccount ? '\n\n• Eliminar y ajustar: recalcula el balance de la cuenta\n• Solo del historial: elimina el registro sin tocar el balance' : ''}`,
+      title: t('finanzas:modals.confirm.deleteTransaction'),
+      message: t('finanzas:modals.confirm.deleteTransactionMessage', { description: tx.description || tx.category, amount: formatInCurrency(tx.amount, txCurrency) }) + (hasAccount ? '\n\n• ' + t('finanzas:modals.confirm.deleteAndAdjustDesc') + '\n• ' + t('finanzas:modals.confirm.deleteFromHistoryDesc') : ''),
       variant: 'danger',
-      confirmText: hasAccount ? 'Eliminar y ajustar' : 'Eliminar',
-      secondaryText: hasAccount ? 'Solo del historial' : undefined,
+      confirmText: hasAccount ? t('finanzas:modals.confirm.deleteAndAdjust') : t('common:buttons.delete'),
+      secondaryText: hasAccount ? t('finanzas:modals.confirm.deleteFromHistory') : undefined,
       onConfirm: async () => {
         // Eliminar y recalcular balance
         try {
@@ -440,9 +442,9 @@ const FinanzasPage = memo(function FinanzasPage() {
             await updateAccountBalance(tx.accountId, delta);
           }
           await loadTransactions();
-          success('Transacción eliminada y balance ajustado');
+          success(t('finanzas:toast.transactionDeletedAdjusted'));
         } catch (e: any) {
-          error(`Error al eliminar: ${e?.message || 'Error desconocido'}`);
+          error(t('finanzas:toast.deleteError', { message: e?.message || 'Error desconocido' }));
         }
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -451,7 +453,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         try {
           await deleteTransaction(txId);
           await loadTransactions();
-          success('Transacción eliminada del historial');
+          success(t('finanzas:toast.transactionDeletedHistory'));
         } catch (e: any) {
           error(`Error al eliminar: ${e?.message || 'Error desconocido'}`);
         }
@@ -468,16 +470,16 @@ const FinanzasPage = memo(function FinanzasPage() {
 
   const handleTransfer = async () => {
     if (!transfer.amount || !transfer.fromAccountId || !transfer.toAccountId) {
-      warning('Completa todos los campos.');
+      warning(t('finanzas:toast.completeFields'));
       return;
     }
     if (transfer.fromAccountId === transfer.toAccountId) {
-      warning('Las cuentas de origen y destino deben ser diferentes.');
+      warning(t('finanzas:toast.sameAccount'));
       return;
     }
     const amount = Number(transfer.amount);
     if (isNaN(amount) || amount <= 0) {
-      warning('Monto inválido.');
+      warning(t('finanzas:toast.invalidAmountShort'));
       return;
     }
 
@@ -485,11 +487,11 @@ const FinanzasPage = memo(function FinanzasPage() {
     const toAcc = accounts.find((a) => a.id === transfer.toAccountId);
 
     if (!fromAcc || !toAcc) {
-      error('Cuenta no encontrada.');
+      error(t('finanzas:toast.accountNotFound'));
       return;
     }
     if (fromAcc.balance < amount) {
-      error(`Fondos insuficientes en "${fromAcc.name}". Balance: ${formatInCurrency(fromAcc.balance, fromAcc.currency)}`);
+      error(t('finanzas:toast.insufficientFunds', { name: fromAcc.name, balance: formatInCurrency(fromAcc.balance, fromAcc.currency) }));
       return;
     }
 
@@ -527,19 +529,19 @@ const FinanzasPage = memo(function FinanzasPage() {
 
       await loadTransactions();
 
-      success(`Transferencia exitosa: ${fromAcc.name} → ${toAcc.name}`);
+      success(t('finanzas:toast.transferSuccess', { from: fromAcc.name, to: toAcc.name }));
       await addNotification({
         ownerId: uid!,
         type: 'transfer',
-        title: 'Transferencia realizada',
-        message: `Se transfirieron ${formatInCurrency(amount, fromCurrency)} de "${fromAcc.name}" a "${toAcc.name}"`,
+        title: t('finanzas:toast.transferNotificationTitle'),
+        message: t('finanzas:toast.transferNotificationMessage', { amount: formatInCurrency(amount, fromCurrency), from: fromAcc.name, to: toAcc.name }),
         read: false,
         meta: { fromAccountId: transfer.fromAccountId, toAccountId: transfer.toAccountId },
       });
       setShowTransferModal(false);
       setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
     } catch (e: any) {
-      error(`Error al transferir: ${e?.message || 'Error desconocido'}`);
+      error(t('finanzas:toast.transferError', { message: e?.message || 'Error desconocido' }));
     }
   };
 
@@ -558,7 +560,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       ...(newAccount.rateMode ? { rateMode: newAccount.rateMode } : {}),
     };
     await createAccount(acc);
-    success(`Cuenta "${acc.name}" creada`);
+    success(t('finanzas:toast.accountCreated', { name: acc.name }));
     setShowAccountModal(false);
     setNewAccount({ name: '', type: 'digital', balance: 0, currency: 'BS', color: '', rateMode: undefined });
     setAccountCategory('monedas');
@@ -567,7 +569,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleEditAccount = async () => {
     if (!editingAccount || !uid) return;
     await updateAccount(editingAccount.id, { name: editingAccount.name, color: editingAccount.color, updatedAt: Date.now() });
-    success('Cuenta actualizada');
+    success(t('finanzas:toast.accountUpdated'));
     setShowEditAccountModal(false);
     setEditingAccount(null);
   };
@@ -585,12 +587,12 @@ const FinanzasPage = memo(function FinanzasPage() {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       });
-      success(`Grupo "${groupFormName.trim()}" creado`);
+      success(t('finanzas:toast.groupCreated', { name: groupFormName.trim() }));
       setShowGroupModal(false);
       setGroupFormName('');
       setGroupFormColor(ACCOUNT_COLORS[0]);
     } catch (e: any) {
-      error(`Error: ${e?.message}`);
+      error(t('finanzas:toast.genericError', { message: e?.message }));
     } finally {
       setGroupFormLoading(false);
     }
@@ -605,7 +607,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         color: groupFormColor,
         updatedAt: Date.now(),
       });
-      success(`Grupo "${groupFormName.trim()}" actualizado`);
+      success(t('finanzas:toast.groupUpdated', { name: groupFormName.trim() }));
       setShowGroupModal(false);
       setEditingGroup(null);
       setGroupFormName('');
@@ -620,17 +622,17 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleDeleteGroup = (group: AccountGroup) => {
     setConfirmState({
       isOpen: true,
-      title: 'Eliminar Grupo',
-      message: `¿Eliminar "${group.name}"? Las cuentas del grupo pasarán a "Sin grupo".`,
+      title: t('finanzas:modals.confirm.deleteGroup'),
+      message: `¿Eliminar "${group.name}"? Las cuentas del grupo pasarán a "{t('finanzas:accounts.noGroup')}".`,
       variant: 'danger',
-      confirmText: 'Eliminar',
+      confirmText: t('common:buttons.delete'),
       onConfirm: async () => {
         try {
           // Unassign accounts from this group first
           const groupAccounts = accounts.filter(a => a.groupId === group.id);
           await Promise.all(groupAccounts.map(a => moveAccountToGroup(a.id, null)));
           await deleteAccountGroup(group.id);
-          success('Grupo eliminado');
+          success(t('finanzas:toast.groupDeleted'));
         } catch (e: any) {
           error(`Error: ${e?.message}`);
         }
@@ -655,7 +657,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleAssignGroup = async (accountId: string, groupId: string | null) => {
     try {
       await moveAccountToGroup(accountId, groupId);
-      success(groupId ? 'Cuenta movida al grupo' : 'Cuenta removida del grupo');
+      success(groupId ? t('finanzas:toast.groupMovedIn') : t('finanzas:toast.groupMovedOut'));
       setShowAssignGroupModal(null);
     } catch (e: any) {
       error(`Error: ${e?.message}`);
@@ -671,14 +673,14 @@ const FinanzasPage = memo(function FinanzasPage() {
     const acc = accounts.find((a) => a.id === id);
     setConfirmState({
       isOpen: true,
-      title: 'Eliminar Cuenta',
-      message: `¿Eliminar "${acc?.name}" y todas sus transacciones? Esta acción no se puede deshacer.`,
+      title: t('finanzas:modals.confirm.deleteAccount'),
+      message: t('finanzas:modals.confirm.deleteAccountMessage', { name: acc?.name }),
       variant: 'danger',
-      confirmText: 'Eliminar',
+      confirmText: t('common:buttons.delete'),
       onConfirm: async () => {
         await deleteAccount(id);
         await loadTransactions();
-        success('Cuenta eliminada');
+        success(t('finanzas:toast.accountDeleted'));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
     });
@@ -688,14 +690,14 @@ const FinanzasPage = memo(function FinanzasPage() {
     const acc = accounts.find((a) => a.id === id);
     setConfirmState({
       isOpen: true,
-      title: 'Borrar Historial',
-      message: `¿Borrar el historial de transacciones de "${acc?.name}"? El balance se mantendrá intacto.`,
+      title: t('finanzas:modals.confirm.clearHistory'),
+      message: t('finanzas:modals.confirm.clearHistoryMessage', { name: acc?.name }),
       variant: 'warning',
-      confirmText: 'Borrar historial',
+      confirmText: t('finanzas:modals.confirm.clearHistoryConfirm'),
       onConfirm: async () => {
         await clearAccountHistory(id);
         await loadTransactions();
-        success('Historial borrado');
+        success(t('finanzas:toast.historyCleared'));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
     });
@@ -706,14 +708,14 @@ const FinanzasPage = memo(function FinanzasPage() {
     const typeLabel = TYPE_LABELS[type];
     setConfirmState({
       isOpen: true,
-      title: `Eliminar ${typeLabel}s`,
-      message: `¿Eliminar todos los ${typeLabel.toLowerCase()}s de "${acc?.name}"? El balance se ajustará automáticamente.`,
+      title: t('finanzas:modals.confirm.wipeType', { icon: TYPE_ICONS[type], type: typeLabel }),
+      message: t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc?.name, action: type === 'income' ? 'restará' : 'sumará' }),
       variant: 'danger',
-      confirmText: `Eliminar ${typeLabel}s`,
+      confirmText: t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel }),
       onConfirm: async () => {
         await deleteTransactionsByType(id, type);
         await loadTransactions();
-        success(`${typeLabel}s eliminados`);
+        success(t('finanzas:toast.typesDeleted', { type: typeLabel }));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
     });
@@ -723,13 +725,13 @@ const FinanzasPage = memo(function FinanzasPage() {
     const acc = accounts.find((a) => a.id === id);
     setConfirmState({
       isOpen: true,
-      title: 'Resetear Balance',
-      message: `¿Resetear el balance de "${acc?.name}" a ${formatInCurrency(0, acc?.currency || 'BS')}? Se perderá el saldo actual de ${formatInCurrency(acc?.balance || 0, acc?.currency || 'BS')}.`,
+      title: t('finanzas:modals.confirm.resetBalance'),
+      message: t('finanzas:modals.confirm.resetBalanceMessage', { name: acc?.name, amount: formatInCurrency(0, acc?.currency || 'BS'), currentBalance: formatInCurrency(acc?.balance || 0, acc?.currency || 'BS') }),
       variant: 'danger',
-      confirmText: 'Resetear balance',
+      confirmText: t('finanzas:modals.confirm.resetBalanceConfirm'),
       onConfirm: async () => {
         await resetAccountBalance(id);
-        success('Balance reseteado');
+        success(t('finanzas:toast.balanceReset'));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
     });
@@ -738,15 +740,15 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleClearAllHistory = async () => {
     setConfirmState({
       isOpen: true,
-      title: 'Borrar Todo el Historial',
-      message: '¿Borrar el historial de TODAS las transacciones? Los balances se mantendrán intactos.',
+      title: t('finanzas:modals.confirm.clearAllHistory'),
+      message: t('finanzas:modals.confirm.clearAllHistoryMessage'),
       variant: 'danger',
-      confirmText: 'Borrar todo el historial',
+      confirmText: t('finanzas:modals.confirm.clearAllHistoryConfirm'),
       onConfirm: async () => {
         if (!uid) return;
         await clearAllTransactionHistory(uid);
         await loadTransactions();
-        success('Historial completo borrado');
+        success(t('finanzas:toast.allHistoryCleared'));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
     });
@@ -759,19 +761,19 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleWipeAllUserTransactions = async () => {
     setConfirmState({
       isOpen: true,
-      title: '⚠️ Vaciar TODAS las Transacciones',
-      message: 'Se eliminarán TODAS las transacciones de TODAS las cuentas. Los balances se resetearán a $0. Esta acción NO se puede deshacer.',
+      title: t('finanzas:modals.confirm.wipeAllTransactions'),
+      message: t('finanzas:modals.confirm.wipeAllTransactionsMessage'),
       variant: 'danger',
-      confirmText: 'Vaciar todo',
+      confirmText: t('finanzas:modals.confirm.wipeAllConfirm'),
       onConfirm: async () => {
         if (!uid) return;
         setAccountingLoading(true);
         try {
           await wipeAllUserTransactions(uid);
           await loadTransactions();
-          success('Todas las transacciones eliminadas. Balances reseteados.');
+          success(t('finanzas:toast.allTransactionsWiped'));
         } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
+          error(t('finanzas:toast.genericError', { message: e?.message || 'Error desconocido' }));
         } finally {
           setAccountingLoading(false);
           setConfirmState(prev => ({ ...prev, isOpen: false }));
@@ -787,10 +789,10 @@ const FinanzasPage = memo(function FinanzasPage() {
 
     setConfirmState({
       isOpen: true,
-      title: `${typeIcon} Vaciar ${typeLabel}s`,
-      message: `Se eliminarán TODOS los ${typeLabel.toLowerCase()}s de TODAS las cuentas. El balance se ${actionText} automáticamente. ¿Continuar?`,
+      title: t('finanzas:modals.confirm.wipeType', { icon: typeIcon, type: typeLabel }),
+      message: t('finanzas:modals.confirm.wipeTypeMessage', { type: typeLabel.toLowerCase(), action: actionText }),
       variant: type === 'income' ? 'warning' : 'danger',
-      confirmText: `Vaciar ${typeLabel}s`,
+      confirmText: t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel }),
       onConfirm: async () => {
         if (!uid) return;
         setAccountingLoading(true);
@@ -800,9 +802,9 @@ const FinanzasPage = memo(function FinanzasPage() {
           const adjustText = result.adjustments.map(a => {
             const acc = accounts.find(acc => acc.id === a.accountId);
             const sign = a.adjustment > 0 ? '+' : '';
-            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${sign}${formatAmount(Math.abs(a.adjustment))}`;
+            return `${acc?.icon || ''} ${acc?.name || t('finanzas:modals.newAccount.noAccount')}: ${sign}${formatAmount(Math.abs(a.adjustment))}`;
           }).join('\n');
-          success(`${result.totalWiped} ${typeLabel.toLowerCase()}s eliminados.${result.adjustments.length > 0 ? '\nAjustes: ' + adjustText : ''}`);
+          success(t('finanzas:toast.typesWiped', { count: result.totalWiped, type: typeLabel.toLowerCase() }) + (result.adjustments.length > 0 ? '\nAjustes: ' + adjustText : ''));
         } catch (e: any) {
           error(`Error: ${e?.message || 'Error desconocido'}`);
         } finally {
@@ -816,10 +818,10 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleRecalculateAllBalances = async () => {
     setConfirmState({
       isOpen: true,
-      title: '🔄 Recalcular Balances',
-      message: 'Se recalcularán los balances de TODAS las cuentas basándose en las transacciones existentes. ¿Continuar?',
+      title: t('finanzas:modals.confirm.recalculateBalances'),
+      message: t('finanzas:modals.confirm.recalculateBalancesMessage'),
       variant: 'info',
-      confirmText: 'Recalcular',
+      confirmText: t('finanzas:modals.confirm.recalculateConfirm'),
       onConfirm: async () => {
         if (!uid) return;
         setAccountingLoading(true);
@@ -828,9 +830,9 @@ const FinanzasPage = memo(function FinanzasPage() {
           await loadTransactions();
           const summary = results.map(r => {
             const acc = accounts.find(a => a.id === r.accountId);
-            return `${acc?.icon || ''} ${acc?.name || 'Cuenta'}: ${formatAmount(r.balance)}`;
+            return `${acc?.icon || ''} ${acc?.name || t('finanzas:modals.newAccount.noAccount')}: ${formatAmount(r.balance)}`;
           }).join('\n');
-          success('Balances recalculados:\n' + summary);
+          success(t('finanzas:toast.balancesRecalculated') + summary);
         } catch (e: any) {
           error(`Error: ${e?.message || 'Error desconocido'}`);
         } finally {
@@ -850,16 +852,16 @@ const FinanzasPage = memo(function FinanzasPage() {
     let confirmText = '';
 
     if (action === 'all') {
-      title = `🗑️ Vaciar "${acc.name}"`;
-      message = `Se eliminarán TODAS las transacciones de "${acc.name}" y el balance se reseteará a ${formatInCurrency(0, acc.currency)}.`;
-      confirmText = 'Vaciar cuenta';
+      title = t('finanzas:modals.confirm.wipeAccount', { name: acc.name });
+      message = t('finanzas:modals.confirm.wipeAccountMessage', { name: acc.name, amount: formatInCurrency(0, acc.currency) });
+      confirmText = t('finanzas:modals.confirm.wipeAccountConfirm');
     } else {
       const typeLabel = TYPE_LABELS[action];
       const typeIcon = TYPE_ICONS[action];
       const actionText = action === 'income' ? 'restará' : 'sumará';
-      title = `${typeIcon} Vaciar ${typeLabel}s de "${acc.name}"`;
-      message = `Se eliminarán los ${typeLabel.toLowerCase()}s de "${acc.name}". El balance se ${actionText} automáticamente.`;
-      confirmText = `Vaciar ${typeLabel}s`;
+      title = t('finanzas:modals.confirm.wipeAccountType', { icon: typeIcon, type: typeLabel, name: acc.name });
+      message = t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc.name, action: actionText });
+      confirmText = t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel });
     }
 
     setConfirmState({
@@ -873,11 +875,11 @@ const FinanzasPage = memo(function FinanzasPage() {
         try {
           if (action === 'all') {
             await wipeAllTransactions(accountId);
-            success(`"${acc.name}" vaciada. Balance: ${formatInCurrency(0, acc.currency)}`);
+            success(t('finanzas:toast.accountEmptied', { name: acc.name, balance: formatInCurrency(0, acc.currency) }));
           } else {
             const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
             const sign = result.balanceAdjustment > 0 ? '+' : '';
-            success(`${result.wipedCount} ${TYPE_LABELS[action].toLowerCase()}s eliminados. Ajuste: ${sign}${formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency)}`);
+            success(t('finanzas:toast.typesWipedFromAccount', { count: result.wipedCount, type: TYPE_LABELS[action].toLowerCase(), adjustment: sign + formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency) }));
           }
           await loadTransactions();
         } catch (e: any) {
@@ -892,9 +894,9 @@ const FinanzasPage = memo(function FinanzasPage() {
 
   const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
   const getAccountName = (accountId?: string) => {
-    if (!accountId) return 'Sin cuenta';
+    if (!accountId) return t('finanzas:modals.newTransaction.noAccount');
     const acc = accounts.find((a) => a.id === accountId);
-    return acc ? `${acc.icon} ${acc.name}` : 'Sin cuenta';
+    return acc ? `${acc.icon} ${acc.name}` : t('finanzas:modals.newTransaction.noAccount');
   };
 
   const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
@@ -906,25 +908,25 @@ const FinanzasPage = memo(function FinanzasPage() {
           {/* Header */}
           <div className="page-header">
             <div className="page-header-left">
-              <h1 className="page-title">Finanzas</h1>
-              <p className="page-subtitle">Controla tus ingresos, gastos y ahorros.</p>
+              <h1 className="page-title">{t('finanzas:title')}</h1>
+              <p className="page-subtitle">{t('finanzas:subtitle')}</p>
             </div>
             {/* Desktop actions */}
             <div className="page-header-actions desktop-only-actions">
               <button className="btn btn-outline" onClick={() => setShowAccountModal(true)}>
-                <IconPlus width={14} /> Nueva Cuenta
+                <IconPlus width={14} /> {t('finanzas:header.newAccount')}
               </button>
               <button className="btn btn-outline" onClick={() => setShowTransferModal(true)}>
-                <IconWallet width={14} /> Transferir
+                <IconWallet width={14} /> {t('finanzas:header.transfer')}
               </button>
-              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title="Archivar todo el historial">
-                <IconArchive width={14} /> Borrar Historial
+              <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title={t('finanzas:header.archiveAllHistory')}>
+                <IconArchive width={14} /> {t('finanzas:header.clearHistory')}
               </button>
-              <button className="btn btn-outline btn-accounting" onClick={() => setShowAccountingModal(true)} title="Gestión contable avanzada">
+              <button className="btn btn-outline btn-accounting" onClick={() => setShowAccountingModal(true)} title={t('finanzas:header.accountingAdvanced')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                 </svg>
-                <span className="btn-accounting-label">Gestión Contable</span>
+                <span className="btn-accounting-label">{t('finanzas:header.accounting')}</span>
               </button>
               <button className="btn btn-outline btn-toggle-visibility" onClick={toggleShowAmounts}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -941,11 +943,11 @@ const FinanzasPage = memo(function FinanzasPage() {
                     </>
                   )}
                 </svg>
-                <span className="btn-toggle-label">{showAmounts ? 'Visible' : 'Oculto'}</span>
+                <span className="btn-toggle-label">{showAmounts ? t('finanzas:header.visible') : t('finanzas:header.hidden')}</span>
               </button>
-              <div className="btn-p2p-toggle" title="Elige entre tasa de mercado (Oficial) o precio P2P real para criptos (USDT, SOL, BTC, USDC)">
-                <button className={!p2pMode ? 'active' : ''} onClick={() => setP2pMode(false)}>Oficial</button>
-                <button className={p2pMode ? 'active' : ''} onClick={() => setP2pMode(true)}>P2P</button>
+              <div className="btn-p2p-toggle" title={t('finanzas:rates.p2pToggleTitle')}>
+                <button className={!p2pMode ? 'active' : ''} onClick={() => setP2pMode(false)}>{t('finanzas:header.official')}</button>
+                <button className={p2pMode ? 'active' : ''} onClick={() => setP2pMode(true)}>{t('finanzas:header.p2p')}</button>
               </div>
               <button className="btn btn-outline btn-vepay" onClick={() => setShowVepayModal(true)}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -953,10 +955,10 @@ const FinanzasPage = memo(function FinanzasPage() {
                   <circle cx="8.5" cy="8.5" r="1.5"/>
                   <polyline points="21 15 16 10 5 21"/>
                 </svg>
-                <span className="btn-vepay-label">Importar Captura</span>
+                <span className="btn-vepay-label">{t('finanzas:header.importScreenshot')}</span>
               </button>
               <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-                <IconPlus width={14} /> Nueva Transacción
+                <IconPlus width={14} /> {t('finanzas:header.newTransaction')}
               </button>
             </div>
 
@@ -971,8 +973,8 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="rates-section-header-left">
                 <span className="rates-section-icon">💱</span>
                 <div>
-                  <span className="rates-section-title">Mercado de Divisas</span>
-                  <span className="rates-section-subtitle">Tasas en tiempo real</span>
+                  <span className="rates-section-title">{t('finanzas:rates.title')}</span>
+                  <span className="rates-section-subtitle">{t('finanzas:rates.subtitle')}</span>
                 </div>
               </div>
               <svg 
@@ -1002,8 +1004,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <div className="rates-table-header-left">
                       <span className="rates-table-icon">💱</span>
                       <div>
-                        <span className="rates-table-title">Monedas</span>
-                        <span className="rates-table-subtitle">Tasas oficiales BCV</span>
+                        <span className="rates-table-title">{t('finanzas:rates.fiatTitle')}</span>
+                        <span className="rates-table-subtitle">{t('finanzas:rates.fiatSubtitle')}</span>
                       </div>
                     </div>
                   </div>
@@ -1040,8 +1042,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <div className="rates-table-header-left">
                       <span className="rates-table-icon">💎</span>
                       <div>
-                        <span className="rates-table-title">Cryptos</span>
-                        <span className="rates-table-subtitle">USD vs BS</span>
+                        <span className="rates-table-title">{t('finanzas:rates.cryptoTitle')}</span>
+                        <span className="rates-table-subtitle">{t('finanzas:rates.cryptoSubtitle')}</span>
                       </div>
                     </div>
                   </div>
@@ -1066,16 +1068,16 @@ const FinanzasPage = memo(function FinanzasPage() {
                             </div>
                           </div>
                           <div className="rates-row-values">
-                            <span className="rates-row-val rates-usd-val" title="Precio en USD">
+                            <span className="rates-row-val rates-usd-val" title={t('finanzas:rates.usdPrice')}>
                               {usdPrice ? `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}
                             </span>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                              <span className="rates-row-val rates-bs-official" title="Tasa oficial BS">
+                              <span className="rates-row-val rates-bs-official" title={t('finanzas:rates.officialRateTitle')}>
                                 {bsOfficial ? `Bs. ${formatCompact(bsOfficial)}` : '—'}
                               </span>
                               {bsP2p && (
-                                <span className="rates-row-val rates-bs-p2p" title="Tasa P2P BS">
-                                  P2P: {formatCompact(bsP2p)}
+                                <span className="rates-row-val rates-bs-p2p" title={t('finanzas:rates.p2pRateTitle')}>
+                                  {t('finanzas:rates.p2pLabel')}: {formatCompact(bsP2p)}
                                 </span>
                               )}
                             </div>
@@ -1093,9 +1095,9 @@ const FinanzasPage = memo(function FinanzasPage() {
           <div className="accounts-section">
             {/* Header de sección con botón de grupos */}
             <div className="accounts-section-header">
-              <h2 className="accounts-section-title">🏦 Mis Cuentas</h2>
+              <h2 className="accounts-section-title">{t('finanzas:accounts.title')}</h2>
               <button className="btn btn-outline btn-sm" onClick={() => openGroupModal()}>
-                <IconPlus width={12} /> Nuevo Grupo
+                <IconPlus width={12} /> {t('finanzas:accounts.newGroup')}
               </button>
             </div>
 
@@ -1119,16 +1121,16 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <div className="account-info">
                       <span className="account-name">{acc.name}</span>
                       <span className="account-type">
-                        {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
+                        {acc.type === 'digital' ? t('finanzas:accounts.walletDigital') : acc.type === 'bank' ? t('finanzas:accounts.bank') : t('finanzas:accounts.foreign')} • {acc.currency || 'BS'}
                       </span>
                     </div>
                     <div className="account-actions-group">
-                      <button className="account-action" onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }} title={acc.favorite ? 'Quitar de favoritos' : 'Marcar como favorito'} style={{ color: acc.favorite ? '#F59E0B' : 'var(--text-tertiary)' }}>
+                      <button className="account-action" onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }} title={acc.favorite ? t('finanzas:accounts.removeFavorite') : t('finanzas:accounts.addFavorite')} style={{ color: acc.favorite ? '#F59E0B' : 'var(--text-tertiary)' }}>
                         {acc.favorite ? '★' : '☆'}
                       </button>
-                      <button className="account-action" onClick={() => setShowAssignGroupModal(acc.id)} title="Mover de grupo">📁</button>
-                      <button className="account-action" onClick={() => handleClearHistory(acc.id)} title="Archivar historial"><IconArchive width={14} /></button>
-                      <button className="account-action" onClick={() => handleResetBalance(acc.id)} title="Resetear balance"><IconReset width={14} /></button>
+                      <button className="account-action" onClick={() => setShowAssignGroupModal(acc.id)} title={t('finanzas:accounts.moveGroup')}>📁</button>
+                      <button className="account-action" onClick={() => handleClearHistory(acc.id)} title={t('finanzas:accounts.archiveHistory')}><IconArchive width={14} /></button>
+                      <button className="account-action" onClick={() => handleResetBalance(acc.id)} title={t('finanzas:accounts.resetBalance')}><IconReset width={14} /></button>
                     </div>
                   </div>
                   <div className="account-balance-group">
@@ -1161,8 +1163,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                             <span className="account-group-count">{groupAccs.length}</span>
                           </div>
                           <div className="account-group-actions" onClick={(e) => e.stopPropagation()}>
-                            <button className="account-group-btn" onClick={() => openGroupModal(group)} title="Editar">✏️</button>
-                            <button className="account-group-btn" onClick={() => handleDeleteGroup(group)} title="Eliminar">🗑️</button>
+                            <button className="account-group-btn" onClick={() => openGroupModal(group)} title={t('common:buttons.edit')}>✏️</button>
+                            <button className="account-group-btn" onClick={() => handleDeleteGroup(group)} title={t('common:buttons.delete')}>🗑️</button>
                           </div>
                         </div>
                         {!isCollapsed && (
@@ -1180,7 +1182,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       <div className="account-group-header">
                         <div className="account-group-title">
                           <span className="account-group-dot" style={{ background: 'var(--text-tertiary)' }} />
-                          Sin grupo
+                          {t('finanzas:accounts.noGroup')}
                           <span className="account-group-count">{ungrouped.length}</span>
                         </div>
                       </div>
@@ -1192,7 +1194,7 @@ const FinanzasPage = memo(function FinanzasPage() {
 
                   {accounts.length === 0 && (
                     <div className="empty-accounts">
-                      <p>No tienes cuentas. ¡Crea tu primera cuenta!</p>
+                      <p>{t('finanzas:accounts.empty')}</p>
                     </div>
                   )}
                 </>
@@ -1206,18 +1208,18 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Editar Cuenta</h2>
-                    <p className="modal-subtitle">Nombre y color</p>
+                    <h2 className="modal-title">{t('finanzas:modals.editAccount.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.editAccount.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
-                    <label className="tx-label">Nombre</label>
-                    <input className="tx-input" type="text" placeholder="Nombre de la cuenta" value={editingAccount.name} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} />
+                    <label className="tx-label">{t('finanzas:modals.editAccount.name')}</label>
+                    <input className="tx-input" type="text" placeholder={t('finanzas:modals.editAccount.namePlaceholder')} value={editingAccount.name} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} />
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">Color</label>
+                    <label className="tx-label">{t('finanzas:modals.editAccount.color')}</label>
                     <div className="color-picker-row">
                       {ACCOUNT_COLORS.map((c) => (
                         <button
@@ -1231,8 +1233,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>Cancelar</button>
-                  <button className="btn btn-primary" onClick={handleEditAccount}>Guardar</button>
+                  <button className="btn btn-outline" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>{t('common:buttons.cancel')}</button>
+                  <button className="btn btn-primary" onClick={handleEditAccount}>{t('common:buttons.save')}</button>
                 </div>
               </div>
             </div>
@@ -1244,18 +1246,18 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">{editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'}</h2>
-                    <p className="modal-subtitle">Organiza tus cuentas</p>
+                    <h2 className="modal-title">{editingGroup ? t('finanzas:modals.group.editTitle') : t('finanzas:modals.group.newTitle')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.group.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
-                    <label className="tx-label">Nombre *</label>
-                    <input className="tx-input" type="text" placeholder="Ej: Bancos, Criptos, Efectivo" value={groupFormName} onChange={(e) => setGroupFormName(e.target.value)} autoFocus />
+                    <label className="tx-label">{t('finanzas:modals.group.name')}</label>
+                    <input className="tx-input" type="text" placeholder={t('finanzas:modals.group.namePlaceholder')} value={groupFormName} onChange={(e) => setGroupFormName(e.target.value)} autoFocus />
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">Color</label>
+                    <label className="tx-label">{t('finanzas:modals.group.color')}</label>
                     <div className="color-picker-row">
                       {ACCOUNT_COLORS.map((c) => (
                         <button
@@ -1269,9 +1271,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>{t('common:buttons.cancel')}</button>
                   <button className="btn btn-primary" onClick={editingGroup ? handleEditGroup : handleCreateGroup} disabled={groupFormLoading || !groupFormName.trim()}>
-                    {groupFormLoading ? 'Guardando...' : editingGroup ? 'Guardar' : 'Crear'}
+                    {groupFormLoading ? t('finanzas:modals.group.saving') : editingGroup ? t('common:buttons.save') : t('finanzas:modals.group.create')}
                   </button>
                 </div>
               </div>
@@ -1284,8 +1286,8 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 360 }}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Mover a Grupo</h2>
-                    <p className="modal-subtitle">Selecciona un grupo para esta cuenta</p>
+                    <h2 className="modal-title">{t('finanzas:modals.assignGroup.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.assignGroup.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowAssignGroupModal(null)}>✕</button>
                 </div>
@@ -1296,7 +1298,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       onClick={() => handleAssignGroup(showAssignGroupModal, null)}
                     >
                       <span className="group-assign-dot" style={{ background: 'var(--text-tertiary)' }} />
-                      <span className="group-assign-name">Sin grupo</span>
+                      <span className="group-assign-name">{t('finanzas:modals.assignGroup.noGroup')}</span>
                     </button>
                     {accountGroups.map((g) => (
                       <button
@@ -1311,7 +1313,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowAssignGroupModal(null)}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => setShowAssignGroupModal(null)}>{t('common:buttons.cancel')}</button>
                 </div>
               </div>
             </div>
@@ -1320,16 +1322,16 @@ const FinanzasPage = memo(function FinanzasPage() {
           {/* Resumen mensual */}
           <div className="summary-section">
             <div className="summary-grid">
-              <SummaryWidget label="Ingresos" value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-              <SummaryWidget label="Gastos" value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-              <SummaryWidget label="Balance Total" value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label={t('finanzas:summary.income')} value={summary.income} altValue={altSummary.income} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label={t('finanzas:summary.expenses')} value={summary.expenses} altValue={altSummary.expenses} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              <SummaryWidget label={t('finanzas:summary.totalBalance')} value={totalBalance} altValue={altTotalBalance} color={totalBalance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
             </div>
             <button
               onClick={() => { const next = !showConversion; setShowConversion(next); try { safeLocalStorage.setItem('finanzas-show-conversion', String(next)); } catch {} }}
               className={`conversion-toggle ${showConversion ? 'active' : ''}`}
-              title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
+              title={showConversion ? t('finanzas:summary.hideConversion') : t('finanzas:summary.showConversion')}
             >
-              ⇄ {showConversion ? `${displayCurrency}/${altCurrency}` : 'Convertir'}
+              ⇄ {showConversion ? `${displayCurrency}/${altCurrency}` : t('finanzas:summary.convert')}
             </button>
           </div>
 
@@ -1342,52 +1344,52 @@ const FinanzasPage = memo(function FinanzasPage() {
           <div className="tx-filters">
             <div className="tx-filters-row">
               <div className="tx-filter-group">
-                <span className="tx-filter-label">📊 Cuenta</span>
+                <span className="tx-filter-label">{t('finanzas:filters.account')}</span>
                 <CustomSelect
                   value={selectedAccount}
                   onChange={(val) => setSelectedAccount(val)}
                   options={[
-                    { value: 'all', label: 'Todas', icon: '📊' },
+                    { value: 'all', label: t('finanzas:filters.allF'), icon: '📊' },
                     ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
                   ]}
-                  placeholder="Todas"
+                  placeholder={t('finanzas:filters.allF')}
                 />
               </div>
               <div className="tx-filter-group">
-                <span className="tx-filter-label">📋 Tipo</span>
+                <span className="tx-filter-label">{t('finanzas:filters.type')}</span>
                 <div className="tx-filter-pills">
-                  {['Todos', 'income', 'expense', 'saving'].map((t) => (
+                  {['Todos', 'income', 'expense', 'saving'].map((type) => (
                     <button 
-                      key={t} 
-                      className={`tx-filter-pill ${filterType === t ? 'active' : ''}`} 
-                      onClick={() => { setFilterType(t); setFilterCategory('Todas'); }}
+                      key={type} 
+                      className={`tx-filter-pill ${filterType === type ? 'active' : ''}`} 
+                      onClick={() => { setFilterType(type); setFilterCategory('Todas'); }}
                     >
-                      {t === 'Todos' ? 'Todos' : `${TYPE_ICONS[t]}`}
+                      {type === 'Todos' ? t('finanzas:filters.allM') : `${TYPE_ICONS[type]}`}
                     </button>
                   ))}
                 </div>
               </div>
               <div className="tx-filter-group tx-filter-group-wide">
-                <span className="tx-filter-label">🏷️ Categoría</span>
+                <span className="tx-filter-label">{t('finanzas:filters.category')}</span>
                 <CustomSelect
                   value={filterCategory}
                   onChange={(val) => setFilterCategory(val)}
                   options={[
-                    { value: 'Todas', label: 'Todas', icon: '📋' },
+                    { value: 'Todas', label: t('finanzas:filters.allF'), icon: '📋' },
                     ...categories.map((c) => ({ value: c, label: c })),
                   ]}
-                  placeholder="Todas"
+                  placeholder={t('finanzas:filters.allF')}
                 />
               </div>
             </div>
             <div className="tx-filters-summary">
-              <span className="tx-filters-count">{filteredTx.length} transacción{filteredTx.length !== 1 ? 'es' : ''}</span>
+              <span className="tx-filters-count">{t('finanzas:filters.transactionsCount', { count: filteredTx.length })}</span>
               {(selectedAccount !== 'all' || filterType !== 'Todos' || filterCategory !== 'Todas') && (
                 <button 
                   className="tx-filters-clear" 
                   onClick={() => { setSelectedAccount('all'); setFilterType('Todos'); setFilterCategory('Todas'); }}
                 >
-                  Limpiar filtros
+                  {t('finanzas:filters.clearFilters')}
                 </button>
               )}
             </div>
@@ -1398,11 +1400,11 @@ const FinanzasPage = memo(function FinanzasPage() {
             <table className="transactions-table">
               <thead>
                 <tr>
-                  <th scope="col">Descripción</th>
-                  <th scope="col">Categoría</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Monto</th>
-                  <th scope="col">Acciones</th>
+                  <th scope="col">{t('finanzas:table.description')}</th>
+                  <th scope="col">{t('finanzas:table.category')}</th>
+                  <th scope="col">{t('finanzas:table.status')}</th>
+                  <th scope="col">{t('finanzas:table.amount')}</th>
+                  <th scope="col">{t('finanzas:table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1426,7 +1428,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       <td>
                         <span className="tx-status">
                           <span className="tx-status-dot" style={{ background: tx.type === 'expense' ? '#ffb3af' : '#4edea3' }} />
-                          COMPLETADO
+                          {t('finanzas:table.completed')}
                         </span>
                       </td>
                       <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
@@ -1472,14 +1474,14 @@ const FinanzasPage = memo(function FinanzasPage() {
                         )}
                       </td>
                       <td>
-                        <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title="Eliminar">
+                        <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title={t('common:buttons.delete')}>
                           <IconTrash width={14} />
                         </button>
                       </td>
                     </tr>
                   );
                 }) : (
-                  <tr><td colSpan={5} className="empty-state">No hay transacciones. ¡Agrega tu primera!</td></tr>
+                  <tr><td colSpan={5} className="empty-state">{t('finanzas:table.empty')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -1489,7 +1491,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   className="btn btn-outline"
                   onClick={() => setTxLimit(prev => prev + 5)}
                 >
-                  Ver más ({filteredTx.length - txLimit} restantes)
+                  {t('finanzas:table.viewMore')} ({filteredTx.length - txLimit} {t('finanzas:table.remaining')})
                 </button>
               </div>
             )}
@@ -1501,8 +1503,8 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content modal-tx" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Nueva Transacción</h2>
-                    <p className="modal-subtitle">Registra un ingreso, gasto o ahorro</p>
+                    <h2 className="modal-title">{t('finanzas:modals.newTransaction.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.newTransaction.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
                 </div>
@@ -1520,13 +1522,13 @@ const FinanzasPage = memo(function FinanzasPage() {
                         }}
                       >
                         <span className="tx-type-icon">{TYPE_ICONS[type]}</span>
-                        <span className="tx-type-label">{TYPE_LABELS[type]}</span>
+                        <span className="tx-type-label">{t(`finanzas:typeLabels.${type}`)}</span>
                       </button>
                     ))}
                   </div>
 
                   <div className="tx-field">
-                    <label className="tx-label">Monto *</label>
+                    <label className="tx-label">{t('finanzas:modals.newTransaction.amount')} *</label>
                     <div className="tx-input-wrap">
                       <span className="tx-currency">
                         {currencyMap[accounts.find(a => a.id === newTx.accountId)?.currency || displayCurrency].symbol}
@@ -1546,19 +1548,19 @@ const FinanzasPage = memo(function FinanzasPage() {
 
                   <div className="tx-field-row">
                     <div className="tx-field">
-                      <label className="tx-label">Cuenta</label>
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.account')}</label>
                       <CustomSelect
                         value={newTx.accountId}
                         onChange={(val) => setNewTx({ ...newTx, accountId: val })}
                         options={[
-                          { value: '', label: 'Sin cuenta', icon: '—' },
+                          { value: '', label: t('finanzas:modals.newTransaction.noAccount'), icon: '—' },
                           ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
                         ]}
-                        placeholder="Seleccionar..."
+                        placeholder={t('finanzas:modals.newTransaction.account')}
                       />
                     </div>
                     <div className="tx-field">
-                      <label className="tx-label">Fecha</label>
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.date')}</label>
                       <input
                         className="tx-input tx-input-date"
                         type="date"
@@ -1569,12 +1571,12 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
 
                   <div className="tx-field">
-                    <label className="tx-label">Categoría</label>
+                    <label className="tx-label">{t('finanzas:modals.newTransaction.category')}</label>
                     <CustomSelect
                       value={newTx.category}
                       onChange={(val) => setNewTx({ ...newTx, category: val })}
                       options={currentTypeCats.map((c) => ({ value: c, label: c }))}
-                      placeholder="Seleccionar..."
+                      placeholder={t('finanzas:modals.newTransaction.selectPlaceholder')}
                       allowCustom
                       onAddCustom={async (value) => {
                         if (uid) {
@@ -1583,29 +1585,29 @@ const FinanzasPage = memo(function FinanzasPage() {
                           setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
                         }
                       }}
-                      customPlaceholder="Nombre de la categoría..."
+                      customPlaceholder={t('finanzas:modals.newTransaction.categoryPlaceholder')}
                     />
                   </div>
 
                   <div className="tx-field">
-                    <label className="tx-label">Descripción (opcional)</label>
+                    <label className="tx-label">{t('finanzas:modals.newTransaction.description')}</label>
                     <input
                       className="tx-input"
                       type="text"
-                      placeholder="Ej: Pago de nómina mensual"
+                      placeholder={t('finanzas:modals.newTransaction.descriptionPlaceholder')}
                       value={newTx.description}
                       onChange={(e) => setNewTx({ ...newTx, description: e.target.value })}
                     />
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowModal(false)}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => setShowModal(false)}>{t('common:buttons.cancel')}</button>
                   <button className="btn btn-primary btn-tx-submit" onClick={handleAddTransaction} disabled={txLoading || !newTx.amount}>
                     {txLoading ? (
                       <span className="btn-loading">
-                        <span className="spinner" /> Guardando...
+                        <span className="spinner" /> {t('finanzas:modals.newTransaction.saving')}
                       </span>
-                    ) : `Registrar ${TYPE_LABELS[newTx.type]}`}
+                    ) : t('finanzas:modals.newTransaction.register', { type: t(`finanzas:typeLabels.${newTx.type}`) })}
                   </button>
                 </div>
               </div>
@@ -1618,14 +1620,14 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Transferir</h2>
-                    <p className="modal-subtitle">Entre tus cuentas</p>
+                    <h2 className="modal-title">{t('finanzas:modals.transfer.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.transfer.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowTransferModal(false)}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
-                    <label className="tx-label">De</label>
+                    <label className="tx-label">{t('finanzas:modals.transfer.from')}</label>
                     <CustomSelect
                       value={transfer.fromAccountId}
                       onChange={(val) => {
@@ -1642,16 +1644,16 @@ const FinanzasPage = memo(function FinanzasPage() {
                         setTransfer({ ...transfer, fromAccountId: val, toAccountId: nextToId, amount: newAmount });
                       }}
                       options={accounts.map((a) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency)})`, icon: a.icon }))}
-                      placeholder="Cuenta origen..."
+                      placeholder={t('finanzas:modals.transfer.from')}
                     />
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">A</label>
+                    <label className="tx-label">{t('finanzas:modals.transfer.to')}</label>
                     <CustomSelect
                       value={transfer.toAccountId}
                       onChange={(val) => setTransfer({ ...transfer, toAccountId: val })}
                       options={accounts.filter((a) => a.id !== transfer.fromAccountId).map((a) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency)})`, icon: a.icon }))}
-                      placeholder="Cuenta destino..."
+                      placeholder={t('finanzas:modals.transfer.to')}
                     />
                   </div>
                   {(() => {
@@ -1662,7 +1664,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       return (
                         <>
                           <div className="tx-field">
-                            <label className="tx-label">Monto a debitar ({fromAcc.name})</label>
+                            <label className="tx-label">{t('finanzas:modals.transfer.amountToDebit', { account: fromAcc.name })}</label>
                             <div className="tx-input-wrap">
                               <span className="tx-currency">{currencyMap[fromAcc.currency].symbol}</span>
                               <input
@@ -1676,7 +1678,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                               />
                             </div>
                             <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                              Saldo disponible: {formatInCurrency(fromAcc.balance, fromAcc.currency)}
+                              {t('finanzas:modals.transfer.availableBalance', { balance: formatInCurrency(fromAcc.balance, fromAcc.currency) })}
                             </span>
                           </div>
 
@@ -1685,7 +1687,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                           </div>
 
                           <div className="tx-field">
-                            <label className="tx-label">Monto a acreditar ({toAcc.name})</label>
+                            <label className="tx-label">{t('finanzas:modals.transfer.amountToCredit', { account: toAcc.name })}</label>
                             <div className="tx-input-wrap" style={{ border: '1px solid var(--neon-green)', boxShadow: '0 0 8px rgba(61, 204, 142, 0.2)' }}>
                               <span className="tx-currency">{currencyMap[toAcc.currency].symbol}</span>
                               <input
@@ -1707,7 +1709,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                               />
                             </div>
                             <span style={{ fontSize: '11px', color: 'var(--neon-green)', fontWeight: 500 }}>
-                              Tasa BCV en vivo aplicada
+                              {t('finanzas:modals.transfer.liveRate')}
                             </span>
                           </div>
                         </>
@@ -1716,7 +1718,7 @@ const FinanzasPage = memo(function FinanzasPage() {
 
                     return (
                       <div className="tx-field">
-                        <label className="tx-label">Monto</label>
+                        <label className="tx-label">{t('finanzas:modals.transfer.amount')}</label>
                         <div className="tx-input-wrap">
                           <span className="tx-currency">
                             {currencyMap[fromAcc?.currency || displayCurrency].symbol}
@@ -1733,7 +1735,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                         </div>
                         {fromAcc && (
                           <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                            Saldo disponible: {formatInCurrency(fromAcc.balance, fromAcc.currency)}
+                            {t('finanzas:modals.transfer.availableBalance', { balance: formatInCurrency(fromAcc.balance, fromAcc.currency) })}
                           </span>
                         )}
                       </div>
@@ -1741,8 +1743,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                   })()}
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowTransferModal(false)}>Cancelar</button>
-                  <button className="btn btn-primary" onClick={handleTransfer}>Transferir</button>
+                  <button className="btn btn-outline" onClick={() => setShowTransferModal(false)}>{t('common:buttons.cancel')}</button>
+                  <button className="btn btn-primary" onClick={handleTransfer}>{t('finanzas:modals.transfer.transferBtn')}</button>
                 </div>
               </div>
             </div>
@@ -1754,31 +1756,31 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Nueva Cuenta</h2>
-                    <p className="modal-subtitle">Corriente, ahorro o efectivo</p>
+                    <h2 className="modal-title">{t('finanzas:modals.newAccount.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.newAccount.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowAccountModal(false)}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
-                    <label className="tx-label">Nombre</label>
-                    <input className="tx-input" type="text" placeholder="Ej: Cuenta Principal" value={newAccount.name} onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
+                    <label className="tx-label">{t('finanzas:modals.newAccount.name')}</label>
+                    <input className="tx-input" type="text" placeholder={t('finanzas:modals.newAccount.namePlaceholder')} value={newAccount.name} onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })} />
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">Tipo</label>
+                    <label className="tx-label">{t('finanzas:modals.newAccount.type')}</label>
                     <CustomSelect
                       value={newAccount.type}
                       onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
                       options={[
-                        { value: 'digital', label: 'Billetera Digital', icon: '💳' },
-                        { value: 'bank', label: 'Banco', icon: '🏦' },
-                        { value: 'foreign', label: 'Divisas', icon: '💱' },
+                        { value: 'digital', label: t('finanzas:accounts.walletDigital'), icon: '💳' },
+                        { value: 'bank', label: t('finanzas:accounts.bank'), icon: '🏦' },
+                        { value: 'foreign', label: t('finanzas:accounts.foreign'), icon: '💱' },
                       ]}
-                      placeholder="Seleccionar tipo..."
+                      placeholder={t('finanzas:modals.newAccount.typePlaceholder')}
                     />
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">Categoría</label>
+                    <label className="tx-label">{t('finanzas:modals.newAccount.category')}</label>
                     <CustomSelect
                       value={accountCategory}
                       onChange={(val) => {
@@ -1786,14 +1788,14 @@ const FinanzasPage = memo(function FinanzasPage() {
                         setNewAccount({ ...newAccount, currency: val === 'criptos' ? 'USDT' : 'BS' });
                       }}
                       options={[
-                        { value: 'monedas', label: 'Monedas', icon: '💱' },
-                        { value: 'criptos', label: 'Criptos', icon: '₿' },
+                        { value: 'monedas', label: t('finanzas:rates.fiatTitle'), icon: '💱' },
+                        { value: 'criptos', label: t('finanzas:rates.cryptoTitle'), icon: '₿' },
                       ]}
-                      placeholder="Seleccionar categoría..."
+                      placeholder={t('finanzas:modals.newAccount.categoryPlaceholder')}
                     />
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">Moneda</label>
+                    <label className="tx-label">{t('finanzas:modals.newAccount.currency')}</label>
                     <CustomSelect
                       value={newAccount.currency || 'BS'}
                       onChange={(val) => setNewAccount({ ...newAccount, currency: val as CurrencyCode })}
@@ -1812,12 +1814,12 @@ const FinanzasPage = memo(function FinanzasPage() {
                               { value: 'COP', label: 'Pesos Colombianos (COP)', icon: '🇨🇴' },
                             ]
                       }
-                      placeholder="Seleccionar moneda..."
+                      placeholder={t('finanzas:modals.newAccount.currencyPlaceholder')}
                     />
                   </div>
                   {(newAccount.currency === 'USDT' || newAccount.currency === 'SOL' || newAccount.currency === 'BTC' || newAccount.currency === 'USDC') && (
                     <div className="tx-field">
-                      <label className="tx-label">Tasa de conversión</label>
+                      <label className="tx-label">{t('finanzas:modals.newAccount.conversionRate')}</label>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                           type="button"
@@ -1825,7 +1827,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                           onClick={() => setNewAccount({ ...newAccount, rateMode: 'official' })}
                           style={{ flex: 1 }}
                         >
-                          Oficial
+                          {t('finanzas:modals.newAccount.official')}
                         </button>
                         <button
                           type="button"
@@ -1833,23 +1835,23 @@ const FinanzasPage = memo(function FinanzasPage() {
                           onClick={() => setNewAccount({ ...newAccount, rateMode: 'p2p' })}
                           style={{ flex: 1 }}
                         >
-                          P2P
+                          {t('finanzas:modals.newAccount.p2p')}
                         </button>
                       </div>
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
-                        {newAccount.rateMode === 'p2p' ? 'Usará el precio P2P real para convertir esta cuenta.' : 'Usará la tasa de mercado oficial para convertir esta cuenta.'}
+                        {newAccount.rateMode === 'p2p' ? t('finanzas:modals.newAccount.p2pRate') : t('finanzas:modals.newAccount.officialRate')}
                       </span>
                     </div>
                   )}
                   <div className="tx-field">
-                    <label className="tx-label">Balance Inicial</label>
+                    <label className="tx-label">{t('finanzas:modals.newAccount.initialBalance')}</label>
                     <div className="tx-input-wrap">
                       <span className="tx-currency">{currencyMap[newAccount.currency || 'BS'].symbol}</span>
                       <input className="tx-input tx-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(newAccount.currency) ? '0.00000001' : '0.01'} placeholder="0.00" value={newAccount.balance || ''} onChange={(e) => setNewAccount({ ...newAccount, balance: Number(e.target.value) })} />
                     </div>
                   </div>
                   <div className="tx-field">
-                    <label className="tx-label">Color (opcional)</label>
+                    <label className="tx-label">{t('finanzas:modals.newAccount.color')}</label>
                     <div className="color-picker-row">
                       {ACCOUNT_COLORS.map((c) => (
                         <button
@@ -1863,8 +1865,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowAccountModal(false)}>Cancelar</button>
-                  <button className="btn btn-primary" onClick={handleAddAccount}>Crear Cuenta</button>
+                  <button className="btn btn-outline" onClick={() => setShowAccountModal(false)}>{t('common:buttons.cancel')}</button>
+                  <button className="btn btn-primary" onClick={handleAddAccount}>{t('finanzas:modals.newAccount.create')}</button>
                 </div>
               </div>
             </div>
@@ -1893,50 +1895,50 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="modal-content modal-accounting" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Gestión Contable</h2>
-                    <p className="modal-subtitle">Vaciar transacciones y reajustar balances</p>
+                    <h2 className="modal-title">{t('finanzas:modals.accounting.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.accounting.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowAccountingModal(false)}>✕</button>
                 </div>
                 <div className="modal-body">
                   {/* Sección: Acciones Globales */}
                   <div className="accounting-section">
-                    <h2 className="accounting-section-title"> Acciones Globales</h2>
-                    <p className="accounting-section-desc">Afectan a TODAS las cuentas</p>
+                    <h2 className="accounting-section-title">{t('finanzas:modals.accounting.globalActions')}</h2>
+                    <p className="accounting-section-desc">{t('finanzas:modals.accounting.globalActionsDesc')}</p>
                     <div className="accounting-actions">
                       <button className="accounting-btn accounting-btn-danger" onClick={handleWipeAllUserTransactions} disabled={accountingLoading}>
                         <span className="accounting-btn-icon">🗑️</span>
                         <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">Vaciar TODO</span>
-                          <span className="accounting-btn-desc">Elimina todas las transacciones y resetea balances a $0</span>
+                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeAll')}</span>
+                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeAllDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('income')} disabled={accountingLoading}>
                         <span className="accounting-btn-icon">📥</span>
                         <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">Vaciar Ingresos</span>
-                          <span className="accounting-btn-desc">Elimina ingresos · Balance se ajusta (-)</span>
+                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeIncome')}</span>
+                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeIncomeDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('expense')} disabled={accountingLoading}>
                         <span className="accounting-btn-icon">📤</span>
                         <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">Vaciar Gastos</span>
-                          <span className="accounting-btn-desc">Elimina gastos · Balance se ajusta (+)</span>
+                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeExpenses')}</span>
+                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeExpensesDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('saving')} disabled={accountingLoading}>
                         <span className="accounting-btn-icon">💰</span>
                         <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">Vaciar Ahorros</span>
-                          <span className="accounting-btn-desc">Elimina ahorros · Balance se ajusta (+)</span>
+                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeSavings')}</span>
+                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeSavingsDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-info" onClick={handleRecalculateAllBalances} disabled={accountingLoading}>
                         <span className="accounting-btn-icon">🔄</span>
                         <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">Recalcular Balances</span>
-                          <span className="accounting-btn-desc">Recalcula desde transacciones existentes</span>
+                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.recalculate')}</span>
+                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.recalculateDesc')}</span>
                         </div>
                       </button>
                     </div>
@@ -1945,8 +1947,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                   {/* Sección: Por Cuenta */}
                   {accounts.length > 0 && (
                     <div className="accounting-section">
-                      <h2 className="accounting-section-title">🏦 Por Cuenta</h2>
-                      <p className="accounting-section-desc">Acciones específicas por cuenta</p>
+                      <h2 className="accounting-section-title">{t('finanzas:modals.accounting.perAccount')}</h2>
+                      <p className="accounting-section-desc">{t('finanzas:modals.accounting.perAccountDesc')}</p>
                       <div className="accounting-accounts-list">
                         {accounts.map(acc => (
                           <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
@@ -1960,17 +1962,17 @@ const FinanzasPage = memo(function FinanzasPage() {
                               </div>
                             </div>
                             <div className="accounting-account-actions">
-                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleWipeAccountTransactions(acc.id, 'all')} disabled={accountingLoading} title="Vaciar toda la cuenta">
+                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleWipeAccountTransactions(acc.id, 'all')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyAccountTooltip')}>
                                 🗑️ Vaciar
                               </button>
-                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'income')} disabled={accountingLoading} title="Vaciar ingresos">
-                                📥 Ingresos
+                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'income')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyIncomeTooltip')}>
+                                {t('finanzas:modals.accounting.income')}
                               </button>
-                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'expense')} disabled={accountingLoading} title="Vaciar gastos">
-                                📤 Gastos
+                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'expense')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyExpensesTooltip')}>
+                                {t('finanzas:modals.accounting.expenses')}
                               </button>
-                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'saving')} disabled={accountingLoading} title="Vaciar ahorros">
-                                💰 Ahorros
+                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'saving')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptySavingsTooltip')}>
+                                {t('finanzas:modals.accounting.savings')}
                               </button>
                             </div>
                           </div>
@@ -1983,15 +1985,15 @@ const FinanzasPage = memo(function FinanzasPage() {
                   <div className="accounting-info-box">
                     <span className="accounting-info-icon">💡</span>
                     <div className="accounting-info-text">
-                      <strong>Lógica contable:</strong> Al eliminar transacciones, el balance se ajusta automáticamente. Eliminar ingresos resta del balance, eliminar gastos/ahorros suma al balance.
+                      <strong>{t('finanzas:modals.accounting.accountingLogic')}</strong> {t('finanzas:modals.accounting.accountingInfo')}
                     </div>
                   </div>
 
                   {/* Sección: Editar Cuentas */}
                   {accounts.length > 0 && (
                     <div className="accounting-section">
-                      <h2 className="accounting-section-title">️ Editar Cuentas</h2>
-                      <p className="accounting-section-desc">Cambiar nombre, color, moneda o eliminar</p>
+                      <h2 className="accounting-section-title">{t('finanzas:modals.accounting.editAccounts')}</h2>
+                      <p className="accounting-section-desc">{t('finanzas:modals.accounting.editAccountsDesc')}</p>
                       <div className="accounting-accounts-list">
                         {accounts.map(acc => (
                           <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
@@ -2005,11 +2007,11 @@ const FinanzasPage = memo(function FinanzasPage() {
                               </div>
                             </div>
                             <div className="accounting-account-actions">
-                              <button className="accounting-mini-btn accounting-mini-info" onClick={() => { openEditAccount(acc); setShowAccountingModal(false); }} title="Editar nombre/color">
-                                ✏️ Editar
+                              <button className="accounting-mini-btn accounting-mini-info" onClick={() => { openEditAccount(acc); setShowAccountingModal(false); }} title={t('finanzas:modals.accounting.editNameColorTooltip')}>
+                                {t('finanzas:modals.accounting.editNameColor')}
                               </button>
-                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleDeleteAccount(acc.id)} title="Eliminar cuenta">
-                                Eliminar
+                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleDeleteAccount(acc.id)} title={t('finanzas:modals.accounting.deleteAccountTooltip')}>
+                                {t('common:buttons.delete')}
                               </button>
                             </div>
                           </div>
@@ -2019,7 +2021,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   )}
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowAccountingModal(false)}>Cerrar</button>
+                  <button className="btn btn-outline" onClick={() => setShowAccountingModal(false)}>{t('finanzas:modals.accounting.close')}</button>
                 </div>
               </div>
             </div>
@@ -2653,35 +2655,35 @@ const FinanzasPage = memo(function FinanzasPage() {
           <div className="mobile-fab-menu">
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowModal(true); }}>
               <span className="mobile-fab-icon">💸</span>
-              <span className="mobile-fab-label">Nueva Transacción</span>
+              <span className="mobile-fab-label">{t('finanzas:fab.newTransaction')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountModal(true); }}>
               <span className="mobile-fab-icon">💳</span>
-              <span className="mobile-fab-label">Nueva Cuenta</span>
+              <span className="mobile-fab-label">{t('finanzas:fab.newAccount')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowTransferModal(true); }}>
               <span className="mobile-fab-icon">🔄</span>
-              <span className="mobile-fab-label">Transferir</span>
+              <span className="mobile-fab-label">{t('finanzas:fab.transfer')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowVepayModal(true); }}>
               <span className="mobile-fab-icon">📷</span>
-              <span className="mobile-fab-label">Importar Captura</span>
+              <span className="mobile-fab-label">{t('finanzas:fab.importScreenshot')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountingModal(true); }}>
               <span className="mobile-fab-icon">📊</span>
-              <span className="mobile-fab-label">Gestión Contable</span>
+              <span className="mobile-fab-label">{t('finanzas:fab.accounting')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); toggleShowAmounts(); }}>
               <span className="mobile-fab-icon">{showAmounts ? '🙈' : '👁️'}</span>
-              <span className="mobile-fab-label">{showAmounts ? 'Ocultar Saldos' : 'Mostrar Saldos'}</span>
+              <span className="mobile-fab-label">{showAmounts ? t('finanzas:fab.hideBalances') : t('finanzas:fab.showBalances')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setP2pMode(!p2pMode); }}>
               <span className="mobile-fab-icon">💱</span>
-              <span className="mobile-fab-label">Modo {p2pMode ? 'P2P' : 'Oficial'}</span>
+              <span className="mobile-fab-label">{p2pMode ? t('finanzas:fab.p2pMode') : t('finanzas:fab.officialMode')}</span>
             </button>
             <button className="mobile-fab-item mobile-fab-item-danger" onClick={() => { setFabOpen(false); handleClearAllHistory(); }}>
               <span className="mobile-fab-icon">🗑️</span>
-              <span className="mobile-fab-label">Borrar Historial</span>
+              <span className="mobile-fab-label">{t('finanzas:fab.clearHistory')}</span>
             </button>
           </div>
           <button className="mobile-fab-main" onClick={() => setFabOpen(!fabOpen)} aria-label="Acciones">

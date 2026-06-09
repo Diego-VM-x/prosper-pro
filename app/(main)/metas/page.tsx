@@ -2,6 +2,7 @@
 import '@/app/dashboard.css';
 
 import React, { useState, useEffect, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
@@ -20,49 +21,11 @@ import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '@/ap
 import { CURRENCY_LIST } from '@/lib/currency';
 import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest, CurrencyCode } from '@/types';
 
-const PLAN_TYPES: { value: PlanType; label: string; icon: string; color: string; desc: string }[] = [
-  { value: 'savings', label: 'Plan de Ahorro', icon: '💰', color: '#3DCC8E', desc: 'Ahorra para una meta' },
-  { value: 'expense', label: 'Gasto Planificado', icon: '🛒', color: '#EF4444', desc: 'Planifica un gasto grande' },
-  { value: 'recurring', label: 'Gasto Recurrente', icon: '🔄', color: '#F59E0B', desc: 'Suscripciones, alquileres' },
-];
-
-const PLAN_CATEGORIES: { value: PlanCategory; icon: string }[] = [
-  { value: 'Ahorro', icon: '💰' },
-  { value: 'Inversión', icon: '📈' },
-  { value: 'Educación', icon: '🎓' },
-  { value: 'Comida', icon: '🍔' },
-  { value: 'Tecnología', icon: '📱' },
-  { value: 'Vivienda', icon: '🏠' },
-  { value: 'Transporte', icon: '🚗' },
-  { value: 'Salud', icon: '💊' },
-  { value: 'Entretenimiento', icon: '🎬' },
-  { value: 'Suscripción', icon: '📺' },
-  { value: 'Alquiler', icon: '🏢' },
-  { value: 'Servicios', icon: '⚡' },
-  { value: 'Otro', icon: '📌' },
-];
-
-const RECURRENCES: { value: RecurringFrequency; label: string }[] = [
-  { value: 'daily', label: 'Diario' },
-  { value: 'weekly', label: 'Semanal' },
-  { value: 'biweekly', label: 'Quincenal' },
-  { value: 'monthly', label: 'Mensual' },
-  { value: 'quarterly', label: 'Trimestral' },
-  { value: 'yearly', label: 'Anual' },
-];
-
 const STATUS_COLORS: Record<PlanStatus, string> = {
   pending: '#A8A29E',
   progress: '#3DCC8E',
   completed: '#22C55E',
   cancelled: '#EF4444',
-};
-
-const STATUS_LABELS: Record<PlanStatus, string> = {
-  pending: 'Pendiente',
-  progress: 'En Progreso',
-  completed: 'Completado',
-  cancelled: 'Cancelado',
 };
 
 function todayISO() {
@@ -76,27 +39,64 @@ function nextMonthISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-
-
-function getDaysRemaining(deadline: string): string {
-  if (!deadline) return 'Sin fecha';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const target = new Date(deadline + 'T12:00:00');
-  target.setHours(0, 0, 0, 0);
-  const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (days < 0) return `Vencido hace ${Math.abs(days)} días`;
-  if (days === 0) return 'Hoy';
-  if (days === 1) return 'Mañana';
-  return `${days} días`;
-}
-
 const MetasPage = memo(function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, formatInCurrency } = useCurrency();
   const uid = user?.uid || '';
+  const { t } = useTranslation(['metas', 'common']);
+
+  const PLAN_TYPES: { value: PlanType; label: string; icon: string; color: string; desc: string }[] = [
+    { value: 'savings', label: t('metas:planTypes.savings'), icon: '💰', color: '#3DCC8E', desc: t('metas:planTypeDescriptions.savings') },
+    { value: 'expense', label: t('metas:planTypes.expense'), icon: '🛒', color: '#EF4444', desc: t('metas:planTypeDescriptions.expense') },
+    { value: 'recurring', label: t('metas:planTypes.recurring'), icon: '🔄', color: '#F59E0B', desc: t('metas:planTypeDescriptions.recurring') },
+  ];
+
+  const PLAN_CATEGORIES: { value: PlanCategory; icon: string }[] = [
+    { value: 'Ahorro', icon: '💰' },
+    { value: 'Inversión', icon: '📈' },
+    { value: 'Educación', icon: '🎓' },
+    { value: 'Comida', icon: '🍔' },
+    { value: 'Tecnología', icon: '📱' },
+    { value: 'Vivienda', icon: '🏠' },
+    { value: 'Transporte', icon: '🚗' },
+    { value: 'Salud', icon: '💊' },
+    { value: 'Entretenimiento', icon: '🎬' },
+    { value: 'Suscripción', icon: '📺' },
+    { value: 'Alquiler', icon: '🏢' },
+    { value: 'Servicios', icon: '⚡' },
+    { value: 'Otro', icon: '📌' },
+  ];
+
+  const RECURRENCES: { value: RecurringFrequency; label: string }[] = [
+    { value: 'daily', label: t('metas:recurrences.daily') },
+    { value: 'weekly', label: t('metas:recurrences.weekly') },
+    { value: 'biweekly', label: t('metas:recurrences.biweekly') },
+    { value: 'monthly', label: t('metas:recurrences.monthly') },
+    { value: 'quarterly', label: t('metas:recurrences.quarterly') },
+    { value: 'yearly', label: t('metas:recurrences.yearly') },
+  ];
+
+  const STATUS_LABELS: Record<PlanStatus, string> = {
+    pending: t('metas:status.pending'),
+    progress: t('metas:status.progress'),
+    completed: t('metas:status.completed'),
+    cancelled: t('metas:status.cancelled'),
+  };
+
+  function getDaysRemaining(deadline: string): string {
+    if (!deadline) return t('metas:planCard.daysRemaining.noDate');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(deadline + 'T12:00:00');
+    target.setHours(0, 0, 0, 0);
+    const days = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 0) return t('metas:planCard.daysRemaining.overdue', { days: Math.abs(days) });
+    if (days === 0) return t('metas:planCard.daysRemaining.today');
+    if (days === 1) return t('metas:planCard.daysRemaining.tomorrow');
+    return t('metas:planCard.daysRemaining.days', { days });
+  }
 
   const [filter, setFilter] = useState<PlanType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<PlanStatus | 'all'>('all');
@@ -205,12 +205,12 @@ const MetasPage = memo(function MetasPage() {
 
   const handleCreatePlan = async () => {
     if (!formTitle || !formTarget || !uid) {
-      warning('Completa título y monto.');
+      warning(t('metas:validation.completeTitleAndAmount'));
       return;
     }
     const target = Number(formTarget);
     if (isNaN(target) || target <= 0) {
-      warning('Monto inválido.');
+      warning(t('metas:validation.invalidAmount'));
       return;
     }
 
@@ -244,11 +244,11 @@ const MetasPage = memo(function MetasPage() {
       }
 
       await addPlan(planData);
-      success(`"${formTitle}" creado`);
+      success(t('metas:toasts.planCreated', { title: formTitle }));
       setShowNewModal(false);
       resetForm();
     } catch (e: any) {
-      error(`Error: ${e?.message || 'Error desconocido'}`);
+      error(`${t('common:toast.error')}: ${e?.message || t('metas:toasts.unknownError')}`);
     } finally {
       setFormLoading(false);
     }
@@ -258,7 +258,7 @@ const MetasPage = memo(function MetasPage() {
     if (!editingPlan || !formTitle || !formTarget) return;
     const target = Number(formTarget);
     if (isNaN(target) || target <= 0) {
-      warning('Monto inválido.');
+      warning(t('metas:validation.invalidAmount'));
       return;
     }
 
@@ -275,7 +275,7 @@ const MetasPage = memo(function MetasPage() {
         accountId: formAccountId || undefined,
         currency: formCurrency,
       });
-      success(`"${formTitle}" actualizado`);
+      success(t('metas:toasts.planUpdated', { title: formTitle }));
       setEditingPlan(null);
       resetForm();
     } catch (e: any) {
@@ -288,16 +288,16 @@ const MetasPage = memo(function MetasPage() {
   const handleDeletePlan = (plan: FinancialPlan) => {
     setConfirmState({
       isOpen: true,
-      title: 'Eliminar Plan',
-      message: `¿Eliminar "${plan.title}"? Esta acción no se puede deshacer.`,
+      title: t('metas:toasts.deletePlanTitle'),
+      message: t('metas:toasts.deletePlanMessage', { title: plan.title }),
       variant: 'danger',
-      confirmText: 'Eliminar',
+      confirmText: t('metas:toasts.deleteConfirm'),
       onConfirm: async () => {
         try {
           await deletePlanFn(plan.id);
-          success('Plan eliminado');
+          success(t('metas:toasts.planDeleted'));
         } catch (e: any) {
-          error(`Error: ${e?.message}`);
+          error(`${t('common:toast.error')}: ${e?.message}`);
         }
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -307,14 +307,14 @@ const MetasPage = memo(function MetasPage() {
   const handleAddFunds = async (plan: FinancialPlan) => {
     const amount = Number(addAmount);
     if (isNaN(amount) || amount <= 0) {
-      warning('Monto inválido.');
+      warning(t('metas:validation.invalidAmount'));
       return;
     }
 
     if (addAccountId) {
       const acc = accounts.find(a => a.id === addAccountId);
       if (acc && acc.balance < amount) {
-        warning(`Saldo insuficiente en la cuenta. Balance actual: ${formatAmount(acc.balance)}`);
+        warning(t('metas:validation.insufficientBalance', { balance: formatAmount(acc.balance) }));
         return;
       }
     }
@@ -335,7 +335,7 @@ const MetasPage = memo(function MetasPage() {
           amount,
           type: 'saving',
           category: plan.category,
-          description: `Ahorro para: ${plan.title}`,
+          description: t('metas:toasts.savingTransaction', { title: plan.title }),
           date: Date.now(),
           accountId: addAccountId,
           currency: acc?.currency || 'USD',
@@ -343,7 +343,7 @@ const MetasPage = memo(function MetasPage() {
         await updateAccountBalance(addAccountId, -amount);
       }
 
-      success(`${formatAmount(amount)} añadido a "${plan.title}"`);
+      success(t('metas:toasts.fundsAdded', { amount: formatAmount(amount), title: plan.title }));
       setShowAddFundsModal(null);
       setAddAmount('');
       setAddAccountId('');
@@ -357,14 +357,14 @@ const MetasPage = memo(function MetasPage() {
   const handleRecordPayment = async (plan: FinancialPlan) => {
     const amount = Number(payAmount);
     if (isNaN(amount) || amount <= 0) {
-      warning('Monto inválido.');
+      warning(t('metas:validation.invalidAmount'));
       return;
     }
 
     if (payAccountId) {
       const acc = accounts.find(a => a.id === payAccountId);
       if (acc && acc.balance < amount) {
-        warning(`Saldo insuficiente en la cuenta. Balance actual: ${formatAmount(acc.balance)}`);
+        warning(t('metas:validation.insufficientBalance', { balance: formatAmount(acc.balance) }));
         return;
       }
     }
@@ -402,7 +402,7 @@ const MetasPage = memo(function MetasPage() {
           amount,
           type: 'expense',
           category: plan.category,
-          description: `Pago: ${plan.title}`,
+          description: t('metas:toasts.paymentTransaction', { title: plan.title }),
           date: Date.now(),
           accountId: payAccountId,
           currency: acc?.currency || 'USD',
@@ -410,7 +410,7 @@ const MetasPage = memo(function MetasPage() {
         await updateAccountBalance(payAccountId, -amount);
       }
 
-      success(`Pago de ${formatAmount(amount)} registrado`);
+      success(t('metas:toasts.paymentRecorded', { amount: formatAmount(amount) }));
       setShowRecordPaymentModal(null);
       setPayAmount('');
       setPayAccountId('');
@@ -423,23 +423,23 @@ const MetasPage = memo(function MetasPage() {
 
   const handleSharePlan = async (plan: FinancialPlan) => {
     if (!shareEmail || !shareAmount || !uid) {
-      warning('Completa email y monto.');
+      warning(t('metas:validation.completeEmailAndAmount'));
       return;
     }
     const amount = Number(shareAmount);
     if (isNaN(amount) || amount <= 0) {
-      warning('Monto inválido.');
+      warning(t('metas:validation.invalidAmount'));
       return;
     }
     if (!shareFoundUser) {
-      warning('Usuario no encontrado. Verifica el email.');
+      warning(t('metas:validation.userNotFound'));
       return;
     }
 
     setShareLoading(true);
     try {
       if (shareFoundUser.uid === uid) {
-        error('No puedes enviarte una solicitud a ti mismo.');
+        error(t('metas:validation.cannotInviteSelf'));
         setShareLoading(false);
         return;
       }
@@ -450,14 +450,14 @@ const MetasPage = memo(function MetasPage() {
         toOwnerId: shareFoundUser.uid,
         amount,
         status: 'pending',
-        message: shareMessage || `Te invito a dividir "${plan.title}"`,
+        message: shareMessage || t('metas:toasts.shareMessageDefault', { title: plan.title }),
       });
 
       // Actualizar plan con sharedWith
       const updatedShared = [...(plan.sharedWith || []), shareFoundUser.uid];
       await updatePlanFn(plan.id, { sharedWith: updatedShared });
 
-      success(`Solicitud enviada a ${shareFoundUser.displayName || shareFoundUser.email}`);
+      success(t('metas:toasts.requestSent', { name: shareFoundUser.displayName || shareFoundUser.email }));
       setShowShareModal(null);
       setShareEmail('');
       setShareAmount('');
@@ -485,7 +485,7 @@ const MetasPage = memo(function MetasPage() {
         setShareSearchResults(results.filter(u => u.uid !== uid));
       }
     } catch (e) {
-      console.error('Error buscando usuario:', e);
+      console.error('Error searching user:', e);
     } finally {
       setShareSearching(false);
     }
@@ -514,15 +514,15 @@ const MetasPage = memo(function MetasPage() {
           await addNotification({
             ownerId: request.fromOwnerId,
             type: 'plan_rejected',
-            title: 'Invitación rechazada',
-            message: `${user?.displayName || user?.email || 'Alguien'} rechazó tu invitación a "${data.title}"`,
+            title: t('metas:toasts.rejectionTitle'),
+            message: t('metas:toasts.rejectionMessage', { name: user?.displayName || user?.email || 'Alguien', title: data.title }),
             read: false,
             meta: { planId: request.planId, requestId: request.id },
           });
         }
       }
       refresh();
-      success(response === 'accepted' ? 'Solicitud aceptada' : 'Solicitud rechazada');
+      success(response === 'accepted' ? t('metas:toasts.requestAccepted') : t('metas:toasts.requestRejected'));
     } catch (e: any) {
       error(`Error: ${e?.message}`);
     }
@@ -554,12 +554,12 @@ const MetasPage = memo(function MetasPage() {
           {/* Header */}
           <div className="page-header">
             <div className="page-header-left">
-              <h1 className="page-title">Planes Financieros</h1>
-              <p className="page-subtitle">Organiza ahorros, gastos y pagos recurrentes</p>
+              <h1 className="page-title">{t('metas:page.title')}</h1>
+              <p className="page-subtitle">{t('metas:page.subtitle')}</p>
             </div>
             <div className="page-header-actions">
               <button className="btn btn-primary" onClick={() => openNewModal()}>
-                <IconPlus width={14} /> Nuevo Plan
+                <IconPlus width={14} /> {t('metas:page.newPlan')}
               </button>
             </div>
           </div>
@@ -569,9 +569,9 @@ const MetasPage = memo(function MetasPage() {
             <div className="plans-stat-card plans-stat-savings">
               <span className="plans-stat-icon">💰</span>
               <div className="plans-stat-info">
-                <span className="plans-stat-label">Planes de Ahorro</span>
+                <span className="plans-stat-label">{t('metas:stats.savings')}</span>
                 <span className="plans-stat-value">{formatAmount(totalSavingsCurrent)} <small>/ {formatAmount(totalSavingsTarget)}</small></span>
-                <span className="plans-stat-count">{stats.savings.length} planes</span>
+                <span className="plans-stat-count">{stats.savings.length} {t('metas:stats.plans')}</span>
               </div>
               {totalSavingsTarget > 0 && (
                 <div className="plans-stat-bar">
@@ -582,9 +582,9 @@ const MetasPage = memo(function MetasPage() {
             <div className="plans-stat-card plans-stat-expense">
               <span className="plans-stat-icon">🛒</span>
               <div className="plans-stat-info">
-                <span className="plans-stat-label">Gastos Planificados</span>
+                <span className="plans-stat-label">{t('metas:stats.expenses')}</span>
                 <span className="plans-stat-value">{formatAmount(totalExpenseCurrent)} <small>/ {formatAmount(totalExpenseTarget)}</small></span>
-                <span className="plans-stat-count">{stats.expenses.length} planes</span>
+                <span className="plans-stat-count">{stats.expenses.length} {t('metas:stats.plans')}</span>
               </div>
               {totalExpenseTarget > 0 && (
                 <div className="plans-stat-bar">
@@ -595,17 +595,17 @@ const MetasPage = memo(function MetasPage() {
             <div className="plans-stat-card plans-stat-recurring">
               <span className="plans-stat-icon">🔄</span>
               <div className="plans-stat-info">
-                <span className="plans-stat-label">Gastos Recurrentes</span>
-                <span className="plans-stat-value">{formatAmount(totalRecurringMonthly)}<small>/mes</small></span>
-                <span className="plans-stat-count">{stats.recurring.length} planes</span>
+                <span className="plans-stat-label">{t('metas:stats.recurring')}</span>
+                <span className="plans-stat-value">{formatAmount(totalRecurringMonthly)}<small>{t('metas:stats.perMonth')}</small></span>
+                <span className="plans-stat-count">{stats.recurring.length} {t('metas:stats.plans')}</span>
               </div>
             </div>
             <div className="plans-stat-card plans-stat-active">
               <span className="plans-stat-icon">📊</span>
               <div className="plans-stat-info">
-                <span className="plans-stat-label">Estado General</span>
-                <span className="plans-stat-value">{stats.active} activos</span>
-                <span className="plans-stat-count">{stats.completed} completados</span>
+                <span className="plans-stat-label">{t('metas:stats.statusGeneral')}</span>
+                <span className="plans-stat-value">{stats.active} {t('metas:stats.active')}</span>
+                <span className="plans-stat-count">{stats.completed} {t('metas:stats.completed')}</span>
               </div>
             </div>
           </div>
@@ -613,18 +613,18 @@ const MetasPage = memo(function MetasPage() {
           {/* Filters */}
           <div className="plans-filters">
             <div className="plans-filter-group">
-              <span className="plans-filter-label">Tipo:</span>
-              {(['all', 'savings', 'expense', 'recurring'] as const).map(t => (
-                <button key={t} className={`plans-filter-btn ${filter === t ? 'active' : ''}`} onClick={() => setFilter(t)}>
-                  {t === 'all' ? 'Todos' : PLAN_TYPES.find(pt => pt.value === t)?.icon} {t === 'all' ? '' : PLAN_TYPES.find(pt => pt.value === t)?.label}
+              <span className="plans-filter-label">{t('metas:filters.type')}</span>
+              {(['all', 'savings', 'expense', 'recurring'] as const).map(ft => (
+                <button key={ft} className={`plans-filter-btn ${filter === ft ? 'active' : ''}`} onClick={() => setFilter(ft)}>
+                  {ft === 'all' ? t('metas:filters.all') : PLAN_TYPES.find(pt => pt.value === ft)?.icon} {ft === 'all' ? '' : PLAN_TYPES.find(pt => pt.value === ft)?.label}
                 </button>
               ))}
             </div>
             <div className="plans-filter-group">
-              <span className="plans-filter-label">Estado:</span>
+              <span className="plans-filter-label">{t('metas:filters.status')}</span>
               {(['all', 'pending', 'progress', 'completed', 'cancelled'] as const).map(s => (
                 <button key={s} className={`plans-filter-btn plans-filter-status ${statusFilter === s ? 'active' : ''}`} onClick={() => setStatusFilter(s)}>
-                  {s === 'all' ? 'Todos' : STATUS_LABELS[s]}
+                  {s === 'all' ? t('metas:filters.all') : STATUS_LABELS[s]}
                 </button>
               ))}
             </div>
@@ -633,7 +633,7 @@ const MetasPage = memo(function MetasPage() {
           {/* Received Requests */}
           {receivedRequests.filter(r => r.status === 'pending').length > 0 && (
             <div className="plans-requests-section">
-              <h3 className="plans-section-title">📬 Solicitudes Recibidas</h3>
+              <h3 className="plans-section-title">📬 {t('metas:requests.title')}</h3>
               <div className="plans-requests-list">
                 {receivedRequests.filter(r => r.status === 'pending').map(req => (
                   <div key={req.id} className="plans-request-card">
@@ -642,8 +642,8 @@ const MetasPage = memo(function MetasPage() {
                       <span className="plans-request-msg">{req.message}</span>
                     </div>
                     <div className="plans-request-actions">
-                      <button className="plans-req-btn plans-req-accept" onClick={() => handleRespondRequest(req, 'accepted')}>✓ Aceptar</button>
-                      <button className="plans-req-btn plans-req-reject" onClick={() => handleRespondRequest(req, 'rejected')}>✕ Rechazar</button>
+                      <button className="plans-req-btn plans-req-accept" onClick={() => handleRespondRequest(req, 'accepted')}>✓ {t('metas:requests.accept')}</button>
+                      <button className="plans-req-btn plans-req-reject" onClick={() => handleRespondRequest(req, 'rejected')}>✕ {t('metas:requests.reject')}</button>
                     </div>
                   </div>
                 ))}
@@ -671,10 +671,10 @@ const MetasPage = memo(function MetasPage() {
                       </div>
                       <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
                         {plan.sharedWith && plan.sharedWith.length > 0 && (
-                          <span className="plan-card-badge plan-card-badge-shared">Compartido</span>
+                          <span className="plan-card-badge plan-card-badge-shared">{t('metas:planCard.shared')}</span>
                         )}
                         {plan.ownerId !== uid && (
-                          <span className="plan-card-badge plan-card-badge-invited">Invitado</span>
+                          <span className="plan-card-badge plan-card-badge-invited">{t('metas:planCard.invited')}</span>
                         )}
                         <div className="plan-card-status" style={{ background: `${STATUS_COLORS[plan.status]}20`, color: STATUS_COLORS[plan.status] }}>
                           {STATUS_LABELS[plan.status]}
@@ -706,7 +706,7 @@ const MetasPage = memo(function MetasPage() {
                         )}
                         {plan.sharedWith && plan.sharedWith.length > 0 && (
                           <span className="plan-card-meta-item">
-                            <IconUsers width={12} /> {plan.sharedWith.length} invitado{plan.sharedWith.length > 1 ? 's' : ''}
+                            <IconUsers width={12} /> {plan.sharedWith.length} {t('metas:planCard.guest', { count: plan.sharedWith.length })}
                           </span>
                         )}
                         {plan.deadline && plan.type !== 'recurring' && (
@@ -719,7 +719,7 @@ const MetasPage = memo(function MetasPage() {
                         <div className="plan-card-contributions">
                           {Object.entries(plan.contributions).map(([contribUid, contribAmount]) => (
                             <span key={contribUid} className="plan-card-meta-item plan-card-contrib-item">
-                              {contribUid === uid ? 'Tu aporte' : 'Otro usuario'}: {formatInCurrency(contribAmount, plan.currency || displayCurrency)}
+                              {contribUid === uid ? t('metas:planCard.yourContribution') : t('metas:planCard.otherUser')}: {formatInCurrency(contribAmount, plan.currency || displayCurrency)}
                             </span>
                           ))}
                         </div>
@@ -729,17 +729,17 @@ const MetasPage = memo(function MetasPage() {
                     <div className="plan-card-actions">
                       {plan.type === 'savings' && plan.status !== 'completed' && (
                         <button className="plan-action-btn plan-action-primary" onClick={() => { setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}>
-                          + Añadir
+                          + {t('metas:planCard.add')}
                         </button>
                       )}
                       {plan.type === 'recurring' && plan.status !== 'completed' && (
                         <button className="plan-action-btn plan-action-primary" onClick={() => { setShowRecordPaymentModal(plan); setPayAmount(''); setPayAccountId(''); }}>
-                          💳 Pagar
+                          💳 {t('metas:planCard.pay')}
                         </button>
                       )}
                       {plan.type === 'expense' && plan.status !== 'completed' && (
                         <button className="plan-action-btn plan-action-primary" onClick={() => { setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}>
-                          + Abonar
+                          + {t('metas:planCard.deposit')}
                         </button>
                       )}
                       {plan.ownerId === uid && (
@@ -765,10 +765,10 @@ const MetasPage = memo(function MetasPage() {
           ) : (
             <div className="plans-empty">
               <span className="plans-empty-icon">📋</span>
-              <h3>No hay planes</h3>
-              <p>Crea tu primer plan de ahorro, gasto planificado o recurrente</p>
+              <h3>{t('metas:empty.title')}</h3>
+              <p>{t('metas:empty.description')}</p>
               <button className="btn btn-primary" onClick={() => openNewModal()}>
-                <IconPlus width={14} /> Crear Plan
+                <IconPlus width={14} /> {t('metas:page.createPlan')}
               </button>
             </div>
           )}
@@ -779,8 +779,8 @@ const MetasPage = memo(function MetasPage() {
               <div className="modal-content modal-plan" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">{editingPlan ? 'Editar Plan' : 'Nuevo Plan'}</h2>
-                    <p className="modal-subtitle">{editingPlan ? 'Modifica los datos del plan' : 'Elige el tipo de plan financiero'}</p>
+                    <h2 className="modal-title">{editingPlan ? t('metas:modals.editPlan.title') : t('metas:modals.newPlan.title')}</h2>
+                    <p className="modal-subtitle">{editingPlan ? t('metas:modals.editPlan.subtitle') : t('metas:modals.newPlan.subtitle')}</p>
                   </div>
                   <button className="modal-close" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>✕</button>
                 </div>
@@ -797,18 +797,18 @@ const MetasPage = memo(function MetasPage() {
                   </div>
 
                   <div className="plan-field">
-                    <label className="plan-label">Título *</label>
-                    <input className="plan-input" type="text" placeholder="Ej: Comprar celular, Alquiler mensual" value={formTitle} onChange={e => setFormTitle(e.target.value)} autoFocus />
+                    <label className="plan-label">{t('metas:modals.fields.title')}</label>
+                    <input className="plan-input" type="text" placeholder={t('metas:modals.fields.titlePlaceholder')} value={formTitle} onChange={e => setFormTitle(e.target.value)} autoFocus />
                   </div>
 
                   <div className="plan-field">
-                    <label className="plan-label">Descripción</label>
-                    <input className="plan-input" type="text" placeholder="Descripción opcional" value={formDesc} onChange={e => setFormDesc(e.target.value)} />
+                    <label className="plan-label">{t('metas:modals.fields.description')}</label>
+                    <input className="plan-input" type="text" placeholder={t('metas:modals.fields.descriptionPlaceholder')} value={formDesc} onChange={e => setFormDesc(e.target.value)} />
                   </div>
 
                   <div className="plan-field-row">
                     <div className="plan-field">
-                      <label className="plan-label">Categoría</label>
+                      <label className="plan-label">{t('metas:modals.fields.category')}</label>
                       <div className="plan-category-group">
                         {PLAN_CATEGORIES.map(category => (
                           <button
@@ -816,33 +816,33 @@ const MetasPage = memo(function MetasPage() {
                             className={`plan-category-btn ${formCategory === category.value ? 'active' : ''}`}
                             onClick={() => setFormCategory(category.value)}
                           >
-                            {category.icon} {category.value}
+                            {category.icon} {t('metas:categories.' + category.value)}
                           </button>
                         ))}
                       </div>
                     </div>
                     <div className="plan-field">
-                      <label className="plan-label">Moneda</label>
+                      <label className="plan-label">{t('metas:modals.fields.currency')}</label>
                       <CustomSelect
                         value={formCurrency}
                         onChange={v => setFormCurrency(v as CurrencyCode)}
                         options={CURRENCY_LIST.map(c => ({ value: c, label: `${currencyMap[c].flag} ${c}`, icon: currencyMap[c].flag }))}
-                        placeholder="Seleccionar..."
+                        placeholder={t('metas:modals.fields.selectPlaceholder')}
                       />
                     </div>
                   </div>
 
                   <div className="plan-field">
-                    <label className="plan-label">Monto *</label>
+                    <label className="plan-label">{t('metas:modals.fields.amount')}</label>
                     <div className="plan-input-wrap">
                       <span className="plan-currency">{currencyMap[formCurrency].symbol}</span>
-                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'} placeholder="0.00" value={formTarget} onChange={e => setFormTarget(e.target.value)} />
+                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'} placeholder={t('metas:modals.fields.amountPlaceholder')} value={formTarget} onChange={e => setFormTarget(e.target.value)} />
                     </div>
                   </div>
 
                   {formType !== 'recurring' && (
                     <div className="plan-field">
-                      <label className="plan-label">Fecha límite</label>
+                      <label className="plan-label">{t('metas:modals.fields.deadline')}</label>
                       <input className="plan-input plan-input-date" type="date" value={formDeadline} onChange={e => setFormDeadline(e.target.value)} />
                     </div>
                   )}
@@ -850,25 +850,25 @@ const MetasPage = memo(function MetasPage() {
                   {formType === 'recurring' && (
                     <div className="plan-field-row">
                       <div className="plan-field">
-                        <label className="plan-label">Frecuencia</label>
-                        <CustomSelect value={formFrequency} onChange={v => setFormFrequency(v as RecurringFrequency)} options={RECURRENCES.map(r => ({ value: r.value, label: r.label }))} placeholder="Seleccionar..." />
+                        <label className="plan-label">{t('metas:modals.fields.frequency')}</label>
+                        <CustomSelect value={formFrequency} onChange={v => setFormFrequency(v as RecurringFrequency)} options={RECURRENCES.map(r => ({ value: r.value, label: r.label }))} placeholder={t('metas:modals.fields.selectPlaceholder')} />
                       </div>
                       <div className="plan-field">
-                        <label className="plan-label">Próximo pago</label>
+                        <label className="plan-label">{t('metas:modals.fields.nextPayment')}</label>
                         <input className="plan-input plan-input-date" type="date" value={formDeadline} onChange={e => setFormDeadline(e.target.value)} />
                       </div>
                     </div>
                   )}
 
                   <div className="plan-field">
-                    <label className="plan-label">Cuenta vinculada</label>
-                    <CustomSelect value={formAccountId} onChange={v => setFormAccountId(v)} options={[{ value: '', label: 'Sin cuenta' }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder="Seleccionar..." />
+                    <label className="plan-label">{t('metas:modals.fields.linkedAccount')}</label>
+                    <CustomSelect value={formAccountId} onChange={v => setFormAccountId(v)} options={[{ value: '', label: t('metas:modals.fields.noAccount') }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder={t('metas:modals.fields.selectPlaceholder')} />
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>{t('metas:modals.buttons.cancel')}</button>
                   <button className="btn btn-primary" onClick={editingPlan ? handleEditPlan : handleCreatePlan} disabled={formLoading || !formTitle || !formTarget}>
-                    {formLoading ? 'Guardando...' : editingPlan ? 'Guardar Cambios' : 'Crear Plan'}
+                    {formLoading ? t('metas:modals.buttons.saving') : editingPlan ? t('metas:modals.buttons.saveChanges') : t('metas:modals.buttons.create')}
                   </button>
                 </div>
               </div>
@@ -881,28 +881,28 @@ const MetasPage = memo(function MetasPage() {
               <div className="modal-content modal-plan-small" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Añadir a "{showAddFundsModal.title}"</h2>
-                    <p className="modal-subtitle">Actual: {formatAmount(showAddFundsModal.current)} / {formatAmount(showAddFundsModal.target)}</p>
+                    <h2 className="modal-title">{t('metas:modals.addFunds.title', { title: showAddFundsModal.title })}</h2>
+                    <p className="modal-subtitle">{t('metas:modals.addFunds.subtitle', { current: formatAmount(showAddFundsModal.current), target: formatAmount(showAddFundsModal.target) })}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowAddFundsModal(null)}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
-                    <label className="plan-label">Monto</label>
+                    <label className="plan-label">{t('metas:modals.fields.amount')}</label>
                     <div className="plan-input-wrap">
                       <span className="plan-currency">{currencyMap[displayCurrency].symbol}</span>
-                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(showAddFundsModal?.currency || displayCurrency) ? '0.00000001' : '0.01'} placeholder="0.00" value={addAmount} onChange={e => setAddAmount(e.target.value)} autoFocus />
+                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(showAddFundsModal?.currency || displayCurrency) ? '0.00000001' : '0.01'} placeholder={t('metas:modals.fields.amountPlaceholder')} value={addAmount} onChange={e => setAddAmount(e.target.value)} autoFocus />
                     </div>
                   </div>
                   <div className="plan-field">
-                    <label className="plan-label">Cuenta (opcional)</label>
-                    <CustomSelect value={addAccountId} onChange={v => setAddAccountId(v)} options={[{ value: '', label: 'Sin cuenta' }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder="Seleccionar..." />
+                    <label className="plan-label">{t('metas:modals.fields.accountOptional')}</label>
+                    <CustomSelect value={addAccountId} onChange={v => setAddAccountId(v)} options={[{ value: '', label: t('metas:modals.fields.noAccount') }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder={t('metas:modals.fields.selectPlaceholder')} />
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowAddFundsModal(null)}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => setShowAddFundsModal(null)}>{t('metas:modals.buttons.cancel')}</button>
                   <button className="btn btn-primary" onClick={() => handleAddFunds(showAddFundsModal)} disabled={formLoading || !addAmount}>
-                    {formLoading ? 'Guardando...' : 'Añadir'}
+                    {formLoading ? t('metas:modals.buttons.saving') : t('metas:modals.buttons.add')}
                   </button>
                 </div>
               </div>
@@ -915,28 +915,28 @@ const MetasPage = memo(function MetasPage() {
               <div className="modal-content modal-plan-small" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Registrar Pago</h2>
-                    <p className="modal-subtitle">{showRecordPaymentModal.title} · {formatAmount(showRecordPaymentModal.target)}/{RECURRENCES.find(r => r.value === showRecordPaymentModal.frequency)?.label}</p>
+                    <h2 className="modal-title">{t('metas:modals.recordPayment.title')}</h2>
+                    <p className="modal-subtitle">{t('metas:modals.recordPayment.subtitle', { title: showRecordPaymentModal.title, target: formatAmount(showRecordPaymentModal.target), frequency: RECURRENCES.find(r => r.value === showRecordPaymentModal.frequency)?.label || '' })}</p>
                   </div>
                   <button className="modal-close" onClick={() => setShowRecordPaymentModal(null)}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
-                    <label className="plan-label">Monto del pago</label>
+                    <label className="plan-label">{t('metas:modals.fields.amount')}</label>
                     <div className="plan-input-wrap">
                       <span className="plan-currency">$</span>
                       <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder={String(showRecordPaymentModal.target)} value={payAmount} onChange={e => setPayAmount(e.target.value)} autoFocus />
                     </div>
                   </div>
                   <div className="plan-field">
-                    <label className="plan-label">Cuenta</label>
-                    <CustomSelect value={payAccountId} onChange={v => setPayAccountId(v)} options={[{ value: '', label: 'Sin cuenta' }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder="Seleccionar..." />
+                    <label className="plan-label">{t('metas:modals.fields.linkedAccount')}</label>
+                    <CustomSelect value={payAccountId} onChange={v => setPayAccountId(v)} options={[{ value: '', label: t('metas:modals.fields.noAccount') }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder={t('metas:modals.fields.selectPlaceholder')} />
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowRecordPaymentModal(null)}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => setShowRecordPaymentModal(null)}>{t('metas:modals.buttons.cancel')}</button>
                   <button className="btn btn-primary" onClick={() => handleRecordPayment(showRecordPaymentModal)} disabled={formLoading || !payAmount}>
-                    {formLoading ? 'Guardando...' : 'Registrar Pago'}
+                    {formLoading ? t('metas:modals.buttons.saving') : t('metas:modals.buttons.record')}
                   </button>
                 </div>
               </div>
@@ -949,16 +949,16 @@ const MetasPage = memo(function MetasPage() {
               <div className="modal-content modal-plan-small" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                   <div>
-                    <h2 className="modal-title">Compartir Gasto</h2>
-                    <p className="modal-subtitle">Invita a alguien a dividir "{showShareModal.title}"</p>
+                    <h2 className="modal-title">{t('metas:modals.share.title')}</h2>
+                    <p className="modal-subtitle">{t('metas:modals.share.subtitle', { title: showShareModal.title })}</p>
                   </div>
                   <button className="modal-close" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>✕</button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
-                    <label className="plan-label">Nombre o email del usuario</label>
-                    <input className="plan-input" type="text" placeholder="Nombre o email..." value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
-                    {shareSearching && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>Buscando...</span>}
+                    <label className="plan-label">{t('metas:modals.share.userLabel')}</label>
+                    <input className="plan-input" type="text" placeholder={t('metas:modals.share.userPlaceholder')} value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
+                    {shareSearching && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>{t('metas:modals.share.searching')}</span>}
                   </div>
 
                   {/* Search Results (multiple users) */}
@@ -974,7 +974,7 @@ const MetasPage = memo(function MetasPage() {
                             )}
                           </div>
                           <div className="share-user-info">
-                            <span className="share-user-name">{user.displayName || 'Usuario'}</span>
+                            <span className="share-user-name">{user.displayName || t('metas:modals.share.userDefault')}</span>
                             <span className="share-user-email">{user.email}</span>
                           </div>
                         </div>
@@ -983,7 +983,7 @@ const MetasPage = memo(function MetasPage() {
                   )}
 
                   {shareSearchResults.length === 0 && shareEmail.length >= 2 && !shareEmail.includes('@') && !shareSearching && !shareFoundUser && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>Sin resultados. Prueba con el email exacto.</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>{t('metas:modals.share.noResults')}</p>
                   )}
 
                   {/* Selected User Profile Card */}
@@ -997,7 +997,7 @@ const MetasPage = memo(function MetasPage() {
                         )}
                       </div>
                       <div className="share-user-info">
-                        <span className="share-user-name">{shareFoundUser.displayName || 'Usuario'}</span>
+                        <span className="share-user-name">{shareFoundUser.displayName || t('metas:modals.share.userDefault')}</span>
                         <span className="share-user-email">{shareFoundUser.email}</span>
                       </div>
                       <span className="share-user-check">✓</span>
@@ -1006,28 +1006,28 @@ const MetasPage = memo(function MetasPage() {
                   )}
 
                   <div className="plan-field">
-                    <label className="plan-label">Monto a pagar</label>
+                    <label className="plan-label">{t('metas:modals.share.amountLabel')}</label>
                     <div className="plan-input-wrap">
                       <span className="plan-currency">$</span>
-                      <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder="0.00" value={shareAmount} onChange={e => setShareAmount(e.target.value)} />
+                      <input className="plan-input plan-input-amount" type="number" min="0" step="0.01" placeholder={t('metas:modals.fields.amountPlaceholder')} value={shareAmount} onChange={e => setShareAmount(e.target.value)} />
                     </div>
                   </div>
                   <div className="plan-field">
-                    <label className="plan-label">Mensaje (opcional)</label>
-                    <input className="plan-input" type="text" placeholder="Te invito a dividir este gasto" value={shareMessage} onChange={e => setShareMessage(e.target.value)} />
+                    <label className="plan-label">{t('metas:modals.share.messageLabel')}</label>
+                    <input className="plan-input" type="text" placeholder={t('metas:modals.share.messagePlaceholder')} value={shareMessage} onChange={e => setShareMessage(e.target.value)} />
                   </div>
                 </div>
                 <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>Cancelar</button>
+                  <button className="btn btn-outline" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>{t('metas:modals.buttons.cancel')}</button>
                   <button className="btn btn-primary" onClick={() => handleSharePlan(showShareModal)} disabled={shareLoading || !shareEmail || !shareAmount || !shareFoundUser}>
-                    {shareLoading ? 'Enviando...' : 'Enviar Solicitud'}
+                    {shareLoading ? t('metas:modals.buttons.sending') : t('metas:modals.share.sendRequest')}
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          <ConfirmDialog isOpen={confirmState.isOpen} title={confirmState.title} message={confirmState.message} variant={confirmState.variant} confirmText={confirmState.confirmText || 'Confirmar'} onConfirm={confirmState.onConfirm} onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
+          <ConfirmDialog isOpen={confirmState.isOpen} title={confirmState.title} message={confirmState.message} variant={confirmState.variant} confirmText={confirmState.confirmText || t('common:buttons.confirm')} onConfirm={confirmState.onConfirm} onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
         </div>
 
         <style>{`

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { MobileNav } from './MobileNav';
 
 interface LandingHeaderProps {
@@ -9,6 +10,7 @@ interface LandingHeaderProps {
 }
 
 export function LandingHeader({ user }: LandingHeaderProps) {
+  const { t } = useTranslation('landing');
   const router = useRouter();
   const [scrollY, setScrollY] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,10 +36,10 @@ export function LandingHeader({ user }: LandingHeaderProps) {
           </div>
 
           <nav className="landing-nav">
-            <button className="nav-link" onClick={() => scrollTo('features')}>Funciones</button>
-            <button className="nav-link" onClick={() => scrollTo('tutoriales')}>Tutoriales</button>
-            <button className="nav-link" onClick={() => scrollTo('how-it-works')}>Cómo Funciona</button>
-            <button className="nav-link" onClick={() => scrollTo('faq')}>FAQ</button>
+            <button className="nav-link" onClick={() => scrollTo('features')}>{t('header.nav.features')}</button>
+            <button className="nav-link" onClick={() => scrollTo('tutoriales')}>{t('header.nav.tutorials')}</button>
+            <button className="nav-link" onClick={() => scrollTo('how-it-works')}>{t('header.nav.howItWorks')}</button>
+            <button className="nav-link" onClick={() => scrollTo('faq')}>{t('header.nav.faq')}</button>
           </nav>
 
           <div className="landing-header-actions">
@@ -48,14 +50,14 @@ export function LandingHeader({ user }: LandingHeaderProps) {
               </button>
             ) : (
               <>
-                <button className="btn btn-ghost desktop-only" onClick={() => router.push('/login')}>Iniciar Sesión</button>
-                <button className="btn btn-primary" onClick={() => router.push('/register')}>Comenzar Gratis</button>
+                <button className="btn btn-ghost desktop-only" onClick={() => router.push('/login')}>{t('header.login')}</button>
+                <button className="btn btn-primary" onClick={() => router.push('/register')}>{t('header.startFree')}</button>
               </>
             )}
             <button
               className="mobile-menu-toggle"
               onClick={() => setMobileOpen(true)}
-              aria-label="Abrir menú"
+              aria-label={t('header.openMenu')}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12" />

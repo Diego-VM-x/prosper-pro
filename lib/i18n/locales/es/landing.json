@@ -1,1 +1,226 @@
-{}
+{
+  "header": {
+    "nav": {
+      "features": "Funciones",
+      "tutorials": "Tutoriales",
+      "howItWorks": "Cómo Funciona",
+      "faq": "FAQ"
+    },
+    "login": "Iniciar Sesión",
+    "startFree": "Comenzar Gratis",
+    "goToDashboard": "Ir al Dashboard",
+    "openMenu": "Abrir menú"
+  },
+  "hero": {
+    "badge": {
+      "registered": "Ya estás registrado",
+      "free": "100% Gratis · Sin anuncios · Multi-moneda"
+    },
+    "title": "Toma el control de tu",
+    "titleHighlight": " futuro financiero",
+    "subtitle": {
+      "registered": "Bienvenido de vuelta. Explora las novedades de Prosper o vuelve a tu dashboard.",
+      "guest": "Gestiona cuentas en múltiples monedas, crea planes de ahorro, analiza tus gastos, importa comprobantes con OCR y aprende finanzas personales. Todo en un solo lugar."
+    },
+    "cta": {
+      "createAccount": "Crear Cuenta Gratis",
+      "haveAccount": "Ya tengo cuenta",
+      "goToDashboard": "Ir al Dashboard"
+    },
+    "stats": {
+      "multiCurrency": { "label": "Multi-moneda", "value": "8 monedas" },
+      "realTime": { "label": "Tiempo real", "value": "Tasas actualizadas" },
+      "private": { "label": "Privado", "value": "Solo tú lo ves" },
+      "secure": { "label": "Seguro", "value": "Auth por Firebase" }
+    }
+  },
+  "mockup": {
+    "title": "Prosper Dashboard",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "savings": "Ahorro",
+    "emergencyFund": "Fondo de Emergencia",
+    "vacations": "Vacaciones",
+    "usdBs": "USD/BS",
+    "usdtBs": "USDT/BS"
+  },
+  "trustBar": {
+    "items": [
+      { "icon": "💱", "label": "8 Monedas", "desc": "USD, BS, EUR, COP, USDT, SOL, BTC, USDC" },
+      { "icon": "📊", "label": "Tasas en vivo", "desc": "BCV oficial + P2P Binance" },
+      { "icon": "📸", "label": "VEPay OCR", "desc": "20+ bancos venezolanos" },
+      { "icon": "🎓", "label": "Academia", "desc": "Cursos de finanzas gratis" },
+      { "icon": "🔒", "label": "Privado", "desc": "Solo tú ves tus datos" },
+      { "icon": "⚡", "label": "100% Gratis", "desc": "Sin anuncios ni límites" }
+    ],
+    "counters": [
+      { "icon": "💰", "end": 8, "suffix": "", "label": "Monedas soportadas" },
+      { "icon": "🏦", "end": 20, "suffix": "+", "label": "Bancos en VEPay OCR" },
+      { "icon": "📚", "end": 15, "suffix": "+", "label": "Cursos disponibles" },
+      { "icon": "🌍", "end": 100, "suffix": "%", "label": "Gratis para siempre" }
+    ]
+  },
+  "productDemo": {
+    "sectionTag": "Demo Interactiva",
+    "sectionTitle": "Explora cada rincón de Prosper",
+    "sectionDesc": "Haz clic en las pestañas para ver cómo se ve cada sección de la app.",
+    "tabs": [
+      { "id": "dashboard", "icon": "📊", "label": "Dashboard", "title": "Tu panorama financiero en un vistazo", "description": "Visualiza ingresos, gastos, balance mensual, metas en progreso y accesos directos a todas tus herramientas." },
+      { "id": "finanzas", "icon": "💳", "label": "Finanzas", "title": "Control total de tus cuentas y transacciones", "description": "Gestiona múltiples monedas, registra movimientos, transfiere entre cuentas e importa comprobantes con OCR." },
+      { "id": "metas", "icon": "🎯", "label": "Metas", "title": "Planes financieros que cumples", "description": "Crea planes de ahorro, gastos planificados y pagos recurrentes. Comparte gastos y sigue el progreso visual." },
+      { "id": "calendario", "icon": "📅", "label": "Calendario", "title": "Nunca más olvides una fecha importante", "description": "Visualiza vencimientos, recordatorios, pagos recurrentes y planes con fecha límite en una interfaz clara." },
+      { "id": "cursos", "icon": "🎓", "label": "Academia", "title": "Aprende finanzas personales paso a paso", "description": "Cursos prácticos con progreso guardado. Desde presupuesto básico hasta inversión y libertad financiera." }
+    ]
+  },
+  "features": {
+    "sectionTag": "Funciones",
+    "sectionTitle": "Todo lo que necesitas para crecer financieramente",
+    "sectionDesc": "Herramientas poderosas diseñadas para simplificar tu vida financiera.",
+    "items": [
+      { "icon": "📊", "title": "Gestión de Cuentas Multi-moneda", "description": "Administra todas tus cuentas en un solo lugar. Soporta monedas fiduciarias y criptomonedas con conversión automática.", "features": ["Cuentas multi-moneda independientes", "Transferencias con conversión automática", "Historial completo de transacciones"], "visual": { "accounts": [{"name":"Ahorro","balance":"$1,240"},{"name":"Corriente","balance":"$3,580"},{"name":"USDT","balance":"₮850"}] } },
+      { "icon": "🎯", "title": "Planes Financieros", "description": "Crea planes de ahorro, gastos planificados y pagos recurrentes. Sigue tu progreso visualmente.", "features": ["Metas con fecha límite", "Pagos recurrentes automáticos", "Compartir gastos con otros"], "visual": { "goals": [{"name":"Auto","pct":"65%"},{"name":"Vacaciones","pct":"42%"}] } },
+      { "icon": "📈", "title": "Análisis Visual", "description": "Gráficos interactivos que muestran tus ingresos, gastos y ahorro por período.", "features": ["Gráficas por día, semana, mes o año", "Conversión entre monedas al instante", "Resumen financiero detallado"] },
+      { "icon": "⚡", "title": "Tasas en Tiempo Real", "description": "Tasas BCV oficial para monedas fiduciarias y P2P Binance para criptomonedas.", "features": ["BCV, EUR, COP actualizados", "P2P para USDT, SOL, BTC, USDC", "Modo oficial vs P2P por cuenta"] },
+      { "icon": "📅", "title": "Calendario Inteligente", "description": "Organiza recordatorios, fechas de pago y vencimientos de tus planes financieros.", "features": ["Recordatorios personalizables", "Integración con transacciones", "Alertas de vencimiento"] },
+      { "icon": "🎓", "title": "Academia Financiera", "description": "Cursos prácticos para mejorar tu educación financiera desde cero hasta avanzado.", "features": ["Cursos con progreso guardado", "Contenido práctico y aplicable", "Aprende a tu ritmo"], "visual": { "courses": [{"name":"Presupuesto","pct":"75%"},{"name":"Ahorro","pct":"30%"}] } },
+      { "icon": "📸", "title": "VEPay OCR", "description": "Captura comprobantes bancarios venezolanos y extrae datos automáticamente.", "features": ["20+ bancos soportados", "Extracción de monto, ref. y fecha", "Procesamiento en lote"] },
+      { "icon": "🤝", "title": "Compartir Gastos", "description": "Divide gastos con amigos, familia o compañeros de trabajo directamente en la app.", "features": ["Invitaciones por email", "Solicitudes de pago", "Notificaciones en tiempo real"] }
+    ]
+  },
+  "tutorials": {
+    "sectionTag": "Tutoriales",
+    "sectionTitle": "Aprende a usar Prosper en minutos",
+    "sectionDesc": "Guías paso a paso para sacarle el máximo provecho a cada función.",
+    "items": [
+      { "id": "cuenta", "icon": "💳", "title": "Tu primera cuenta", "steps": ["Regístrate gratis con Google o email en segundos.", "Crea tu primera cuenta: billetera, banco o divisas.", "Registra ingresos y gastos desde el dashboard."] },
+      { "id": "plan", "icon": "🎯", "title": "Crear un plan de ahorro", "steps": ["Ve a Planes Financieros y elige Ahorro.", "Define monto objetivo, fecha límite y frecuencia.", "Sigue tu progreso visual y cumple tus metas."] },
+      { "id": "vepay", "icon": "📸", "title": "Usar VEPay OCR", "steps": ["Toma una captura de tu pago bancario.", "Súbela en Finanzas → Importar Captura.", "Revisa los datos extraídos y guarda la transacción."] },
+      { "id": "p2p", "icon": "⚖️", "title": "Entender tasas P2P", "steps": ["Al crear una cuenta cripto (USDT, SOL, BTC, USDC) elige modo.", "Oficial usa CoinGecko · P2P usa precio real Binance.", "Cambia entre modos desde el dashboard en un clic."] }
+    ]
+  },
+  "howItWorks": {
+    "sectionTag": "Cómo Funciona",
+    "sectionTitle": "Empieza en 4 simples pasos",
+    "sectionDesc": "Sin configuraciones complicadas. Haz clic en cada paso para explorar.",
+    "steps": [
+      { "n": 1, "icon": "🚀", "title": "Crea tu cuenta", "description": "Regístrate gratis con Google o email. Elige tu moneda preferida y personaliza tu perfil en segundos.", "details": ["Sin tarjeta de crédito", "Verificación por email", "Perfil personalizable"] },
+      { "n": 2, "icon": "💳", "title": "Agrega tus cuentas", "description": "Crea cuentas en múltiples monedas, registra ingresos y gastos. Todo se sincroniza al instante en la nube.", "details": ["8 monedas soportadas", "Transferencias entre cuentas", "Importa comprobantes con OCR"] },
+      { "n": 3, "icon": "🎯", "title": "Crea planes y metas", "description": "Define objetivos de ahorro, gastos planificados y pagos recurrentes. Visualiza tu progreso día a día.", "details": ["Metas con fecha límite", "Pagos recurrentes", "Comparte gastos con otros"] },
+      { "n": 4, "icon": "🎓", "title": "Aprende y crece", "description": "Completa cursos en la Academia, consulta el calendario de vencimientos y toma decisiones financieras inteligentes.", "details": ["Cursos con progreso", "Recordatorios inteligentes", "Reportes visuales"] }
+    ],
+    "stepProgress": "Paso {{current}} de {{total}}"
+  },
+  "testimonials": {
+    "sectionTag": "Testimonios",
+    "sectionTitle": "Lo que dicen nuestros usuarios",
+    "sectionDesc": "Miles de personas ya organizan sus finanzas con Prosper Pro.",
+    "items": [
+      { "name": "Mariana R.", "role": "Freelancer", "avatar": "👩‍💻", "content": "Prosper me ayudó a organizar mis ingresos en USD y BS. Las tasas en tiempo real son exactas y el dashboard es súper claro.", "stars": 5 },
+      { "name": "Carlos G.", "role": "Emprendedor", "avatar": "👨‍💼", "content": "El VEPay OCR me ahorra horas cada semana. Subo las capturas de mis pagos y Prosper extrae todo automáticamente.", "stars": 5 },
+      { "name": "Andrea P.", "role": "Estudiante", "avatar": "👩‍🎓", "content": "Los cursos de la Academia son prácticos y cortos. Por primera vez entiendo cómo administrar mi dinero.", "stars": 5 },
+      { "name": "Luis M.", "role": "Ingeniero", "avatar": "👨‍🔧", "content": "Compartir gastos con mi familia nunca fue tan fácil. Cada uno ve su parte y yo tengo el control total.", "stars": 5 },
+      { "name": "Sofía T.", "role": "Contadora", "avatar": "👩‍💼", "content": "Recomiendo Prosper a todos mis clientes. La multi-moneda y el calendario de vencimientos son indispensables.", "stars": 5 },
+      { "name": "Daniel K.", "role": "Trader", "avatar": "👨‍💻", "content": "El modo P2P para cripto es exacto. Comparado con otros apps, Prosper tiene las tasas más actualizadas del mercado.", "stars": 5 }
+    ],
+    "aria": {
+      "viewTestimonial": "Ver testimonio {{n}}",
+      "prev": "Anterior",
+      "next": "Siguiente"
+    }
+  },
+  "security": {
+    "sectionTag": "Seguridad",
+    "sectionTitle": "Tu información financiera está protegida",
+    "sectionDesc": "Diseñamos Prosper con privacidad y seguridad desde el primer día.",
+    "items": [
+      { "icon": "🔒", "title": "Autenticación segura", "description": "Usamos Firebase Authentication con soporte para Google Sign-In, verificación de email y sesiones cifradas." },
+      { "icon": "🛡️", "title": "Tus datos son solo tuyos", "description": "Cada usuario tiene su propio espacio aislado en Firestore. Nadie más puede ver tus cuentas, metas ni transacciones." },
+      { "icon": "👁️", "title": "Perfil privado por defecto", "description": "Puedes elegir si tu perfil es público o privado. En modo privado, solo te encuentran por email exacto." },
+      { "icon": "🌐", "title": "Conexión cifrada", "description": "Toda la comunicación entre tu navegador y nuestros servidores usa HTTPS y TLS. Siempre." },
+      { "icon": "💾", "title": "Respaldo en la nube", "description": "Tus datos se sincronizan automáticamente en Firebase. Si cambias de dispositivo, todo está ahí." },
+      { "icon": "🚫", "title": "Sin anuncios ni trackers", "description": "No vendemos tu información. No mostramos anuncios. No usamos cookies de terceros." }
+    ]
+  },
+  "faq": {
+    "sectionTag": "FAQ",
+    "sectionTitle": "Preguntas frecuentes",
+    "sectionDesc": "Todo lo que necesitas saber antes de empezar.",
+    "items": [
+      { "q": "¿Prosper Pro es realmente gratis?", "a": "Sí. Prosper Pro es 100% gratuito, sin anuncios y sin límites de cuentas o transacciones. Puedes usar todas las funciones desde el primer día." },
+      { "q": "¿Qué monedas soporta?", "a": "Soportamos monedas fiduciarias (USD, BS, EUR, COP) y criptomonedas (USDT, SOL, BTC, USDC). Además puedes elegir tasa oficial o P2P para las criptos." },
+      { "q": "¿Cómo funciona VEPay?", "a": "VEPay usa OCR para leer capturas de pantalla de apps bancarias venezolanas. Extrae automáticamente banco, monto, referencia, fecha y concepto, creando una transacción lista para guardar." },
+      { "q": "¿Mis datos están seguros?", "a": "Sí. Tus datos se almacenan en Firebase con autenticación segura. Solo tú tienes acceso a tu información financiera." },
+      { "q": "¿Puedo compartir gastos con otras personas?", "a": "Sí. En los planes de gasto compartido puedes invitar a otros usuarios por correo y dividir montos. Cada persona recibe notificaciones y puede aceptar o rechazar solicitudes." },
+      { "q": "¿Necesito tarjeta de crédito para registrarme?", "a": "No. Solo necesitas un email o una cuenta de Google. No pedimos ni almacenamos información de pago." }
+    ]
+  },
+  "cta": {
+    "title": "¿Listo para tomar el control?",
+    "description": "Únete a Prosper Pro y comienza a construir tu libertad financiera hoy mismo.",
+    "startFree": "Comenzar Gratis",
+    "goToDashboard": "Ir al Dashboard",
+    "note": {
+      "registered": "Ya tienes una cuenta activa",
+      "guest": "Sin tarjeta de crédito · Sin compromisos · 100% gratis"
+    }
+  },
+  "footer": {
+    "description": "Tu plataforma de libertad financiera. Gestiona, ahorra, aprende y crece con nosotros.",
+    "socials": {
+      "twitter": "Twitter",
+      "instagram": "Instagram",
+      "linkedin": "LinkedIn"
+    },
+    "columns": {
+      "product": {
+        "title": "Producto",
+        "features": "Funciones",
+        "demo": "Demo",
+        "tutorials": "Tutoriales",
+        "howItWorks": "Cómo Funciona"
+      },
+      "resources": {
+        "title": "Recursos",
+        "faq": "Preguntas Frecuentes",
+        "security": "Seguridad",
+        "helpCenter": "Centro de Ayuda",
+        "releaseNotes": "Notas de Versión"
+      },
+      "account": {
+        "title": "Cuenta",
+        "dashboard": "Dashboard",
+        "login": "Iniciar Sesión",
+        "register": "Registrarse"
+      },
+      "legal": {
+        "title": "Legal",
+        "terms": "Términos de Uso",
+        "privacy": "Privacidad"
+      }
+    },
+    "newsletter": {
+      "title": "Recibe consejos financieros",
+      "description": "Tips mensuales para mejorar tus finanzas personales."
+    },
+    "copyright": "© 2026 Prosper Pro. Todos los derechos reservados."
+  },
+  "newsletter": {
+    "placeholder": "tu@email.com",
+    "subscribe": "Suscribirme",
+    "success": "✓ ¡Gracias por suscribirte!",
+    "error": "✗ Ingresa un email válido"
+  },
+  "mobileNav": {
+    "title": "Menú",
+    "close": "Cerrar menú",
+    "nav": {
+      "features": "Funciones",
+      "tutorials": "Tutoriales",
+      "howItWorks": "Cómo Funciona",
+      "faq": "FAQ"
+    },
+    "login": "Iniciar Sesión",
+    "startFree": "Comenzar Gratis",
+    "goToDashboard": "Ir al Dashboard"
+  }
+}

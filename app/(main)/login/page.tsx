@@ -3,10 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { sendBrowserNotification } from '@/lib/firestore/notifications';
 import './auth.css';
+
+interface AuthFeature {
+  icon: string;
+  title: string;
+  desc: string;
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -15,6 +22,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { loginWithGoogle, loginWithEmail, user, loading: authLoading, isGuest, enterGuestMode } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation('auth');
 
   useEffect(() => {
     if (!authLoading && (user || isGuest)) {
@@ -23,8 +31,8 @@ export default function LoginPage() {
   }, [user, isGuest, authLoading, router]);
 
   const sendWelcomeNotification = (userName: string) => {
-    const title = '🎉 ¡Bienvenido/a a Prosper!';
-    const body = `Hola ${userName}, estamos listos para ayudarte a tomar el control de tu futuro financiero.`;
+    const title = t('login.welcomeNotification.title');
+    const body = t('login.welcomeNotification.body', { name: userName });
     console.log('[Login] Sending notification:', title, body);
     sendBrowserNotification(title, body, 'general');
   };
@@ -44,7 +52,7 @@ export default function LoginPage() {
       
       router.replace('/');
     } catch (e: any) {
-      setError(e?.message || 'Error al conectar con Google.');
+      setError(e?.message || t('login.errors.google'));
       setLoading(false);
     }
   };
@@ -52,7 +60,7 @@ export default function LoginPage() {
   const handleManualLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Por favor, completa todos los campos.');
+      setError(t('login.errors.emptyFields'));
       return;
     }
 
@@ -75,13 +83,13 @@ export default function LoginPage() {
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
         case 'auth/user-not-found':
-          setError('Credenciales incorrectas. Si creaste tu cuenta con Google, usa el botón superior.');
+          setError(t('login.errors.auth/invalid-credential'));
           break;
         case 'auth/too-many-requests':
-          setError('Demasiados intentos fallidos. Inténtalo más tarde.');
+          setError(t('login.errors.auth/too-many-requests'));
           break;
         default:
-          setError(err.message || 'Error al iniciar sesión. Inténtalo de nuevo.');
+          setError(err.message || t('login.errors.generic'));
       }
     }
   };
@@ -90,6 +98,8 @@ export default function LoginPage() {
     enterGuestMode();
     router.replace('/');
   };
+
+  const features = t('login.features', { returnObjects: true }) as AuthFeature[];
 
   return (
     <div className="auth-container">
@@ -109,45 +119,33 @@ export default function LoginPage() {
             <h1 className="auth-brand-title">
               Prosper<span className="auth-brand-dot">.</span>
             </h1>
-            <p className="auth-brand-tagline">Tu camino a la libertad financiera comienza aquí.</p>
+            <p className="auth-brand-tagline">{t('login.brandTagline')}</p>
           </div>
 
           <div className="auth-features">
-            <div className="auth-feature">
-              <div className="auth-feature-icon">📊</div>
-              <div>
-                <h3>Control Financiero</h3>
-                <p>Gestiona tus cuentas, ingresos y gastos en un solo lugar.</p>
+            {features.map((f, i) => (
+              <div className="auth-feature" key={i}>
+                <div className="auth-feature-icon">{f.icon}</div>
+                <div>
+                  <h3>{f.title}</h3>
+                  <p>{f.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">🎯</div>
-              <div>
-                <h3>Planes de Ahorro</h3>
-                <p>Crea metas financieras y sigue tu progreso en tiempo real.</p>
-              </div>
-            </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">📈</div>
-              <div>
-                <h3>Análisis Inteligente</h3>
-                <p>Visualiza tu rendimiento con gráficos interactivos.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
         <div className="auth-right">
           <div className="auth-card">
             <div className="auth-header">
-              <h2>Bienvenido de nuevo</h2>
-              <p>Inicia sesión para continuar</p>
+              <h2>{t('login.title')}</h2>
+              <p>{t('login.subtitle')}</p>
             </div>
 
             <div className="auth-content">
               {!auth && (
                 <div className="error-alert" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B' }}>
-                  ⚠️ <strong>Servicio no disponible:</strong> Firebase no está configurado en este deploy. Si eres el administrador, verifica las variables de entorno en Vercel Dashboard y haz <strong>Redeploy</strong>.
+                  ⚠️ <strong>{t('login.firebaseWarningStrong')}</strong> {t('login.firebaseWarningText')}
                 </div>
               )}
               {error && <div className="error-alert">{error}</div>}
@@ -158,34 +156,34 @@ export default function LoginPage() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                {loading ? 'Conectando...' : 'Continuar con Google'}
+                {loading ? t('login.googleBtn.loading') : t('login.googleBtn.default')}
               </button>
 
               <div className="divider">
-                <span>o usar correo</span>
+                <span>{t('login.divider')}</span>
               </div>
 
               <form className="auth-form" onSubmit={handleManualLogin}>
                 <div className="form-group">
-                  <label>Email</label>
-                  <input type="email" placeholder="nombre@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                  <label>{t('login.emailLabel')}</label>
+                  <input type="email" placeholder={t('login.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
                 </div>
                 <div className="form-group">
-                  <label>Contraseña</label>
-                  <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+                  <label>{t('login.passwordLabel')}</label>
+                  <input type="password" placeholder={t('login.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
                 </div>
                 <button type="submit" className="login-btn" disabled={loading || !auth}>
                   {loading ? (
                     <span className="login-btn-loading">
-                      <span className="spinner" /> Entrando...
+                      <span className="spinner" /> {t('login.submitBtn.loading')}
                     </span>
-                  ) : 'Entrar'}
+                  ) : t('login.submitBtn.default')}
                 </button>
               </form>
             </div>
 
             <div className="auth-footer">
-              ¿No tienes una cuenta? <Link href="/register">Regístrate gratis</Link>
+              {t('login.footer.noAccount')} <Link href="/register">{t('login.footer.register')}</Link>
             </div>
             <div className="auth-footer" style={{ marginTop: 8 }}>
               <button
@@ -193,11 +191,11 @@ export default function LoginPage() {
                 className="home-btn"
                 style={{ background: 'none', border: 'none', color: 'var(--color-prosper-green)', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}
               >
-                👤 Entrar como invitado
+                {t('login.footer.guest')}
               </button>
             </div>
             <div className="auth-footer">
-              <Link href="/" className="home-btn">Ir al inicio</Link>
+              <Link href="/" className="home-btn">{t('login.footer.home')}</Link>
             </div>
           </div>
         </div>

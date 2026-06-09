@@ -1,7 +1,8 @@
 'use client';
 import '@/app/dashboard.css';
 
-import React, { useState, useMemo, useEffect, memo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useGoals } from '@/lib/contexts/GoalsContext';
@@ -16,10 +17,10 @@ import type { Reminder, FinancialPlan, Transaction } from '@/types';
 
 const DEFAULT_TYPES: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
 const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
-const TYPE_LABELS: Record<string, string> = { mentor: 'Mentor', course: 'Curso', meeting: 'Reunión', other: 'Otro' };
+// TYPE_LABELS moved into component for i18n
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
-const DAYS_ES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+
 
 function parseDeadlineToISO(deadline: string): string | null {
   if (!deadline) return null;
@@ -38,9 +39,9 @@ function parseDeadlineToISO(deadline: string): string | null {
   return null;
 }
 
-function formatDateLong(dateStr: string): string {
+function formatDateLong(dateStr: string, locale: string): string {
   const d = new Date(dateStr + 'T12:00:00');
-  return d.toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' });
+  return d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 type CalendarEventType = 'plan' | 'reminder' | 'transaction_summary';
@@ -55,50 +56,26 @@ export interface CalendarEvent {
   data: any;
 }
 
-function planToEvents(plan: FinancialPlan): CalendarEvent[] {
-  const events: CalendarEvent[] = [];
-  if (plan.status === 'completed' || plan.status === 'cancelled') return events;
-
-  if (plan.type === 'recurring' && plan.nextDueDate) {
-    const dStr = parseDeadlineToISO(plan.nextDueDate);
-    if (dStr) {
-      events.push({
-        id: `plan-${plan.id}-rec`,
-        date: dStr,
-        title: `Pago recurrente: ${plan.title}`,
-        type: 'plan',
-        color: plan.color || '#F59E0B',
-        icon: plan.icon || '🔄',
-        data: plan
-      });
-    }
-  } else if ((plan.type === 'savings' || plan.type === 'expense') && plan.deadline) {
-    const dStr = parseDeadlineToISO(plan.deadline);
-    if (dStr) {
-      events.push({
-        id: `plan-${plan.id}-dl`,
-        date: dStr,
-        title: `Vence: ${plan.title}`,
-        type: 'plan',
-        color: plan.color || '#3DCC8E',
-        icon: plan.icon || '🎯',
-        data: plan
-      });
-    }
-  }
-  return events;
-}
-
 const CalendarioPage = memo(function CalendarioPage() {
+  const { t, i18n } = useTranslation(['calendario', 'common']);
   const { plans, reminders, userId, addReminder, deleteReminderFn } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
   
+  const DAYS = t('days', { returnObjects: true }) as string[];
+  const MONTHS = t('months', { returnObjects: true }) as string[];
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [newReminder, setNewReminder] = useState({ title: '', description: '', reminderTime: '09:00', type: 'other' as Reminder['type'] });
   const [allTypes, setAllTypes] = useState<Record<string, string>>({ ...DEFAULT_TYPES });
+  const [typeLabels, setTypeLabels] = useState<Record<string, string>>({
+    mentor: t('types.mentor'),
+    course: t('types.course'),
+    meeting: t('types.meeting'),
+    other: t('types.other'),
+  });
   const [customTypes, setCustomTypes] = useState<string[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
@@ -155,19 +132,53 @@ const CalendarioPage = memo(function CalendarioPage() {
       const details = [];
       if (totals.income > 0) details.push(`+$${totals.income}`);
       if (totals.expense > 0) details.push(`-$${totals.expense}`);
-      if (totals.saving > 0) details.push(`+$${totals.saving} (Ahorro)`);
+      if (totals.saving > 0) details.push(`+$${totals.saving} (${t('common:topbar.savings')})`);
 
       return {
         id: `tx-${date}`,
         date,
-        title: `${totals.count} transaccione(s)`,
+        title: t('transactionSummary', { count: totals.count }),
         type: 'transaction_summary' as CalendarEventType,
         color: '#6B7280',
         icon: '💳',
         data: { ...totals, details: details.join(' | ') }
       };
     });
-  }, [transactions]);
+  }, [transactions, t]);
+
+  const planToEvents = useCallback((plan: FinancialPlan): CalendarEvent[] => {
+    const events: CalendarEvent[] = [];
+    if (plan.status === 'completed' || plan.status === 'cancelled') return events;
+
+    if (plan.type === 'recurring' && plan.nextDueDate) {
+      const dStr = parseDeadlineToISO(plan.nextDueDate);
+      if (dStr) {
+        events.push({
+          id: `plan-${plan.id}-rec`,
+          date: dStr,
+          title: t('eventTitles.recurringPayment', { title: plan.title }),
+          type: 'plan',
+          color: plan.color || '#F59E0B',
+          icon: plan.icon || '🔄',
+          data: plan
+        });
+      }
+    } else if ((plan.type === 'savings' || plan.type === 'expense') && plan.deadline) {
+      const dStr = parseDeadlineToISO(plan.deadline);
+      if (dStr) {
+        events.push({
+          id: `plan-${plan.id}-dl`,
+          date: dStr,
+          title: t('eventTitles.due', { title: plan.title }),
+          type: 'plan',
+          color: plan.color || '#3DCC8E',
+          icon: plan.icon || '🎯',
+          data: plan
+        });
+      }
+    }
+    return events;
+  }, [t]);
 
   const allEvents = useMemo(() => {
     const pEvents = plans.flatMap(planToEvents);
@@ -181,7 +192,7 @@ const CalendarioPage = memo(function CalendarioPage() {
       data: r
     }));
     return [...pEvents, ...rEvents, ...transactionSummaries].sort((a, b) => a.date.localeCompare(b.date));
-  }, [plans, reminders, transactionSummaries, allTypes]);
+  }, [plans, reminders, transactionSummaries, allTypes, planToEvents]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -224,7 +235,7 @@ const CalendarioPage = memo(function CalendarioPage() {
     });
     setShowModal(false);
     setNewReminder({ title: '', description: '', reminderTime: '09:00', type: 'other' });
-    success('Recordatorio creado');
+    success(t('toast.reminderCreated'));
   };
 
   // Programar notificaciones de recordatorios
@@ -237,14 +248,14 @@ const CalendarioPage = memo(function CalendarioPage() {
       <DashboardLayout>
         <div className="cal-page-header">
           <div>
-            <h1 className="cal-page-title">Calendario Maestro</h1>
-            <p className="cal-page-subtitle">Tus planes, recordatorios y movimientos financieros en un solo lugar.</p>
+            <h1 className="cal-page-title">{t('title')}</h1>
+            <p className="cal-page-subtitle">{t('subtitle')}</p>
           </div>
           <div className="cal-header-actions">
-            <button className="cal-btn-today" onClick={handleToday}>Ir a Hoy</button>
+            <button className="cal-btn-today" onClick={handleToday}>{t('goToday')}</button>
             <button className="cal-add-event-btn" onClick={() => setShowModal(true)}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-              Nuevo
+              {t('new')}
             </button>
           </div>
         </div>
@@ -256,14 +267,14 @@ const CalendarioPage = memo(function CalendarioPage() {
               <button className="cal-nav-arrow" onClick={handlePrevMonth}>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
-              <h2 className="cal-month-label">{MONTHS_ES[month]} {year}</h2>
+              <h2 className="cal-month-label">{MONTHS[month]} {year}</h2>
               <button className="cal-nav-arrow" onClick={handleNextMonth}>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
             </div>
 
             <div className="cal-grid">
-              {DAYS_ES.map((d) => <div key={d} className="cal-weekday">{d}</div>)}
+              {DAYS.map((d) => <div key={d} className="cal-weekday">{d}</div>)}
               {getDaysArray().map((day, i) => {
                 if (!day) return <div key={`empty-${i}`} className="cal-cell cal-cell-empty" />;
                 const dateStr = getDateStr(day);
@@ -294,9 +305,9 @@ const CalendarioPage = memo(function CalendarioPage() {
             </div>
 
             <div className="cal-legend">
-              <div className="cal-legend-item"><div className="cal-legend-dot cal-indicator-plan" /> Planes Financieros</div>
-              <div className="cal-legend-item"><div className="cal-legend-dot cal-indicator-reminder" /> Recordatorios</div>
-              <div className="cal-legend-item"><div className="cal-legend-dot cal-indicator-tx" /> Movimientos</div>
+              <div className="cal-legend-item"><div className="cal-legend-dot cal-indicator-plan" /> {t('legend.plans')}</div>
+              <div className="cal-legend-item"><div className="cal-legend-dot cal-indicator-reminder" /> {t('legend.reminders')}</div>
+              <div className="cal-legend-item"><div className="cal-legend-dot cal-indicator-tx" /> {t('legend.movements')}</div>
             </div>
           </div>
 
@@ -305,7 +316,7 @@ const CalendarioPage = memo(function CalendarioPage() {
             <div className="cal-card cal-agenda-card">
               <div className="cal-detail-header">
                 <h3 className="cal-detail-title">
-                  {selectedDate ? formatDateLong(selectedDate) : 'Selecciona Un Día'}
+                  {selectedDate ? formatDateLong(selectedDate, i18n.language) : t('agenda.selectDay')}
                 </h3>
               </div>
 
@@ -337,7 +348,7 @@ const CalendarioPage = memo(function CalendarioPage() {
                             </div>
                             <div className="cal-event-body">
                               <h4 className="cal-event-title">{ev.title}</h4>
-                              <p className="cal-event-desc">{plan.category} • {plan.type === 'recurring' ? 'Recurrente' : 'Objetivo'}</p>
+                              <p className="cal-event-desc">{plan.category} • {plan.type === 'recurring' ? t('planTypes.recurring') : t('planTypes.goal')}</p>
                               {plan.type !== 'recurring' && (
                                 <div className="cal-plan-progress">
                                   <div className="cal-plan-bar"><div className="cal-plan-fill" style={{ width: `${pct}%`, background: ev.color }} /></div>
@@ -374,11 +385,11 @@ const CalendarioPage = memo(function CalendarioPage() {
                 ) : selectedDate ? (
                   <div className="cal-empty-state">
                     <span className="cal-empty-icon">✨</span>
-                    <p>No hay eventos registrados para este día.</p>
+                    <p>{t('agenda.noEvents')}</p>
                   </div>
                 ) : (
                   <div className="cal-empty-state">
-                    <p>Selecciona un día en el calendario.</p>
+                    <p>{t('agenda.selectDayCalendar')}</p>
                   </div>
                 )}
               </div>
@@ -391,29 +402,29 @@ const CalendarioPage = memo(function CalendarioPage() {
           <div className="cal-modal-overlay" onClick={() => setShowModal(false)}>
             <div className="cal-modal" onClick={(e) => e.stopPropagation()}>
               <div className="cal-modal-header">
-                <h2 className="cal-modal-title">Nuevo Recordatorio</h2>
+                <h2 className="cal-modal-title">{t('modal.title')}</h2>
                 <button className="cal-modal-close" onClick={() => setShowModal(false)}>
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                 </button>
               </div>
-              <p className="cal-modal-date">{selectedDate ? formatDateLong(selectedDate) : 'Selecciona una fecha'}</p>
+              <p className="cal-modal-date">{selectedDate ? formatDateLong(selectedDate, i18n.language) : t('modal.selectDate')}</p>
               <div className="cal-modal-body">
-                <label className="cal-form-label">Título</label>
-                <input className="cal-form-input" type="text" placeholder="Ej: Sesión con mentor" value={newReminder.title} onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })} />
-                <label className="cal-form-label">Descripción</label>
-                <input className="cal-form-input" type="text" placeholder="Detalles del recordatorio" value={newReminder.description} onChange={(e) => setNewReminder({ ...newReminder, description: e.target.value })} />
+                <label className="cal-form-label">{t('modal.form.title')}</label>
+                <input className="cal-form-input" type="text" placeholder={t('modal.form.titlePlaceholder')} value={newReminder.title} onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })} />
+                <label className="cal-form-label">{t('modal.form.description')}</label>
+                <input className="cal-form-input" type="text" placeholder={t('modal.form.descriptionPlaceholder')} value={newReminder.description} onChange={(e) => setNewReminder({ ...newReminder, description: e.target.value })} />
                 <div className="cal-form-row">
                   <div className="cal-form-col">
-                    <label className="cal-form-label">Hora de notificación</label>
+                    <label className="cal-form-label">{t('modal.form.notificationTime')}</label>
                     <input className="cal-form-input" type="time" value={newReminder.reminderTime} onChange={(e) => setNewReminder({ ...newReminder, reminderTime: e.target.value })} />
                   </div>
                 </div>
-                <label className="cal-form-label">Tipo</label>
+                <label className="cal-form-label">{t('modal.form.type')}</label>
                 <CustomSelect
                   value={newReminder.type}
                   onChange={(val) => setNewReminder({ ...newReminder, type: val as Reminder['type'] })}
-                  options={Object.entries(allTypes).map(([key, icon]) => ({ value: key, label: TYPE_LABELS[key] || key, icon }))}
-                  placeholder="Seleccionar tipo..."
+                  options={Object.entries(allTypes).map(([key, icon]) => ({ value: key, label: typeLabels[key] || key, icon }))}
+                  placeholder={t('modal.form.selectType')}
                   allowCustom
                   onAddCustom={async (value, label) => {
                     const uid = user?.uid;
@@ -424,15 +435,15 @@ const CalendarioPage = memo(function CalendarioPage() {
                       const newIcon = typeIcons[customTypes.length % typeIcons.length];
                       setAllTypes(prev => ({ ...prev, [value]: newIcon }));
                       TYPE_ICONS[value] = newIcon;
-                      TYPE_LABELS[value] = label;
+                      setTypeLabels(prev => ({ ...prev, [value]: label }));
                     }
                   }}
-                  customPlaceholder="Nombre del tipo..."
+                  customPlaceholder={t('modal.form.customTypePlaceholder')}
                 />
               </div>
               <div className="cal-modal-footer">
-                <button className="cal-btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
-                <button className="cal-btn-create" onClick={handleAddReminder}>Guardar</button>
+                <button className="cal-btn-cancel" onClick={() => setShowModal(false)}>{t('common:buttons.cancel')}</button>
+                <button className="cal-btn-create" onClick={handleAddReminder}>{t('common:buttons.save')}</button>
               </div>
             </div>
           </div>

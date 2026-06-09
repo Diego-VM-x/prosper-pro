@@ -3,10 +3,17 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import type { CurrencyCode } from '@/types';
 import '../login/auth.css';
+
+interface AuthFeature {
+  icon: string;
+  title: string;
+  desc: string;
+}
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -17,6 +24,7 @@ export default function RegisterPage() {
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
   const { loginWithGoogle, registerWithEmail, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation('auth');
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -30,7 +38,7 @@ export default function RegisterPage() {
       setLoading(true);
       await loginWithGoogle();
     } catch {
-      setError('Error al conectar con Google.');
+      setError(t('register.errors.google'));
       setLoading(false);
     }
   };
@@ -38,7 +46,7 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
-      setError('Por favor, completa todos los campos.');
+      setError(t('register.errors.emptyFields'));
       return;
     }
 
@@ -49,20 +57,22 @@ export default function RegisterPage() {
     } catch (err: any) {
       switch (err.code) {
         case 'auth/email-already-in-use':
-          setError('Este correo ya está registrado.');
+          setError(t('register.errors.auth/email-already-in-use'));
           break;
         case 'auth/weak-password':
-          setError('La contraseña debe tener al menos 6 caracteres.');
+          setError(t('register.errors.auth/weak-password'));
           break;
         case 'auth/invalid-email':
-          setError('El correo no es válido.');
+          setError(t('register.errors.auth/invalid-email'));
           break;
         default:
-          setError('Error al crear la cuenta. Inténtalo de nuevo.');
+          setError(t('register.errors.generic'));
       }
       setLoading(false);
     }
   };
+
+  const features = t('register.features', { returnObjects: true }) as AuthFeature[];
 
   return (
     <div className="auth-container">
@@ -82,39 +92,27 @@ export default function RegisterPage() {
             <h1 className="auth-brand-title">
               Prosper<span className="auth-brand-dot">.</span>
             </h1>
-            <p className="auth-brand-tagline">Únete a la élite financiera de Prosper Pro.</p>
+            <p className="auth-brand-tagline">{t('register.brandTagline')}</p>
           </div>
 
           <div className="auth-features">
-            <div className="auth-feature">
-              <div className="auth-feature-icon">💳</div>
-              <div>
-                <h3>Cuentas Multi-Moneda</h3>
-                <p>Maneja cuentas en USD y BS con conversión automática.</p>
+            {features.map((f, i) => (
+              <div className="auth-feature" key={i}>
+                <div className="auth-feature-icon">{f.icon}</div>
+                <div>
+                  <h3>{f.title}</h3>
+                  <p>{f.desc}</p>
+                </div>
               </div>
-            </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">🎓</div>
-              <div>
-                <h3>Educación Financiera</h3>
-                <p>Aprende con cursos prácticos y guías especializadas.</p>
-              </div>
-            </div>
-            <div className="auth-feature">
-              <div className="auth-feature-icon">🔒</div>
-              <div>
-                <h3>100% Privado</h3>
-                <p>Tus datos están protegidos y solo tú puedes verlos.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
         <div className="auth-right">
           <div className="auth-card auth-card-register">
             <div className="auth-header">
-              <h2>Crea tu cuenta</h2>
-              <p>Comienza tu camino hacia la libertad financiera</p>
+              <h2>{t('register.title')}</h2>
+              <p>{t('register.subtitle')}</p>
             </div>
 
             <div className="auth-content">
@@ -126,28 +124,28 @@ export default function RegisterPage() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                {loading ? 'Conectando...' : 'Registrarse con Google'}
+                {loading ? t('register.googleBtn.loading') : t('register.googleBtn.default')}
               </button>
 
               <div className="divider">
-                <span>o usar correo</span>
+                <span>{t('register.divider')}</span>
               </div>
 
               <form className="auth-form" onSubmit={handleRegister}>
                 <div className="form-group">
-                  <label>Nombre</label>
-                  <input type="text" placeholder="Tu nombre" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoComplete="name" />
+                  <label>{t('register.nameLabel')}</label>
+                  <input type="text" placeholder={t('register.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoComplete="name" />
                 </div>
                 <div className="form-group">
-                  <label>Email</label>
-                  <input type="email" placeholder="nombre@ejemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} autoComplete="email" />
+                  <label>{t('register.emailLabel')}</label>
+                  <input type="email" placeholder={t('register.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} autoComplete="email" />
                 </div>
                 <div className="form-group">
-                  <label>Contraseña</label>
-                  <input type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="new-password" />
+                  <label>{t('register.passwordLabel')}</label>
+                  <input type="password" placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="new-password" />
                 </div>
                 <div className="form-group">
-                  <label>Moneda Principal</label>
+                  <label>{t('register.currencyLabel')}</label>
                   <div className="currency-selector">
                     {CURRENCY_LIST.map((code) => {
                       const cfg = CURRENCY_MAP[code];
@@ -169,15 +167,15 @@ export default function RegisterPage() {
                 <button type="submit" className="login-btn" disabled={loading}>
                   {loading ? (
                     <span className="login-btn-loading">
-                      <span className="spinner" /> Creando...
+                      <span className="spinner" /> {t('register.submitBtn.loading')}
                     </span>
-                  ) : 'Crear Cuenta'}
+                  ) : t('register.submitBtn.default')}
                 </button>
               </form>
             </div>
 
             <div className="auth-footer">
-              ¿Ya tienes una cuenta? <Link href="/login">Inicia Sesión</Link>
+              {t('register.footer.haveAccount')} <Link href="/login">{t('register.footer.login')}</Link>
             </div>
           </div>
         </div>

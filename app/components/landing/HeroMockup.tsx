@@ -1,26 +1,29 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 export function HeroMockup() {
+  const { t } = useTranslation('landing');
   return (
     <div className="hero-mockup">
       <div className="mockup-header">
         <div className="mockup-dots">
           <span /><span /><span />
         </div>
-        <span className="mockup-title">Prosper Dashboard</span>
+        <span className="mockup-title">{t('mockup.title')}</span>
       </div>
       <div className="mockup-body">
         <div className="mockup-stat-row">
           <div className="mockup-stat mockup-stat-green">
-            <span className="mockup-stat-label">Ingresos</span>
+            <span className="mockup-stat-label">{t('mockup.income')}</span>
             <span className="mockup-stat-value">$2,450</span>
           </div>
           <div className="mockup-stat mockup-stat-red">
-            <span className="mockup-stat-label">Gastos</span>
+            <span className="mockup-stat-label">{t('mockup.expenses')}</span>
             <span className="mockup-stat-value">$1,280</span>
           </div>
           <div className="mockup-stat mockup-stat-blue">
-            <span className="mockup-stat-label">Ahorro</span>
+            <span className="mockup-stat-label">{t('mockup.savings')}</span>
             <span className="mockup-stat-value">$620</span>
           </div>
         </div>
@@ -33,11 +36,11 @@ export function HeroMockup() {
 
         <div className="mockup-goals">
           <div className="mockup-goal">
-            <span>Fondo de Emergencia</span>
+            <span>{t('mockup.emergencyFund')}</span>
             <div className="mockup-goal-bar"><div className="mockup-goal-fill" style={{ width: '72%' }} /></div>
           </div>
           <div className="mockup-goal">
-            <span>Vacaciones</span>
+            <span>{t('mockup.vacations')}</span>
             <div className="mockup-goal-bar"><div className="mockup-goal-fill" style={{ width: '45%' }} /></div>
           </div>
         </div>
@@ -45,13 +48,13 @@ export function HeroMockup() {
         <div className="mockup-rate-float">
           <div className="mockup-rate-item">
             <span className="mockup-rate-flag">🇺🇸</span>
-            <span className="mockup-rate-pair">USD/BS</span>
+            <span className="mockup-rate-pair">{t('mockup.usdBs')}</span>
             <span className="mockup-rate-value">45.20</span>
           </div>
           <div className="mockup-rate-divider" />
           <div className="mockup-rate-item">
             <span className="mockup-rate-flag">💎</span>
-            <span className="mockup-rate-pair">USDT/BS</span>
+            <span className="mockup-rate-pair">{t('mockup.usdtBs')}</span>
             <span className="mockup-rate-value">46.80</span>
           </div>
         </div>

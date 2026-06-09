@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose, user, onLogin, onRegister, onDashboard }: MobileNavProps) {
+  const { t } = useTranslation('landing');
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -35,8 +37,8 @@ export function MobileNav({ isOpen, onClose, user, onLogin, onRegister, onDashbo
     <div className="mobile-nav-overlay" onClick={onClose}>
       <div className="mobile-nav-drawer" onClick={(e) => e.stopPropagation()}>
         <div className="mobile-nav-header">
-          <span className="mobile-nav-title">Menú</span>
-          <button className="mobile-nav-close" onClick={onClose} aria-label="Cerrar menú">
+          <span className="mobile-nav-title">{t('mobileNav.title')}</span>
+          <button className="mobile-nav-close" onClick={onClose} aria-label={t('mobileNav.close')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -44,20 +46,20 @@ export function MobileNav({ isOpen, onClose, user, onLogin, onRegister, onDashbo
           </button>
         </div>
         <nav className="mobile-nav-links">
-          <button onClick={() => handleNav('features')}>Funciones</button>
-          <button onClick={() => handleNav('tutoriales')}>Tutoriales</button>
-          <button onClick={() => handleNav('how-it-works')}>Cómo Funciona</button>
-          <button onClick={() => handleNav('faq')}>FAQ</button>
+          <button onClick={() => handleNav('features')}>{t('mobileNav.nav.features')}</button>
+          <button onClick={() => handleNav('tutoriales')}>{t('mobileNav.nav.tutorials')}</button>
+          <button onClick={() => handleNav('how-it-works')}>{t('mobileNav.nav.howItWorks')}</button>
+          <button onClick={() => handleNav('faq')}>{t('mobileNav.nav.faq')}</button>
         </nav>
         <div className="mobile-nav-actions">
           {user ? (
             <button className="btn btn-primary" onClick={onDashboard}>
-              Ir al Dashboard
+              {t('mobileNav.goToDashboard')}
             </button>
           ) : (
             <>
-              <button className="btn btn-ghost" onClick={onLogin}>Iniciar Sesión</button>
-              <button className="btn btn-primary" onClick={onRegister}>Comenzar Gratis</button>
+              <button className="btn btn-ghost" onClick={onLogin}>{t('mobileNav.login')}</button>
+              <button className="btn btn-primary" onClick={onRegister}>{t('mobileNav.startFree')}</button>
             </>
           )}
         </div>

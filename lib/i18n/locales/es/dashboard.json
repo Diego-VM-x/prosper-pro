@@ -1,1 +1,128 @@
-{}
+{
+  "greeting": {
+    "morning": "Buenos días",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches"
+  },
+  "welcome": {
+    "subtitle": "Aquí tienes un resumen de tu situación financiera",
+    "newPlan": "Nuevo Plan"
+  },
+  "stats": {
+    "savingsInPlans": "Ahorro en Planes",
+    "recurringPerMonth": "Recurrentes/Mes",
+    "goalsAndPlans": "Metas/Planes"
+  },
+  "today": {
+    "title": "Para Hoy",
+    "pending_one": "{{count}} pendiente",
+    "pending_other": "{{count}} pendientes"
+  },
+  "sections": {
+    "actions": "Acciones",
+    "finances": "Finanzas",
+    "goals": "Metas",
+    "market": "Mercado"
+  },
+  "quickActions": {
+    "title": "Acciones Rápidas",
+    "newPlan": "Nuevo Plan",
+    "newAccount": "Nueva Cuenta",
+    "transaction": "Transacción",
+    "calendar": "Calendario"
+  },
+  "tools": {
+    "title": "Herramientas",
+    "inDevelopment": "En Desarrollo",
+    "usdBs": "USD/BS",
+    "importInvoice": "Importar factura",
+    "shoppingLists": "Listas de compras",
+    "aiAssistant": "Asistente AI"
+  },
+  "finances": {
+    "monthlySummary": "Resumen del Mes",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "balance": "Balance",
+    "myAccounts": "Mis Cuentas",
+    "hideBalances": "Ocultar saldos",
+    "showBalances": "Mostrar saldos",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "manage": "Gestionar",
+    "noFavorites": "No tienes cuentas favoritas. Marca hasta 3 cuentas en Finanzas para verlas aquí.",
+    "accountTypes": {
+      "digital": "Billetera Digital",
+      "bank": "Banco",
+      "foreign": "Divisas"
+    },
+    "recentTransactions": "Últimos Movimientos",
+    "viewAll": "Ver todo",
+    "noRecentTransactions": "Sin movimientos recientes",
+    "quickTransfer": "Transferencia Rápida",
+    "fromPlaceholder": "Desde...",
+    "toPlaceholder": "Hacia...",
+    "amountPlaceholder": "Monto",
+    "transfer": "Transferir",
+    "transferLoading": "..."
+  },
+  "goals": {
+    "activePlans": "Planes Activos",
+    "planTypes": {
+      "savings": "Ahorro",
+      "expense": "Gasto",
+      "recurring": "Recurrente"
+    },
+    "noActivePlans": "No hay planes activos",
+    "createFirstPlan": "Crear primer plan",
+    "upcomingDeadlines": "Próximos Vencimientos",
+    "overdue": "vencido",
+    "day_one": "día",
+    "day_other": "días",
+    "noUpcomingDeadlines": "No hay vencimientos próximos"
+  },
+  "market": {
+    "exchangeRates": "Tasas de Cambio",
+    "fiat": "Divisas",
+    "cryptos": "Cryptos",
+    "financialPerformance": "Rendimiento Financiero",
+    "viewDetails": "Ver detalles"
+  },
+  "modal": {
+    "newGoal": "Nueva Meta",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Ej: Fondo de Emergencia",
+    "categoryLabel": "Categoría",
+    "categoryPlaceholder": "Seleccionar categoría...",
+    "customCategoryPlaceholder": "Nombre de la categoría...",
+    "currentAmountLabel": "Monto Actual ({{symbol}})",
+    "targetAmountLabel": "Meta ({{symbol}})",
+    "deadlineLabel": "Fecha Límite",
+    "colorLabel": "Color",
+    "iconLabel": "Icono",
+    "createGoal": "Crear Meta"
+  },
+  "transfer": {
+    "selectAccounts": "Selecciona cuentas de origen y destino",
+    "accountsMustDiffer": "Las cuentas deben ser diferentes",
+    "enterValidAmount": "Ingresa un monto válido",
+    "insufficientFunds": "Saldo insuficiente en la cuenta origen",
+    "success": "Transferencia realizada",
+    "error": "Error: {{message}}",
+    "retry": "intenta de nuevo"
+  },
+  "aria": {
+    "expandSection": "Expandir sección",
+    "collapseSection": "Colapsar sección",
+    "removeFavorite": "Quitar de favoritos"
+  },
+  "alerts": {
+    "favoriteError": "No se pudo actualizar favorito"
+  },
+  "categories": {
+    "Ahorro": "Ahorro",
+    "Inversión": "Inversión",
+    "Educación": "Educación",
+    "Otro": "Otro"
+  }
+}
