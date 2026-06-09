@@ -1,42 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
 
-const SECURITY_ITEMS = [
-  {
-    icon: '🔒',
-    title: 'Autenticación segura',
-    description: 'Usamos Firebase Authentication con soporte para Google Sign-In, verificación de email y sesiones cifradas.',
-  },
-  {
-    icon: '🛡️',
-    title: 'Tus datos son solo tuyos',
-    description: 'Cada usuario tiene su propio espacio aislado en Firestore. Nadie más puede ver tus cuentas, metas ni transacciones.',
-  },
-  {
-    icon: '👁️',
-    title: 'Perfil privado por defecto',
-    description: 'Puedes elegir si tu perfil es público o privado. En modo privado, solo te encuentran por email exacto.',
-  },
-  {
-    icon: '🌐',
-    title: 'Conexión cifrada',
-    description: 'Toda la comunicación entre tu navegador y nuestros servidores usa HTTPS y TLS. Siempre.',
-  },
-  {
-    icon: '💾',
-    title: 'Respaldo en la nube',
-    description: 'Tus datos se sincronizan automáticamente en Firebase. Si cambias de dispositivo, todo está ahí.',
-  },
-  {
-    icon: '🚫',
-    title: 'Sin anuncios ni trackers',
-    description: 'No vendemos tu información. No mostramos anuncios. No usamos cookies de terceros.',
-  },
-];
+interface SecurityItem {
+  icon: string;
+  title: string;
+  description: string;
+}
 
 export function SecuritySection() {
+  const { t } = useTranslation('landing');
+  const SECURITY_ITEMS = t('security.items', { returnObjects: true }) as SecurityItem[];
   const [active, setActive] = useState<number | null>(null);
 
   return (

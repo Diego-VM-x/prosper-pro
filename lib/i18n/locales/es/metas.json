@@ -1,0 +1,173 @@
+{
+  "page": {
+    "title": "Planes Financieros",
+    "subtitle": "Organiza ahorros, gastos y pagos recurrentes",
+    "newPlan": "Nuevo Plan",
+    "createPlan": "Crear Plan"
+  },
+  "planTypes": {
+    "savings": "Plan de Ahorro",
+    "expense": "Gasto Planificado",
+    "recurring": "Gasto Recurrente"
+  },
+  "planTypeDescriptions": {
+    "savings": "Ahorra para una meta",
+    "expense": "Planifica un gasto grande",
+    "recurring": "Suscripciones, alquileres"
+  },
+  "categories": {
+    "Ahorro": "Ahorro",
+    "Inversión": "Inversión",
+    "Educación": "Educación",
+    "Comida": "Comida",
+    "Tecnología": "Tecnología",
+    "Vivienda": "Vivienda",
+    "Transporte": "Transporte",
+    "Salud": "Salud",
+    "Entretenimiento": "Entretenimiento",
+    "Suscripción": "Suscripción",
+    "Alquiler": "Alquiler",
+    "Servicios": "Servicios",
+    "Otro": "Otro"
+  },
+  "recurrences": {
+    "daily": "Diario",
+    "weekly": "Semanal",
+    "biweekly": "Quincenal",
+    "monthly": "Mensual",
+    "quarterly": "Trimestral",
+    "yearly": "Anual"
+  },
+  "status": {
+    "pending": "Pendiente",
+    "progress": "En Progreso",
+    "completed": "Completado",
+    "cancelled": "Cancelado"
+  },
+  "stats": {
+    "savings": "Planes de Ahorro",
+    "expenses": "Gastos Planificados",
+    "recurring": "Gastos Recurrentes",
+    "statusGeneral": "Estado General",
+    "active": "activos",
+    "completed": "completados",
+    "plans": "planes",
+    "perMonth": "/mes"
+  },
+  "filters": {
+    "type": "Tipo:",
+    "status": "Estado:",
+    "all": "Todos"
+  },
+  "requests": {
+    "title": "Solicitudes Recibidas",
+    "accept": "Aceptar",
+    "reject": "Rechazar"
+  },
+  "planCard": {
+    "shared": "Compartido",
+    "invited": "Invitado",
+    "guest_one": "invitado",
+    "guest_other": "invitados",
+    "yourContribution": "Tu aporte",
+    "otherUser": "Otro usuario",
+    "add": "Añadir",
+    "pay": "Pagar",
+    "deposit": "Abonar",
+    "daysRemaining": {
+      "noDate": "Sin fecha",
+      "overdue": "Vencido hace {{days}} días",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "days": "{{days}} días"
+    }
+  },
+  "empty": {
+    "title": "No hay planes",
+    "description": "Crea tu primer plan de ahorro, gasto planificado o recurrente"
+  },
+  "modals": {
+    "newPlan": {
+      "title": "Nuevo Plan",
+      "subtitle": "Elige el tipo de plan financiero"
+    },
+    "editPlan": {
+      "title": "Editar Plan",
+      "subtitle": "Modifica los datos del plan"
+    },
+    "fields": {
+      "title": "Título *",
+      "titlePlaceholder": "Ej: Comprar celular, Alquiler mensual",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción opcional",
+      "category": "Categoría",
+      "currency": "Moneda",
+      "selectPlaceholder": "Seleccionar...",
+      "amount": "Monto *",
+      "amountPlaceholder": "0.00",
+      "deadline": "Fecha límite",
+      "frequency": "Frecuencia",
+      "nextPayment": "Próximo pago",
+      "linkedAccount": "Cuenta vinculada",
+      "noAccount": "Sin cuenta",
+      "accountOptional": "Cuenta (opcional)"
+    },
+    "addFunds": {
+      "title": "Añadir a \"{{title}}\"",
+      "subtitle": "Actual: {{current}} / {{target}}"
+    },
+    "recordPayment": {
+      "title": "Registrar Pago",
+      "subtitle": "{{title}} · {{target}}/{{frequency}}"
+    },
+    "share": {
+      "title": "Compartir Gasto",
+      "subtitle": "Invita a alguien a dividir \"{{title}}\"",
+      "userLabel": "Nombre o email del usuario",
+      "userPlaceholder": "Nombre o email...",
+      "searching": "Buscando...",
+      "noResults": "Sin resultados. Prueba con el email exacto.",
+      "amountLabel": "Monto a pagar",
+      "messageLabel": "Mensaje (opcional)",
+      "messagePlaceholder": "Te invito a dividir este gasto",
+      "sendRequest": "Enviar Solicitud",
+      "userDefault": "Usuario"
+    },
+    "buttons": {
+      "cancel": "Cancelar",
+      "saving": "Guardando...",
+      "sending": "Enviando...",
+      "saveChanges": "Guardar Cambios",
+      "create": "Crear Plan",
+      "add": "Añadir",
+      "record": "Registrar Pago"
+    }
+  },
+  "validation": {
+    "completeTitleAndAmount": "Completa título y monto.",
+    "invalidAmount": "Monto inválido.",
+    "completeEmailAndAmount": "Completa email y monto.",
+    "userNotFound": "Usuario no encontrado. Verifica el email.",
+    "cannotInviteSelf": "No puedes enviarte una solicitud a ti mismo.",
+    "insufficientBalance": "Saldo insuficiente en la cuenta. Balance actual: {{balance}}"
+  },
+  "toasts": {
+    "planCreated": "\"{{title}}\" creado",
+    "unknownError": "Error desconocido",
+    "planUpdated": "\"{{title}}\" actualizado",
+    "deletePlanTitle": "Eliminar Plan",
+    "deletePlanMessage": "¿Eliminar \"{{title}}\"? Esta acción no se puede deshacer.",
+    "deleteConfirm": "Eliminar",
+    "planDeleted": "Plan eliminado",
+    "fundsAdded": "{{amount}} añadido a \"{{title}}\"",
+    "savingTransaction": "Ahorro para: {{title}}",
+    "paymentTransaction": "Pago: {{title}}",
+    "paymentRecorded": "Pago de {{amount}} registrado",
+    "shareMessageDefault": "Te invito a dividir \"{{title}}\"",
+    "requestSent": "Solicitud enviada a {{name}}",
+    "rejectionTitle": "Invitación rechazada",
+    "rejectionMessage": "{{name}} rechazó tu invitación a \"{{title}}\"",
+    "requestAccepted": "Solicitud aceptada",
+    "requestRejected": "Solicitud rechazada"
+  }
+}

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function NewsletterForm() {
+  const { t } = useTranslation('landing');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -22,7 +24,7 @@ export function NewsletterForm() {
     <form onSubmit={handleSubmit} className="footer-newsletter-form">
       <input
         type="email"
-        placeholder="tu@email.com"
+        placeholder={t('newsletter.placeholder')}
         className="footer-input"
         value={email}
         onChange={(e) => {
@@ -31,10 +33,10 @@ export function NewsletterForm() {
         }}
       />
       <button type="submit" className="btn btn-primary">
-        Suscribirme
+        {t('newsletter.subscribe')}
       </button>
-      {status === 'success' && <span className="newsletter-status success">✓ ¡Gracias por suscribirte!</span>}
-      {status === 'error' && <span className="newsletter-status error">✗ Ingresa un email válido</span>}
+      {status === 'success' && <span className="newsletter-status success">{t('newsletter.success')}</span>}
+      {status === 'error' && <span className="newsletter-status error">{t('newsletter.error')}</span>}
     </form>
   );
 }

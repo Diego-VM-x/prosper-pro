@@ -212,7 +212,7 @@ export function CustomSelect({
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
         }
         @media (max-width: 768px) {
-          .custom-select-dropdown { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 60vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+          .custom-select-dropdown { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 60dvh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
         }
 
         .custom-select-option {

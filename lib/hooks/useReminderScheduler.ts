@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, doc, updateDoc } from '@/lib/firebase';
 import type { Reminder } from '@/types';
 import { sendBrowserNotification } from '@/lib/firestore/notifications';
 

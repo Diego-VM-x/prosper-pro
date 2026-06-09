@@ -1,0 +1,51 @@
+{
+  "title": "Master Calendar",
+  "subtitle": "Your plans, reminders and financial movements in one place.",
+  "goToday": "Go to Today",
+  "new": "New",
+  "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  "legend": {
+    "plans": "Financial Plans",
+    "reminders": "Reminders",
+    "movements": "Movements"
+  },
+  "agenda": {
+    "selectDay": "Select a Day",
+    "noEvents": "No events registered for this day.",
+    "selectDayCalendar": "Select a day on the calendar."
+  },
+  "planTypes": {
+    "recurring": "Recurring",
+    "goal": "Goal"
+  },
+  "eventTitles": {
+    "recurringPayment": "Recurring payment: {{title}}",
+    "due": "Due: {{title}}"
+  },
+  "transactionSummary_one": "{{count}} transaction",
+  "transactionSummary_other": "{{count}} transactions",
+  "modal": {
+    "title": "New Reminder",
+    "selectDate": "Select a date",
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "E.g.: Mentor session",
+      "description": "Description",
+      "descriptionPlaceholder": "Reminder details",
+      "notificationTime": "Notification time",
+      "type": "Type",
+      "selectType": "Select type...",
+      "customTypePlaceholder": "Type name..."
+    }
+  },
+  "toast": {
+    "reminderCreated": "Reminder created"
+  },
+  "types": {
+    "mentor": "Mentor",
+    "course": "Course",
+    "meeting": "Meeting",
+    "other": "Other"
+  }
+}

@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { Suspense } from 'react';
 import './globals.css';
 import './animations.css';
+import { ThemeProvider } from './components/ThemeProvider';
+import { I18nProvider } from './components/I18nProvider';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
 
 const inter = Inter({
@@ -11,12 +13,6 @@ const inter = Inter({
   preload: true,
   variable: '--font-inter',
 });
-import { SearchProvider } from '@/lib/contexts/SearchContext';
-import { GoalsProvider } from '@/lib/contexts/GoalsContext';
-import { CurrencyProvider } from '@/lib/contexts/CurrencyContext';
-import { ThemeProvider } from './components/ThemeProvider';
-import { ToastProvider } from './components/Toast';
-import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -80,34 +76,6 @@ export const metadata: Metadata = {
   category: 'finance',
 };
 
-// Skeleton de carga global
-function LoadingSkeleton() {
-  return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--bg-card, #ffffff)',
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{
-          width: 48,
-          height: 48,
-          border: '4px solid var(--border-default, #e5e7eb)',
-          borderTopColor: 'var(--color-prosper-green, #3DCC8E)',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 16px',
-        }} />
-        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #666)' }}>
-          Cargando Prosper Pro...
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -142,21 +110,13 @@ export default function RootLayout({
             `,
           }}
         />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        {/* Solo preconnects críticos para la carga inicial */}
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
         <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
         <link rel="dns-prefetch" href="https://identitytoolkit.googleapis.com" />
         <link rel="preconnect" href="https://ve.dolarapi.com" />
         <link rel="dns-prefetch" href="https://ve.dolarapi.com" />
-        <link rel="preconnect" href="https://api.coingecko.com" />
-        <link rel="dns-prefetch" href="https://api.coingecko.com" />
-        <link rel="preconnect" href="https://criptoya.com" />
-        <link rel="dns-prefetch" href="https://criptoya.com" />
-        <link rel="preconnect" href="https://api.exchangerate-api.com" />
-        <link rel="dns-prefetch" href="https://api.exchangerate-api.com" />
         {/* next-themes theme sync script - evita flash de tema incorrecto */}
         <script
           dangerouslySetInnerHTML={{
@@ -176,8 +136,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(regs) {
-                  regs.forEach(function(r) { r.unregister(); });
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                    console.log('[SW] Registered:', reg.scope);
+                  }).catch(function(err) {
+                    console.log('[SW] Registration failed:', err);
+                  });
                 });
               }
             `,
@@ -187,19 +151,11 @@ export default function RootLayout({
       <body className={inter.variable}>
         <ErrorBoundary>
           <ThemeProvider>
-            <AuthProvider>
-              <CurrencyProvider>
-              <GoalsProvider>
-                <SearchProvider>
-                  <ToastProvider>
-                    <Suspense fallback={<LoadingSkeleton />}>
-                      {children}
-                    </Suspense>
-                  </ToastProvider>
-                </SearchProvider>
-              </GoalsProvider>
-              </CurrencyProvider>
+            <I18nProvider>
+          <AuthProvider>
+              {children}
             </AuthProvider>
+          </I18nProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

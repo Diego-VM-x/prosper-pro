@@ -1,0 +1,51 @@
+{
+  "title": "Calendario Maestro",
+  "subtitle": "Tus planes, recordatorios y movimientos financieros en un solo lugar.",
+  "goToday": "Ir a Hoy",
+  "new": "Nuevo",
+  "days": ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+  "months": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+  "legend": {
+    "plans": "Planes Financieros",
+    "reminders": "Recordatorios",
+    "movements": "Movimientos"
+  },
+  "agenda": {
+    "selectDay": "Selecciona Un Día",
+    "noEvents": "No hay eventos registrados para este día.",
+    "selectDayCalendar": "Selecciona un día en el calendario."
+  },
+  "planTypes": {
+    "recurring": "Recurrente",
+    "goal": "Objetivo"
+  },
+  "eventTitles": {
+    "recurringPayment": "Pago recurrente: {{title}}",
+    "due": "Vence: {{title}}"
+  },
+  "transactionSummary_one": "{{count}} transacción",
+  "transactionSummary_other": "{{count}} transacciones",
+  "modal": {
+    "title": "Nuevo Recordatorio",
+    "selectDate": "Selecciona una fecha",
+    "form": {
+      "title": "Título",
+      "titlePlaceholder": "Ej: Sesión con mentor",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Detalles del recordatorio",
+      "notificationTime": "Hora de notificación",
+      "type": "Tipo",
+      "selectType": "Seleccionar tipo...",
+      "customTypePlaceholder": "Nombre del tipo..."
+    }
+  },
+  "toast": {
+    "reminderCreated": "Recordatorio creado"
+  },
+  "types": {
+    "mentor": "Mentor",
+    "course": "Curso",
+    "meeting": "Reunión",
+    "other": "Otro"
+  }
+}

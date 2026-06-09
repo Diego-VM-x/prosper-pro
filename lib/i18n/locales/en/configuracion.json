@@ -1,0 +1,150 @@
+{
+  "header": {
+    "title": "Settings",
+    "subtitle": "Manage your profile, preferences, and security."
+  },
+  "tabs": {
+    "perfil": "Profile",
+    "preferencias": "Preferences",
+    "notificaciones": "Alerts",
+    "seguridad": "Security"
+  },
+  "perfil": {
+    "panelTitle": "Personal Information",
+    "panelDesc": "Your identity in Prosper",
+    "avatarAlt": "Avatar",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your name",
+    "emailLabel": "Email",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Describe your financial profile...",
+    "planBadge": "Free",
+    "planTitle": "Free Plan",
+    "planDesc": "Full access to Prosper",
+    "planFeatures": {
+      "unlimitedGoals": "Unlimited goals",
+      "fullDashboard": "Full dashboard",
+      "courses": "Educational courses"
+    }
+  },
+  "preferencias": {
+    "languageCurrencyTitle": "Language & Currency",
+    "languageCurrencyDesc": "Customize your experience",
+    "languageLabel": "Interface Language",
+    "inDevelopment": "In Development",
+    "currencyLabel": "Display Currency",
+    "ratesLabel": "Active Exchange Rates",
+    "appearanceTitle": "Appearance",
+    "appearanceDesc": "App visual theme",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "amoled": "AMOLED"
+    },
+    "updateNotesLabel": "Show update notes",
+    "yes": "Yes",
+    "no": "No",
+    "privacyLabel": "Profile Privacy",
+    "privacyHint": "Control whether other users can find you by name when sharing plans.",
+    "publicProfile": "Public Profile",
+    "privateProfile": "Private Profile",
+    "publicDesc": "Other users can find you by name or email when sharing plans.",
+    "privateDesc": "You can only be found by exact email. Your name won't appear in searches."
+  },
+  "notificaciones": {
+    "panelTitle": "Notification Center",
+    "panelDesc": "Control which alerts you receive",
+    "toggles": {
+      "push": {
+        "label": "Push Notifications",
+        "desc": "Browser alerts"
+      },
+      "priceAlerts": {
+        "label": "Price Alerts",
+        "desc": "In development"
+      },
+      "budgetAlerts": {
+        "label": "Budget Alerts",
+        "desc": "In development"
+      },
+      "planInvite": {
+        "label": "Plan Invitations",
+        "desc": "When you're invited to collaborate"
+      },
+      "planContribution": {
+        "label": "Plan Contributions",
+        "desc": "When someone contributes to your plan"
+      },
+      "planReminder": {
+        "label": "Plan Reminders",
+        "desc": "Upcoming deadlines"
+      },
+      "planRejected": {
+        "label": "Rejected Plans",
+        "desc": "When your plan is rejected or deleted"
+      },
+      "dollarChange": {
+        "label": "Dollar Rate Change",
+        "desc": "BCV rate variation"
+      },
+      "dailyBalance": {
+        "label": "Daily Balance",
+        "desc": "Daily summary at 12pm UTC"
+      },
+      "appUpdate": {
+        "label": "Updates",
+        "desc": "New app versions"
+      },
+      "calendarReminder": {
+        "label": "Calendar Reminders",
+        "desc": "In development"
+      }
+    }
+  },
+  "seguridad": {
+    "sessionsTitle": "Active Sessions",
+    "sessionsDesc": "Devices connected to your account",
+    "thisDevice": "This Device",
+    "sessionDetail": "Chrome · Active now",
+    "currentBadge": "Current",
+    "deleteAccount": {
+      "title": "Delete Account",
+      "desc": "This action is irreversible. All your data will be permanently deleted.",
+      "btn": "Delete my account",
+      "confirmLabel": "Type <strong>DELETE</strong> to confirm:",
+      "placeholder": "DELETE",
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "confirmBtn": "Confirm Deletion"
+    },
+    "wipeData": {
+      "title": "Delete All My Data",
+      "desc": "Removes all your goals, transactions, accounts, and settings. Your account will remain active with default accounts.",
+      "btn": "Delete all my data",
+      "confirmLabel": "Type <strong>WIPE</strong> to confirm:",
+      "placeholder": "WIPE",
+      "cancel": "Cancel",
+      "wiping": "Deleting...",
+      "confirmBtn": "Confirm Deletion"
+    }
+  },
+  "saveBar": {
+    "hint": "Changes are not saved automatically",
+    "saving": "Saving...",
+    "saveBtn": "Save Changes"
+  },
+  "footer": "Prosper Pro © 2026 — Encrypted Financial Intelligence",
+  "messages": {
+    "profileUpdated": "Profile updated successfully",
+    "saveError": "Error saving changes",
+    "reauthRequired": "For security, sign out and sign back in before deleting your account.",
+    "deleteError": "Error deleting account. Please try again.",
+    "dataWiped": "All your data has been deleted. The page will reload.",
+    "wipeError": "Error deleting data",
+    "wipeErrorRetry": "Error deleting data. Please try again."
+  },
+  "fallbacks": {
+    "userName": "User",
+    "email": "no-email@example.com"
+  }
+}

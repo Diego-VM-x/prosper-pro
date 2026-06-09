@@ -1,0 +1,173 @@
+{
+  "page": {
+    "title": "Financial Plans",
+    "subtitle": "Organize savings, expenses, and recurring payments",
+    "newPlan": "New Plan",
+    "createPlan": "Create Plan"
+  },
+  "planTypes": {
+    "savings": "Savings Plan",
+    "expense": "Planned Expense",
+    "recurring": "Recurring Expense"
+  },
+  "planTypeDescriptions": {
+    "savings": "Save for a goal",
+    "expense": "Plan a big expense",
+    "recurring": "Subscriptions, rents"
+  },
+  "categories": {
+    "Ahorro": "Savings",
+    "Inversión": "Investment",
+    "Educación": "Education",
+    "Comida": "Food",
+    "Tecnología": "Technology",
+    "Vivienda": "Housing",
+    "Transporte": "Transport",
+    "Salud": "Health",
+    "Entretenimiento": "Entertainment",
+    "Suscripción": "Subscription",
+    "Alquiler": "Rent",
+    "Servicios": "Utilities",
+    "Otro": "Other"
+  },
+  "recurrences": {
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "biweekly": "Biweekly",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "yearly": "Yearly"
+  },
+  "status": {
+    "pending": "Pending",
+    "progress": "In Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "stats": {
+    "savings": "Savings Plans",
+    "expenses": "Planned Expenses",
+    "recurring": "Recurring Expenses",
+    "statusGeneral": "General Status",
+    "active": "active",
+    "completed": "completed",
+    "plans": "plans",
+    "perMonth": "/month"
+  },
+  "filters": {
+    "type": "Type:",
+    "status": "Status:",
+    "all": "All"
+  },
+  "requests": {
+    "title": "Received Requests",
+    "accept": "Accept",
+    "reject": "Reject"
+  },
+  "planCard": {
+    "shared": "Shared",
+    "invited": "Invited",
+    "guest_one": "guest",
+    "guest_other": "guests",
+    "yourContribution": "Your contribution",
+    "otherUser": "Other user",
+    "add": "Add",
+    "pay": "Pay",
+    "deposit": "Deposit",
+    "daysRemaining": {
+      "noDate": "No date",
+      "overdue": "Overdue by {{days}} days",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "days": "{{days}} days"
+    }
+  },
+  "empty": {
+    "title": "No plans",
+    "description": "Create your first savings, planned, or recurring plan"
+  },
+  "modals": {
+    "newPlan": {
+      "title": "New Plan",
+      "subtitle": "Choose the type of financial plan"
+    },
+    "editPlan": {
+      "title": "Edit Plan",
+      "subtitle": "Modify plan data"
+    },
+    "fields": {
+      "title": "Title *",
+      "titlePlaceholder": "E.g.: Buy phone, Monthly rent",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description",
+      "category": "Category",
+      "currency": "Currency",
+      "selectPlaceholder": "Select...",
+      "amount": "Amount *",
+      "amountPlaceholder": "0.00",
+      "deadline": "Deadline",
+      "frequency": "Frequency",
+      "nextPayment": "Next payment",
+      "linkedAccount": "Linked account",
+      "noAccount": "No account",
+      "accountOptional": "Account (optional)"
+    },
+    "addFunds": {
+      "title": "Add to \"{{title}}\"",
+      "subtitle": "Current: {{current}} / {{target}}"
+    },
+    "recordPayment": {
+      "title": "Record Payment",
+      "subtitle": "{{title}} · {{target}}/{{frequency}}"
+    },
+    "share": {
+      "title": "Share Expense",
+      "subtitle": "Invite someone to split \"{{title}}\"",
+      "userLabel": "User name or email",
+      "userPlaceholder": "Name or email...",
+      "searching": "Searching...",
+      "noResults": "No results. Try the exact email.",
+      "amountLabel": "Amount to pay",
+      "messageLabel": "Message (optional)",
+      "messagePlaceholder": "I invite you to split this expense",
+      "sendRequest": "Send Request",
+      "userDefault": "User"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "sending": "Sending...",
+      "saveChanges": "Save Changes",
+      "create": "Create Plan",
+      "add": "Add",
+      "record": "Record Payment"
+    }
+  },
+  "validation": {
+    "completeTitleAndAmount": "Complete title and amount.",
+    "invalidAmount": "Invalid amount.",
+    "completeEmailAndAmount": "Complete email and amount.",
+    "userNotFound": "User not found. Please verify the email.",
+    "cannotInviteSelf": "You cannot send a request to yourself.",
+    "insufficientBalance": "Insufficient balance in account. Current balance: {{balance}}"
+  },
+  "toasts": {
+    "planCreated": "\"{{title}}\" created",
+    "unknownError": "Unknown error",
+    "planUpdated": "\"{{title}}\" updated",
+    "deletePlanTitle": "Delete Plan",
+    "deletePlanMessage": "Delete \"{{title}}\"? This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "planDeleted": "Plan deleted",
+    "fundsAdded": "{{amount}} added to \"{{title}}\"",
+    "savingTransaction": "Savings for: {{title}}",
+    "paymentTransaction": "Payment: {{title}}",
+    "paymentRecorded": "Payment of {{amount}} recorded",
+    "shareMessageDefault": "I invite you to split \"{{title}}\"",
+    "requestSent": "Request sent to {{name}}",
+    "rejectionTitle": "Invitation rejected",
+    "rejectionMessage": "{{name}} rejected your invitation to \"{{title}}\"",
+    "requestAccepted": "Request accepted",
+    "requestRejected": "Request rejected"
+  }
+}

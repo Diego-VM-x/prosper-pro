@@ -1,13 +1,4 @@
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  onSnapshot,
-  arrayUnion,
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from '../firebase';
 import type { UserProfile } from '@/types';
 
 const COLLECTION = 'users';

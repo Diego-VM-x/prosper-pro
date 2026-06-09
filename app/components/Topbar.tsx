@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { subscribeToNotifications, markNotificationRead, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { useTranslation } from 'react-i18next';
 import { useClickOutside } from '@/lib/hooks/useClickOutside';
 import { useEscape } from '@/lib/hooks/useKeyPress';
 import {
@@ -49,7 +50,7 @@ interface TopbarProps {
  */
 export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onToggleCollapse }: TopbarProps) {
   const { theme, setTheme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, isGuest } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
   const { goals } = useGoals();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -60,6 +61,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifPermissioned, setNotifPermissioned] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { t } = useTranslation('common');
 
   // Refs para click-outside
   const notifRef = useRef<HTMLDivElement>(null);
@@ -67,7 +69,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const mobileUserMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
+  const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : isGuest ? t('topbar.guest').charAt(0) : t('topbar.user').charAt(0));
 
   const closeUserMenu = () => setShowUserMenu(false);
   const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
@@ -116,7 +118,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   // Enviar notificación push cuando hay nuevas notificaciones no leídas
   useEffect(() => {
     if (unreadCount > 0 && notifPermissioned) {
-      sendBrowserNotification('Prosper', `Tienes ${unreadCount} notificación${unreadCount > 1 ? 'es' : ''} nueva${unreadCount > 1 ? 's' : ''}`);
+      sendBrowserNotification(t('topbar.browserNotificationTitle'), t('topbar.browserNotification', { count: unreadCount }));
     }
   }, [unreadCount, notifPermissioned]);
 
@@ -172,7 +174,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     try {
       await deleteNotification(id);
     } catch (e) {
-      console.error('Error al eliminar notificación:', e);
+      console.error(t('topbar.errorDeleteNotif'), e);
       setNotifications(prev);
     }
   }, []);
@@ -184,21 +186,21 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     try {
       await deleteAllNotifications(user.uid);
     } catch (e) {
-      console.error('Error al limpiar notificaciones:', e);
+      console.error(t('topbar.errorClearNotif'), e);
       setNotifications(prev);
     }
   }, [user?.uid]);
 
   // Rutas disponibles para búsqueda
-  const searchRoutes = [
-    { name: 'Inicio', route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
-    { name: 'Dashboard', route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
-    { name: 'Planes Financieros', route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
-    { name: 'Calendario', route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
-    { name: 'Finanzas', route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
-    { name: 'Configuración', route: '/configuracion', icon: '⚙️', keywords: 'configuración ajustes preferencias' },
-    { name: 'Ayuda', route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
-  ];
+  const searchRoutes = useMemo(() => [
+    { name: t('topbar.pageHome'), route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
+    { name: t('sidebar.dashboard'), route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
+    { name: t('sidebar.planes'), route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
+    { name: t('sidebar.calendario'), route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
+    { name: t('sidebar.finanzas'), route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
+    { name: t('sidebar.configuracion'), route: '/configuracion', icon: '⚙️', keywords: 'configuración ajustes preferencias' },
+    { name: t('sidebar.ayuda'), route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
+  ], [t]);
 
   // Memoizar resultados de búsqueda para evitar re-filtrado en cada render
   const searchResults = useMemo(() =>
@@ -208,7 +210,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           r.keywords.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : [],
-    [searchQuery]
+    [searchQuery, searchRoutes]
   );
 
   const goalResults = useMemo(() =>
@@ -252,8 +254,8 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         <button
           className="topbar-collapse-btn"
           onClick={onToggleCollapse}
-          aria-label={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
-          title={isCollapsed ? 'Expandir menú' : 'Colapsar menú'}
+          aria-label={isCollapsed ? t('topbar.expandMenu') : t('topbar.collapseMenu')}
+          title={isCollapsed ? t('topbar.expandMenu') : t('topbar.collapseMenu')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             {isCollapsed ? (
@@ -267,13 +269,13 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         <button
           className="topbar-icon-btn mobile-menu-btn"
           onClick={() => setShowMobileMenu(!showMobileMenu)}
-          aria-label="Abrir menú"
+          aria-label={t('topbar.openMenu')}
         >
           {showMobileMenu ? <IconX width={20} /> : <IconMenu />}
         </button>
         {/* Título dinámico */}
         <span className="topbar-title-dynamic">
-          {isCollapsed ? 'Navegación Rápida' : `Hola, ${user?.displayName || 'Usuario'}`}
+          {isCollapsed ? t('topbar.quickNav') : t('topbar.hello', { name: user?.displayName || (isGuest ? t('topbar.guest') : t('topbar.user')) })}
         </span>
       </div>
 
@@ -283,9 +285,9 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           <IconSearch className="topbar-search-icon" />
           <input
             type="text"
-            placeholder="Buscar..."
+            placeholder={t('topbar.searchPlaceholder')}
             id="global-search"
-            aria-label="Buscador de metas"
+            aria-label={t('topbar.searchAriaLabel')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setShowSearch(true)}
@@ -306,7 +308,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             {searchResults.length > 0 && (
               <>
                 <div className="search-results-header">
-                  <span>Páginas</span>
+                  <span>{t('topbar.pages')}</span>
                   <span className="search-results-count">{searchResults.length}</span>
                 </div>
                 {searchResults.map((r) => (
@@ -330,7 +332,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             {goalResults.length > 0 && (
               <>
                 <div className="search-results-header">
-                  <span>Planes</span>
+                  <span>{t('topbar.plans')}</span>
                   <span className="search-results-count">{goalResults.length}</span>
                 </div>
                 {goalResults.slice(0, 5).map((goal) => (
@@ -355,12 +357,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             {txResults.length > 0 && (
               <>
                 <div className="search-results-header">
-                  <span>Transacciones</span>
+                  <span>{t('topbar.transactions')}</span>
                   <span className="search-results-count">{txResults.length}</span>
                 </div>
                 {txResults.slice(0, 5).map((tx) => {
                   const typeIcon = tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '💰';
-                  const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
+                  const typeLabel = tx.type === 'income' ? t('topbar.income') : tx.type === 'expense' ? t('topbar.expense') : t('topbar.savings');
                   return (
                     <div
                       key={tx.id}
@@ -382,14 +384,14 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         {showSearch && searchQuery.trim() && !hasResults && !noData && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>No se encontraron resultados para &quot;{searchQuery}&quot;</p>
+              <p>{t('topbar.noResults', { query: searchQuery })}</p>
             </div>
           </div>
         )}
         {showSearch && searchQuery.trim() && noData && (
           <div className="search-results-dropdown">
             <div className="search-no-results">
-              <p>Crea metas o transacciones para buscar</p>
+              <p>{t('topbar.createToSearch')}</p>
             </div>
           </div>
         )}
@@ -401,15 +403,15 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         <button
           className="theme-toggle"
           onClick={toggleTheme}
-          aria-label={`Cambiar a modo ${theme === 'light' ? 'oscuro' : theme === 'dark' ? 'AMOLED' : 'claro'}`}
+          aria-label={t('topbar.theme.toggle', { mode: theme === 'light' ? t('topbar.theme.dark') : theme === 'dark' ? t('topbar.theme.amoled') : t('topbar.theme.light') })}
           id="theme-toggle-btn"
-          title={theme === 'light' ? 'Cambiar a Oscuro' : theme === 'dark' ? 'Cambiar a AMOLED' : 'Cambiar a Claro'}
+          title={t('topbar.theme.toggle', { mode: theme === 'light' ? t('topbar.theme.dark') : theme === 'dark' ? t('topbar.theme.amoled') : t('topbar.theme.light') })}
         >
           <span className="theme-toggle-icon">
             {theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '☀️'}
           </span>
           <span className="theme-toggle-label">
-            {theme === 'light' ? 'Oscuro' : theme === 'dark' ? 'AMOLED' : 'Claro'}
+            {theme === 'light' ? t('topbar.theme.dark') : theme === 'dark' ? t('topbar.theme.amoled') : t('topbar.theme.light')}
           </span>
         </button>
 
@@ -417,7 +419,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         <div className="topbar-notif-wrapper">
           <button
             className="topbar-icon-btn"
-            aria-label="Notificaciones"
+            aria-label={t('topbar.notifications')}
             id="btn-notifications"
             onClick={() => setShowNotifications(!showNotifications)}
           >
@@ -428,11 +430,11 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           {showNotifications && (
             <div className="notifications-dropdown" ref={notifRef}>
               <div className="notifications-dropdown-header">
-                <span>Notificaciones</span>
+                <span>{t('topbar.notifications')}</span>
                 <div className="notif-actions">
                   {notifications.length > 0 && (
                     <button className="notif-clear-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleClearAll(); }}>
-                      Limpiar todo
+                      {t('topbar.clearAll')}
                     </button>
                   )}
                 </div>
@@ -446,13 +448,13 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <p className="notif-title">{notif.title}</p>
                     <p className="notif-message">{notif.message}</p>
                   </div>
-                  <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title="Eliminar">
+                  <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title={t('topbar.delete')}>
                     ✕
                   </button>
                 </div>
               )) : (
                 <div className="notif-empty">
-                  <p>No hay notificaciones</p>
+                  <p>{t('topbar.noNotifications')}</p>
                 </div>
               )}
             </div>
@@ -463,55 +465,58 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
         {/* Usuario */}
         <div className="topbar-user" id="user-profile" ref={userMenuRef}>
-          {user ? (
+          {user || isGuest ? (
             <>
               <div
                 className="topbar-avatar"
                 onClick={() => setShowUserMenu(!showUserMenu)}
+                style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}
               >
                 {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
               </div>
               <div className="topbar-user-info" onClick={() => setShowUserMenu(!showUserMenu)}>
-                <span className="topbar-user-name">{user?.displayName || 'Usuario'}</span>
-                <span className="topbar-user-email">{user?.email}</span>
+                <span className="topbar-user-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</span>
+                <span className="topbar-user-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</span>
               </div>
 
            {showUserMenu && (
              <div className="user-dropdown">
                <div className="user-dropdown-header">
-                 <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                 <p className="user-dropdown-email">{user?.email}</p>
+                 <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
+                 <p className="user-dropdown-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>
                </div>
-               <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
-                 <IconSettings /> Configuración
-               </Link>
+               {!isGuest && (
+                 <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
+                   <IconSettings /> {t('topbar.settings')}
+                 </Link>
+               )}
                <div className="user-dropdown-divider" />
                <button
                  className="user-dropdown-item user-dropdown-logout"
                  onClick={() => { setShowUserMenu(false); logout(); }}
                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
                >
-                 <IconLogout width={20} height={20} /> Cerrar Sesión
+                 <IconLogout width={20} height={20} /> {isGuest ? t('topbar.logoutGuest') : t('topbar.logout')}
                </button>
              </div>
            )}
             </>
           ) : (
             <Link href="/login" className="topbar-login-btn" onClick={() => setShowUserMenu(false)}>
-              <IconLogin /> Iniciar Sesión
+              <IconLogin /> {t('topbar.login')}
             </Link>
           )}
         </div>
       </div>
 
       {/* Acciones móviles: Notificaciones + Avatar */}
-      {user && (
+      {(user || isGuest) && (
         <div className="mobile-user-actions">
           {/* Notificaciones móvil */}
           <div className="mobile-notif-wrapper">
             <button
               className="topbar-icon-btn mobile-notif-btn"
-              aria-label="Notificaciones"
+              aria-label={t('topbar.notifications')}
               onClick={() => setShowNotifications(!showNotifications)}
             >
               <IconBell />
@@ -520,9 +525,9 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             {showNotifications && (
               <div className="notifications-dropdown mobile-notif-dropdown" ref={notifRef}>
                 <div className="notifications-dropdown-header">
-                  <span>Notificaciones</span>
+                  <span>{t('topbar.notifications')}</span>
                   {unreadCount > 0 && (
-                    <span className="notifications-badge">{unreadCount} nueva{unreadCount > 1 ? 's' : ''}</span>
+                    <span className="notifications-badge">{t('topbar.newNotification', { count: unreadCount })}</span>
                   )}
                 </div>
                 {notifications.length > 0 ? notifications.slice(0, 5).map((notif) => (
@@ -534,13 +539,13 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       <p className="notif-title">{notif.title}</p>
                       <p className="notif-message">{notif.message}</p>
                     </div>
-                    <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title="Eliminar">
+                    <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title={t('topbar.delete')}>
                       ✕
                     </button>
                   </div>
                 )) : (
                   <div className="notif-empty">
-                    <p>Sin notificaciones</p>
+                    <p>{t('topbar.noNotifications')}</p>
                   </div>
                 )}
               </div>
@@ -549,25 +554,27 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
           {/* Avatar con dropdown */}
           <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
-            <div className="topbar-avatar">
+            <div className="topbar-avatar" style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}>
               {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
             </div>
             <div className="mobile-user-text">
-              <span className="mobile-user-name">{user?.displayName || 'Usuario'}</span>
-              <span className="mobile-user-email">{user?.email}</span>
+              <span className="mobile-user-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</span>
+              <span className="mobile-user-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</span>
             </div>
           </div>
           {showUserMenu && (
             <div className="user-dropdown mobile-user-dropdown" ref={mobileUserMenuRef}>
               <div className="user-dropdown-header">
-                <p className="user-dropdown-name">{user?.displayName || 'Usuario'}</p>
-                <p className="user-dropdown-email">{user?.email}</p>
+                <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
+                <p className="user-dropdown-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>
               </div>
-              <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
-                <IconSettings /> Configuración
-              </Link>
+              {!isGuest && (
+                <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
+                  <IconSettings /> {t('sidebar.configuracion')}
+                </Link>
+              )}
                <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
-                  <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Claro" aria-label="Tema Claro">
+                  <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.light')} aria-label={t('topbar.theme.light')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5"></circle>
                       <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -581,12 +588,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     </svg>
                   </button>
 
-                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Oscuro" aria-label="Tema Oscuro">
+                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.dark')} aria-label={t('topbar.theme.dark')}>
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                    </svg>
                  </button>
-                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ flex: 1, padding: '10px 0' }} title="Tema AMOLED" aria-label="Tema AMOLED">
+                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.amoled')} aria-label={t('topbar.theme.amoled')}>
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                      <circle cx="12" cy="12" r="10"></circle>
                    </svg>
@@ -598,7 +605,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                  onClick={() => { setShowUserMenu(false); logout(); }}
                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
                >
-                 <IconLogout width={20} height={20} /> Cerrar Sesión
+                 <IconLogout width={20} height={20} /> {isGuest ? t('topbar.logoutGuest') : t('topbar.logout')}
                </button>
               </div>
           )}
@@ -611,12 +618,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           <div className="mobile-menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-header">
               <div className="mobile-menu-user">
-                <div className="mobile-menu-avatar">
+                <div className="mobile-menu-avatar" style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}>
                   {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={40} height={40} loading="lazy" decoding="async" /> : userInitial}
                 </div>
                 <div>
-                  <p className="mobile-menu-name">{user?.displayName || 'Usuario'}</p>
-                  <p className="mobile-menu-email">{user?.email}</p>
+                  <p className="mobile-menu-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
+                  <p className="mobile-menu-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>
                 </div>
               </div>
               <button className="mobile-menu-close" onClick={() => setShowMobileMenu(false)}>
@@ -625,32 +632,34 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             </div>
             <nav className="mobile-menu-nav">
               <Link href="/" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconDashboard /> Dashboard
+                <IconDashboard /> {t('sidebar.dashboard')}
               </Link>
               <Link href="/metas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconTasks /> Planes Financieros
+                <IconTasks /> {t('sidebar.planes')}
               </Link>
               <Link href="/calendario" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconCalendar /> Calendario
+                <IconCalendar /> {t('sidebar.calendario')}
               </Link>
               <Link href="/finanzas" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconAnalytics /> Finanzas
+                <IconAnalytics /> {t('sidebar.finanzas')}
               </Link>
-              <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconSettings /> Configuración
-              </Link>
+              {!isGuest && (
+                <Link href="/configuracion" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                  <IconSettings /> {t('sidebar.configuracion')}
+                </Link>
+              )}
               <Link href="/ayuda" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
-                <IconHelp /> Ayuda
+                <IconHelp /> {t('sidebar.ayuda')}
               </Link>
             </nav>
 
              <div className="mobile-menu-footer">
                <Link href="/" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                 Ir al Inicio
+                 {t('topbar.goHome')}
                </Link>
                 <div className="mobile-menu-theme-buttons" style={{ display: 'flex', gap: '8px' }}>
-                  <button className="mobile-menu-theme" onClick={() => { setTheme('light'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Claro" aria-label="Tema Claro">
+                  <button className="mobile-menu-theme" onClick={() => { setTheme('light'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.light')} aria-label={t('topbar.theme.light')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5"></circle>
                       <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -663,12 +672,12 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                   </button>
-                  <button className="mobile-menu-theme" onClick={() => { setTheme('dark'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title="Tema Oscuro" aria-label="Tema Oscuro">
+                  <button className="mobile-menu-theme" onClick={() => { setTheme('dark'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.dark')} aria-label={t('topbar.theme.dark')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                   </button>
-                  <button className="mobile-menu-theme" onClick={() => { setTheme('amoled'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title="Tema AMOLED" aria-label="Tema AMOLED">
+                  <button className="mobile-menu-theme" onClick={() => { setTheme('amoled'); setShowMobileMenu(false); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.amoled')} aria-label={t('topbar.theme.amoled')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
                     </svg>
@@ -676,7 +685,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 </div>
                </div>
                <button className="mobile-menu-logout" onClick={() => { setShowMobileMenu(false); logout(); }}>
-                 <IconLogout width={20} height={20} /> Cerrar Sesión
+                 <IconLogout width={20} height={20} /> {isGuest ? t('topbar.logoutGuest') : t('topbar.logout')}
                </button>
           </div>
         </div>
@@ -1150,7 +1159,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           top: calc(100% + 12px);
           right: 0;
           width: 260px;
-          max-height: 80vh;
+          max-height: 80dvh;
           overflow-y: auto;
           background: #ffffff;
           border: 1px solid var(--border-default);
@@ -1292,7 +1301,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             left: 16px;
             right: 16px;
             width: auto;
-            max-height: 80vh;
+            max-height: 80dvh;
             overflow-y: auto;
           }
           .user-dropdown:not(.mobile-user-dropdown) { 
@@ -1301,7 +1310,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             left: 16px;
             right: 16px;
             width: auto;
-            max-height: 80vh;
+            max-height: 80dvh;
             overflow-y: auto;
           }
           .user-dropdown.mobile-user-dropdown {
@@ -1312,7 +1321,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             right: 0 !important;
             width: 100% !important;
             border-radius: 20px 20px 0 0 !important;
-            max-height: 80vh !important;
+            max-height: 80dvh !important;
             overflow-y: auto !important;
             animation: none;
           }

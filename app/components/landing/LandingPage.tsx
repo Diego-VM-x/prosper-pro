@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+
 import { AnimatedSection } from '../AnimatedSection';
 import { LandingHeader } from './LandingHeader';
 import { HeroMockup } from './HeroMockup';
@@ -15,154 +16,113 @@ import { SecuritySection } from './SecuritySection';
 import { FaqAccordion } from './FaqAccordion';
 import { Footer } from './Footer';
 
-const FEATURES = [
-  {
-    icon: '📊',
-    title: 'Gestión de Cuentas Multi-moneda',
-    description: 'Administra todas tus cuentas en un solo lugar. Soporta monedas fiduciarias y criptomonedas con conversión automática.',
-    features: ['Cuentas multi-moneda independientes', 'Transferencias con conversión automática', 'Historial completo de transacciones'],
-    visual: (
-      <div className="feature-visual-accounts">
-        <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
-          <span className="feature-account-icon">💰</span>
-          <span className="feature-account-name">Ahorro</span>
-          <span className="feature-account-balance">$1,240</span>
-        </div>
-        <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
-          <span className="feature-account-icon">🏦</span>
-          <span className="feature-account-name">Corriente</span>
-          <span className="feature-account-balance">$3,580</span>
-        </div>
-        <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
-          <span className="feature-account-icon">💎</span>
-          <span className="feature-account-name">USDT</span>
-          <span className="feature-account-balance">₮850</span>
-        </div>
+const FEATURE_VISUALS = [
+  (
+    <div className="feature-visual-accounts">
+      <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
+        <span className="feature-account-icon">💰</span>
+        <span className="feature-account-name">Ahorro</span>
+        <span className="feature-account-balance">$1,240</span>
       </div>
-    ),
-    large: true,
-    delay: 0,
-  },
-  {
-    icon: '🎯',
-    title: 'Planes Financieros',
-    description: 'Crea planes de ahorro, gastos planificados y pagos recurrentes. Sigue tu progreso visualmente.',
-    features: ['Metas con fecha límite', 'Pagos recurrentes automáticos', 'Compartir gastos con otros'],
-    visual: (
-      <div className="feature-visual-goals">
-        <div className="feature-goal-mini">
-          <span>🚗 Auto</span>
-          <div className="feature-goal-bar"><div className="feature-goal-fill" style={{ width: '65%' }} /></div>
-        </div>
-        <div className="feature-goal-mini">
-          <span>🏖️ Vacaciones</span>
-          <div className="feature-goal-bar"><div className="feature-goal-fill blue" style={{ width: '42%' }} /></div>
-        </div>
+      <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
+        <span className="feature-account-icon">🏦</span>
+        <span className="feature-account-name">Corriente</span>
+        <span className="feature-account-balance">$3,580</span>
       </div>
-    ),
-    delay: 100,
-  },
-  {
-    icon: '📈',
-    title: 'Análisis Visual',
-    description: 'Gráficos interactivos que muestran tus ingresos, gastos y ahorro por período.',
-    features: ['Gráficas por día, semana, mes o año', 'Conversión entre monedas al instante', 'Resumen financiero detallado'],
-    visual: (
-      <div className="feature-visual-chart">
-        {[35, 55, 40, 70, 50, 85, 60].map((h, i) => (
-          <div key={i} className="feature-chart-bar" style={{ height: `${h}%` }} />
-        ))}
+      <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
+        <span className="feature-account-icon">💎</span>
+        <span className="feature-account-name">USDT</span>
+        <span className="feature-account-balance">₮850</span>
       </div>
-    ),
-    delay: 200,
-  },
-  {
-    icon: '⚡',
-    title: 'Tasas en Tiempo Real',
-    description: 'Tasas BCV oficial para monedas fiduciarias y P2P Binance para criptomonedas.',
-    features: ['BCV, EUR, COP actualizados', 'P2P para USDT, SOL, BTC, USDC', 'Modo oficial vs P2P por cuenta'],
-    visual: (
-      <div className="feature-visual-rates">
-        <div className="feature-rate-pill"><span>USD/BS</span><span>45.20</span></div>
-        <div className="feature-rate-pill active"><span>USDT/BS</span><span>46.80</span></div>
-        <div className="feature-rate-pill"><span>EUR/BS</span><span>49.10</span></div>
+    </div>
+  ),
+  (
+    <div className="feature-visual-goals">
+      <div className="feature-goal-mini">
+        <span>🚗 Auto</span>
+        <div className="feature-goal-bar"><div className="feature-goal-fill" style={{ width: '65%' }} /></div>
       </div>
-    ),
-    delay: 300,
-  },
-  {
-    icon: '📅',
-    title: 'Calendario Inteligente',
-    description: 'Organiza recordatorios, fechas de pago y vencimientos de tus planes financieros.',
-    features: ['Recordatorios personalizables', 'Integración con transacciones', 'Alertas de vencimiento'],
-    visual: (
-      <div className="feature-visual-calendar">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className={`feature-cal-day ${[2, 7, 10].includes(i) ? 'event' : ''}`}>{i + 1}</div>
-        ))}
+      <div className="feature-goal-mini">
+        <span>🏖️ Vacaciones</span>
+        <div className="feature-goal-bar"><div className="feature-goal-fill blue" style={{ width: '42%' }} /></div>
       </div>
-    ),
-    delay: 400,
-  },
-  {
-    icon: '🎓',
-    title: 'Academia Financiera',
-    description: 'Cursos prácticos para mejorar tu educación financiera desde cero hasta avanzado.',
-    features: ['Cursos con progreso guardado', 'Contenido práctico y aplicable', 'Aprende a tu ritmo'],
-    visual: (
-      <div className="feature-visual-courses">
-        <div className="feature-course-mini">
-          <span>📘 Presupuesto</span>
-          <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '75%' }} /></div>
-        </div>
-        <div className="feature-course-mini">
-          <span>📗 Ahorro</span>
-          <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '30%' }} /></div>
-        </div>
+    </div>
+  ),
+  (
+    <div className="feature-visual-chart">
+      {[35, 55, 40, 70, 50, 85, 60].map((h, i) => (
+        <div key={i} className="feature-chart-bar" style={{ height: `${h}%` }} />
+      ))}
+    </div>
+  ),
+  (
+    <div className="feature-visual-rates">
+      <div className="feature-rate-pill"><span>USD/BS</span><span>45.20</span></div>
+      <div className="feature-rate-pill active"><span>USDT/BS</span><span>46.80</span></div>
+      <div className="feature-rate-pill"><span>EUR/BS</span><span>49.10</span></div>
+    </div>
+  ),
+  (
+    <div className="feature-visual-calendar">
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className={`feature-cal-day ${[2, 7, 10].includes(i) ? 'event' : ''}`}>{i + 1}</div>
+      ))}
+    </div>
+  ),
+  (
+    <div className="feature-visual-courses">
+      <div className="feature-course-mini">
+        <span>📘 Presupuesto</span>
+        <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '75%' }} /></div>
       </div>
-    ),
-    delay: 500,
-  },
-  {
-    icon: '📸',
-    title: 'VEPay OCR',
-    description: 'Captura comprobantes bancarios venezolanos y extrae datos automáticamente.',
-    features: ['20+ bancos soportados', 'Extracción de monto, ref. y fecha', 'Procesamiento en lote'],
-    visual: (
-      <div className="feature-visual-ocr">
-        <div className="feature-ocr-receipt">
-          <div className="feature-ocr-row"><span>Banco</span><span>Banesco</span></div>
-          <div className="feature-ocr-row"><span>Monto</span><span>$120.00</span></div>
-          <div className="feature-ocr-row"><span>Ref.</span><span>00992344</span></div>
-          <div className="feature-ocr-status">✓ Verificado</div>
-        </div>
+      <div className="feature-course-mini">
+        <span>📗 Ahorro</span>
+        <div className="feature-course-progress"><div className="feature-course-fill" style={{ width: '30%' }} /></div>
       </div>
-    ),
-    delay: 600,
-  },
-  {
-    icon: '🤝',
-    title: 'Compartir Gastos',
-    description: 'Divide gastos con amigos, familia o compañeros de trabajo directamente en la app.',
-    features: ['Invitaciones por email', 'Solicitudes de pago', 'Notificaciones en tiempo real'],
-    visual: (
-      <div className="feature-visual-share">
-        <div className="feature-share-avatars">
-          <span className="feature-share-avatar">M</span>
-          <span className="feature-share-avatar">C</span>
-          <span className="feature-share-avatar">A</span>
-          <span className="feature-share-avatar">+2</span>
-        </div>
-        <div className="feature-share-pill">$450 / 5 personas</div>
+    </div>
+  ),
+  (
+    <div className="feature-visual-ocr">
+      <div className="feature-ocr-receipt">
+        <div className="feature-ocr-row"><span>Banco</span><span>Banesco</span></div>
+        <div className="feature-ocr-row"><span>Monto</span><span>$120.00</span></div>
+        <div className="feature-ocr-row"><span>Ref.</span><span>00992344</span></div>
+        <div className="feature-ocr-status">✓ Verificado</div>
       </div>
-    ),
-    delay: 700,
-  },
+    </div>
+  ),
+  (
+    <div className="feature-visual-share">
+      <div className="feature-share-avatars">
+        <span className="feature-share-avatar">M</span>
+        <span className="feature-share-avatar">C</span>
+        <span className="feature-share-avatar">A</span>
+        <span className="feature-share-avatar">+2</span>
+      </div>
+      <div className="feature-share-pill">$450 / 5 personas</div>
+    </div>
+  ),
 ];
+
+interface FeatureItem {
+  icon: string;
+  title: string;
+  description: string;
+  features: string[];
+}
 
 export function LandingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { t } = useTranslation('landing');
+  const user = null;
+
+  const FEATURES_DATA = t('features.items', { returnObjects: true }) as FeatureItem[];
+  const FEATURES = FEATURES_DATA.map((f, i) => ({
+    ...f,
+    visual: FEATURE_VISUALS[i],
+    large: i === 0,
+    delay: i * 100,
+  }));
 
   return (
     <div className="landing-page">
@@ -183,22 +143,22 @@ export function LandingPage() {
             <AnimatedSection animationType="fade-up" delay={0}>
               <div className="landing-badge">
                 <span className="landing-badge-dot" />
-                {user ? 'Ya estás registrado' : '100% Gratis · Sin anuncios · Multi-moneda'}
+                {user ? t('hero.badge.registered') : t('hero.badge.free')}
               </div>
             </AnimatedSection>
 
             <AnimatedSection animationType="fade-up" delay={100}>
               <h1 className="landing-hero-title">
-                Toma el control de tu
-                <span className="landing-gradient-text"> futuro financiero</span>
+                {t('hero.title')}
+                <span className="landing-gradient-text">{t('hero.titleHighlight')}</span>
               </h1>
             </AnimatedSection>
 
             <AnimatedSection animationType="fade-up" delay={200}>
               <p className="landing-hero-subtitle">
                 {user
-                  ? 'Bienvenido de vuelta. Explora las novedades de Prosper o vuelve a tu dashboard.'
-                  : 'Gestiona cuentas en múltiples monedas, crea planes de ahorro, analiza tus gastos, importa comprobantes con OCR y aprende finanzas personales. Todo en un solo lugar.'}
+                  ? t('hero.subtitle.registered')
+                  : t('hero.subtitle.guest')}
               </p>
             </AnimatedSection>
 
@@ -206,17 +166,17 @@ export function LandingPage() {
               <div className="landing-hero-cta">
                 {user ? (
                   <button className="btn btn-primary btn-xl" onClick={() => router.push('/')}>
-                    Ir al Dashboard
+                    {t('hero.cta.goToDashboard')}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                   </button>
                 ) : (
                   <>
                     <button className="btn btn-primary btn-xl" onClick={() => router.push('/register')}>
-                      Crear Cuenta Gratis
+                      {t('hero.cta.createAccount')}
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </button>
                     <button className="btn btn-outline btn-xl" onClick={() => router.push('/login')}>
-                      Ya tengo cuenta
+                      {t('hero.cta.haveAccount')}
                     </button>
                   </>
                 )}
@@ -226,23 +186,23 @@ export function LandingPage() {
             <AnimatedSection animationType="fade-up" delay={400}>
               <div className="landing-hero-stats">
                 <div className="hero-stat">
-                  <span className="hero-stat-value">Multi-moneda</span>
-                  <span className="hero-stat-label">8 monedas</span>
+                  <span className="hero-stat-value">{t('hero.stats.multiCurrency.label')}</span>
+                  <span className="hero-stat-label">{t('hero.stats.multiCurrency.value')}</span>
                 </div>
                 <div className="hero-stat-divider" />
                 <div className="hero-stat">
-                  <span className="hero-stat-value">Tiempo real</span>
-                  <span className="hero-stat-label">Tasas actualizadas</span>
+                  <span className="hero-stat-value">{t('hero.stats.realTime.label')}</span>
+                  <span className="hero-stat-label">{t('hero.stats.realTime.value')}</span>
                 </div>
                 <div className="hero-stat-divider" />
                 <div className="hero-stat">
-                  <span className="hero-stat-value">Privado</span>
-                  <span className="hero-stat-label">Solo tú lo ves</span>
+                  <span className="hero-stat-value">{t('hero.stats.private.label')}</span>
+                  <span className="hero-stat-label">{t('hero.stats.private.value')}</span>
                 </div>
                 <div className="hero-stat-divider" />
                 <div className="hero-stat">
-                  <span className="hero-stat-value">Seguro</span>
-                  <span className="hero-stat-label">Auth por Firebase</span>
+                  <span className="hero-stat-value">{t('hero.stats.secure.label')}</span>
+                  <span className="hero-stat-label">{t('hero.stats.secure.value')}</span>
                 </div>
               </div>
             </AnimatedSection>
@@ -268,9 +228,9 @@ export function LandingPage() {
           <div className="lp-container">
             <AnimatedSection animationType="fade-up" delay={0}>
               <div className="section-header">
-                <span className="section-tag">Funciones</span>
-                <h2 className="section-title">Todo lo que necesitas para crecer financieramente</h2>
-                <p className="section-desc">Herramientas poderosas diseñadas para simplificar tu vida financiera.</p>
+                <span className="section-tag">{t('features.sectionTag')}</span>
+                <h2 className="section-title">{t('features.sectionTitle')}</h2>
+                <p className="section-desc">{t('features.sectionDesc')}</p>
               </div>
             </AnimatedSection>
 
@@ -306,22 +266,22 @@ export function LandingPage() {
                 <div className="cta-shape cta-shape-2" />
               </div>
               <div className="cta-content">
-                <h2>¿Listo para tomar el control?</h2>
-                <p>Únete a Prosper Pro y comienza a construir tu libertad financiera hoy mismo.</p>
+                <h2>{t('cta.title')}</h2>
+                <p>{t('cta.description')}</p>
                 <div className="cta-buttons">
                   {user ? (
                     <button className="btn btn-white btn-xl" onClick={() => router.push('/')}>
-                      Ir al Dashboard
+                      {t('cta.goToDashboard')}
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </button>
                   ) : (
                     <button className="btn btn-white btn-xl" onClick={() => router.push('/register')}>
-                      Comenzar Gratis
+                      {t('cta.startFree')}
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </button>
                   )}
                 </div>
-                <p className="cta-note">{user ? 'Ya tienes una cuenta activa' : 'Sin tarjeta de crédito · Sin compromisos · 100% gratis'}</p>
+                <p className="cta-note">{user ? t('cta.note.registered') : t('cta.note.guest')}</p>
               </div>
             </div>
           </AnimatedSection>

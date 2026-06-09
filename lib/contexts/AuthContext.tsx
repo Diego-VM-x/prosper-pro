@@ -1,42 +1,55 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, updateCurrentUser, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { enableOfflinePersistence } from '@/lib/firebase';
-import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
-
 import type { CurrencyCode } from '@/types';
 
-
 interface AuthContextType {
-  user: User | null;
+  user: any | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<void>;
+  isGuest: boolean;
+  loginWithGoogle: () => Promise<any | null>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
   wipeAllData: () => Promise<{ success: boolean; wiped?: string[]; errors?: string[]; error?: string }>;
   enableNotifications: () => Promise<boolean>;
+  enterGuestMode: () => void;
+  exitGuestMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  loginWithGoogle: async () => {},
+  isGuest: false,
+  loginWithGoogle: async () => null,
   loginWithEmail: async () => {},
   registerWithEmail: async () => {},
   logout: async () => {},
   deleteAccount: async () => ({ success: false, error: 'No disponible' }),
   wipeAllData: async () => ({ success: false, error: 'No disponible' }),
   enableNotifications: async () => false,
+  enterGuestMode: () => {},
+  exitGuestMode: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
-function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }): User {
+function getStoredTokens() {
+  try {
+    const raw = localStorage.getItem('prosper_auth') || sessionStorage.getItem('prosper_auth');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+function clearStoredTokens() {
+  try { localStorage.removeItem('prosper_auth'); } catch {}
+  try { sessionStorage.removeItem('prosper_auth'); } catch {}
+}
+
+function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
   return {
     uid: response.localId,
     email: response.email || null,
@@ -67,122 +80,56 @@ function createUserObject(response: { localId: string; email?: string; displayNa
       signInSecondFactor: null,
     }),
     reload: async () => {},
-  } as unknown as User;
+  };
 }
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const router = useRouter();
+  const coreRef = useRef<any>(null);
+  const unsubRef = useRef<(() => void) | null>(null);
 
+  const enterGuestMode = useCallback(() => {
+    setIsGuest(true);
+    setUser({
+      uid: null,
+      email: null,
+      displayName: 'Invitado',
+      photoURL: null,
+      isAnonymous: true,
+      metadata: {},
+      getIdToken: async () => '',
+    });
+    setLoading(false);
+    try { localStorage.setItem('prosper_guest', '1'); } catch {}
+  }, []);
+
+  const exitGuestMode = useCallback(() => {
+    setIsGuest(false);
+    setUser(null);
+    try { localStorage.removeItem('prosper_guest'); } catch {}
+  }, []);
+
+  // Fast init: check localStorage synchronously, load Firebase only if needed
   useEffect(() => {
-    let cancelled = false;
-    async function init() {
-      if (!auth) {
-        if (!cancelled) setLoading(false);
+    // Check for guest mode first
+    try {
+      const guestFlag = localStorage.getItem('prosper_guest');
+      if (guestFlag === '1') {
+        enterGuestMode();
         return;
       }
-      await enableOfflinePersistence();
+    } catch {}
 
-      const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (cancelled) return;
-        if (firebaseUser) {
-          setUser(firebaseUser);
-          await onUserReady(firebaseUser);
-        } else {
-          const tokens = await getStoredTokens();
-          if (tokens && tokens.idToken) {
-            const userObj = createUserObject({
-              localId: tokens.localId,
-              email: tokens.email,
-              displayName: tokens.displayName,
-              photoUrl: tokens.photoUrl,
-              idToken: tokens.idToken,
-              refreshToken: tokens.refreshToken,
-            });
-            setUser(userObj);
-            if (auth) {
-              try { await updateCurrentUser(auth, userObj); } catch {}
-            }
-            try {
-              const { getUserDataRest } = await import('@/lib/firebase-auth-rest');
-              const data = await getUserDataRest(tokens.idToken);
-              if (data && data.localId) {
-                await onUserReady(userObj);
-              } else {
-                clearStoredTokens();
-                setUser(null);
-              }
-            } catch {
-              clearStoredTokens();
-              setUser(null);
-            }
-          }
-        }
-        if (!cancelled) setLoading(false);
-      });
-      return () => { cancelled = true; unsub(); };
-    }
-    init();
-    }, []);
-
-    async function onUserReady(u: User) {
-      try {
-        const profile = await getUserProfile(u.uid);
-        if (!profile) {
-          await createUserProfile({
-            uid: u.uid,
-            displayName: u.displayName,
-            email: u.email,
-            photoURL: u.photoURL,
-            createdAt: Date.now(),
-            currency: 'USD' as CurrencyCode,
-            showProfile: true,
-          });
-        }
-
-        // Request notification permission
-        try {
-          const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
-          await requestNotificationPermission();
-        } catch (error) {
-          console.error('Failed to request notification permission:', error);
-        }
-
-        // Initialize Capacitor native push notifications (no-op on web).
-        try {
-          // Native push notifications are not available on web
-        } catch (error) {
-          console.error('Failed to init native push notifications:', error);
-        }
-      } catch (error) {
-        console.error('Error in onUserReady:', error);
-      }
+    const tokens = getStoredTokens();
+    if (!tokens) {
+      setLoading(false);
+      return;
     }
 
-  async function getStoredTokens() {
-    try {
-      const raw = localStorage.getItem('prosper_auth') || sessionStorage.getItem('prosper_auth');
-      if (raw) return JSON.parse(raw);
-      return null;
-    } catch { return null; }
-  }
-
-function storeTokens(tokens: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
-  try {
-    const json = JSON.stringify(tokens);
-    localStorage.setItem('prosper_auth', json);
-    sessionStorage.setItem('prosper_auth', json);
-  } catch {}
-}
-
-function clearStoredTokens() {
-  try { localStorage.removeItem('prosper_auth'); } catch {}
-  try { sessionStorage.removeItem('prosper_auth'); } catch {}
-}
-
-  async function setAppUser(tokens: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
-    storeTokens(tokens);
+    // Show user from tokens immediately (avoids blank screen)
     const userObj = createUserObject({
       localId: tokens.localId,
       email: tokens.email,
@@ -192,129 +139,98 @@ function clearStoredTokens() {
       refreshToken: tokens.refreshToken,
     });
     setUser(userObj);
-    if (auth) {
-      try { await updateCurrentUser(auth, userObj); } catch {}
-    }
-    try {
-      const profile = await getUserProfile(tokens.localId);
-      if (!profile) {
-        await createUserProfile({
-          uid: tokens.localId,
-          displayName: tokens.displayName || null,
-          email: tokens.email || null,
-          photoURL: tokens.photoUrl || null,
-          createdAt: Date.now(),
-          currency: 'USD' as CurrencyCode,
-          showProfile: true,
-        });
-      }
-    } catch {}
-  }
 
-  const loginWithGoogle = async () => {
-    if (!auth) throw new Error('Firebase Auth no está disponible.');
-    const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  };
-
-  const loginWithEmail = async (email: string, pass: string) => {
-    if (!auth) throw new Error('Firebase Auth no está disponible.');
-    if (!navigator.onLine) throw { code: 'auth/network-request-failed', message: 'Sin conexión a internet.' };
-    try {
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      const userCred = await signInWithEmailAndPassword(auth, email, pass);
-      storeTokens({
-        localId: userCred.user.uid,
-        email: userCred.user.email || undefined,
-        displayName: userCred.user.displayName || undefined,
-        photoUrl: userCred.user.photoURL || undefined,
-        idToken: await userCred.user.getIdToken(),
-        refreshToken: (userCred.user as any).refreshToken || '',
+    // Lazy load Firebase auth core
+    let cancelled = false;
+    import('./firebase-auth-core').then((core) => {
+      coreRef.current = core;
+      if (cancelled) return;
+      core.initAuth({ setUser, setLoading }).then((unsub) => {
+        if (!cancelled) unsubRef.current = unsub;
       });
-      setUser(userCred.user);
-      await onUserReady(userCred.user);
-    } catch (e: any) {
-      throw e;
-    }
-  };
+    });
 
-  const registerWithEmail = async (email: string, pass: string, name: string, currency?: CurrencyCode) => {
-    if (!auth) return;
-    try {
-      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-      const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-      await updateProfile(userCred.user, { displayName: name });
-      storeTokens({
-        localId: userCred.user.uid,
-        email: userCred.user.email || undefined,
-        displayName: name,
-        photoUrl: userCred.user.photoURL || undefined,
-        idToken: await userCred.user.getIdToken(),
-        refreshToken: (userCred.user as any).refreshToken || '',
-      });
-      setUser(userCred.user);
-      await createUserProfile({
-        uid: userCred.user.uid,
-        displayName: name,
-        email: email,
-        photoURL: null,
-        createdAt: Date.now(),
-        currency: currency || 'USD',
-        showProfile: true,
-      });
-      await onUserReady(userCred.user);
-    } catch (e: any) {
-      throw e;
-    }
-  };
+    return () => {
+      cancelled = true;
+      if (unsubRef.current) unsubRef.current();
+    };
+  }, []);
 
-  const logout = async () => {
+  const loginWithGoogle = useCallback(async () => {
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    const firebaseUser = await core.loginWithGoogleImpl();
+    if (firebaseUser) {
+      setUser(firebaseUser);
+    }
+    return firebaseUser;
+  }, []);
+
+  const loginWithEmail = useCallback(async (email: string, pass: string) => {
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    const firebaseUser = await core.loginWithEmailImpl(email, pass);
+    setUser(firebaseUser);
+  }, []);
+
+  const registerWithEmail = useCallback(async (email: string, pass: string, name: string, currency?: CurrencyCode) => {
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    const firebaseUser = await core.registerWithEmailImpl(email, pass, name, currency);
+    setUser(firebaseUser);
+  }, []);
+
+  const logout = useCallback(async () => {
     clearStoredTokens();
+    exitGuestMode();
     setUser(null);
-    if (auth) try { await signOut(auth); } catch {}
+    if (coreRef.current) {
+      try { await coreRef.current.logoutImpl(); } catch {}
+    }
     router.push('/login');
-  };
+  }, [router, exitGuestMode]);
 
-  const deleteAccount = async () => {
-    if (!auth || !user) return { success: false, error: 'No hay usuario autenticado' };
-    try {
-      const { wipeAllUserData } = await import('@/lib/firestore/accounts');
-      const result = await wipeAllUserData(user.uid);
-      try {
-        const { deleteUser } = await import('firebase/auth');
-        await deleteUser(user);
-      } catch {}
-      clearStoredTokens();
+  const deleteAccount = useCallback(async () => {
+    if (!user) return { success: false, error: 'No hay usuario autenticado' };
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    const result = await core.deleteAccountImpl(user);
+    if (result.success) {
       setUser(null);
       router.push('/login');
-      return { success: true, wiped: result.wiped };
-    } catch (e: any) {
-      if (e?.code === 'auth/requires-recent-login') {
-        return { success: false, needsReauth: true, error: 'Debes volver a iniciar sesión por seguridad antes de eliminar tu cuenta.' };
-      }
-      return { success: false, error: e?.message || 'Error desconocido al eliminar la cuenta.' };
     }
-  };
+    return result;
+  }, [user, router]);
 
-  const enableNotifications = async () => {
-    const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
-    return requestNotificationPermission();
-  };
+  const wipeAllData = useCallback(async () => {
+    if (!user) return { success: false, error: 'No hay usuario autenticado' };
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    return core.wipeAllDataImpl(user);
+  }, [user]);
 
-  const wipeAllData = async () => {
-    if (!auth || !user) return { success: false, error: 'No hay usuario autenticado' };
-    try {
-      const { wipeAllUserData } = await import('@/lib/firestore/accounts');
-      const result = await wipeAllUserData(user.uid);
-      return { success: true, wiped: result.wiped, errors: result.errors };
-    } catch (e: any) {
-      return { success: false, error: e?.message || 'Error desconocido al borrar datos.' };
-    }
-  };
+  const enableNotifications = useCallback(async () => {
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    return core.enableNotificationsImpl();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout, deleteAccount, wipeAllData, enableNotifications }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isGuest,
+      loginWithGoogle,
+      loginWithEmail,
+      registerWithEmail,
+      logout,
+      deleteAccount,
+      wipeAllData,
+      enableNotifications,
+      enterGuestMode,
+      exitGuestMode,
+    }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}

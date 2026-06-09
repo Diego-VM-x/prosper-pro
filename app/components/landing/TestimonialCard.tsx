@@ -1,40 +1,27 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
 
-const TESTIMONIALS = [
-  {
-    name: 'Mariana R.',
-    role: 'Freelancer',
-    avatar: '👩‍💻',
-    content: 'Prosper me ayudó a organizar mis ingresos en USD y BS. Las tasas en tiempo real son exactas y el dashboard es súper claro.',
-    stars: 5,
-  },
-  {
-    name: 'Carlos G.',
-    role: 'Emprendedor',
-    avatar: '👨‍💼',
-    content: 'El VEPay OCR me ahorra horas cada semana. Subo las capturas de mis pagos y Prosper extrae todo automáticamente.',
-    stars: 5,
-  },
-  {
-    name: 'Andrea P.',
-    role: 'Estudiante',
-    avatar: '👩‍🎓',
-    content: 'Los cursos de la Academia son prácticos y cortos. Por primera vez entiendo cómo administrar mi dinero.',
-    stars: 5,
-  },
-];
+interface TestimonialItem {
+  name: string;
+  role: string;
+  avatar: string;
+  content: string;
+  stars: number;
+}
 
 export function Testimonials() {
+  const { t } = useTranslation('landing');
+  const TESTIMONIALS = t('testimonials.items', { returnObjects: true }) as TestimonialItem[];
   return (
     <section className="landing-testimonials-section">
       <div className="landing-testimonials-inner">
         <AnimatedSection animationType="fade-up" delay={0}>
           <div className="section-header">
-            <span className="section-tag">Testimonios</span>
-            <h2 className="section-title">Lo que dicen nuestros usuarios</h2>
-            <p className="section-desc">Miles de personas ya organizan sus finanzas con Prosper Pro.</p>
+            <span className="section-tag">{t('testimonials.sectionTag')}</span>
+            <h2 className="section-title">{t('testimonials.sectionTitle')}</h2>
+            <p className="section-desc">{t('testimonials.sectionDesc')}</p>
           </div>
         </AnimatedSection>
 

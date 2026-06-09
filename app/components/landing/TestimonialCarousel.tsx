@@ -1,54 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
 
-const TESTIMONIALS = [
-  {
-    name: 'Mariana R.',
-    role: 'Freelancer',
-    avatar: '👩‍💻',
-    content: 'Prosper me ayudó a organizar mis ingresos en USD y BS. Las tasas en tiempo real son exactas y el dashboard es súper claro.',
-    stars: 5,
-  },
-  {
-    name: 'Carlos G.',
-    role: 'Emprendedor',
-    avatar: '👨‍💼',
-    content: 'El VEPay OCR me ahorra horas cada semana. Subo las capturas de mis pagos y Prosper extrae todo automáticamente.',
-    stars: 5,
-  },
-  {
-    name: 'Andrea P.',
-    role: 'Estudiante',
-    avatar: '👩‍🎓',
-    content: 'Los cursos de la Academia son prácticos y cortos. Por primera vez entiendo cómo administrar mi dinero.',
-    stars: 5,
-  },
-  {
-    name: 'Luis M.',
-    role: 'Ingeniero',
-    avatar: '👨‍🔧',
-    content: 'Compartir gastos con mi familia nunca fue tan fácil. Cada uno ve su parte y yo tengo el control total.',
-    stars: 5,
-  },
-  {
-    name: 'Sofía T.',
-    role: 'Contadora',
-    avatar: '👩‍💼',
-    content: 'Recomiendo Prosper a todos mis clientes. La multi-moneda y el calendario de vencimientos son indispensables.',
-    stars: 5,
-  },
-  {
-    name: 'Daniel K.',
-    role: 'Trader',
-    avatar: '👨‍💻',
-    content: 'El modo P2P para cripto es exacto. Comparado con otros apps, Prosper tiene las tasas más actualizadas del mercado.',
-    stars: 5,
-  },
-];
+interface TestimonialItem {
+  name: string;
+  role: string;
+  avatar: string;
+  content: string;
+  stars: number;
+}
 
 export function TestimonialCarousel() {
+  const { t } = useTranslation('landing');
+  const TESTIMONIALS = t('testimonials.items', { returnObjects: true }) as TestimonialItem[];
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -95,16 +61,16 @@ export function TestimonialCarousel() {
                   key={i}
                   className={`testimonial-dot ${i === active ? 'active' : ''}`}
                   onClick={() => setActive(i)}
-                  aria-label={`Ver testimonio ${i + 1}`}
+                  aria-label={t('testimonials.aria.viewTestimonial', { n: i + 1 })}
                 />
               ))}
             </div>
 
             <div className="testimonial-nav">
-              <button className="testimonial-nav-btn" onClick={() => setActive((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)} aria-label="Anterior">
+              <button className="testimonial-nav-btn" onClick={() => setActive((prev) => (prev - 1 + TESTIMONIALS.length) % TESTIMONIALS.length)} aria-label={t('testimonials.aria.prev')}>
                 ←
               </button>
-              <button className="testimonial-nav-btn" onClick={() => setActive((prev) => (prev + 1) % TESTIMONIALS.length)} aria-label="Siguiente">
+              <button className="testimonial-nav-btn" onClick={() => setActive((prev) => (prev + 1) % TESTIMONIALS.length)} aria-label={t('testimonials.aria.next')}>
                 →
               </button>
             </div>

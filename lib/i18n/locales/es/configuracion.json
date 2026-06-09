@@ -1,0 +1,150 @@
+{
+  "header": {
+    "title": "Configuración",
+    "subtitle": "Gestiona tu perfil, preferencias y seguridad."
+  },
+  "tabs": {
+    "perfil": "Perfil",
+    "preferencias": "Preferencias",
+    "notificaciones": "Alertas",
+    "seguridad": "Seguridad"
+  },
+  "perfil": {
+    "panelTitle": "Información Personal",
+    "panelDesc": "Tu identidad en Prosper",
+    "avatarAlt": "Avatar",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Tu nombre",
+    "emailLabel": "Email",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "Describe tu perfil financiero...",
+    "planBadge": "Free",
+    "planTitle": "Plan Gratuito",
+    "planDesc": "Acceso completo a Prosper",
+    "planFeatures": {
+      "unlimitedGoals": "Metas ilimitadas",
+      "fullDashboard": "Dashboard completo",
+      "courses": "Cursos educativos"
+    }
+  },
+  "preferencias": {
+    "languageCurrencyTitle": "Idioma y Moneda",
+    "languageCurrencyDesc": "Personaliza tu experiencia",
+    "languageLabel": "Idioma de Interfaz",
+    "inDevelopment": "En Desarrollo",
+    "currencyLabel": "Moneda de Visualización",
+    "ratesLabel": "Tasas de Cambio Activas",
+    "appearanceTitle": "Apariencia",
+    "appearanceDesc": "Tema visual de la aplicación",
+    "themes": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "amoled": "AMOLED"
+    },
+    "updateNotesLabel": "Mostrar notas de actualización",
+    "yes": "Sí",
+    "no": "No",
+    "privacyLabel": "Privacidad del Perfil",
+    "privacyHint": "Controla si otros usuarios pueden encontrarte al buscar por nombre para compartir planes.",
+    "publicProfile": "Perfil Público",
+    "privateProfile": "Perfil Privado",
+    "publicDesc": "Otros usuarios pueden encontrarte por nombre o email al compartir planes.",
+    "privateDesc": "Solo te pueden encontrar por email exacto. Tu nombre no aparece en búsquedas."
+  },
+  "notificaciones": {
+    "panelTitle": "Centro de Notificaciones",
+    "panelDesc": "Controla qué alertas recibes",
+    "toggles": {
+      "push": {
+        "label": "Notificaciones Push",
+        "desc": "Alertas en el navegador"
+      },
+      "priceAlerts": {
+        "label": "Alertas de Precio",
+        "desc": "En desarrollo"
+      },
+      "budgetAlerts": {
+        "label": "Alertas de Presupuesto",
+        "desc": "En desarrollo"
+      },
+      "planInvite": {
+        "label": "Invitaciones a Planes",
+        "desc": "Cuando te inviten a colaborar"
+      },
+      "planContribution": {
+        "label": "Aportes a Planes",
+        "desc": "Cuando alguien aporte a tu plan"
+      },
+      "planReminder": {
+        "label": "Recordatorios de Planes",
+        "desc": "Fechas límite próximas"
+      },
+      "planRejected": {
+        "label": "Planes Rechazados",
+        "desc": "Cuando rechacen o eliminen tu plan"
+      },
+      "dollarChange": {
+        "label": "Cambio del Dólar",
+        "desc": "Variación de la tasa BCV"
+      },
+      "dailyBalance": {
+        "label": "Balance Diario",
+        "desc": "Resumen diario a las 12pm UTC"
+      },
+      "appUpdate": {
+        "label": "Actualizaciones",
+        "desc": "Nuevas versiones de la app"
+      },
+      "calendarReminder": {
+        "label": "Recordatorios de Calendario",
+        "desc": "En desarrollo"
+      }
+    }
+  },
+  "seguridad": {
+    "sessionsTitle": "Sesiones Activas",
+    "sessionsDesc": "Dispositivos conectados a tu cuenta",
+    "thisDevice": "Este Dispositivo",
+    "sessionDetail": "Chrome · Activo ahora",
+    "currentBadge": "Actual",
+    "deleteAccount": {
+      "title": "Eliminar Cuenta",
+      "desc": "Esta acción es irreversible. Se borrarán todos tus datos permanentemente.",
+      "btn": "Eliminar mi cuenta",
+      "confirmLabel": "Escribe <strong>ELIMINAR</strong> para confirmar:",
+      "placeholder": "ELIMINAR",
+      "cancel": "Cancelar",
+      "deleting": "Eliminando...",
+      "confirmBtn": "Confirmar Eliminación"
+    },
+    "wipeData": {
+      "title": "Borrar Todos Mis Datos",
+      "desc": "Elimina todas tus metas, transacciones, cuentas y configuraciones. Tu cuenta se mantendrá activa con cuentas por defecto.",
+      "btn": "Borrar todos mis datos",
+      "confirmLabel": "Escribe <strong>BORRAR</strong> para confirmar:",
+      "placeholder": "BORRAR",
+      "cancel": "Cancelar",
+      "wiping": "Borrando...",
+      "confirmBtn": "Confirmar Borrado"
+    }
+  },
+  "saveBar": {
+    "hint": "Los cambios no se guardan automáticamente",
+    "saving": "Guardando...",
+    "saveBtn": "Guardar Cambios"
+  },
+  "footer": "Prosper Pro © 2026 — Inteligencia Financiera Encriptada",
+  "messages": {
+    "profileUpdated": "Perfil actualizado correctamente",
+    "saveError": "Error al guardar los cambios",
+    "reauthRequired": "Por seguridad, cierra sesión y vuelve a entrar antes de eliminar tu cuenta.",
+    "deleteError": "Error al eliminar la cuenta. Intenta de nuevo.",
+    "dataWiped": "Todos tus datos han sido eliminados. La página se recargará.",
+    "wipeError": "Error al borrar los datos",
+    "wipeErrorRetry": "Error al borrar los datos. Intenta de nuevo."
+  },
+  "fallbacks": {
+    "userName": "Usuario",
+    "email": "sin-email@ejemplo.com"
+  }
+}

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense, useRef, useMemo, useCallback, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useTranslation, Trans } from 'react-i18next';
 import { DashboardLayout } from './DashboardLayout';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
@@ -104,6 +105,7 @@ const FIAT_LIST = [
 ] as const;
 
 function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').ExchangeRates; p2pMode: boolean }) {
+  const { t } = useTranslation('dashboard');
   const oficialRate = rates.rates.USD || 40;
   const eurRate = rates.rates.EUR || 48.5;
   const copRate = rates.rates.COP || 0.0105;
@@ -116,13 +118,13 @@ function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').Exchan
             <line x1="12" y1="1" x2="12" y2="23" />
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
-          <h2 className="content-card-title">Tasas de Cambio</h2>
+          <h2 className="content-card-title">{t('market.exchangeRates')}</h2>
         </div>
       </div>
       <div className="rates-list">
         {/* Fiat */}
         <div className="rates-group">
-          <span className="rates-group-label">Divisas</span>
+          <span className="rates-group-label">{t('market.fiat')}</span>
           <div className="rates-items">
             <div className="rate-item">
               <span className="rate-flag">🇺🇸</span>
@@ -143,7 +145,7 @@ function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').Exchan
         </div>
         {/* Cryptos */}
         <div className="rates-group">
-          <span className="rates-group-label">Cryptos</span>
+          <span className="rates-group-label">{t('market.cryptos')}</span>
           <div className="rates-items">
             {CRYPTO_LIST.map(({ code, name, flag }) => {
               const usdPrice = rates.cryptoPrices?.[code];
@@ -180,6 +182,7 @@ function SectionHeader({ icon, title, count, collapsed, onToggle }: {
   collapsed: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation('dashboard');
   return (
     <div className="dash-section-header" onClick={onToggle}>
       <div className="dash-section-header-left">
@@ -189,7 +192,7 @@ function SectionHeader({ icon, title, count, collapsed, onToggle }: {
           <span className="dash-section-count">{count}</span>
         )}
       </div>
-      <button className="dash-section-toggle" aria-label={collapsed ? 'Expandir sección' : 'Colapsar sección'} onClick={(e) => { e.stopPropagation(); onToggle(); }}>
+      <button className="dash-section-toggle" aria-label={collapsed ? t('aria.expandSection') : t('aria.collapseSection')} onClick={(e) => { e.stopPropagation(); onToggle(); }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }}>
           <polyline points="6 9 12 15 18 9" />
         </svg>
@@ -204,6 +207,7 @@ export const Dashboard = memo(function Dashboard() {
   const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
   const { user } = useAuth();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode } = useCurrency();
+  const { t } = useTranslation(['dashboard', 'common']);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthlyRecurring, setMonthlyRecurring] = useState(0);
@@ -233,7 +237,7 @@ export const Dashboard = memo(function Dashboard() {
     if (!uid) return;
     const result = await toggleAccountFavorite(accountId, uid, accounts);
     if (!result.success) {
-      alert(result.message || 'No se pudo actualizar favorito');
+      alert(result.message || t('alerts.favoriteError'));
     }
   };
 
@@ -369,10 +373,10 @@ export const Dashboard = memo(function Dashboard() {
     const from = accounts.find(a => a.id === transferFrom);
     const to = accounts.find(a => a.id === transferTo);
     const amount = parseFloat(transferAmount);
-    if (!from || !to) { setTransferMsg('Selecciona cuentas de origen y destino'); showTransferMsg(); return; }
-    if (from.id === to.id) { setTransferMsg('Las cuentas deben ser diferentes'); showTransferMsg(); return; }
-    if (!amount || amount <= 0) { setTransferMsg('Ingresa un monto válido'); showTransferMsg(); return; }
-    if (from.balance < amount) { setTransferMsg('Saldo insuficiente en la cuenta origen'); showTransferMsg(); return; }
+    if (!from || !to) { setTransferMsg(t('transfer.selectAccounts')); showTransferMsg(); return; }
+    if (from.id === to.id) { setTransferMsg(t('transfer.accountsMustDiffer')); showTransferMsg(); return; }
+    if (!amount || amount <= 0) { setTransferMsg(t('transfer.enterValidAmount')); showTransferMsg(); return; }
+    if (from.balance < amount) { setTransferMsg(t('transfer.insufficientFunds')); showTransferMsg(); return; }
     setTransferring(true);
     setTransferMsg('');
     try {
@@ -386,10 +390,10 @@ export const Dashboard = memo(function Dashboard() {
       setTransferAmount('');
       setTransferFrom('');
       setTransferTo('');
-      setTransferMsg('Transferencia realizada');
+      setTransferMsg(t('transfer.success'));
       showTransferMsg();
     } catch (e: any) {
-      setTransferMsg('Error: ' + (e?.message || 'intenta de nuevo'));
+      setTransferMsg(t('transfer.error', { message: e?.message || t('transfer.retry', { defaultValue: 'intenta de nuevo' }) }));
       showTransferMsg();
     }
     setTransferring(false);
@@ -439,9 +443,9 @@ export const Dashboard = memo(function Dashboard() {
 
   const greeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Buenos días';
-    if (hour < 18) return 'Buenas tardes';
-    return 'Buenas noches';
+    if (hour < 12) return t('greeting.morning');
+    if (hour < 18) return t('greeting.afternoon');
+    return t('greeting.evening');
   };
 
   // Cursor neon glow (desktop only)
@@ -566,12 +570,12 @@ export const Dashboard = memo(function Dashboard() {
         <div className="welcome-banner dash-item" style={{animationDelay: '0s'}}>
           <div className="welcome-content">
             <p className="welcome-greeting">{greeting()},</p>
-            <h1 className="welcome-title">{user?.displayName || 'Usuario'}</h1>
-            <p className="welcome-subtitle">Aquí tienes un resumen de tu situación financiera</p>
+            <h1 className="welcome-title">{user?.displayName || t('common:user')}</h1>
+            <p className="welcome-subtitle">{t('welcome.subtitle')}</p>
           </div>
           <div className="welcome-actions">
             <button className="btn btn-primary btn-sm" onClick={() => router.push('/metas')}>
-              <IconPlus width={14} /> Nuevo Plan
+              <IconPlus width={14} /> {t('welcome.newPlan')}
             </button>
           </div>
           <div className="welcome-bg-shapes">
@@ -586,14 +590,14 @@ export const Dashboard = memo(function Dashboard() {
           <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
             <div className="stat-pill-info">
-              <span className="stat-pill-label">Ahorro en Planes</span>
+              <span className="stat-pill-label">{t('stats.savingsInPlans')}</span>
               <span className="stat-pill-value">{formatAmount(totalSavingsCurrent)}</span>
             </div>
           </div>
           <div className="stat-pill dash-item" style={{animationDelay: '0.17s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}>🔄</div>
             <div className="stat-pill-info">
-              <span className="stat-pill-label">Recurrentes/Mes</span>
+              <span className="stat-pill-label">{t('stats.recurringPerMonth')}</span>
               <span className="stat-pill-value">{formatAmount(monthlyRecurring)}</span>
             </div>
             {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
@@ -601,7 +605,7 @@ export const Dashboard = memo(function Dashboard() {
           <div className="stat-pill dash-item" style={{animationDelay: '0.23s'}} onClick={() => router.push('/metas')}>
             <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}>✓</div>
             <div className="stat-pill-info">
-              <span className="stat-pill-label">Metas/Planes</span>
+              <span className="stat-pill-label">{t('stats.goalsAndPlans')}</span>
               <span className="stat-pill-value">{goals.filter(g => g.status === 'completed').length + plans.filter(p => p.status === 'completed').length}</span>
             </div>
           </div>
@@ -613,9 +617,9 @@ export const Dashboard = memo(function Dashboard() {
             <div className="section-header">
               <div className="section-header-left">
                 <IconCalendar width={18} />
-                <h2 className="section-title">Para Hoy</h2>
+                <h2 className="section-title">{t('today.title')}</h2>
               </div>
-              <span className="section-count">{todayItems.length} pendiente{todayItems.length > 1 ? 's' : ''}</span>
+              <span className="section-count">{t('today.pending', { count: todayItems.length })}</span>
             </div>
             <div className="today-list">
               {todayItems.map((item) => (
@@ -647,7 +651,7 @@ export const Dashboard = memo(function Dashboard() {
         <div className="dash-section">
           <SectionHeader
             icon={<IconZap width={18} />}
-            title="Acciones"
+            title={t('sections.actions')}
             collapsed={collapsed.acciones}
             onToggle={() => toggle('acciones')}
           />
@@ -657,25 +661,25 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconZap width={18} />
-                    <h2 className="content-card-title">Acciones Rápidas</h2>
+                    <h2 className="content-card-title">{t('quickActions.title')}</h2>
                   </div>
                 </div>
                 <div className="quick-actions-grid">
                   <button className="quick-action-btn" onClick={() => router.push('/metas?action=add-plan')}>
                     <span className="quick-action-icon">🎯</span>
-                    <span className="quick-action-label">Nuevo Plan</span>
+                    <span className="quick-action-label">{t('quickActions.newPlan')}</span>
                   </button>
                   <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-account')}>
                     <span className="quick-action-icon">💳</span>
-                    <span className="quick-action-label">Nueva Cuenta</span>
+                    <span className="quick-action-label">{t('quickActions.newAccount')}</span>
                   </button>
                   <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-transaction')}>
                     <span className="quick-action-icon">💸</span>
-                    <span className="quick-action-label">Transacción</span>
+                    <span className="quick-action-label">{t('quickActions.transaction')}</span>
                   </button>
                   <button className="quick-action-btn" onClick={() => router.push('/calendario')}>
                     <span className="quick-action-icon">📅</span>
-                    <span className="quick-action-label">Calendario</span>
+                    <span className="quick-action-label">{t('quickActions.calendar')}</span>
                   </button>
                 </div>
               </div>
@@ -687,26 +691,26 @@ export const Dashboard = memo(function Dashboard() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                     </svg>
-                    <h2 className="content-card-title">Herramientas</h2>
+                    <h2 className="content-card-title">{t('tools.title')}</h2>
                   </div>
-                  <span style={{fontSize:'0.6rem',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>En Desarrollo</span>
+                  <span style={{fontSize:'0.6rem',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>{t('tools.inDevelopment')}</span>
                 </div>
                 <div className="quick-actions-grid">
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
                     <span className="quick-action-icon">💱</span>
-                    <span className="quick-action-label">USD/BS</span>
+                    <span className="quick-action-label">{t('tools.usdBs')}</span>
                   </div>
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
                     <span className="quick-action-icon">🧾</span>
-                    <span className="quick-action-label">Importar factura</span>
+                    <span className="quick-action-label">{t('tools.importInvoice')}</span>
                   </div>
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
                     <span className="quick-action-icon">🛒</span>
-                    <span className="quick-action-label">Listas de compras</span>
+                    <span className="quick-action-label">{t('tools.shoppingLists')}</span>
                   </div>
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
                     <span className="quick-action-icon">🤖</span>
-                    <span className="quick-action-label">Asistente AI</span>
+                    <span className="quick-action-label">{t('tools.aiAssistant')}</span>
                   </div>
                 </div>
               </div>
@@ -719,7 +723,7 @@ export const Dashboard = memo(function Dashboard() {
         <div className="dash-section">
           <SectionHeader
             icon={<IconWallet width={18} />}
-            title="Finanzas"
+            title={t('sections.finances')}
             count={accounts.length}
             collapsed={collapsed.finanzas}
             onToggle={() => toggle('finanzas')}
@@ -730,16 +734,16 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconWallet width={18} />
-                    <h2 className="content-card-title">Resumen del Mes</h2>
+                    <h2 className="content-card-title">{t('finances.monthlySummary')}</h2>
                   </div>
                 </div>
                 <div className="summary-body">
                   <div className="summary-row">
-                    <span className="summary-label">Ingresos</span>
+                    <span className="summary-label">{t('finances.income')}</span>
                     <span className="summary-value income">{formatInCurrency(monthlyIncome, displayCurrency)}</span>
                   </div>
                   <div className="summary-row">
-                    <span className="summary-label">Gastos</span>
+                    <span className="summary-label">{t('finances.expenses')}</span>
                     <span className="summary-value expense">{formatInCurrency(monthlyExpenses, displayCurrency)}</span>
                   </div>
                   {(monthlyIncome + monthlyExpenses) > 0 && (
@@ -751,7 +755,7 @@ export const Dashboard = memo(function Dashboard() {
                     </div>
                   )}
                   <div className="summary-row summary-total">
-                    <span className="summary-label">Balance</span>
+                    <span className="summary-label">{t('finances.balance')}</span>
                     <span className={`summary-value ${monthlyIncome - monthlyExpenses >= 0 ? 'income' : 'expense'}`}>
                       {formatInCurrency(monthlyIncome - monthlyExpenses, displayCurrency)}
                     </span>
@@ -764,14 +768,14 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconWallet width={18} />
-                    <h2 className="content-card-title">Mis Cuentas</h2>
+                    <h2 className="content-card-title">{t('finances.myAccounts')}</h2>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { safeLocalStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? 'Ocultar saldos' : 'Mostrar saldos'} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                      {showBalances ? ' Ocultar' : '👁️ Mostrar'}
+                    <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { safeLocalStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? t('finances.hideBalances') : t('finances.showBalances')} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                      {showBalances ? ' ' + t('finances.hide') : '👁️ ' + t('finances.show')}
                     </button>
                     <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                      Gestionar
+                      {t('finances.manage')}
                     </button>
                   </div>
                 </div>
@@ -781,7 +785,7 @@ export const Dashboard = memo(function Dashboard() {
                     if (favoriteAccounts.length === 0) {
                       return (
                         <p className="empty-msg" style={{ textAlign: 'center', padding: '16px 0' }}>
-                          No tienes cuentas favoritas. Marca hasta 3 cuentas en <strong>Finanzas</strong> para verlas aquí.
+                          <Trans i18nKey="dashboard:finances.noFavorites" components={{ strong: <strong /> }} />
                         </p>
                       );
                     }
@@ -795,7 +799,7 @@ export const Dashboard = memo(function Dashboard() {
                           <div className="account-item-info">
                             <span className="account-item-name">{acc.name}</span>
                             <span className="account-item-type">
-                              {acc.type === 'digital' ? 'Billetera Digital' : acc.type === 'bank' ? 'Banco' : 'Divisas'} • {acc.currency || 'BS'}
+                              {t(`finances.accountTypes.${acc.type}`, { defaultValue: acc.type })} • {acc.currency || 'BS'}
                             </span>
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -809,7 +813,7 @@ export const Dashboard = memo(function Dashboard() {
                             )}
                             <button
                               onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }}
-                              title="Quitar de favoritos"
+                              title={t('aria.removeFavorite')}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#F59E0B', padding: 0, lineHeight: 1 }}
                             >
                               ★
@@ -827,10 +831,10 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconReceipt width={18} />
-                    <h2 className="content-card-title">Últimos Movimientos</h2>
+                    <h2 className="content-card-title">{t('finances.recentTransactions')}</h2>
                   </div>
                   <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                    Ver todo
+                    {t('finances.viewAll')}
                   </button>
                 </div>
                 <div className="recent-tx-list">
@@ -853,7 +857,7 @@ export const Dashboard = memo(function Dashboard() {
                       </div>
                     );
                   }) : (
-                    <p className="empty-msg" style={{ padding: '24px 0' }}>Sin movimientos recientes</p>
+                    <p className="empty-msg" style={{ padding: '24px 0' }}>{t('finances.noRecentTransactions')}</p>
                   )}
                 </div>
               </div>
@@ -868,7 +872,7 @@ export const Dashboard = memo(function Dashboard() {
                       <polyline points="7 23 3 19 7 15" />
                       <path d="M21 13v2a4 4 0 0 1-4 4H3" />
                     </svg>
-                    <h2 className="content-card-title">Transferencia Rápida</h2>
+                    <h2 className="content-card-title">{t('finances.quickTransfer')}</h2>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
@@ -878,7 +882,7 @@ export const Dashboard = memo(function Dashboard() {
                         value={transferFrom}
                         onChange={(v) => { setTransferFrom(v); if (v === transferTo) setTransferTo(''); }}
                         options={accounts.map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
-                        placeholder="Desde..."
+                        placeholder={t('finances.fromPlaceholder')}
                       />
                     </div>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -892,7 +896,7 @@ export const Dashboard = memo(function Dashboard() {
                         value={transferTo}
                         onChange={setTransferTo}
                         options={accounts.filter((a: FinancialAccount) => a.id !== transferFrom).map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
-                        placeholder="Hacia..."
+                        placeholder={t('finances.toPlaceholder')}
                       />
                     </div>
                   </div>
@@ -901,7 +905,7 @@ export const Dashboard = memo(function Dashboard() {
                       <input
                         className="form-input"
                         type="number"
-                        placeholder="Monto"
+                        placeholder={t('finances.amountPlaceholder')}
                         value={transferAmount}
                         onChange={(e) => setTransferAmount(e.target.value)}
                         style={{ width: '100%' }}
@@ -917,11 +921,11 @@ export const Dashboard = memo(function Dashboard() {
                       })()}
                     </div>
                     <button className="btn btn-primary btn-sm" onClick={handleTransfer} disabled={transferring || !transferFrom || !transferTo || !transferAmount} style={{ whiteSpace: 'nowrap', height: 36 }}>
-                      {transferring ? '...' : 'Transferir'}
+                      {transferring ? t('finances.transferLoading') : t('finances.transfer')}
                     </button>
                   </div>
                   {transferMsg && (
-                    <span style={{ fontSize: '0.75rem', color: transferMsg.includes('Error') || transferMsg.includes('insuficiente') ? 'var(--color-error)' : transferMsg.includes('realizada') ? 'var(--color-prosper-green)' : 'var(--text-secondary)' }}>
+                    <span style={{ fontSize: '0.75rem', color: transferMsg.includes('Error') || transferMsg.includes('insuficiente') || transferMsg.includes('insufficient') ? 'var(--color-error)' : transferMsg.includes('realizada') || transferMsg.includes('completed') ? 'var(--color-prosper-green)' : 'var(--text-secondary)' }}>
                       {transferMsg}
                     </span>
                   )}
@@ -936,7 +940,7 @@ export const Dashboard = memo(function Dashboard() {
         <div className="dash-section">
           <SectionHeader
             icon={<IconTasks width={18} />}
-            title="Metas"
+            title={t('sections.goals')}
             count={activePlans.length + upcomingDeadlines.length}
             collapsed={collapsed.metas}
             onToggle={() => toggle('metas')}
@@ -947,10 +951,10 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconTasks width={18} />
-                    <h2 className="content-card-title">Planes Activos</h2>
+                    <h2 className="content-card-title">{t('goals.activePlans')}</h2>
                   </div>
                   <button className="content-card-action" onClick={() => router.push('/metas')}>
-                    Ver todo
+                    {t('finances.viewAll')}
                   </button>
                 </div>
                 <div className="plans-list">
@@ -972,7 +976,7 @@ export const Dashboard = memo(function Dashboard() {
                           <div className="plan-item-icon">{plan.icon || typeIcons[plan.type] || '📌'}</div>
                           <div className="plan-item-info">
                             <span className="plan-item-title">{plan.title}</span>
-                            <span className="plan-item-meta">{plan.category} · {plan.type === 'savings' ? 'Ahorro' : plan.type === 'expense' ? 'Gasto' : 'Recurrente'}</span>
+                            <span className="plan-item-meta">{plan.category} · {t(`goals.planTypes.${plan.type}`, { defaultValue: plan.type })}</span>
                           </div>
                         </div>
                         <div className="plan-item-progress">
@@ -992,8 +996,8 @@ export const Dashboard = memo(function Dashboard() {
                   })}
                   {activePlans.length === 0 && (
                     <div className="plans-empty">
-                      <p>No hay planes activos</p>
-                      <button className="plans-empty-btn" onClick={() => router.push('/metas')}>Crear primer plan</button>
+                      <p>{t('goals.noActivePlans')}</p>
+                      <button className="plans-empty-btn" onClick={() => router.push('/metas')}>{t('goals.createFirstPlan')}</button>
                     </div>
                   )}
                 </div>
@@ -1004,7 +1008,7 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconClock width={18} />
-                    <h2 className="content-card-title">Próximos Vencimientos</h2>
+                    <h2 className="content-card-title">{t('goals.upcomingDeadlines')}</h2>
                   </div>
                 </div>
                 <div className="deadlines-list">
@@ -1015,7 +1019,7 @@ export const Dashboard = memo(function Dashboard() {
                       <div className="deadline-item" key={item.id} onClick={() => router.push('/metas')}>
                         <div className={`deadline-badge ${urgency}`}>
                           <span className="deadline-badge-days">{daysLeft <= 0 ? '!' : daysLeft}</span>
-                          <span className="deadline-badge-label">{daysLeft <= 0 ? 'vencido' : daysLeft === 1 ? 'día' : 'días'}</span>
+                          <span className="deadline-badge-label">{daysLeft <= 0 ? t('goals.overdue') : t('goals.day', { count: daysLeft })}</span>
                         </div>
                         <div className="deadline-info">
                           <span className="deadline-title">{item.title}</span>
@@ -1024,7 +1028,7 @@ export const Dashboard = memo(function Dashboard() {
                       </div>
                     );
                   }) : (
-                    <p className="empty-msg">No hay vencimientos próximos</p>
+                    <p className="empty-msg">{t('goals.noUpcomingDeadlines')}</p>
                   )}
                 </div>
               </div>
@@ -1037,7 +1041,7 @@ export const Dashboard = memo(function Dashboard() {
         <div className="dash-section">
           <SectionHeader
             icon={<IconTrendUp width={18} />}
-            title="Mercado"
+            title={t('sections.market')}
             collapsed={collapsed.mercado}
             onToggle={() => toggle('mercado')}
           />
@@ -1050,10 +1054,10 @@ export const Dashboard = memo(function Dashboard() {
                 <div className="content-card-header">
                   <div className="content-card-header-left">
                     <IconTrendUp width={18} />
-                    <h2 className="content-card-title">Rendimiento Financiero</h2>
+                    <h2 className="content-card-title">{t('market.financialPerformance')}</h2>
                   </div>
                   <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                    Ver detalles <IconArrowForward width={14} />
+                    {t('market.viewDetails')} <IconArrowForward width={14} />
                   </button>
                 </div>
                 <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
@@ -1069,18 +1073,18 @@ export const Dashboard = memo(function Dashboard() {
         <div className="modal-overlay" onClick={() => setShowNewGoalModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">Nueva Meta</h2>
+              <h2 className="modal-title">{t('modal.newGoal')}</h2>
               <button className="modal-close" onClick={() => setShowNewGoalModal(false)}><IconX width={20} /></button>
             </div>
             <div className="modal-body">
-              <label className="form-label">Título</label>
-              <input className="form-input" type="text" placeholder="Ej: Fondo de Emergencia" value={newGoal.title} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
-              <label className="form-label">Categoría</label>
+              <label className="form-label">{t('modal.titleLabel')}</label>
+              <input className="form-input" type="text" placeholder={t('modal.titlePlaceholder')} value={newGoal.title} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
+              <label className="form-label">{t('modal.categoryLabel')}</label>
               <CustomSelect
                 value={newGoal.category}
                 onChange={(val) => setNewGoal({ ...newGoal, category: val as GoalCategory })}
-                options={Object.entries(allCategories).map(([key, icon]) => ({ value: key, label: key, icon }))}
-                placeholder="Seleccionar categoría..."
+                options={Object.entries(allCategories).map(([key, icon]) => ({ value: key, label: t(`categories.${key}`, { defaultValue: key }), icon }))}
+                placeholder={t('modal.categoryPlaceholder')}
                 allowCustom
                 onAddCustom={async (value, label) => {
                   const uid = user?.uid;
@@ -1092,21 +1096,21 @@ export const Dashboard = memo(function Dashboard() {
                     setAllCategories(prev => ({ ...prev, [value]: newColor }));
                   }
                 }}
-                customPlaceholder="Nombre de la categoría..."
+                customPlaceholder={t('modal.customCategoryPlaceholder')}
               />
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div><label className="form-label">{`Monto Actual (${currencyMap[displayCurrency].symbol})`}</label><input className="form-input" type="number" placeholder="0" value={newGoal.current || ''} onChange={(e) => setNewGoal({ ...newGoal, current: Number(e.target.value) })} /></div>
-                <div><label className="form-label">{`Meta (${currencyMap[displayCurrency].symbol})`}</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>
+                <div><label className="form-label">{t('modal.currentAmountLabel', { symbol: currencyMap[displayCurrency].symbol })}</label><input className="form-input" type="number" placeholder="0" value={newGoal.current || ''} onChange={(e) => setNewGoal({ ...newGoal, current: Number(e.target.value) })} /></div>
+                <div><label className="form-label">{t('modal.targetAmountLabel', { symbol: currencyMap[displayCurrency].symbol })}</label><input className="form-input" type="number" placeholder="10000" value={newGoal.target || ''} onChange={(e) => setNewGoal({ ...newGoal, target: Number(e.target.value) })} /></div>
               </div>
-              <label className="form-label">Fecha Límite</label>
+              <label className="form-label">{t('modal.deadlineLabel')}</label>
               <input className="form-input" type="date" value={newGoal.deadline} onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })} />
-              <label className="form-label">Color</label>
+              <label className="form-label">{t('modal.colorLabel')}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {['#3DCC8E', '#1E3A6E', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6'].map((c) => (
                   <button key={c} onClick={() => setNewGoal({ ...newGoal, color: c })} style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: newGoal.color === c ? '2px solid var(--text-primary)' : '2px solid transparent', cursor: 'pointer' }} />
                 ))}
               </div>
-              <label className="form-label">Icono</label>
+              <label className="form-label">{t('modal.iconLabel')}</label>
               <div style={{ display: 'flex', gap: 6 }}>
                 {['🎯', '💰', '📈', '🎓', '🏠', '🚗', '✈️'].map((icon) => (
                   <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.25rem', padding: 6, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer' }}>{icon}</button>
@@ -1114,8 +1118,8 @@ export const Dashboard = memo(function Dashboard() {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn btn-outline btn-sm" onClick={() => setShowNewGoalModal(false)}>Cancelar</button>
-              <button className="btn btn-primary btn-sm" onClick={handleCreateGoal}>Crear Meta</button>
+              <button className="btn btn-outline btn-sm" onClick={() => setShowNewGoalModal(false)}>{t('common:buttons.cancel')}</button>
+              <button className="btn btn-primary btn-sm" onClick={handleCreateGoal}>{t('modal.createGoal')}</button>
             </div>
           </div>
         </div>
