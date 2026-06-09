@@ -1,28 +1,35 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { safeLocalStorage, safeSessionStorage } from '@/lib/utils/safeStorage';
+
 interface UpdateNote {
   emoji: string;
   text: string;
 }
+
 interface UpdateModalProps {
   version?: string;
   notes?: UpdateNote[];
 }
+
 export function UpdateModal({
-  version = "0.9.7",
-  notes = [
-    { emoji: "⭐", text: "Cuentas favoritas: marca hasta 3 cuentas y el Dashboard mostrará solo esas cuentas para una vista más limpia." },
-    { emoji: "🛠️", text: "Menú de perfil corregido: Configuración, cambio de tema y Cerrar sesión responden correctamente en PC y móvil." },
-    { emoji: "🔔", text: "Modal de novedades restaurado: ahora se muestra automáticamente cada vez que hay una nueva versión." },
-    { emoji: "🚀", text: "Optimizaciones de rendimiento: mejor puntuación en Lighthouse, carga más rápida y menos consumo de recursos." },
-    { emoji: "🐛", text: "Corrección de duplicados en el Dashboard: las cuentas ya no aparecen repetidas al sincronizar desde Firestore." },
-    { emoji: "✨", text: "Eliminado el efecto de parpadeo al expandir secciones del Dashboard: transiciones más suaves y estables." },
-  ],
+  version = "0.9.8",
+  notes: notesProp,
 }: UpdateModalProps) {
+  const { t, ready } = useTranslation('common');
   const [isOpen, setIsOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [shouldHide, setShouldHide] = useState(false);
+
+  const notes = useMemo<UpdateNote[]>(() => {
+    if (notesProp && notesProp.length > 0) return notesProp;
+    try {
+      const items = t('updateModal.notes', { returnObjects: true });
+      if (Array.isArray(items)) return items as UpdateNote[];
+    } catch {}
+    return [];
+  }, [notesProp, t, ready]);
 
   // Show modal when version changes (even in the same session)
   useEffect(() => {
@@ -253,6 +260,7 @@ export function UpdateModal({
         .um-note:nth-child(5) { animation-delay: 0.33s; }
         .um-note:nth-child(6) { animation-delay: 0.40s; }
         .um-note:nth-child(7) { animation-delay: 0.47s; }
+        .um-note:nth-child(8) { animation-delay: 0.54s; }
 
         /* ── FOOTER ── */
         .um-footer {
@@ -339,14 +347,14 @@ export function UpdateModal({
         }
       `}</style>
       <div className="um-overlay" onClick={(e) => e.target === e.currentTarget && handleClose()}>
-        <div className="um-card" role="dialog" aria-modal="true" aria-label="Novedades de la versión">
+        <div className="um-card" role="dialog" aria-modal="true" aria-label={t('updateModal.dialogAria')}>
           {/* HEADER */}
           <div className="um-header">
             <div className="um-header-dots" />
-            <div className="um-badge">✨ Nueva versión</div>
-            <button className="um-close" onClick={handleClose} aria-label="Cerrar">✕</button>
-            <h2 className="um-title">¡Hay novedades! 🎉</h2>
-            <p className="um-subtitle">Actualización {version} — ya disponible para ti</p>
+            <div className="um-badge">{t('updateModal.badge')}</div>
+            <button className="um-close" onClick={handleClose} aria-label={t('updateModal.closeAria')}>✕</button>
+            <h2 className="um-title">{t('updateModal.title')}</h2>
+            <p className="um-subtitle">{t('updateModal.subtitle', { version })}</p>
           </div>
           {/* BODY */}
           <div className="um-body">
@@ -359,8 +367,8 @@ export function UpdateModal({
           </div>
           {/* FOOTER */}
           <div className="um-footer">
-            <button className="um-btn" onClick={handleNeverShow}>No volver a mostrar</button>
-            <button className="um-btn" onClick={handleClose}>¡Vamos! 🚀</button>
+            <button className="um-btn" onClick={handleNeverShow}>{t('updateModal.secondaryBtn')}</button>
+            <button className="um-btn" onClick={handleClose}>{t('updateModal.primaryBtn')}</button>
           </div>
         </div>
       </div>

@@ -223,5 +223,163 @@
       "releaseNotes": "Release Notes",
       "terms": "Terms"
     }
+  },
+  "releaseNotes": {
+    "title": "📜 Release Notes",
+    "history": "History",
+    "preRelease": "PRE-release",
+    "versions": [
+      {
+        "version": "0.9.8",
+        "date": "2026-06-09",
+        "preRelease": false,
+        "items": [
+          "Full English & Spanish internationalization (i18n) support.",
+          "Guest Mode to explore the app without signing in.",
+          "Daily frequency added to recurring financial plans.",
+          "Real-time BCV rate change notifications.",
+          "Landing page redesigned: faster, more accessible, and with smoother animations.",
+          "Help center overhaul: 9 categories, 41 FAQs, and step-by-step tutorials.",
+          "App notifications subscription from the landing page footer.",
+          "Persistent language switcher that saves your preference across the site."
+        ]
+      },
+      {
+        "version": "0.9.7",
+        "date": "2026-06-07",
+        "preRelease": false,
+        "items": [
+          "Favorite accounts: mark up to 3 accounts and the Dashboard will show only those for a cleaner view.",
+          "Profile menu fixed: Settings, theme switch and Log Out respond correctly on desktop and mobile.",
+          "Update modal restored: now displays automatically whenever there's a new version.",
+          "Performance optimizations: better Lighthouse score, faster loading, and less resource usage.",
+          "Dashboard duplicate fix: accounts no longer appear duplicated when syncing from Firestore.",
+          "Removed flicker effect when expanding Dashboard sections: smoother, more stable transitions."
+        ]
+      },
+      {
+        "version": "0.9.6",
+        "date": "2026-06-07",
+        "preRelease": false,
+        "items": [
+          "Landing page completely redesigned to be more interactive, dynamic, and free of empty spaces.",
+          "New Interactive Demo on the landing page: explore mockups of Dashboard, Finances, Goals, Calendar, and Academy.",
+          "Testimonials now in automatic carousel with manual navigation and more user stories.",
+          "New Security section with interactive cards explaining how we protect your data.",
+          "\"How It Works\" steps are now clickable, with progress bar and details per step.",
+          "All feature cards now include animated visuals and hover effects.",
+          "Animated counters in the trust bar that activate on scroll.",
+          "Newsletter form in the footer is now functional with validation and confirmation messages."
+        ]
+      },
+      {
+        "version": "0.9.5",
+        "date": "2026-06-07",
+        "preRelease": false,
+        "items": [
+          "Favorite accounts: you can now mark up to 3 accounts as favorites from the Finances section.",
+          "The \"My Accounts\" Dashboard widget was refreshed to show only your favorite accounts.",
+          "If you have no favorites, the Dashboard will tell you how to add them to customize your main view.",
+          "You can remove an account from favorites directly from the Dashboard or Finances with one click.",
+          "The limit of 3 favorites is maintained to keep the Dashboard clean and focused on what matters most."
+        ]
+      },
+      {
+        "version": "0.9.1",
+        "date": "2026-06-06",
+        "preRelease": false,
+        "items": [
+          "Performance optimization: code split with dynamic imports to reduce initial bundle.",
+          "Next.js optimized images (automatic WebP/AVIF formats).",
+          "New P2P cryptocurrencies: Bitcoin (BTC) and USD Coin (USDC) with real Binance prices.",
+          "Landing page completely refreshed with testimonials, interactive FAQ, trust bar, and tutorials.",
+          "Smart redirect: /dashboard redirects to / to avoid landing page duplication.",
+          "Optimized CSS animations: lower CPU usage on low-end devices."
+        ]
+      },
+      {
+        "version": "0.9.0",
+        "date": "2026-06-06",
+        "preRelease": false,
+        "items": [
+          "P2P rates: now you can choose between the official BCV rate or the real market price (Binance) when viewing your bolivar balances.",
+          "Improved notifications: delete notifications one by one or clear them all at once.",
+          "Finances movement history loads 5 at a time for better speed.",
+          "Mobile-adapted design: buttons, tables, and menus look better on small screens.",
+          "Simplified dashboard: removed the Savings section to focus on income, expenses, and balance.",
+          "Dashboard stats now show 3 indicators in a single row."
+        ]
+      },
+      {
+        "version": "0.8.9 BETA",
+        "date": "2026-05-30",
+        "preRelease": true,
+        "items": [
+          "Dashboard works correctly on mobile: CSS moved to its own file (dashboard.css), conflicts resolved with globals.css.",
+          "Overall Progress widget fully functional: now counts goals and plans, including shared plans.",
+          "Animations with prefers-reduced-motion fallback to avoid invisible elements on devices with reduced motion preference.",
+          "Fixed stats-grid forcing 4 columns at 1280px (now collapses to 2).",
+          "Fixed progress ring stroke-dashoffset showing a pre-filled bar.",
+          "Fixed modal-content not respecting max-width: 440px at 480px.",
+          "Removed * { box-sizing: border-box } global from dashboard CSS that was overriding system styles."
+        ]
+      },
+      {
+        "version": "0.8.7 BETA",
+        "date": "2026-05-29",
+        "preRelease": true,
+        "items": [
+          "Dashboard refreshed with 3 new widgets: Month Summary (income/expenses/balance), Latest Movements, and Quick Actions.",
+          "Smart arrows in scrollable sections: appear on hover and auto-scroll while the mouse is held.",
+          "Improved aesthetics: glassmorphism, premium shadows, smooth transitions, and hover effects on cards."
+        ]
+      },
+      {
+        "version": "0.8.6 BETA",
+        "date": "2026-05-29",
+        "preRelease": true,
+        "items": [
+          "Collaborative shared plans: plans you're invited to automatically appear in Goals with \"Shared\" and \"Guest\" badges.",
+          "Per-user contributions: when adding funds to a shared plan, who contributed is recorded and shown on the card.",
+          "Global Save Changes bar in Settings, visible from any tab.",
+          "Persistent profile privacy: the public/private toggle now saves correctly when clicking Save Changes.",
+          "Automatic exclusion of the current user when searching people to share plans.",
+          "Firestore rules updated to allow invited users to update shared plans."
+        ]
+      },
+      {
+        "version": "0.8.5 BETA",
+        "date": "2026-05-29",
+        "preRelease": true,
+        "items": [
+          "Profile privacy: new option in Settings to choose whether your profile is public or private. If private, only found by exact email.",
+          "Search by name when sharing plans: now you can type a person's name and a list of results will appear.",
+          "Hamburger menu refreshed: now covers the full screen and slides smoothly from the left.",
+          "Mobile user menu: tapping your avatar opens a bottom-sheet with rounded corners.",
+          "Name visible in the top mobile bar next to the avatar.",
+          "Fixed animations: all menus and windows now have consistent, smooth transitions.",
+          "What's new window adapted to any screen, anchored at the bottom on mobile.",
+          "\"In Development\" labels added to Languages, Active Sessions, and Email contact."
+        ]
+      },
+      {
+        "version": "0.8.0",
+        "date": "2026-05-26",
+        "preRelease": true,
+        "items": [
+          "Update to BETA 0.8.0 with performance improvements.",
+          "New financial analysis tools."
+        ]
+      },
+      {
+        "version": "0.8.2",
+        "date": "2026-05-27",
+        "preRelease": true,
+        "items": [
+          "Update to BETA 0.8.2 with performance improvements and new features.",
+          "New financial analysis and advanced reporting tools."
+        ]
+      }
+    ]
   }
 }

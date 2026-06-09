@@ -81,9 +81,22 @@
     "back": "Back"
   },
   "updateModal": {
-    "title": "New Version Available",
-    "description": "A new version of Prosper Pro is available. Update to get the latest improvements.",
-    "updateBtn": "Update Now",
-    "laterBtn": "Later"
+    "badge": "✨ New version",
+    "title": "What's new! 🎉",
+    "subtitle": "Update {{version}} — available now",
+    "primaryBtn": "Let's go! 🚀",
+    "secondaryBtn": "Don't show again",
+    "closeAria": "Close",
+    "dialogAria": "Version release notes",
+    "notes": [
+      { "emoji": "🌍", "text": "Full English & Spanish internationalization (i18n) support." },
+      { "emoji": "👤", "text": "Guest Mode to explore the app without signing in." },
+      { "emoji": "📅", "text": "Daily frequency added to recurring financial plans." },
+      { "emoji": "🔔", "text": "Real-time BCV rate change notifications." },
+      { "emoji": "🚀", "text": "Landing page redesigned: faster, more accessible, and with smoother animations." },
+      { "emoji": "❓", "text": "Help center overhaul: 9 categories, 41 FAQs, and step-by-step tutorials." },
+      { "emoji": "✉️", "text": "App notifications subscription from the landing page footer." },
+      { "emoji": "🌐", "text": "Persistent language switcher that saves your preference across the site." }
+    ]
   }
 }
