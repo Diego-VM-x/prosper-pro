@@ -65,11 +65,14 @@
 
   .feature-card-large {
     grid-column: span 2;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
-  .feature-card-visual {
-    order: -1;
+  .feature-card-visual,
+  .feature-card-content {
+    order: 0;
   }
 
   .tutorial-panel {
@@ -161,17 +164,22 @@
 
   .feature-card-large {
     grid-column: span 1;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
   .feature-visual-accounts {
     flex-direction: row;
+    justify-content: center;
     gap: 10px;
+    padding: 20px;
   }
 
   .feature-account-card {
-    flex: 1 1 calc(33.333% - 7px);
-    padding: 14px 8px;
+    flex: 0 1 100px;
+    min-width: 80px;
+    padding: 12px 8px;
     gap: 4px;
   }
 
@@ -180,11 +188,11 @@
   }
 
   .feature-account-name {
-    font-size: 0.6875rem;
+    font-size: 0.625rem;
   }
 
   .feature-account-balance {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   .feature-card {

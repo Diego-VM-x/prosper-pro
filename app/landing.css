@@ -1248,10 +1248,10 @@
 
 .feature-card-large {
   grid-column: span 2;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .feature-card-visual {
@@ -1270,6 +1270,11 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  order: 2;
+}
+
+.feature-card-visual {
+  order: 1;
 }
 
 .feature-icon-wrapper {
@@ -1339,27 +1344,29 @@
 .feature-visual-accounts {
   display: flex;
   flex-direction: row;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 20px;
+  padding: 24px;
   background: rgba(0, 0, 0, 0.15);
   align-items: stretch;
+  border-radius: 14px;
 }
 
 .feature-account-card {
-  flex: 1 1 calc(33.333% - 8px);
+  flex: 0 1 120px;
   min-width: 90px;
-  padding: 16px 12px;
+  max-width: 140px;
+  padding: 14px 10px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   color: white;
   text-align: center;
   animation: slideInRight 0.6s ease both;
-  min-width: 0;
 }
 
 .feature-account-card:nth-child(1) { animation-delay: 0s; }
@@ -1377,20 +1384,16 @@
 }
 
 .feature-account-name {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.6875rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  min-width: 0;
-  overflow-wrap: break-word;
+  letter-spacing: 0.6px;
   line-height: 1.2;
 }
 
 .feature-account-balance {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 700;
-  min-width: 0;
-  overflow-wrap: break-word;
   line-height: 1.2;
 }
 
