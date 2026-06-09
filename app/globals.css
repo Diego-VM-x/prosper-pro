@@ -381,9 +381,6 @@ html {
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   background: var(--bg-primary);
-  /* Permitir scroll nativo en móviles */
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -485,7 +482,8 @@ ul, ol {
 .app-shell {
   display: flex;
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   background: var(--bg-primary);
   transition: background var(--transition-base);
   overflow-x: hidden;
@@ -904,7 +902,8 @@ ul, ol {
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--topbar-height));
+  min-height: -webkit-fill-available;
   width: 100%;
   margin-left: var(--sidebar-width);
   padding-top: var(--topbar-height);
@@ -924,7 +923,7 @@ ul, ol {
 
 /* Contenido principal */
 .main-content {
-  flex: 1 0 auto;
+  flex: 1;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
@@ -1246,7 +1245,9 @@ ul, ol {
 .page-content {
   flex: 1;
   padding: 28px 24px;
+  overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   position: relative;
   z-index: 1;
 }
