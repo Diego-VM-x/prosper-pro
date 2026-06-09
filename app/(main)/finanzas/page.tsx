@@ -2542,6 +2542,13 @@ const FinanzasPage = memo(function FinanzasPage() {
               bottom: 20px;
               right: 20px;
               z-index: 9999;
+              pointer-events: none;
+            }
+            .mobile-fab-container.open {
+              pointer-events: auto;
+            }
+            .mobile-fab-main {
+              pointer-events: auto;
             }
             .mobile-fab-main {
               width: 56px;
