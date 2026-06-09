@@ -119,6 +119,41 @@
   "alerts": {
     "favoriteError": "No se pudo actualizar favorito"
   },
+  "chart": {
+    "title": "Flujo Financiero",
+    "subtitle": "Ingresos vs Gastos",
+    "tooltip": {
+      "income": "📥 Ingresos",
+      "expense": "📤 Gastos",
+      "hidden": "Montos ocultos"
+    },
+    "toggle": {
+      "hideAmounts": "Ocultar montos",
+      "showAmounts": "Mostrar montos",
+      "hide": "Ocultar",
+      "show": "Mostrar"
+    },
+    "timeRanges": {
+      "day": "Día",
+      "week": "Semana",
+      "month": "Mes",
+      "year": "Año"
+    },
+    "days": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+    "months": ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+    "weekLabel": "Sem {{week}}",
+    "summary": {
+      "income": "Ingresos",
+      "expense": "Gastos",
+      "balance": "Balance"
+    },
+    "conversion": {
+      "hide": "Ocultar conversión",
+      "show": "Ver conversión",
+      "label": "Convertir"
+    },
+    "emptyState": "No hay datos para el período seleccionado"
+  },
   "categories": {
     "Ahorro": "Ahorro",
     "Inversión": "Inversión",

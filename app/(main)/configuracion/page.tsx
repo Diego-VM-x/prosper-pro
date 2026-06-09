@@ -202,6 +202,24 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
             </div>
           </div>
 
+          {/* Floating Save Bar */}
+          <div className="settings-save-bar">
+            <div className="settings-save-bar-inner">
+              <span className="settings-save-hint">{t('saveBar.hint')}</span>
+              <button
+                className="btn-save"
+                onClick={handleSaveProfile}
+                disabled={saving}
+              >
+                {saving ? (
+                  <span className="btn-loading">
+                    <span className="spinner" /> {t('saveBar.saving')}
+                  </span>
+                ) : t('saveBar.saveBtn')}
+              </button>
+            </div>
+          </div>
+
           {/* Mobile Tabs */}
           <div className="mobile-tabs">
             {tabs.map(tab => (
@@ -767,24 +785,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Floating Save Bar */}
-          <div className="settings-save-bar">
-            <div className="settings-save-bar-inner">
-              <span className="settings-save-hint">{t('saveBar.hint')}</span>
-              <button
-                className="btn-save"
-                onClick={handleSaveProfile}
-                disabled={saving}
-              >
-                {saving ? (
-                  <span className="btn-loading">
-                    <span className="spinner" /> {t('saveBar.saving')}
-                  </span>
-                ) : t('saveBar.saveBtn')}
-              </button>
             </div>
           </div>
 
@@ -1602,17 +1602,18 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
             /* Floating Save Bar */
 .settings-save-bar {
               position: sticky;
-              bottom: 0;
+              top: 0;
               left: 0;
               right: 0;
               background: var(--bg-page);
-              border-top: 1px solid var(--border-default);
-              border-radius: 12px 12px 0 0;
+              border-bottom: 1px solid var(--border-default);
+              border-radius: 0 0 12px 12px;
               padding: 12px 16px;
-              box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+              box-shadow: 0 4px 20px rgba(0,0,0,0.08);
               z-index: 100;
               max-width: 100%;
               box-sizing: border-box;
+              margin-bottom: 16px;
             }
             .settings-save-bar-inner {
               display: flex;
@@ -1630,19 +1631,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
             .settings-save-bar .btn-save {
               flex-shrink: 0;
               min-width: auto;
-            }
-            .settings-save-bar-inner {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              gap: 12px;
-            }
-            .settings-save-hint {
-              font-size: 0.6875rem;
-              color: var(--text-tertiary);
-            }
-            .settings-save-bar .btn-save {
-              flex-shrink: 0;
             }
 
             /* Footer */

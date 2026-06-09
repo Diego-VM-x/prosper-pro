@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { MobileNav } from './MobileNav';
 
 interface LandingHeaderProps {
   user: { uid: string } | null;
@@ -13,7 +12,7 @@ export function LandingHeader({ user }: LandingHeaderProps) {
   const { t } = useTranslation('landing');
   const router = useRouter();
   const [scrollY, setScrollY] = useState(0);
-  const [mobileOpen, setMobileOpen] = useState(false);
+
 
   useEffect(() => {
     const onScroll = () => setScrollY(window.scrollY);
@@ -54,29 +53,12 @@ export function LandingHeader({ user }: LandingHeaderProps) {
                 <button className="btn btn-primary" onClick={() => router.push('/register')}>{t('header.startFree')}</button>
               </>
             )}
-            <button
-              className="mobile-menu-toggle"
-              onClick={() => setMobileOpen(true)}
-              aria-label={t('header.openMenu')}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
+
           </div>
         </div>
       </header>
 
-      <MobileNav
-        isOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        user={user}
-        onLogin={() => router.push('/login')}
-        onRegister={() => router.push('/register')}
-        onDashboard={() => router.push('/')}
-      />
+
     </>
   );
 }

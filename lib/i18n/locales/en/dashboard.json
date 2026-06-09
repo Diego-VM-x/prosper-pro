@@ -119,6 +119,41 @@
   "alerts": {
     "favoriteError": "Could not update favorite"
   },
+  "chart": {
+    "title": "Financial Flow",
+    "subtitle": "Income vs Expenses",
+    "tooltip": {
+      "income": "📥 Income",
+      "expense": "📤 Expenses",
+      "hidden": "Amounts hidden"
+    },
+    "toggle": {
+      "hideAmounts": "Hide amounts",
+      "showAmounts": "Show amounts",
+      "hide": "Hide",
+      "show": "Show"
+    },
+    "timeRanges": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "year": "Year"
+    },
+    "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "weekLabel": "Wk {{week}}",
+    "summary": {
+      "income": "Income",
+      "expense": "Expenses",
+      "balance": "Balance"
+    },
+    "conversion": {
+      "hide": "Hide conversion",
+      "show": "View conversion",
+      "label": "Convert"
+    },
+    "emptyState": "No data for the selected period"
+  },
   "categories": {
     "Ahorro": "Savings",
     "Inversión": "Investment",

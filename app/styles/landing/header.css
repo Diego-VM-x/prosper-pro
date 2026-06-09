@@ -94,22 +94,6 @@
   gap: 12px;
 }
 
-.mobile-menu-toggle {
-  display: none;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--lp-border-light);
-  color: var(--lp-text-primary);
-  border-radius: var(--lp-radius-sm);
-  padding: 8px;
-  cursor: pointer;
-  transition: all var(--lp-transition-fast);
-}
-
-.mobile-menu-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
 /* ── Mobile Nav ── */
 .mobile-nav-overlay {
   position: fixed;

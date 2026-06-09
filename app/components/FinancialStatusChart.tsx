@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { subscribeToTransactions } from '@/lib/firestore/transactions';
@@ -25,14 +26,18 @@ interface ChartDataPoint {
   expense: number;
 }
 
-const TIME_RANGES: { key: TimeRange; label: string }[] = [
-  { key: 'day', label: 'Día' },
-  { key: 'week', label: 'Semana' },
-  { key: 'month', label: 'Mes' },
-  { key: 'year', label: 'Año' },
-];
+function useTimeRanges() {
+  const { t } = useTranslation('dashboard');
+  return useMemo<{ key: TimeRange; label: string }[]>(() => [
+    { key: 'day', label: t('chart.timeRanges.day') },
+    { key: 'week', label: t('chart.timeRanges.week') },
+    { key: 'month', label: t('chart.timeRanges.month') },
+    { key: 'year', label: t('chart.timeRanges.year') },
+  ], [t]);
+}
 
 function CustomTooltip({ active, payload, label, formatter, showAmounts }: { active?: boolean; payload?: { value: number; dataKey: string; color: string }[]; label?: string; formatter?: (v: number) => string; showAmounts?: boolean }) {
+  const { t } = useTranslation('dashboard');
   const fmt = formatter || ((v: number) => `$${v}`);
   if (active && payload && payload.length) {
     return (
@@ -46,10 +51,10 @@ function CustomTooltip({ active, payload, label, formatter, showAmounts }: { act
         <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</p>
         {showAmounts ? payload.map((p) => (
           <p key={p.dataKey} style={{ margin: '2px 0', fontSize: '12px', color: p.color }}>
-            {p.dataKey === 'income' ? '📥 Ingresos' : '📤 Gastos'}: {fmt(p.value)}
+            {p.dataKey === 'income' ? t('chart.tooltip.income') : t('chart.tooltip.expense')}: {fmt(p.value)}
           </p>
         )) : (
-          <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-tertiary)' }}>Montos ocultos</p>
+          <p style={{ margin: '2px 0', fontSize: '12px', color: 'var(--text-tertiary)' }}>{t('chart.tooltip.hidden')}</p>
         )}
       </div>
     );
@@ -119,6 +124,8 @@ function SummaryCard({ label, value, color, showAmounts, altValue, showConversio
 export function FinancialStatusChart() {
   const { user } = useAuth();
   const { formatAmount, formatInCurrency, displayCurrency, convertBetween } = useCurrency();
+  const { t } = useTranslation('dashboard');
+  const TIME_RANGES = useTimeRanges();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,8 +166,8 @@ export function FinancialStatusChart() {
     if (nonTransferTxs.length === 0) return [];
 
     const now = new Date();
-    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const dayNames = t('chart.days', { returnObjects: true }) as string[];
+    const monthNames = t('chart.months', { returnObjects: true }) as string[];
 
     let periods: { key: string; label: string; start: Date; end: Date }[] = [];
 
@@ -194,7 +201,7 @@ export function FinancialStatusChart() {
           const start = new Date(end);
           start.setDate(start.getDate() - 6);
           start.setHours(0, 0, 0, 0);
-          periods.push({ key: `w${i}`, label: `Sem ${4 - i}`, start, end });
+          periods.push({ key: `w${i}`, label: t('chart.weekLabel', { week: 4 - i }), start, end });
         }
         break;
       }
@@ -265,10 +272,10 @@ export function FinancialStatusChart() {
       }}>
         <div>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Flujo Financiero
+            {t('chart.title')}
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Ingresos vs Gastos
+            {t('chart.subtitle')}
           </p>
         </div>
 
@@ -290,9 +297,9 @@ export function FinancialStatusChart() {
               gap: '4px',
               transition: 'var(--transition-fast)',
             }}
-            title={showAmounts ? 'Ocultar montos' : 'Mostrar montos'}
+            title={showAmounts ? t('chart.toggle.hideAmounts') : t('chart.toggle.showAmounts')}
           >
-            {showAmounts ? '👁️' : '🙈'} {showAmounts ? 'Ocultar' : 'Mostrar'}
+            {showAmounts ? '👁️' : '🙈'} {showAmounts ? t('chart.toggle.hide') : t('chart.toggle.show')}
           </button>
 
           {/* Time Range Selector */}
@@ -341,9 +348,9 @@ export function FinancialStatusChart() {
           gap: '16px',
           flex: 1,
         }}>
-          <SummaryCard label="Ingresos" value={totals.income} color="var(--color-prosper-green)" showAmounts={showAmounts} altValue={altTotals.income} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-          <SummaryCard label="Gastos" value={totals.expense} color="var(--color-error)" showAmounts={showAmounts} altValue={altTotals.expense} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-          <SummaryCard label="Balance" value={totals.balance} color={totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} altValue={altTotals.balance} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} isBalance />
+          <SummaryCard label={t('chart.summary.income')} value={totals.income} color="var(--color-prosper-green)" showAmounts={showAmounts} altValue={altTotals.income} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+          <SummaryCard label={t('chart.summary.expense')} value={totals.expense} color="var(--color-error)" showAmounts={showAmounts} altValue={altTotals.expense} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+          <SummaryCard label={t('chart.summary.balance')} value={totals.balance} color={totals.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} altValue={altTotals.balance} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} isBalance />
         </div>
 
         <button
@@ -364,9 +371,9 @@ export function FinancialStatusChart() {
             whiteSpace: 'nowrap',
             flexShrink: 0,
           }}
-          title={showConversion ? 'Ocultar conversión' : 'Ver conversión'}
+          title={showConversion ? t('chart.conversion.hide') : t('chart.conversion.show')}
         >
-          ⇄ {showConversion ? 'BS/USD' : 'Convertir'}
+          ⇄ {showConversion ? 'BS/USD' : t('chart.conversion.label')}
         </button>
       </div>
 
@@ -382,7 +389,7 @@ export function FinancialStatusChart() {
           color: 'var(--text-tertiary)',
           fontSize: '14px',
         }}>
-          No hay datos para el período seleccionado
+          {t('chart.emptyState')}
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={chartHeight}>
@@ -404,7 +411,7 @@ export function FinancialStatusChart() {
             <Tooltip content={<CustomTooltip formatter={(v) => formatInCurrency(v, displayCurrency)} showAmounts={showAmounts} />} />
             <Legend
               wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)' }}
-              formatter={(value) => value === 'income' ? '📥 Ingresos' : '📤 Gastos'}
+              formatter={(value) => value === 'income' ? t('chart.tooltip.income') : t('chart.tooltip.expense')}
             />
             <Bar dataKey="income" fill="#3DCC8E" radius={[4, 4, 0, 0]} />
             <Bar dataKey="expense" fill="#EF4444" radius={[4, 4, 0, 0]} />

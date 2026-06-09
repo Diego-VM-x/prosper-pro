@@ -96,8 +96,8 @@
     display: none;
   }
 
-  .mobile-menu-toggle {
-    display: flex;
+  .landing-header-actions {
+    gap: 8px;
   }
 
   .landing-hero {
@@ -243,6 +243,23 @@
   .landing-hero-cta {
     width: 100%;
     flex-direction: column;
+  }
+
+  .landing-header {
+    padding: 10px 16px;
+  }
+
+  .landing-header.scrolled {
+    padding: 8px 16px;
+  }
+
+  .landing-logo-text {
+    font-size: 1.25rem;
+  }
+
+  .landing-header-actions .btn-primary {
+    padding: 8px 14px;
+    font-size: 0.8125rem;
   }
 
   .mockup-stat-row {
