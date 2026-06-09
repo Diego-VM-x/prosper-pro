@@ -1,1 +1,227 @@
-{}
+{
+  "hero": {
+    "title": "Help Center",
+    "subtitle": "Everything you need to know to get the most out of Prosper Pro.",
+    "searchPlaceholder": "Search guides, questions..."
+  },
+  "search": {
+    "results_one": "{{count}} result",
+    "results_other": "{{count}} results",
+    "noResults": "No results found for \"{{query}}\"",
+    "clear": "Clear"
+  },
+  "quickLinks": {
+    "title": "Quick Links",
+    "items": [
+      { "icon": "🎯", "title": "Create plan", "route": "/metas" },
+      { "icon": "💰", "title": "Record transaction", "route": "/finanzas" },
+      { "icon": "📅", "title": "Add reminder", "route": "/calendario" },
+      { "icon": "🏦", "title": "New account", "route": "/finanzas" },
+      { "icon": "⚙️", "title": "Set up profile", "route": "/configuracion" },
+      { "icon": "📊", "title": "View rates", "route": "/" }
+    ]
+  },
+  "categories": {
+    "title": "Guides by Category",
+    "items": [
+      { "id": "gettingStarted", "title": "Getting Started", "desc": "Create your account, explore guest mode, and personalize your experience.", "icon": "🚀", "tag": "Essential Guide" },
+      { "id": "accountsAndCurrencies", "title": "Accounts & Currencies", "desc": "Manage multiple fiat currencies and cryptocurrencies.", "icon": "💱", "tags": ["USD", "EUR", "VES", "Crypto"] },
+      { "id": "finances", "title": "Finances", "desc": "Record transactions, manage accounts, favorites, and capture payment receipts.", "icon": "💰", "tags": ["Accounts", "Transactions", "VEPay"] },
+      { "id": "financialPlans", "title": "Financial Plans", "desc": "Create savings plans, planned expenses, and recurring payments.", "icon": "🎯", "tags": ["Savings", "Expenses", "Recurring"] },
+      { "id": "calendarAndReminders", "title": "Calendar & Reminders", "desc": "Set up reminders and view upcoming due dates.", "icon": "📅", "tags": ["Reminders", "Recurring"] },
+      { "id": "settings", "title": "Settings", "desc": "Customize your profile, language, theme, privacy, and rate preferences.", "icon": "⚙️", "tags": ["Profile", "Language", "Privacy"] },
+      { "id": "notifications", "title": "Notifications", "desc": "Rate alerts, daily balance summary, and browser notifications.", "icon": "🔔", "tags": ["BCV", "Push"] },
+      { "id": "security", "title": "Security", "desc": "Encryption protocols, synchronization, and data protection.", "icon": "🛡️" },
+      { "id": "general", "title": "General", "desc": "General information about pricing and access.", "icon": "❓" }
+    ]
+  },
+  "tutorials": {
+    "show": "Show tutorial",
+    "hide": "Hide tutorial",
+    "goTo": "Go to {{category}}",
+    "notAvailable": "Tutorial not available.",
+    "steps": {
+      "gettingStarted": [
+        "Create your account with email or Google, or use Guest mode.",
+        "Set up your profile, photo, and privacy in Settings.",
+        "Choose your preferred language (ES/EN) and visual theme.",
+        "Explore the dashboard and get familiar with the sidebar menu.",
+        "On mobile, use the hamburger button to navigate between sections."
+      ],
+      "accountsAndCurrencies": [
+        "Go to Finances > New Account.",
+        "Select the currency: USD, EUR, VES, COP, USDT, SOL, BTC, or USDC.",
+        "Assign a descriptive name and an initial balance.",
+        "Create as many accounts as you need in different currencies.",
+        "Use the BCV or P2P rate selector to view bolivar conversions."
+      ],
+      "finances": [
+        "Review your favorite accounts on the Dashboard.",
+        "Record transactions: Income, Expense, or Transfer.",
+        "Use filters and search to find specific movements.",
+        "Check the financial performance chart by period.",
+        "Use VEPay to automatically capture payment receipts."
+      ],
+      "financialPlans": [
+        "Go to Financial Plans and click \"New Plan\".",
+        "Select the type: Savings, Planned Expense, or Recurring.",
+        "Set a name, category (custom if you want), and target amount.",
+        "Set a due date and, for recurring plans, the frequency.",
+        "Share the plan with other users to split expenses."
+      ],
+      "calendarAndReminders": [
+        "Go to the Calendar and select a day.",
+        "Click \"+ Reminder\" to create a new one.",
+        "Set a title, description, time, and type (custom if needed).",
+        "Enable recurrence for periodic reminders.",
+        "Plans with a due date appear automatically on the calendar."
+      ],
+      "settings": [
+        "Go to Settings > Profile for your name, avatar, and currency.",
+        "Use the language selector to switch between Spanish and English.",
+        "Set your privacy to Public or Private.",
+        "Choose your preferred rate: official BCV or Binance P2P.",
+        "Customize the visual theme: Light, Dark, or AMOLED."
+      ],
+      "notifications": [
+        "Go to Settings > Notifications.",
+        "Enable BCV rate change alerts.",
+        "Turn on the daily balance summary.",
+        "Grant permission for browser push notifications."
+      ],
+      "security": [
+        "Use a strong, unique password for your account.",
+        "Keep your profile private if you don't want to be found easily.",
+        "Log out on shared devices.",
+        "Report suspicious activity from the help chat."
+      ],
+      "general": [
+        "Prosper Pro is completely free.",
+        "The dashboard is at the root (/)."
+      ]
+    },
+    "routes": {
+      "gettingStarted": "/configuracion",
+      "accountsAndCurrencies": "/finanzas",
+      "finances": "/finanzas",
+      "financialPlans": "/metas",
+      "calendarAndReminders": "/calendario",
+      "settings": "/configuracion",
+      "notifications": "/configuracion",
+      "security": "/configuracion",
+      "general": "/"
+    }
+  },
+  "vepay": {
+    "title": "VEPay — Receipt Capture",
+    "subtitle": "Smart data extraction for Venezuelan mobile payment receipts",
+    "steps": [
+      { "title": "Upload your screenshot", "description": "Take a screenshot from your banking app (BDV, Mercantil, Provincial, Banesco, etc.) and upload it to Prosper Pro." },
+      { "title": "OCR processes automatically", "description": "The system uses optical character recognition to read the text. It supports more than 20 Venezuelan banks." },
+      { "title": "Data extracted", "description": "The following are extracted: <strong>bank</strong>, <strong>amount in Bs.</strong>, <strong>reference</strong>, <strong>date</strong>, <strong>origin</strong>, <strong>recipient</strong>, and <strong>concept</strong>." },
+      { "title": "Smart validation", "description": "The system validates each receipt and shows missing fields. You can review the raw text and make corrections." }
+    ],
+    "supportedBanks": "Supported banks"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "filters": {
+      "all": "All"
+    },
+    "empty": "No results found.",
+    "items": [
+      { "categoryId": "gettingStarted", "q": "How do I create my Prosper Pro account?", "a": "You can sign up with your email address and a password, or use the quick Google sign-in. Once registration is complete, you'll automatically access the main dashboard." },
+      { "categoryId": "gettingStarted", "q": "Can I use the app without signing in?", "a": "Yes. Guest mode lets you explore the app and view all features without creating an account. When you're ready, you can sign up and keep your data." },
+      { "categoryId": "gettingStarted", "q": "How do I change the app language?", "a": "Go to Settings and use the language selector to switch between Spanish and English. Your preference is saved automatically and applied instantly across the entire interface." },
+      { "categoryId": "gettingStarted", "q": "How do I switch between light and dark mode?", "a": "Click the moon or sun icon in the top bar. You can choose light, dark, or pure black AMOLED mode. Your preference is automatically saved to your profile." },
+      { "categoryId": "gettingStarted", "q": "How do I set up my profile and privacy?", "a": "Go to Settings > Profile. There you can change your name, profile picture, default display currency, and set whether your profile is public or private. A private profile can only be found by exact email." },
+      { "categoryId": "gettingStarted", "q": "How do I navigate the app?", "a": "The sidebar menu gives you access to Dashboard, Financial Plans, Calendar, Finances, Settings, and Help. On mobile, use the hamburger menu button. The top bar includes quick access to notifications, search, and theme switching." },
+
+      { "categoryId": "accountsAndCurrencies", "q": "How do I create accounts in different currencies?", "a": "Go to Finances > New Account. Select the desired currency when creating the account. You can have multiple accounts in different currencies simultaneously, each with its own independent balance." },
+      { "categoryId": "accountsAndCurrencies", "q": "What currencies and cryptocurrencies does the app support?", "a": "We support fiat currencies: US Dollar (USD), Venezuelan Bolívar (VES), Euro (EUR), and Colombian Peso (COP). We also support cryptocurrencies: Tether (USDT), Solana (SOL), Bitcoin (BTC), and USD Coin (USDC) with real-time prices from Binance." },
+      { "categoryId": "accountsAndCurrencies", "q": "Can I convert balances between currencies?", "a": "Yes. In the Finances section you can view your balances converted to your preferred display currency using the official BCV rate or the market P2P price (Binance), depending on your settings." },
+      { "categoryId": "accountsAndCurrencies", "q": "What happens to transactions if I delete an account?", "a": "When you delete an account, all transactions associated with that account are also permanently deleted. We recommend exporting or reviewing your history before deleting an account. This action cannot be undone." },
+
+      { "categoryId": "finances", "q": "How do I record a transaction?", "a": "Go to Finances and click \"New Transaction\". Select the type (Income, Expense, or Transfer), account, category, amount, and an optional description. You can also use VEPay to capture receipts automatically." },
+      { "categoryId": "finances", "q": "How do I show and hide account balances?", "a": "In Finances you'll see each account's balance on cards. You can tap the eye icon next to any balance to hide or show it. This is useful in public or when sharing your screen." },
+      { "categoryId": "finances", "q": "How do I make quick transfers between accounts?", "a": "Use the \"Quick Transfer\" feature in Finances. Select the source account, destination account, and amount. The system automatically records an outgoing transaction in one account and an incoming transaction in the other." },
+      { "categoryId": "finances", "q": "How do I filter and search transactions?", "a": "Use the top filter bar to filter by account, transaction type, and category. You can also use the search field to find transactions by description, amount, or date. History loads 5 at a time for better performance." },
+      { "categoryId": "finances", "q": "What are favorite accounts?", "a": "You can mark up to 3 accounts as favorites from the Finances section. The \"My Accounts\" widget on the Dashboard will show only these accounts for a cleaner, more focused view. You can remove them from favorites at any time." },
+      { "categoryId": "finances", "q": "What does the financial chart show?", "a": "The chart compares your income versus expenses for the selected period (day, week, month, or year). It uses colored bars to visualize trends and see your financial progress at a glance." },
+      { "categoryId": "finances", "q": "What is VEPay and how do I capture receipts?", "a": "VEPay is Prosper Pro's OCR system for capturing Venezuelan mobile payment receipts. Upload a screenshot from your banking app and the system automatically extracts the bank, amount, reference, date, origin, recipient, and concept." },
+
+      { "categoryId": "financialPlans", "q": "How do I create a savings plan?", "a": "Go to Financial Plans > New Plan. Select type \"Savings\", set a name, category, target amount, and due date. The plan will appear on your dashboard and calendar so you can track your progress." },
+      { "categoryId": "financialPlans", "q": "What is a planned expense?", "a": "It's a \"Expense\" type plan to organize future payments. You can contribute gradually and see payment progress in real time. Ideal for organizing large purchases, trips, or debts." },
+      { "categoryId": "financialPlans", "q": "How do recurring payments work?", "a": "Create a \"Recurring\" type plan and choose the frequency: daily, weekly, biweekly, monthly, quarterly, or yearly. The system automatically calculates the next due date and lets you record each payment." },
+      { "categoryId": "financialPlans", "q": "How do I add funds to a plan?", "a": "Click on a savings plan and press \"Add Funds\". Select the source account and amount. A transaction is automatically created and the plan progress updates instantly." },
+      { "categoryId": "financialPlans", "q": "Can I share expenses with other users?", "a": "Yes. Within a plan, use the \"Share\" option and enter the user's name or email. A request is sent that they can accept or reject. Shared plans show who contributed and how much." },
+      { "categoryId": "financialPlans", "q": "Can I use custom categories?", "a": "Yes. When creating a plan you can choose from predefined categories or enter a new custom category. This lets you organize your plans exactly how you need." },
+      { "categoryId": "financialPlans", "q": "What statuses can plans have?", "a": "Plans can be: Pending (no funds yet), In Progress (with at least one contribution), Completed (goal reached), or Canceled (archived without completion). You can filter by status in the plans list." },
+
+      { "categoryId": "calendarAndReminders", "q": "How do I create a reminder?", "a": "Go to the Calendar, select a day, and click \"+ Reminder\". Enter a title, description, time, and type. You can also set up recurring reminders so they repeat automatically." },
+      { "categoryId": "calendarAndReminders", "q": "How do I see my goals and plans on the calendar?", "a": "Plans with due dates and reminders appear automatically on the calendar with their original colors. You can see at a glance which days have scheduled financial activity." },
+      { "categoryId": "calendarAndReminders", "q": "Can I create custom reminder types?", "a": "Yes. When creating a reminder, type a new name in the type selector if you can't find the one you need. Your custom type will be available for future reminders." },
+      { "categoryId": "calendarAndReminders", "q": "How do recurring reminders work?", "a": "When creating a reminder, enable the recurrence option and select the frequency (daily, weekly, monthly, etc.). The system will automatically generate future instances on the calendar." },
+
+      { "categoryId": "settings", "q": "What can I configure in my profile?", "a": "In Settings > Profile you can change your full name, avatar picture, default display currency, interface language (Spanish/English), and visual theme (light, dark, or AMOLED)." },
+      { "categoryId": "settings", "q": "How do I change the language between Spanish and English?", "a": "In Settings you'll find the language selector. When changed, the entire interface translates instantly, including menus, buttons, notifications, and help content. Your preference is saved to your profile." },
+      { "categoryId": "settings", "q": "How do I configure my profile privacy?", "a": "In Settings > Profile use the Public/Private toggle. If your profile is private, other users can only find you if they know your exact email. This protects your identity when sharing plans." },
+      { "categoryId": "settings", "q": "What's the difference between BCV and P2P rates?", "a": "The BCV rate is the official reference from the Central Bank of Venezuela. The P2P rate is the real market price according to Binance. You can choose which one to use to convert your bolivar balances in Settings > Preferences." },
+      { "categoryId": "settings", "q": "How do I delete all my data?", "a": "In Settings > Danger Zone you'll find the option to permanently delete your account and all your data from Firestore and Storage. You can also use \"Clear all\" in Accounting Management to reset transactions without deleting your account." },
+
+      { "categoryId": "notifications", "q": "What are BCV rate change alerts?", "a": "You receive a notification when the official BCV rate experiences a significant change. This helps you stay on top of important changes affecting the value of your bolivar balances." },
+      { "categoryId": "notifications", "q": "What is the daily balance summary?", "a": "It's an automatic notification you receive at the end of the day with a summary of your total balances, daily movements, and plan status. You can turn it on or off in Settings > Notifications." },
+      { "categoryId": "notifications", "q": "How do I enable browser notifications?", "a": "In Settings > Notifications you'll find the toggle to enable browser push notifications. The system will ask for permission and then can send you alerts even when the app is closed." },
+
+      { "categoryId": "security", "q": "Is my data secure?", "a": "Yes. We use Firebase with strict security rules that isolate data by ownerId. Only you can access your information. Passwords are handled through Firebase Auth with industry-standard encryption." },
+      { "categoryId": "security", "q": "Can I use Prosper Pro on multiple devices?", "a": "Yes. Your data syncs in real time through Firestore. You can access it from your phone, tablet, or computer and see the same updated information instantly across all devices." },
+      { "categoryId": "security", "q": "How do I permanently delete my account?", "a": "Go to Settings > Danger Zone and click \"Delete my account forever\". All your data from Firestore, Storage, and Authentication will be deleted. This action is irreversible." },
+
+      { "categoryId": "general", "q": "Is Prosper Pro free?", "a": "Yes. All current and future Prosper Pro features are available at no cost. There are no paid plans or hidden usage limits." },
+      { "categoryId": "general", "q": "What URL is the dashboard on?", "a": "The main dashboard is at the root (/). When you sign in, the home page automatically becomes your personalized control panel." }
+    ]
+  },
+  "support": {
+    "title": "Need more help?",
+    "email": {
+      "title": "Email",
+      "badge": "In Development",
+      "description": "Response within 24 business hours.",
+      "button": "Send"
+    },
+    "docs": {
+      "title": "Documentation",
+      "description": "Complete guides and tutorials.",
+      "button": "View"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "description": "Report bugs or send suggestions.",
+      "button": "Open Chat"
+    }
+  },
+  "chat": {
+    "title": "Feedback & Bugs",
+    "subtitle": "Report bugs or send suggestions",
+    "bug": "🐛 Bug",
+    "suggestion": "💡 Suggestion",
+    "bugReported": "🐛 Bug reported",
+    "suggestionSent": "💡 Suggestion sent",
+    "thanks": "Thanks for your feedback. We'll review it soon.",
+    "loading": "Loading history...",
+    "bugPlaceholder": "Describe the bug you found",
+    "suggestionPlaceholder": "Share your idea or suggestion",
+    "hint": "Be detailed so we can help you better.",
+    "inputBugPlaceholder": "Describe the bug...",
+    "inputSuggestionPlaceholder": "Write your suggestion...",
+    "error": "❌ Failed to send. Please try again."
+  },
+  "footer": {
+    "label": "PROSPER PRO SUPPORT",
+    "links": {
+      "systemStatus": "System Status",
+      "releaseNotes": "Release Notes",
+      "terms": "Terms"
+    }
+  }
+}

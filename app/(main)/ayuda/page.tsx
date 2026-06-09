@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -14,173 +15,55 @@ import {
 } from '@/app/components/icons';
 import { submitFeedback, getFeedbackByOwner } from '@/lib/firestore/feedback';
 
-const faqs = [
-  // Primeros Pasos (6)
-  { category: 'Primeros Pasos', q: '¿Cómo creo mi cuenta en Prosper Pro?', a: 'Puedes registrarte con tu dirección de correo electrónico y una contraseña, o usar el inicio de sesión rápido con Google. Una vez completado el registro, accederás automáticamente al dashboard principal.' },
-  { category: 'Primeros Pasos', q: '¿Puedo usar la app sin iniciar sesión?', a: 'Sí. El modo Invitado (Guest) te permite explorar la app y ver todas las funcionalidades sin necesidad de crear una cuenta. Cuando estés listo, puedes registrarte y conservar tus datos.' },
-  { category: 'Primeros Pasos', q: '¿Cómo cambio el idioma de la app?', a: 'Ve a Configuración y usa el selector de idioma para cambiar entre Español e Inglés. La preferencia se guarda automáticamente y se aplica de inmediato en toda la interfaz.' },
-  { category: 'Primeros Pasos', q: '¿Cómo cambio entre modo claro y oscuro?', a: 'Haz clic en el icono de luna o sol en la barra superior. Puedes elegir entre modo claro, oscuro o AMOLED negro puro. Tu preferencia se guarda automáticamente en tu perfil.' },
-  { category: 'Primeros Pasos', q: '¿Cómo configuro mi perfil y privacidad?', a: 'Ve a Configuración > Perfil. Allí puedes cambiar tu nombre, foto de perfil, moneda de visualización predeterminada y configurar si tu perfil es público o privado. Un perfil privado solo puede ser encontrado por email exacto.' },
-  { category: 'Primeros Pasos', q: '¿Cómo navego por la aplicación?', a: 'El menú lateral te da acceso a Dashboard, Planes Financieros, Calendario, Finanzas, Configuración y Ayuda. En móvil, usa el botón de menú hamburguesa. La barra superior incluye acceso rápido a notificaciones, búsqueda y cambio de tema.' },
-
-  // Cuentas y Monedas (4)
-  { category: 'Cuentas y Monedas', q: '¿Cómo creo cuentas en diferentes monedas?', a: 'Ve a Finanzas > Nueva Cuenta. Selecciona la moneda deseada al crear la cuenta. Puedes tener múltiples cuentas en distintas monedas simultáneamente, cada una con su propio balance independiente.' },
-  { category: 'Cuentas y Monedas', q: '¿Qué monedas y criptomonedas soporta la app?', a: 'Soportamos monedas fiduciarias: Dólar estadounidense (USD), Bolívar soberano (VES), Euro (EUR) y Peso colombiano (COP). También criptomonedas: Tether (USDT), Solana (SOL), Bitcoin (BTC) y USD Coin (USDC) con precios en tiempo real de Binance.' },
-  { category: 'Cuentas y Monedas', q: '¿Puedo convertir saldos entre monedas?', a: 'Sí. En la sección de Finanzas puedes ver tus saldos convertidos a tu moneda de visualización preferida usando la tasa oficial del BCV o el precio P2P del mercado (Binance), según tu configuración.' },
-  { category: 'Cuentas y Monedas', q: '¿Qué pasa con las transacciones si elimino una cuenta?', a: 'Al eliminar una cuenta, todas las transacciones asociadas a esa cuenta también se eliminan permanentemente. Te recomendamos exportar o revisar tu historial antes de borrar una cuenta. Esta acción no se puede deshacer.' },
-
-  // Finanzas (7)
-  { category: 'Finanzas', q: '¿Cómo registro una transacción?', a: 'Ve a Finanzas y haz clic en "Nueva Transacción". Selecciona el tipo (Ingreso, Gasto o Transferencia), la cuenta, la categoría, el monto y una descripción opcional. También puedes usar VEPay para capturar comprobantes automáticamente.' },
-  { category: 'Finanzas', q: '¿Cómo veo y oculto los balances de mis cuentas?', a: 'En Finanzas verás el balance de cada cuenta en tarjetas. Puedes tocar el icono del ojo junto a cualquier balance para ocultarlo o mostrarlo. Esto es útil en público o al compartir pantalla.' },
-  { category: 'Finanzas', q: '¿Cómo hago transferencias rápidas entre cuentas?', a: 'Usa la función "Transferencia Rápida" en Finanzas. Selecciona la cuenta de origen, la cuenta destino y el monto. El sistema registra automáticamente una salida en una cuenta y un ingreso en la otra.' },
-  { category: 'Finanzas', q: '¿Cómo filtro y busco transacciones?', a: 'Usa la barra de filtros superiores para filtrar por cuenta, tipo de transacción y categoría. También puedes usar el campo de búsqueda para encontrar transacciones por descripción, monto o fecha. El historial se carga de 5 en 5 para mayor velocidad.' },
-  { category: 'Finanzas', q: '¿Qué son las cuentas favoritas?', a: 'Puedes marcar hasta 3 cuentas como favoritas desde la sección Finanzas. El widget "Mis Cuentas" del Dashboard mostrará únicamente estas cuentas para una vista más limpia y enfocada. Puedes quitarlas de favoritos en cualquier momento.' },
-  { category: 'Finanzas', q: '¿Qué muestra la gráfica financiera?', a: 'La gráfica compara tus ingresos versus gastos en el período seleccionado (día, semana, mes o año). Usa barras de colores para visualizar tendencias y ver tu evolución financiera de un vistazo.' },
-  { category: 'Finanzas', q: '¿Qué es VEPay y cómo capturo comprobantes?', a: 'VEPay es el sistema OCR de Prosper Pro para capturar comprobantes de pago móvil venezolanos. Sube una captura de pantalla de tu app bancaria y el sistema extrae automáticamente el banco, monto, referencia, fecha, origen, destinatario y concepto.' },
-
-  // Planes Financieros (7)
-  { category: 'Planes Financieros', q: '¿Cómo creo un plan de ahorro?', a: 'Ve a Planes Financieros > Nuevo Plan. Selecciona tipo "Ahorro", define un nombre, categoría, monto objetivo y fecha límite. El plan aparecerá en tu dashboard y calendario para que hagas seguimiento de tu progreso.' },
-  { category: 'Planes Financieros', q: '¿Qué es un gasto planificado?', a: 'Es un plan tipo "Gasto" para organizar pagos futuros. Puedes abonar gradualmente y ver el progreso de pago en tiempo real. Ideal para organizar compras grandes, viajes o deudas.' },
-  { category: 'Planes Financieros', q: '¿Cómo funcionan los pagos recurrentes?', a: 'Crea un plan tipo "Recurrente" y elige la frecuencia: diaria, semanal, quincenal, mensual, trimestral o anual. El sistema calcula automáticamente la próxima fecha de vencimiento y te permite registrar cada pago.' },
-  { category: 'Planes Financieros', q: '¿Cómo añado fondos a un plan?', a: 'Haz clic en un plan de ahorro y presiona "Añadir Fondos". Selecciona la cuenta de origen y el monto. Se crea una transacción automáticamente y el progreso del plan se actualiza al instante.' },
-  { category: 'Planes Financieros', q: '¿Puedo compartir gastos con otros usuarios?', a: 'Sí. Dentro de un plan, usa la opción "Compartir" e ingresa el nombre o email del usuario. Se envía una solicitud que puede aceptar o rechazar. Los planes compartidos muestran quién aportó y cuánto.' },
-  { category: 'Planes Financieros', q: '¿Puedo usar categorías personalizadas?', a: 'Sí. Al crear un plan puedes elegir entre categorías predefinidas o escribir una nueva categoría personalizada. Esto te permite organizar tus planes exactamente como lo necesites.' },
-  { category: 'Planes Financieros', q: '¿Qué estados pueden tener los planes?', a: 'Los planes pueden estar: Pendiente (sin fondos aún), En Progreso (con al menos un abono), Completado (objetivo alcanzado) o Cancelado (archivado sin completar). Puedes filtrar por estado en la lista de planes.' },
-
-  // Calendario y Recordatorios (4)
-  { category: 'Calendario y Recordatorios', q: '¿Cómo creo un recordatorio?', a: 'Ve al Calendario, selecciona un día y haz clic en "+ Recordatorio". Ingresa título, descripción, hora y tipo. También puedes configurar recordatorios recurrentes para que se repitan automáticamente.' },
-  { category: 'Calendario y Recordatorios', q: '¿Cómo veo mis metas y planes en el calendario?', a: 'Los planes con fecha límite y los recordatorios aparecen automáticamente en el calendario con sus colores originales. Puedes ver de un vistazo qué días tienen actividad financiera programada.' },
-  { category: 'Calendario y Recordatorios', q: '¿Puedo crear tipos de recordatorio personalizados?', a: 'Sí. Al crear un recordatorio, escribe un nombre nuevo en el selector de tipo si no encuentras el que necesitas. Tu tipo personalizado quedará disponible para futuros recordatorios.' },
-  { category: 'Calendario y Recordatorios', q: '¿Cómo funcionan los recordatorios recurrentes?', a: 'Al crear un recordatorio, activa la opción de recurrencia y selecciona la frecuencia (diaria, semanal, mensual, etc.). El sistema generará automáticamente las instancias futuras en el calendario.' },
-
-  // Configuración (5)
-  { category: 'Configuración', q: '¿Qué puedo configurar en mi perfil?', a: 'En Configuración > Perfil puedes cambiar tu nombre completo, foto de avatar, moneda de visualización predeterminada, idioma de la interfaz (español/inglés) y el tema visual (claro, oscuro o AMOLED).' },
-  { category: 'Configuración', q: '¿Cómo cambio el idioma entre español e inglés?', a: 'En Configuración encontrarás el selector de idioma. Al cambiarlo, toda la interfaz se traduce al instante, incluyendo menús, botones, notificaciones y contenido de ayuda. La preferencia se guarda en tu perfil.' },
-  { category: 'Configuración', q: '¿Cómo configuro la privacidad de mi perfil?', a: 'En Configuración > Perfil usa el toggle Público/Privado. Si tu perfil es privado, otros usuarios solo podrán encontrarte si conocen tu email exacto. Esto protege tu identidad al compartir planes.' },
-  { category: 'Configuración', q: '¿Qué diferencia hay entre tasa BCV y P2P?', a: 'La tasa BCV es la referencia oficial del Banco Central de Venezuela. La tasa P2P es el precio real del mercado según Binance. Puedes elegir cuál usar para convertir tus saldos en bolívares desde Configuración > Preferencias.' },
-  { category: 'Configuración', q: '¿Cómo borro todos mis datos?', a: 'En Configuración > Zona de Peligro encontrarás la opción para eliminar tu cuenta y todos tus datos permanentemente de Firestore y Storage. También puedes usar "Vaciar todo" en Gestión Contable para resetear transacciones sin borrar la cuenta.' },
-
-  // Notificaciones (3)
-  { category: 'Notificaciones', q: '¿Qué son las alertas de cambio de tasa BCV?', a: 'Recibes una notificación cuando la tasa oficial del BCV experimenta una variación significativa. Esto te ayuda a estar al tanto de cambios importantes que afectan el valor de tus saldos en bolívares.' },
-  { category: 'Notificaciones', q: '¿Qué es el resumen diario de balance?', a: 'Es una notificación automática que recibes al final del día con un resumen de tus balances totales, movimientos del día y estado de tus planes. Puedes activarla o desactivarla desde Configuración > Notificaciones.' },
-  { category: 'Notificaciones', q: '¿Cómo activo las notificaciones del navegador?', a: 'En Configuración > Notificaciones encontrarás el toggle para habilitar las notificaciones push del navegador. El sistema te pedirá permiso y luego podrá enviarte alertas incluso con la app cerrada.' },
-
-  // Seguridad (3)
-  { category: 'Seguridad', q: '¿Mis datos están seguros?', a: 'Sí. Usamos Firebase con reglas de seguridad estrictas que aíslan los datos por ownerId. Solo tú puedes acceder a tu información. Las contraseñas se manejan mediante Firebase Auth con encriptación estándar de la industria.' },
-  { category: 'Seguridad', q: '¿Puedo usar Prosper Pro en varios dispositivos?', a: 'Sí. Tus datos se sincronizan en tiempo real a través de Firestore. Puedes acceder desde tu celular, tablet o computadora y verás la misma información actualizada instantáneamente en todos los dispositivos.' },
-  { category: 'Seguridad', q: '¿Cómo elimino mi cuenta permanentemente?', a: 'Ve a Configuración > Zona de Peligro y haz clic en "Eliminar mi cuenta para siempre". Se eliminarán todos tus datos de Firestore, Storage y Authentication. Esta acción es irreversible.' },
-
-  // General (2)
-  { category: 'General', q: '¿Prosper Pro es gratuito?', a: 'Sí. Todas las funcionalidades actuales y futuras de Prosper Pro están disponibles sin costo. No hay planes de pago ni límites ocultos en el uso de la aplicación.' },
-  { category: 'General', q: '¿En qué URL está el dashboard?', a: 'El dashboard principal está en la raíz (/). Cuando inicias sesión, la página de inicio se convierte automáticamente en tu panel de control personalizado.' },
-];
-
-const categories = [
-  { title: 'Primeros Pasos', desc: 'Crea tu cuenta, explora el modo invitado y personaliza tu experiencia.', icon: '🚀', tag: 'Guía Esencial' },
-  { title: 'Cuentas y Monedas', desc: 'Gestiona múltiples monedas fiduciarias y criptomonedas.', icon: '💱', tags: ['USD', 'EUR', 'VES', 'Crypto'] },
-  { title: 'Finanzas', desc: 'Registra transacciones, gestiona cuentas, favoritos y captura comprobantes.', icon: '💰', tags: ['Cuentas', 'Transacciones', 'VEPay'] },
-  { title: 'Planes Financieros', desc: 'Crea planes de ahorro, gastos planificados y pagos recurrentes.', icon: '🎯', tags: ['Ahorro', 'Gastos', 'Recurrentes'] },
-  { title: 'Calendario y Recordatorios', desc: 'Configura recordatorios y visualiza vencimientos.', icon: '📅', tags: ['Recordatorios', 'Recurrentes'] },
-  { title: 'Configuración', desc: 'Personaliza perfil, idioma, tema, privacidad y preferencias de tasas.', icon: '⚙️', tags: ['Perfil', 'Idioma', 'Privacidad'] },
-  { title: 'Notificaciones', desc: 'Alertas de tasas, resumen diario y notificaciones del navegador.', icon: '🔔', tags: ['BCV', 'Push'] },
-  { title: 'Seguridad', desc: 'Protocolos de encriptación, sincronización y protección de datos.', icon: '🛡️' },
-  { title: 'General', desc: 'Información general sobre precios y acceso.', icon: '❓' },
-];
-
-const quickLinks = [
-  { icon: '🎯', title: 'Crear plan', route: '/metas' },
-  { icon: '💰', title: 'Registrar transacción', route: '/finanzas' },
-  { icon: '📅', title: 'Añadir recordatorio', route: '/calendario' },
-  { icon: '🏦', title: 'Nueva cuenta', route: '/finanzas' },
-  { icon: '⚙️', title: 'Configurar perfil', route: '/configuracion' },
-  { icon: '📊', title: 'Ver tasas', route: '/' },
-];
-
-function getTutorialSteps(category: string): string[] {
-  const t: Record<string, string[]> = {
-    'Primeros Pasos': [
-      'Crea tu cuenta con email o Google, o usa el modo Invitado.',
-      'Configura tu perfil, foto y privacidad en Configuración.',
-      'Elige tu idioma (ES/EN) y tema visual preferido.',
-      'Explora el dashboard y familiarízate con el menú lateral.',
-      'En móvil, usa el botón hamburguesa para navegar entre secciones.',
-    ],
-    'Cuentas y Monedas': [
-      'Ve a Finanzas > Nueva Cuenta.',
-      'Selecciona la moneda: USD, EUR, VES, COP, USDT, SOL, BTC o USDC.',
-      'Asigna un nombre descriptivo y un balance inicial.',
-      'Crea tantas cuentas como necesites en diferentes monedas.',
-      'Usa el selector de tasa BCV o P2P para ver conversiones en bolívares.',
-    ],
-    'Finanzas': [
-      'Revisa tus cuentas favoritas en el Dashboard.',
-      'Registra transacciones: Ingreso, Gasto o Transferencia.',
-      'Usa filtros y búsqueda para encontrar movimientos específicos.',
-      'Consulta la gráfica de rendimiento financiero por período.',
-      'Usa VEPay para capturar comprobantes de pago automáticamente.',
-    ],
-    'Planes Financieros': [
-      'Ve a Planes Financieros y haz clic en "Nuevo Plan".',
-      'Selecciona el tipo: Ahorro, Gasto Planificado o Recurrente.',
-      'Define nombre, categoría (personalizada si quieres) y monto objetivo.',
-      'Establece una fecha límite y, para recurrentes, la frecuencia.',
-      'Comparte el plan con otros usuarios para dividir gastos.',
-    ],
-    'Calendario y Recordatorios': [
-      'Ve al Calendario y selecciona un día.',
-      'Haz clic en "+ Recordatorio" para crear uno nuevo.',
-      'Define título, descripción, hora y tipo (personalizado si lo necesitas).',
-      'Activa la recurrencia para recordatorios periódicos.',
-      'Los planes con fecha aparecen automáticamente en el calendario.',
-    ],
-    'Configuración': [
-      'Accede a Configuración > Perfil para tu nombre, avatar y moneda.',
-      'Usa el selector de idioma para cambiar entre Español e Inglés.',
-      'Configura tu privacidad como Pública o Privada.',
-      'Elige tu tasa preferida: BCV oficial o P2P de Binance.',
-      'Personaliza el tema visual: Claro, Oscuro o AMOLED.',
-    ],
-    'Notificaciones': [
-      'Ve a Configuración > Notificaciones.',
-      'Activa las alertas de cambio de tasa BCV.',
-      'Habilita el resumen diario de balance.',
-      'Concede permiso para notificaciones push del navegador.',
-    ],
-    'Seguridad': [
-      'Usa una contraseña fuerte y única para tu cuenta.',
-      'Mantén tu perfil en privado si no quieres ser encontrado fácilmente.',
-      'Cierra sesión en dispositivos compartidos.',
-      'Reporta actividad sospechosa desde el chat de ayuda.',
-    ],
-    'General': [
-      'Prosper Pro es completamente gratuito.',
-      'El dashboard está en la raíz (/).',
-    ],
-  };
-  return t[category] || ['Tutorial no disponible.'];
+interface QuickLink {
+  icon: string;
+  title: string;
+  route: string;
 }
 
-function getTutorialRoute(category: string): string {
-  const r: Record<string, string> = {
-    'Primeros Pasos': '/configuracion',
-    'Cuentas y Monedas': '/finanzas',
-    'Finanzas': '/finanzas',
-    'Planes Financieros': '/metas',
-    'Calendario y Recordatorios': '/calendario',
-    'Configuración': '/configuracion',
-    'Notificaciones': '/configuracion',
-    'Seguridad': '/configuracion',
-    'General': '/',
-  };
-  return r[category] || '/';
+interface Category {
+  id: string;
+  title: string;
+  desc: string;
+  icon: string;
+  tag?: string;
+  tags?: string[];
 }
+
+interface Faq {
+  categoryId: string;
+  q: string;
+  a: string;
+}
+
+interface VepayStep {
+  title: string;
+  description: string;
+}
+
+const ALL_CATEGORY = '__all__';
 
 export default function AyudaPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useTranslation('ayuda');
+
+  const quickLinks = useMemo(() => t('quickLinks.items', { returnObjects: true }) as QuickLink[], [t]);
+  const categories = useMemo(() => t('categories.items', { returnObjects: true }) as Category[], [t]);
+  const faqs = useMemo(() => t('faq.items', { returnObjects: true }) as Faq[], [t]);
+  const tutorialSteps = useMemo(() => t('tutorials.steps', { returnObjects: true }) as Record<string, string[]>, [t]);
+  const tutorialRoutes = useMemo(() => t('tutorials.routes', { returnObjects: true }) as Record<string, string>, [t]);
+  const vepaySteps = useMemo(() => t('vepay.steps', { returnObjects: true }) as VepayStep[], [t]);
+
+  const categoryTitleById = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.forEach((c) => { map[c.id] = c.title; });
+    return map;
+  }, [categories]);
+
   const [openFaqCategory, setOpenFaqCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY);
   const [openTutorial, setOpenTutorial] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -203,8 +86,8 @@ export default function AyudaPage() {
           const date = new Date(item.createdAt);
           const time = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
           messages.push({ type: 'user', text: item.message, time });
-          const label = item.type === 'bug' ? '🐛 Bug reportado' : '💡 Sugerencia enviada';
-          messages.push({ type: 'system', text: `${label}. Gracias por tu feedback. Lo revisaremos pronto.`, time });
+          const label = item.type === 'bug' ? t('chat.bugReported') : t('chat.suggestionSent');
+          messages.push({ type: 'system', text: `${label}. ${t('chat.thanks')}`, time });
         });
         setChatMessages(messages);
       }).catch(err => {
@@ -213,42 +96,43 @@ export default function AyudaPage() {
         setLoadingHistory(false);
       });
     }
-  }, [showChat, user?.uid, chatMessages.length]);
+  }, [showChat, user?.uid, chatMessages.length, t]);
 
-  const allCategories = ['Todas', ...Array.from(new Set(faqs.map(f => f.category)))];
+  const allCategories = useMemo(() => [ALL_CATEGORY, ...categories.map((c) => c.id)], [categories]);
   const searchLower = searchQuery.toLowerCase().trim();
 
   const groupedFaqs = useMemo(() => {
     let filtered = faqs;
     if (searchLower) {
-      filtered = faqs.filter(f =>
+      filtered = faqs.filter((f) =>
         f.q.toLowerCase().includes(searchLower) ||
         f.a.toLowerCase().includes(searchLower) ||
-        f.category.toLowerCase().includes(searchLower)
+        categoryTitleById[f.categoryId]?.toLowerCase().includes(searchLower)
       );
     }
-    if (selectedCategory !== 'Todas') {
-      filtered = filtered.filter(f => f.category === selectedCategory);
+    if (selectedCategory !== ALL_CATEGORY) {
+      filtered = filtered.filter((f) => f.categoryId === selectedCategory);
     }
-    const groups: Record<string, typeof faqs> = {};
-    filtered.forEach(f => {
-      if (!groups[f.category]) groups[f.category] = [];
-      groups[f.category].push(f);
+    const groups: Record<string, { title: string; items: Faq[] }> = {};
+    filtered.forEach((f) => {
+      const title = categoryTitleById[f.categoryId];
+      if (!groups[f.categoryId]) groups[f.categoryId] = { title, items: [] };
+      groups[f.categoryId].items.push(f);
     });
     return groups;
-  }, [searchLower, selectedCategory]);
+  }, [searchLower, selectedCategory, faqs, categoryTitleById]);
 
   const filteredCategories = useMemo(() => {
     if (!searchLower) return categories;
-    return categories.filter(c => c.title.toLowerCase().includes(searchLower) || c.desc.toLowerCase().includes(searchLower));
-  }, [searchLower]);
+    return categories.filter((c) => c.title.toLowerCase().includes(searchLower) || c.desc.toLowerCase().includes(searchLower));
+  }, [searchLower, categories]);
 
   const filteredQuickLinks = useMemo(() => {
     if (!searchLower) return quickLinks;
-    return quickLinks.filter(l => l.title.toLowerCase().includes(searchLower));
-  }, [searchLower]);
+    return quickLinks.filter((l) => l.title.toLowerCase().includes(searchLower));
+  }, [searchLower, quickLinks]);
 
-  const totalFaqs = Object.values(groupedFaqs).reduce((sum, arr) => sum + arr.length, 0);
+  const totalFaqs = Object.values(groupedFaqs).reduce((sum, arr) => sum + arr.items.length, 0);
   const hasResults = totalFaqs > 0 || filteredCategories.length > 0 || filteredQuickLinks.length > 0;
 
   const handleSendChat = async () => {
@@ -256,7 +140,7 @@ export default function AyudaPage() {
     setSendingFeedback(true);
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    setChatMessages(prev => [...prev, { type: 'user', text: chatMessage, time }]);
+    setChatMessages((prev) => [...prev, { type: 'user', text: chatMessage, time }]);
 
     try {
       await submitFeedback({
@@ -265,18 +149,18 @@ export default function AyudaPage() {
         message: chatMessage,
         page: '/ayuda',
       });
-      const label = chatType === 'bug' ? '🐛 Bug reportado' : '💡 Sugerencia enviada';
+      const label = chatType === 'bug' ? t('chat.bugReported') : t('chat.suggestionSent');
       setTimeout(() => {
-        setChatMessages(prev => [...prev, {
+        setChatMessages((prev) => [...prev, {
           type: 'system',
-          text: `${label}. Gracias por tu feedback. Lo revisaremos pronto.`,
+          text: `${label}. ${t('chat.thanks')}`,
           time: `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`,
         }]);
       }, 600);
-    } catch (err) {
-      setChatMessages(prev => [...prev, {
+    } catch {
+      setChatMessages((prev) => [...prev, {
         type: 'system',
-        text: '❌ Error al enviar. Inténtalo de nuevo.',
+        text: t('chat.error'),
         time: `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`,
       }]);
     }
@@ -284,6 +168,8 @@ export default function AyudaPage() {
     setChatMessage('');
     setSendingFeedback(false);
   };
+
+  const resultCount = totalFaqs + filteredCategories.length + filteredQuickLinks.length;
 
   return (
     <ProtectedRoute>
@@ -296,11 +182,11 @@ export default function AyudaPage() {
               <div className="ayuda-hero-shape ayuda-hero-shape-2" />
             </div>
             <div className="ayuda-hero-content">
-              <h1 className="ayuda-hero-title">Centro de Ayuda</h1>
-              <p className="ayuda-hero-subtitle">Todo lo que necesitas saber para aprovechar Prosper Pro.</p>
+              <h1 className="ayuda-hero-title">{t('hero.title')}</h1>
+              <p className="ayuda-hero-subtitle">{t('hero.subtitle')}</p>
               <div className="ayuda-search-wrapper">
                 <IconSearch className="ayuda-search-icon" width={18} height={18} />
-                <input type="text" placeholder="Buscar guías, preguntas..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="ayuda-search-input" />
+                <input type="text" placeholder={t('hero.searchPlaceholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="ayuda-search-input" />
                 {searchQuery && (
                   <button className="ayuda-search-clear" onClick={() => setSearchQuery('')}>
                     <IconX width={14} height={14} />
@@ -312,8 +198,8 @@ export default function AyudaPage() {
 
           {searchQuery && (
             <div className="ayuda-search-results">
-              <p>{hasResults ? `${totalFaqs + filteredCategories.length + filteredQuickLinks.length} resultado${(totalFaqs + filteredCategories.length + filteredQuickLinks.length) !== 1 ? 's' : ''}` : `No se encontraron resultados para "${searchQuery}"`}</p>
-              <button className="ayuda-clear-search" onClick={() => setSearchQuery('')}>Limpiar</button>
+              <p>{hasResults ? t('search.results', { count: resultCount }) : t('search.noResults', { query: searchQuery })}</p>
+              <button className="ayuda-clear-search" onClick={() => setSearchQuery('')}>{t('search.clear')}</button>
             </div>
           )}
 
@@ -322,7 +208,7 @@ export default function AyudaPage() {
             <section className="ayuda-section">
               <div className="ayuda-section-header">
                 <span className="ayuda-section-icon">⚡</span>
-                <h2 className="ayuda-section-title">Accesos Rápidos</h2>
+                <h2 className="ayuda-section-title">{t('quickLinks.title')}</h2>
               </div>
               <div className="ayuda-quick-grid">
                 {filteredQuickLinks.map((link, i) => (
@@ -341,7 +227,7 @@ export default function AyudaPage() {
             <section className="ayuda-section">
               <div className="ayuda-section-header">
                 <span className="ayuda-section-icon">📚</span>
-                <h2 className="ayuda-section-title">Guías por Categoría</h2>
+                <h2 className="ayuda-section-title">{t('categories.title')}</h2>
               </div>
               <div className="ayuda-categories-grid">
                 {filteredCategories.map((cat, i) => (
@@ -355,14 +241,14 @@ export default function AyudaPage() {
                     <h3 className="ayuda-card-title">{cat.title}</h3>
                     <p className="ayuda-card-desc">{cat.desc}</p>
                     {cat.tags && <div className="ayuda-card-tags">{cat.tags.map((tag, j) => <span key={j} className="ayuda-tag">{tag}</span>)}</div>}
-                    <button className="ayuda-tutorial-toggle" onClick={(e) => { e.stopPropagation(); setOpenTutorial(openTutorial === cat.title ? null : cat.title); }}>
-                      <IconChevronDown width={14} height={14} className={`ayuda-tutorial-chevron ${openTutorial === cat.title ? 'ayuda-tutorial-chevron-open' : ''}`} />
-                      <span>{openTutorial === cat.title ? 'Ocultar tutorial' : 'Ver tutorial'}</span>
+                    <button className="ayuda-tutorial-toggle" onClick={(e) => { e.stopPropagation(); setOpenTutorial(openTutorial === cat.id ? null : cat.id); }}>
+                      <IconChevronDown width={14} height={14} className={`ayuda-tutorial-chevron ${openTutorial === cat.id ? 'ayuda-tutorial-chevron-open' : ''}`} />
+                      <span>{openTutorial === cat.id ? t('tutorials.hide') : t('tutorials.show')}</span>
                     </button>
-                    {openTutorial === cat.title && (
+                    {openTutorial === cat.id && (
                       <div className="ayuda-tutorial-content">
-                        <ol className="ayuda-tutorial-steps">{getTutorialSteps(cat.title).map((step, j) => (<li key={j}><span className="ayuda-tutorial-step-num">{j + 1}</span><span className="ayuda-tutorial-step-text">{step}</span></li>))}</ol>
-                        <button className="ayuda-tutorial-link" onClick={() => router.push(getTutorialRoute(cat.title))}>Ir a {cat.title} <IconArrowForward width={12} height={12} /></button>
+                        <ol className="ayuda-tutorial-steps">{(tutorialSteps[cat.id] ?? [t('tutorials.notAvailable')]).map((step, j) => (<li key={j}><span className="ayuda-tutorial-step-num">{j + 1}</span><span className="ayuda-tutorial-step-text">{step}</span></li>))}</ol>
+                        <button className="ayuda-tutorial-link" onClick={() => router.push(tutorialRoutes[cat.id] ?? '/')}>{t('tutorials.goTo', { category: cat.title })} <IconArrowForward width={12} height={12} /></button>
                       </div>
                     )}
                   </div>
@@ -379,42 +265,23 @@ export default function AyudaPage() {
                   <span className="ayuda-vepay-icon">📱</span>
                 </div>
                 <div className="ayuda-vepay-title-wrap">
-                  <h2 className="ayuda-vepay-title">VEPay — Captura de Comprobantes</h2>
-                  <p className="ayuda-vepay-subtitle">Sistema inteligente de extracción de datos de pagos móviles venezolanos</p>
+                  <h2 className="ayuda-vepay-title">{t('vepay.title')}</h2>
+                  <p className="ayuda-vepay-subtitle">{t('vepay.subtitle')}</p>
                 </div>
               </div>
               <div className="ayuda-vepay-steps">
-                <div className="ayuda-vepay-step">
-                  <div className="ayuda-vepay-step-num">1</div>
-                  <div className="ayuda-vepay-step-content">
-                    <h4>Sube tu captura</h4>
-                    <p>Toma una captura de pantalla de tu app bancaria (BDV, Mercantil, Provincial, Banesco, etc.) y súbela a Prosper Pro.</p>
+                {vepaySteps.map((step, idx) => (
+                  <div key={idx} className="ayuda-vepay-step">
+                    <div className="ayuda-vepay-step-num">{idx + 1}</div>
+                    <div className="ayuda-vepay-step-content">
+                      <h4>{step.title}</h4>
+                      <p dangerouslySetInnerHTML={{ __html: step.description }} />
+                    </div>
                   </div>
-                </div>
-                <div className="ayuda-vepay-step">
-                  <div className="ayuda-vepay-step-num">2</div>
-                  <div className="ayuda-vepay-step-content">
-                    <h4>OCR procesa automáticamente</h4>
-                    <p>El sistema usa reconocimiento óptico de caracteres para leer el texto. Soporta más de 20 bancos venezolanos.</p>
-                  </div>
-                </div>
-                <div className="ayuda-vepay-step">
-                  <div className="ayuda-vepay-step-num">3</div>
-                  <div className="ayuda-vepay-step-content">
-                    <h4>Datos extraídos</h4>
-                    <p>Se extraen: <strong>banco</strong>, <strong>monto en Bs.</strong>, <strong>referencia</strong>, <strong>fecha</strong>, <strong>origen</strong>, <strong>destinatario</strong> y <strong>concepto</strong>.</p>
-                  </div>
-                </div>
-                <div className="ayuda-vepay-step">
-                  <div className="ayuda-vepay-step-num">4</div>
-                  <div className="ayuda-vepay-step-content">
-                    <h4>Validación inteligente</h4>
-                    <p>El sistema valida cada comprobante y muestra campos faltantes. Puedes revisar el texto crudo y corregir.</p>
-                  </div>
-                </div>
+                ))}
               </div>
               <div className="ayuda-vepay-supported">
-                <h4>Bancos soportados</h4>
+                <h4>{t('vepay.supportedBanks')}</h4>
                 <div className="ayuda-vepay-banks">
                   {['BDV', 'Mercantil', 'Provincial', 'Banesco', 'Bancamiga', 'Bicentenario', 'Tesoro', 'Caroní', 'Exterior', 'Sofitasa', 'Plaza', 'Activo', 'Del Sur', 'Banfanb'].map((bank) => (
                     <span key={bank} className="ayuda-vepay-bank-tag">{bank}</span>
@@ -428,35 +295,35 @@ export default function AyudaPage() {
           <section className="ayuda-section">
             <div className="ayuda-section-header">
               <span className="ayuda-section-icon">❓</span>
-              <h2 className="ayuda-section-title">Preguntas Frecuentes</h2>
+              <h2 className="ayuda-section-title">{t('faq.title')}</h2>
             </div>
             <div className="ayuda-faq-filters">
-              {allCategories.map((cat) => (<button key={cat} className={`ayuda-filter-btn ${selectedCategory === cat ? 'active' : ''}`} onClick={() => setSelectedCategory(cat)}>{cat}</button>))}
+              {allCategories.map((catId) => (<button key={catId} className={`ayuda-filter-btn ${selectedCategory === catId ? 'active' : ''}`} onClick={() => setSelectedCategory(catId)}>{catId === ALL_CATEGORY ? t('faq.filters.all') : categoryTitleById[catId]}</button>))}
             </div>
             <div className="ayuda-faq-grouped">
-              {Object.entries(groupedFaqs).map(([category, items]) => (
-                <div key={category} className="ayuda-faq-group">
-                  <button className="ayuda-faq-group-header" onClick={() => setOpenFaqCategory(openFaqCategory === category ? null : category)}>
-                    <span className="ayuda-faq-group-title">{category}</span>
+              {Object.entries(groupedFaqs).map(([categoryId, { title, items }]) => (
+                <div key={categoryId} className="ayuda-faq-group">
+                  <button className="ayuda-faq-group-header" onClick={() => setOpenFaqCategory(openFaqCategory === categoryId ? null : categoryId)}>
+                    <span className="ayuda-faq-group-title">{title}</span>
                     <span className="ayuda-faq-group-count">{items.length}</span>
-                    <IconChevronDown width={16} height={16} className={`ayuda-faq-group-chevron ${openFaqCategory === category ? 'ayuda-faq-chevron-open' : ''}`} />
+                    <IconChevronDown width={16} height={16} className={`ayuda-faq-group-chevron ${openFaqCategory === categoryId ? 'ayuda-faq-chevron-open' : ''}`} />
                   </button>
-                  {openFaqCategory === category && (
+                  {openFaqCategory === categoryId && (
                     <div className="ayuda-faq-group-list">
                       {items.map((faq, i) => (
                         <div key={i} className="ayuda-faq-item">
-                          <button className="ayuda-faq-question" onClick={() => setOpenFaqCategory(`${category}-${i}`)}>
+                          <button className="ayuda-faq-question" onClick={() => setOpenFaqCategory(`${categoryId}-${i}`)}>
                             <span className="ayuda-faq-q">{faq.q}</span>
-                            <IconChevronDown width={16} height={16} className={`ayuda-faq-chevron ${openFaqCategory === `${category}-${i}` ? 'ayuda-faq-chevron-open' : ''}`} />
+                            <IconChevronDown width={16} height={16} className={`ayuda-faq-chevron ${openFaqCategory === `${categoryId}-${i}` ? 'ayuda-faq-chevron-open' : ''}`} />
                           </button>
-                          {openFaqCategory === `${category}-${i}` && <div className="ayuda-faq-answer"><p>{faq.a}</p></div>}
+                          {openFaqCategory === `${categoryId}-${i}` && <div className="ayuda-faq-answer"><p>{faq.a}</p></div>}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
               ))}
-              {totalFaqs === 0 && <p className="ayuda-faq-empty">No se encontraron resultados.</p>}
+              {totalFaqs === 0 && <p className="ayuda-faq-empty">{t('faq.empty')}</p>}
             </div>
           </section>
 
@@ -464,39 +331,39 @@ export default function AyudaPage() {
           <section className="ayuda-section">
             <div className="ayuda-section-header">
               <span className="ayuda-section-icon">💬</span>
-              <h2 className="ayuda-section-title">¿Necesitas más ayuda?</h2>
+              <h2 className="ayuda-section-title">{t('support.title')}</h2>
             </div>
             <div className="ayuda-support-grid">
               <div className="ayuda-support-card">
                 <div className="ayuda-support-icon-wrap">
                   <span className="ayuda-support-emoji">📧</span>
                 </div>
-                <h3 className="ayuda-support-title">Email <span style={{fontSize:'0.6rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>En Desarrollo</span></h3>
-                <p className="ayuda-support-desc">Respuesta en 24h hábiles.</p>
-                <button className="ayuda-support-btn ayuda-support-btn-primary" onClick={() => window.location.href = 'mailto:soporte@prosperpro.com'}>Enviar</button>
+                <h3 className="ayuda-support-title">{t('support.email.title')} <span style={{fontSize:'0.6rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>{t('support.email.badge')}</span></h3>
+                <p className="ayuda-support-desc">{t('support.email.description')}</p>
+                <button className="ayuda-support-btn ayuda-support-btn-primary" onClick={() => window.location.href = 'mailto:soporte@prosperpro.com'}>{t('support.email.button')}</button>
               </div>
               <div className="ayuda-support-card">
                 <div className="ayuda-support-icon-wrap">
                   <span className="ayuda-support-emoji">📖</span>
                 </div>
-                <h3 className="ayuda-support-title">Documentación</h3>
-                <p className="ayuda-support-desc">Guías completas y tutoriales.</p>
-                <button className="ayuda-support-btn ayuda-support-btn-secondary" onClick={() => window.open('https://prosper-pro.vercel.app', '_blank')}>Ver</button>
+                <h3 className="ayuda-support-title">{t('support.docs.title')}</h3>
+                <p className="ayuda-support-desc">{t('support.docs.description')}</p>
+                <button className="ayuda-support-btn ayuda-support-btn-secondary" onClick={() => window.open('https://prosper-pro.vercel.app', '_blank')}>{t('support.docs.button')}</button>
               </div>
               <div className="ayuda-support-card ayuda-support-card-chat" onClick={() => setShowChat(true)}>
                 <div className="ayuda-support-icon-wrap">
                   <span className="ayuda-support-emoji">💬</span>
                 </div>
-                <h3 className="ayuda-support-title">Feedback</h3>
-                <p className="ayuda-support-desc">Reporta bugs o envía sugerencias.</p>
-                <button className="ayuda-support-btn ayuda-support-btn-chat">Abrir Chat</button>
+                <h3 className="ayuda-support-title">{t('support.feedback.title')}</h3>
+                <p className="ayuda-support-desc">{t('support.feedback.description')}</p>
+                <button className="ayuda-support-btn ayuda-support-btn-chat">{t('support.feedback.button')}</button>
               </div>
             </div>
           </section>
 
           <footer className="ayuda-footer">
-            <p className="ayuda-footer-label">PROSPER PRO SUPPORT</p>
-            <div className="ayuda-footer-links"><a href="#">Estado del Sistema</a><Link href="/ayuda/notas-version">Notas de Versión</Link><a href="#">Términos</a></div>
+            <p className="ayuda-footer-label">{t('footer.label')}</p>
+            <div className="ayuda-footer-links"><a href="#">{t('footer.links.systemStatus')}</a><Link href="/ayuda/notas-version">{t('footer.links.releaseNotes')}</Link><a href="#">{t('footer.links.terms')}</a></div>
           </footer>
         </div>
 
@@ -508,8 +375,8 @@ export default function AyudaPage() {
                 <div className="chat-header-info">
                   <span className="chat-header-icon">💬</span>
                   <div>
-                    <h3 className="chat-header-title">Feedback & Bugs</h3>
-                    <p className="chat-header-subtitle">Reporta bugs o envía sugerencias</p>
+                    <h3 className="chat-header-title">{t('chat.title')}</h3>
+                    <p className="chat-header-subtitle">{t('chat.subtitle')}</p>
                   </div>
                 </div>
                 <button className="chat-close-btn" onClick={() => setShowChat(false)}>
@@ -517,19 +384,19 @@ export default function AyudaPage() {
                 </button>
               </div>
               <div className="chat-type-selector">
-                <button className={`chat-type-btn ${chatType === 'bug' ? 'active active-bug' : ''}`} onClick={() => setChatType('bug')}>🐛 Bug</button>
-                <button className={`chat-type-btn ${chatType === 'suggestion' ? 'active active-suggestion' : ''}`} onClick={() => setChatType('suggestion')}>💡 Sugerencia</button>
+                <button className={`chat-type-btn ${chatType === 'bug' ? 'active active-bug' : ''}`} onClick={() => setChatType('bug')}>{t('chat.bug')}</button>
+                <button className={`chat-type-btn ${chatType === 'suggestion' ? 'active active-suggestion' : ''}`} onClick={() => setChatType('suggestion')}>{t('chat.suggestion')}</button>
               </div>
               <div className="chat-messages">
                 {loadingHistory ? (
                   <div className="chat-empty">
-                    <p>Cargando historial...</p>
+                    <p>{t('chat.loading')}</p>
                   </div>
                 ) : chatMessages.length === 0 ? (
                   <div className="chat-empty">
                     <span className="chat-empty-icon">{chatType === 'bug' ? '🐛' : '💡'}</span>
-                    <p>{chatType === 'bug' ? 'Describe el bug que encontraste' : 'Comparte tu idea o sugerencia'}</p>
-                    <p className="chat-empty-hint">Sé detallado para que podamos ayudarte mejor.</p>
+                    <p>{chatType === 'bug' ? t('chat.bugPlaceholder') : t('chat.suggestionPlaceholder')}</p>
+                    <p className="chat-empty-hint">{t('chat.hint')}</p>
                   </div>
                 ) : (
                   chatMessages.map((msg, i) => (
@@ -544,7 +411,7 @@ export default function AyudaPage() {
                 <div ref={chatEndRef} />
               </div>
               <div className="chat-input-area">
-                <input type="text" className="chat-input" placeholder={chatType === 'bug' ? 'Describe el bug...' : 'Escribe tu sugerencia...'} value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendChat()} disabled={sendingFeedback} />
+                <input type="text" className="chat-input" placeholder={chatType === 'bug' ? t('chat.inputBugPlaceholder') : t('chat.inputSuggestionPlaceholder')} value={chatMessage} onChange={(e) => setChatMessage(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSendChat()} disabled={sendingFeedback} />
                 <button className="chat-send-btn" onClick={handleSendChat} disabled={!chatMessage.trim() || sendingFeedback}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
