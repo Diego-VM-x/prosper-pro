@@ -123,8 +123,8 @@
     "title": "Flujo Financiero",
     "subtitle": "Ingresos vs Gastos",
     "tooltip": {
-      "income": "Download Ingresos",
-      "expense": "Send Gastos",
+      "income": "Ingresos",
+      "expense": "Gastos",
       "hidden": "Montos ocultos"
     },
     "toggle": {

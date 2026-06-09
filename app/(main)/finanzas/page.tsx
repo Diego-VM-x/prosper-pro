@@ -1021,7 +1021,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       return (
                         <div key={code} className="rates-row">
                           <div className="rates-row-left">
-                            <span className="rates-row-flag"><InlineIcon icon={flag} size={18} /></span>
+                            <span className="rates-row-flag">{flag}</span>
                             <div className="rates-row-info">
                               <span className="rates-row-code">{code}</span>
                               <span className="rates-row-name">{name}</span>
@@ -1051,11 +1051,11 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                   <div className="rates-list">
                     {[
-                      { code: 'USDT', name: 'Tether', flag: 'Diamond' },
-                      { code: 'SOL', name: 'Solana', flag: 'Sun' },
-                      { code: 'BTC', name: 'Bitcoin', flag: 'Circle' },
-                      { code: 'ETH', name: 'Ethereum', flag: 'Gem' },
-                      { code: 'USDC', name: 'USD Coin', flag: 'Hexagon' },
+                      { code: 'USDT', name: 'Tether', flag: '💎' },
+                      { code: 'SOL', name: 'Solana', flag: '☀️' },
+                      { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
+                      { code: 'ETH', name: 'Ethereum', flag: '💠' },
+                      { code: 'USDC', name: 'USD Coin', flag: '🔷' },
                     ].map(({ code, name, flag }) => {
                       const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
                       const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
@@ -2000,7 +2000,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                         {accounts.map(acc => (
                           <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
                             <div className="accounting-account-header">
-                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</span>
+                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}><InlineIcon icon={acc.icon || 'Wallet'} size={16} /></span>
                               <div className="accounting-account-info">
                                 <span className="accounting-account-name">{acc.name}</span>
                                 <span className="accounting-account-balance" style={{ color: acc.color }}>

@@ -123,8 +123,8 @@
     "title": "Financial Flow",
     "subtitle": "Income vs Expenses",
     "tooltip": {
-      "income": "Download Income",
-      "expense": "Send Expenses",
+      "income": "Income",
+      "expense": "Expenses",
       "hidden": "Amounts hidden"
     },
     "toggle": {

@@ -93,11 +93,11 @@ function useCollapsedSections() {
 
 // ── Widget de Tasas de Cambio ───────────────────────────────────────
 const CRYPTO_LIST = [
-  { code: 'USDT', name: 'Tether', flag: 'Diamond' },
-  { code: 'SOL', name: 'Solana', flag: 'Sun' },
-  { code: 'BTC', name: 'Bitcoin', flag: 'Circle' },
-  { code: 'ETH', name: 'Ethereum', flag: 'Gem' },
-  { code: 'USDC', name: 'USD Coin', flag: 'Hexagon' },
+  { code: 'USDT', name: 'Tether', flag: '💎' },
+  { code: 'SOL', name: 'Solana', flag: '☀️' },
+  { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
+  { code: 'ETH', name: 'Ethereum', flag: '💠' },
+  { code: 'USDC', name: 'USD Coin', flag: '🔷' },
 ] as const;
 
 const FIAT_LIST = [
@@ -156,7 +156,7 @@ function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').Exchan
               const displayBs = p2pMode && p2pRate ? p2pRate : bsRate;
               return (
                 <div className="rate-item" key={code}>
-                  <span className="rate-flag"><InlineIcon icon={flag} size={16} /></span>
+                  <span className="rate-flag">{flag}</span>
                   <span className="rate-name">{code}</span>
                   <div className="rate-values">
                     {usdPrice && (
