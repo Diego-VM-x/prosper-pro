@@ -16,6 +16,7 @@ import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { X, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const FinancialStatusChart = dynamic(() => import('@/app/components/FinancialStatusChart').then(m => ({ default: m.FinancialStatusChart })), { ssr: false });
@@ -1013,15 +1014,15 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                   <div className="rates-list">
                     {[
-                      { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
-                      { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-                      { code: 'COP', name: 'Peso Colombiano', flag: '🇨🇴' },
-                    ].map(({ code, name, flag }) => {
+                      { code: 'USD', name: 'Dólar' },
+                      { code: 'EUR', name: 'Euro' },
+                      { code: 'COP', name: 'Peso Colombiano' },
+                    ].map(({ code, name }) => {
                       const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
                       return (
                         <div key={code} className="rates-row">
                           <div className="rates-row-left">
-                            <span className="rates-row-flag">{flag}</span>
+                            <CurrencyFlag code={code} size={20} className="rates-row-flag" />
                             <div className="rates-row-info">
                               <span className="rates-row-code">{code}</span>
                               <span className="rates-row-name">{name}</span>
@@ -1051,19 +1052,19 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                   <div className="rates-list">
                     {[
-                      { code: 'USDT', name: 'Tether', flag: '💎' },
-                      { code: 'SOL', name: 'Solana', flag: '☀️' },
-                      { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-                      { code: 'ETH', name: 'Ethereum', flag: '💠' },
-                      { code: 'USDC', name: 'USD Coin', flag: '🔷' },
-                    ].map(({ code, name, flag }) => {
+                      { code: 'USDT', name: 'Tether' },
+                      { code: 'SOL', name: 'Solana' },
+                      { code: 'BTC', name: 'Bitcoin' },
+                      { code: 'ETH', name: 'Ethereum' },
+                      { code: 'USDC', name: 'USD Coin' },
+                    ].map(({ code, name }) => {
                       const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
                       const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
                       const bsP2p = rates.p2pRates?.[code as keyof typeof rates.p2pRates] as number | undefined;
                       return (
                         <div key={code} className="rates-row">
                           <div className="rates-row-left">
-                            <span className="rates-row-flag">{flag}</span>
+                            <CurrencyFlag code={code} size={20} className="rates-row-flag" />
                             <div className="rates-row-info">
                               <span className="rates-row-code">{code}</span>
                               <span className="rates-row-name">{name}</span>

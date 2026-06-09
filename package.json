@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "cryptocurrency-icons": "^0.18.1",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.10.0",
     "i18next": "^26.3.1",

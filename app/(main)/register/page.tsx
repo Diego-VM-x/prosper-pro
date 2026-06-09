@@ -9,6 +9,7 @@ import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import type { CurrencyCode } from '@/types';
 import '../login/auth.css';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { CurrencyFlag } from '@/app/components/CryptoIcons';
 
 interface AuthFeature {
   icon: string;
@@ -158,7 +159,7 @@ export default function RegisterPage() {
                           onClick={() => setCurrency(code)}
                           disabled={loading}
                         >
-                          <span className="currency-flag">{cfg.flag}</span>
+                          <CurrencyFlag code={code} size={20} className="currency-flag" />
                           <span className="currency-name">{cfg.symbol} {cfg.name}</span>
                         </button>
                       );

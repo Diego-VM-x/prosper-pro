@@ -13,6 +13,7 @@ import type { UserProfile, CurrencyCode } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock } from 'lucide-react';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
@@ -385,7 +386,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                               }}
                               style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}
                             >
-                              <span className="option-flag">{cfg.flag}</span>
+                              <CurrencyFlag code={code} size={20} className="option-flag" />
                               <span className="option-text">{cfg.symbol} {cfg.name}</span>
                               {!isBs && rateToBs && rateToBs > 0 && (
                                 <span style={{ fontSize: '0.75rem', color: 'var(--color-prosper-green)', fontWeight: 500, marginLeft: '28px' }}>

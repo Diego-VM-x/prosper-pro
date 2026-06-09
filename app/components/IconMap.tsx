@@ -7,6 +7,9 @@
 import React from 'react';
 import type { LucideProps } from 'lucide-react';
 import {
+  BtcIcon, EthIcon, UsdtIcon, SolIcon, UsdcIcon,
+} from './CryptoIcons';
+import {
   Target, CreditCard, Banknote, CalendarDays, Globe, Globe2, Moon, Sun,
   Sparkles, GraduationCap, Video, Activity, Sunset, Home, Building2,
   Landmark, School, Tag, Bug, Eye, Hand, User, Pill, Diamond, Heart,
@@ -131,11 +134,25 @@ export const NAMED_ICONS: Record<string, LucideIcon> = {
   HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid,
 };
 
+/** Crypto emoji → custom SVG icon component */
+const CRYPTO_EMOJI_MAP: Record<string, React.FC<{ size?: number; className?: string }>> = {
+  '💎': UsdtIcon,
+  '☀️': SolIcon,
+  '🟠': BtcIcon,
+  '💠': EthIcon,
+  '🔷': UsdcIcon,
+};
+
 /** Resolve an emoji or icon name to a Lucide component. Falls back to Circle. */
 export function getLucideIcon(key: string): LucideIcon {
   if (NAMED_ICONS[key]) return NAMED_ICONS[key];
   if (EMOJI_TO_ICON[key]) return EMOJI_TO_ICON[key];
   return Circle;
+}
+
+/** Check if a string is a crypto emoji that should render an SVG logo. */
+export function isCryptoEmoji(key: string): boolean {
+  return key in CRYPTO_EMOJI_MAP;
 }
 
 /** Predefined color palette for icon badges (matches the Quick Actions screenshot style) */
@@ -252,7 +269,9 @@ export function IconBadge({
   );
 }
 
-/** Render a Lucide icon directly (no badge). Useful for inline replacements. */
+/** Render a Lucide icon directly (no badge). Useful for inline replacements.
+ *  Automatically renders official crypto SVG logos for crypto emojis.
+ */
 export function InlineIcon({
   icon,
   size = 18,
@@ -264,6 +283,10 @@ export function InlineIcon({
   className?: string;
   style?: React.CSSProperties;
 }) {
+  if (typeof icon === 'string' && isCryptoEmoji(icon)) {
+    const CryptoComp = CRYPTO_EMOJI_MAP[icon];
+    return <CryptoComp size={size} className={className} />;
+  }
   const IconComp = typeof icon === 'string' ? getLucideIcon(icon) : icon;
   return <IconComp size={size} className={className} style={style} />;
 }

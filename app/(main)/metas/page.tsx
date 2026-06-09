@@ -829,7 +829,7 @@ const MetasPage = memo(function MetasPage() {
                       <CustomSelect
                         value={formCurrency}
                         onChange={v => setFormCurrency(v as CurrencyCode)}
-                        options={CURRENCY_LIST.map(c => ({ value: c, label: `${currencyMap[c].flag} ${c}`, icon: currencyMap[c].flag }))}
+                        options={CURRENCY_LIST.map(c => ({ value: c, label: c, icon: currencyMap[c].flag }))}
                         placeholder={t('metas:modals.fields.selectPlaceholder')}
                       />
                     </div>

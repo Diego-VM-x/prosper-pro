@@ -21,6 +21,7 @@ import {
   IconReceipt,
 } from './icons';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { Star } from 'lucide-react';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
@@ -93,11 +94,11 @@ function useCollapsedSections() {
 
 // ── Widget de Tasas de Cambio ───────────────────────────────────────
 const CRYPTO_LIST = [
-  { code: 'USDT', name: 'Tether', flag: '💎' },
-  { code: 'SOL', name: 'Solana', flag: '☀️' },
-  { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-  { code: 'ETH', name: 'Ethereum', flag: '💠' },
-  { code: 'USDC', name: 'USD Coin', flag: '🔷' },
+  { code: 'USDT', name: 'Tether' },
+  { code: 'SOL', name: 'Solana' },
+  { code: 'BTC', name: 'Bitcoin' },
+  { code: 'ETH', name: 'Ethereum' },
+  { code: 'USDC', name: 'USD Coin' },
 ] as const;
 
 const FIAT_LIST = [
@@ -129,17 +130,17 @@ function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').Exchan
           <span className="rates-group-label">{t('market.fiat')}</span>
           <div className="rates-items">
             <div className="rate-item">
-              <span className="rate-flag">🇺🇸</span>
+              <CurrencyFlag code="USD" size={16} className="rate-flag" />
               <span className="rate-name">USD</span>
               <span className="rate-value">{CURRENCY_MAP.BS.symbol}{oficialRate.toLocaleString('es-VE', { maximumFractionDigits: 2 })}</span>
             </div>
             <div className="rate-item">
-              <span className="rate-flag">🇪🇺</span>
+              <CurrencyFlag code="EUR" size={16} className="rate-flag" />
               <span className="rate-name">EUR</span>
               <span className="rate-value">{CURRENCY_MAP.BS.symbol}{eurRate.toLocaleString('es-VE', { maximumFractionDigits: 2 })}</span>
             </div>
             <div className="rate-item">
-              <span className="rate-flag">🇨🇴</span>
+              <CurrencyFlag code="COP" size={16} className="rate-flag" />
               <span className="rate-name">COP</span>
               <span className="rate-value">{CURRENCY_MAP.BS.symbol}{copRate.toLocaleString('es-VE', { maximumFractionDigits: 4 })}</span>
             </div>
@@ -149,14 +150,14 @@ function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').Exchan
         <div className="rates-group">
           <span className="rates-group-label">{t('market.cryptos')}</span>
           <div className="rates-items">
-            {CRYPTO_LIST.map(({ code, name, flag }) => {
+            {CRYPTO_LIST.map(({ code, name }) => {
               const usdPrice = rates.cryptoPrices?.[code];
               const bsRate = rates.rates[code as CurrencyCode];
               const p2pRate = rates.p2pRates?.[code];
               const displayBs = p2pMode && p2pRate ? p2pRate : bsRate;
               return (
                 <div className="rate-item" key={code}>
-                  <span className="rate-flag">{flag}</span>
+                  <CurrencyFlag code={code} size={16} className="rate-flag" />
                   <span className="rate-name">{code}</span>
                   <div className="rate-values">
                     {usdPrice && (
