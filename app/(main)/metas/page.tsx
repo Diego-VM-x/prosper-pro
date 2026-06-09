@@ -43,6 +43,7 @@ const PLAN_CATEGORIES: { value: PlanCategory; icon: string }[] = [
 ];
 
 const RECURRENCES: { value: RecurringFrequency; label: string }[] = [
+  { value: 'daily', label: 'Diario' },
   { value: 'weekly', label: 'Semanal' },
   { value: 'biweekly', label: 'Quincenal' },
   { value: 'monthly', label: 'Mensual' },
@@ -377,6 +378,7 @@ const MetasPage = memo(function MetasPage() {
       let nextDue = plan.nextDueDate || todayISO();
       const d = new Date(nextDue + 'T12:00:00');
       switch (plan.frequency) {
+        case 'daily': d.setDate(d.getDate() + 1); break;
         case 'weekly': d.setDate(d.getDate() + 7); break;
         case 'biweekly': d.setDate(d.getDate() + 14); break;
         case 'monthly': d.setMonth(d.getMonth() + 1); break;
