@@ -352,42 +352,42 @@
       {
         "name": "Mariana R.",
         "role": "Freelancer",
-        "avatar": "User‍Laptop",
+        "avatar": "💻",
         "content": "Prosper me ayudó a organizar mis ingresos en USD y BS. Las tasas en tiempo real son exactas y el dashboard es súper claro.",
         "stars": 5
       },
       {
         "name": "Carlos G.",
         "role": "Emprendedor",
-        "avatar": "User‍Briefcase",
+        "avatar": "💼",
         "content": "El VEPay OCR me ahorra horas cada semana. Subo las capturas de mis pagos y Prosper extrae todo automáticamente.",
         "stars": 5
       },
       {
         "name": "Andrea P.",
         "role": "Estudiante",
-        "avatar": "User‍GraduationCap",
+        "avatar": "🎓",
         "content": "Por primera vez tengo control total de mis finanzas. El dashboard y los planes de ahorro me cambiaron la vida.",
         "stars": 5
       },
       {
         "name": "Luis M.",
         "role": "Ingeniero",
-        "avatar": "User‍Wrench",
+        "avatar": "🔧",
         "content": "Compartir gastos con mi familia nunca fue tan fácil. Cada uno ve su parte y yo tengo el control total.",
         "stars": 5
       },
       {
         "name": "Sofía T.",
         "role": "Contadora",
-        "avatar": "User‍Briefcase",
+        "avatar": "💼",
         "content": "Recomiendo Prosper a todos mis clientes. La multi-moneda y el calendario de vencimientos son indispensables.",
         "stars": 5
       },
       {
         "name": "Daniel K.",
         "role": "Trader",
-        "avatar": "User‍Laptop",
+        "avatar": "💻",
         "content": "El modo P2P para cripto es exacto. Comparado con otros apps, Prosper tiene las tasas más actualizadas del mercado.",
         "stars": 5
       }
@@ -409,12 +409,12 @@
         "description": "Usamos Firebase Authentication con soporte para Google Sign-In, verificación de email y sesiones cifradas."
       },
       {
-        "icon": "Shield️",
+        "icon": "Shield",
         "title": "Tus datos son solo tuyos",
         "description": "Cada usuario tiene su propio espacio aislado en Firestore. Nadie más puede ver tus cuentas, metas ni transacciones."
       },
       {
-        "icon": "Eye️",
+        "icon": "Eye",
         "title": "Perfil privado por defecto",
         "description": "Puedes elegir si tu perfil es público o privado. En modo privado, solo te encuentran por email exacto."
       },

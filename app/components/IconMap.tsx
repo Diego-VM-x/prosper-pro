@@ -19,7 +19,8 @@ import {
   MailOpen, Smartphone, Camera, Tv, RefreshCw, Lock, Bell, Wrench,
   Hexagon, Trash2, EyeOff, Rocket, Car, Ban, ShoppingCart, Shield,
   Circle, Bot, Handshake, Receipt, Plane, Pencil, CheckCircle2, XCircle,
-  HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid, type LucideIcon,
+  HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid, Clock, X,
+  type LucideIcon,
 } from 'lucide-react';
 
 /** Props for the IconBadge wrapper */
@@ -131,7 +132,7 @@ export const NAMED_ICONS: Record<string, LucideIcon> = {
   MailOpen, Smartphone, Camera, Tv, RefreshCw, Lock, Bell, Wrench,
   Hexagon, Trash2, EyeOff, Rocket, Car, Ban, ShoppingCart, Shield,
   Circle, Bot, Handshake, Receipt, Plane, Pencil, CheckCircle2, XCircle,
-  HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid,
+  HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid, Clock, X,
 };
 
 /** Crypto emoji → custom SVG icon component */
@@ -143,16 +144,22 @@ const CRYPTO_EMOJI_MAP: Record<string, React.FC<{ size?: number; className?: str
   '🔷': UsdcIcon,
 };
 
+/** Strip invisible Unicode characters (variation selectors, ZWJ, etc.) from icon keys. */
+function normalizeIconKey(key: string): string {
+  return key.replace(/[\uFE00-\uFE0F\u200D]/g, '');
+}
+
 /** Resolve an emoji or icon name to a Lucide component. Falls back to Circle. */
 export function getLucideIcon(key: string): LucideIcon {
-  if (NAMED_ICONS[key]) return NAMED_ICONS[key];
-  if (EMOJI_TO_ICON[key]) return EMOJI_TO_ICON[key];
+  const clean = normalizeIconKey(key);
+  if (NAMED_ICONS[clean]) return NAMED_ICONS[clean];
+  if (EMOJI_TO_ICON[clean]) return EMOJI_TO_ICON[clean];
   return Circle;
 }
 
 /** Check if a string is a crypto emoji that should render an SVG logo. */
 export function isCryptoEmoji(key: string): boolean {
-  return key in CRYPTO_EMOJI_MAP;
+  return normalizeIconKey(key) in CRYPTO_EMOJI_MAP;
 }
 
 /** Predefined color palette for icon badges (matches the Quick Actions screenshot style) */
@@ -233,6 +240,8 @@ export const ICON_BADGE_COLORS: Record<string, { bg: string; color: string }> = 
   AlertTriangle:  { bg: '#F5B800', color: '#1a1a2e' },
   Zap:            { bg: '#3DCC8E', color: '#fff' },
   LayoutGrid:     { bg: '#6366F1', color: '#fff' },
+  Clock:          { bg: '#3B82F6', color: '#fff' },
+  X:              { bg: '#6B7280', color: '#fff' },
 };
 
 /** Render a Lucide icon inside a colored circular badge */
@@ -284,7 +293,7 @@ export function InlineIcon({
   style?: React.CSSProperties;
 }) {
   if (typeof icon === 'string' && isCryptoEmoji(icon)) {
-    const CryptoComp = CRYPTO_EMOJI_MAP[icon];
+    const CryptoComp = CRYPTO_EMOJI_MAP[normalizeIconKey(icon)];
     return <CryptoComp size={size} className={className} />;
   }
   const IconComp = typeof icon === 'string' ? getLucideIcon(icon) : icon;

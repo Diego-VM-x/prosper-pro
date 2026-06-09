@@ -376,7 +376,7 @@
   }
 
   .feature-card {
-    padding: 24px;
+    padding: 28px;
   }
 
   .step-card {
@@ -389,11 +389,11 @@
   }
 
   .tutorial-panel {
-    padding: 20px;
+    padding: 24px;
   }
 
   .cta-card {
-    padding: 36px 20px;
+    padding: 40px 24px;
   }
 
   .section-header {

@@ -282,7 +282,7 @@
       },
       {
         "id": "p2p",
-        "icon": "Scale️",
+        "icon": "Scale",
         "title": "Understand P2P rates",
         "steps": [
           "When creating a crypto account (USDT, SOL, BTC, USDC) choose the mode.",
@@ -352,42 +352,42 @@
       {
         "name": "Mariana R.",
         "role": "Freelancer",
-        "avatar": "User‍Laptop",
+        "avatar": "💻",
         "content": "Prosper helped me organize my income in USD and BS. The real-time rates are accurate and the dashboard is super clear.",
         "stars": 5
       },
       {
         "name": "Carlos G.",
         "role": "Entrepreneur",
-        "avatar": "User‍Briefcase",
+        "avatar": "💼",
         "content": "VEPay OCR saves me hours every week. I upload my payment screenshots and Prosper extracts everything automatically.",
         "stars": 5
       },
       {
         "name": "Andrea P.",
         "role": "Student",
-        "avatar": "User‍GraduationCap",
+        "avatar": "🎓",
         "content": "For the first time I have total control of my finances. The dashboard and savings plans changed my life.",
         "stars": 5
       },
       {
         "name": "Luis M.",
         "role": "Engineer",
-        "avatar": "User‍Wrench",
+        "avatar": "🔧",
         "content": "Sharing expenses with my family has never been easier. Everyone sees their share and I have total control.",
         "stars": 5
       },
       {
         "name": "Sofía T.",
         "role": "Accountant",
-        "avatar": "User‍Briefcase",
+        "avatar": "💼",
         "content": "I recommend Prosper to all my clients. The multi-currency and due date calendar are indispensable.",
         "stars": 5
       },
       {
         "name": "Daniel K.",
         "role": "Trader",
-        "avatar": "User‍Laptop",
+        "avatar": "💻",
         "content": "The P2P mode for crypto is accurate. Compared to other apps, Prosper has the most updated market rates.",
         "stars": 5
       }
@@ -409,12 +409,12 @@
         "description": "We use Firebase Authentication with support for Google Sign-In, email verification, and encrypted sessions."
       },
       {
-        "icon": "Shield️",
+        "icon": "Shield",
         "title": "Your data is yours alone",
         "description": "Each user has their own isolated space in Firestore. No one else can see your accounts, goals, or transactions."
       },
       {
-        "icon": "Eye️",
+        "icon": "Eye",
         "title": "Private profile by default",
         "description": "You can choose whether your profile is public or private. In private mode, you can only be found by exact email."
       },

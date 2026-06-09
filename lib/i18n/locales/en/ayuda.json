@@ -34,7 +34,7 @@
         "route": "/finanzas"
       },
       {
-        "icon": "Settings️",
+        "icon": "Settings",
         "title": "Set up profile",
         "route": "/configuracion"
       },
@@ -103,7 +103,7 @@
         "id": "settings",
         "title": "Settings",
         "desc": "Customize your profile, language, theme, privacy, and rate preferences.",
-        "icon": "Settings️",
+        "icon": "Settings",
         "tags": [
           "Profile",
           "Language",
@@ -124,7 +124,7 @@
         "id": "security",
         "title": "Security",
         "desc": "Encryption protocols, synchronization, and data protection.",
-        "icon": "Shield️"
+        "icon": "Shield"
       },
       {
         "id": "general",

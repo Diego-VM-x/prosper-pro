@@ -1220,7 +1220,7 @@
 
 .features-grid {
   display: grid;
-  gap: 20px;
+  gap: 24px;
 }
 
 .features-grid-3 {
@@ -2198,14 +2198,14 @@
 .security-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .security-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 18px;
-  padding: 28px;
+  padding: 32px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -2251,7 +2251,7 @@
 }
 
 .security-desc.expanded {
-  max-height: 200px;
+  max-height: 400px;
   opacity: 1;
   margin-top: 8px;
 }

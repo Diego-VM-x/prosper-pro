@@ -134,6 +134,7 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-md);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -351,7 +352,7 @@
 .plan-item { cursor: pointer; transition: all var(--transition-fast); }
 .plan-item:hover { opacity: 0.85; }
 .plan-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.plan-item-icon { font-size: 1.125rem; }
+.plan-item-icon { font-size: 1.125rem; color: var(--text-primary); }
 .plan-item-info { flex: 1; min-width: 0; }
 .plan-item-title { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plan-item-meta { font-size: 0.6875rem; color: var(--text-secondary); }
@@ -483,6 +484,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -518,7 +520,7 @@
   cursor: pointer; transition: all var(--transition-fast);
 }
 .recent-tx-item:hover { background: var(--bg-card); box-shadow: var(--shadow-sm); }
-.recent-tx-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; flex-shrink: 0; }
+.recent-tx-icon { width: 32px; height: 32px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; flex-shrink: 0; color: var(--text-primary); }
 .recent-tx-icon.tx-income { background: rgba(61,204,142,0.15); }
 .recent-tx-icon.tx-expense { background: rgba(239,68,68,0.15); }
 .recent-tx-icon.tx-saving { background: rgba(59,130,246,0.15); }
@@ -548,7 +550,7 @@
   background: var(--bg-card); border-color: var(--color-prosper-green);
   box-shadow: 0 0 16px rgba(61,204,142,0.12); transform: translateY(-2px);
 }
-.quick-action-icon { font-size: 1.25rem; }
+.quick-action-icon { font-size: 1.25rem; color: var(--text-primary); }
 .quick-action-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); }
 
 /* ════════════════════════════════════════════════════════════════════
