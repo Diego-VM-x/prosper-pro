@@ -1663,8 +1663,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
             /* ===== RESPONSIVE: Desktop (1024px+) ===== */
             @media (min-width: 1024px) {
               .settings-page { padding: 32px 24px; }
-              .mobile-tabs { display: none; }
-              .settings-sidebar { display: flex; }
+              .mobile-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+              .mobile-tab { padding: 10px 18px; font-size: 0.8125rem; }
+              .settings-sidebar { display: none; }
               .settings-title { font-size: 2rem; }
               .panel-card { padding: 28px; }
               .avatar-circle { width: 112px; height: 112px; }
