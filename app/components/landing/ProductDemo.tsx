@@ -3,16 +3,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
   dashboard: (
     <div className="demo-mockup demo-dashboard">
       <div className="demo-sidebar">
-        <div className="demo-logo">💰 Prosper</div>
-        <div className="demo-nav-item active">📊 Dashboard</div>
-        <div className="demo-nav-item">💳 Finanzas</div>
-        <div className="demo-nav-item">🎯 Metas</div>
-        <div className="demo-nav-item">📅 Calendario</div>
+        <div className="demo-logo"><InlineIcon icon="Wallet" size={16} /> Prosper</div>
+        <div className="demo-nav-item active"><InlineIcon icon="BarChart3" size={16} /> Dashboard</div>
+        <div className="demo-nav-item"><InlineIcon icon="CreditCard" size={16} /> Finanzas</div>
+        <div className="demo-nav-item"><InlineIcon icon="Target" size={16} /> Metas</div>
+        <div className="demo-nav-item"><InlineIcon icon="CalendarDays" size={16} /> Calendario</div>
 
       </div>
       <div className="demo-main">
@@ -45,9 +46,9 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
           </div>
           <div className="demo-widget accounts">
             <div className="demo-widget-header">Mis Cuentas</div>
-            <div className="demo-account-row"><span>💰 Ahorro</span><span>$1,240</span></div>
-            <div className="demo-account-row"><span>🏦 Corriente</span><span>$3,580</span></div>
-            <div className="demo-account-row"><span>💎 USDT</span><span>₮850</span></div>
+            <div className="demo-account-row"><span><InlineIcon icon="Wallet" size={16} /> Ahorro</span><span>$1,240</span></div>
+            <div className="demo-account-row"><span><InlineIcon icon="Landmark" size={16} /> Corriente</span><span>$3,580</span></div>
+            <div className="demo-account-row"><span><InlineIcon icon="Diamond" size={16} /> USDT</span><span>₮850</span></div>
           </div>
         </div>
       </div>
@@ -56,20 +57,20 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
   finanzas: (
     <div className="demo-mockup demo-finanzas">
       <div className="demo-finance-header">
-        <h3>💳 Mis Cuentas</h3>
+        <h3><InlineIcon icon="CreditCard" size={16} /> Mis Cuentas</h3>
         <button className="demo-btn">+ Nueva</button>
       </div>
       <div className="demo-finance-cards">
         <div className="demo-finance-card" style={{ borderLeftColor: '#3DCC8E' }}>
-          <div className="demo-fc-top"><span>💰 Ahorro</span><span>$1,240.00</span></div>
+          <div className="demo-fc-top"><span><InlineIcon icon="Wallet" size={16} /> Ahorro</span><span>$1,240.00</span></div>
           <div className="demo-fc-type">Billetera Digital • USD</div>
         </div>
         <div className="demo-finance-card" style={{ borderLeftColor: '#3B82F6' }}>
-          <div className="demo-fc-top"><span>🏦 Corriente</span><span>$3,580.50</span></div>
+          <div className="demo-fc-top"><span><InlineIcon icon="Landmark" size={16} /> Corriente</span><span>$3,580.50</span></div>
           <div className="demo-fc-type">Banco • USD</div>
         </div>
         <div className="demo-finance-card" style={{ borderLeftColor: '#F59E0B' }}>
-          <div className="demo-fc-top"><span>💎 USDT</span><span>₮850.00</span></div>
+          <div className="demo-fc-top"><span><InlineIcon icon="Diamond" size={16} /> USDT</span><span>₮850.00</span></div>
           <div className="demo-fc-type">Cripto • USDT</div>
         </div>
       </div>
@@ -84,7 +85,7 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
     <div className="demo-mockup demo-metas">
       <div className="demo-goal-card">
         <div className="demo-goal-header">
-          <span>🚗 Auto nuevo</span>
+          <span><InlineIcon icon="Car" size={16} /> Auto nuevo</span>
           <span className="demo-goal-pct">65%</span>
         </div>
         <div className="demo-goal-bar"><div className="demo-goal-fill" style={{ width: '65%' }} /></div>
@@ -97,7 +98,7 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
       </div>
       <div className="demo-goal-card">
         <div className="demo-goal-header">
-          <span>🏖️ Vacaciones</span>
+          <span><InlineIcon icon="Sunset" size={16} /> Vacaciones</span>
           <span className="demo-goal-pct">42%</span>
         </div>
         <div className="demo-goal-bar"><div className="demo-goal-fill blue" style={{ width: '42%' }} /></div>
@@ -105,8 +106,8 @@ const DEMO_MOCKUPS: Record<string, React.ReactNode> = {
       </div>
       <div className="demo-goal-card completed">
         <div className="demo-goal-header">
-          <span>🎓 Curso online</span>
-          <span className="demo-goal-pct">✓</span>
+          <span><InlineIcon icon="GraduationCap" size={16} /> Curso online</span>
+          <span className="demo-goal-pct"><InlineIcon icon="CheckCircle2" size={16} /></span>
         </div>
         <div className="demo-goal-bar"><div className="demo-goal-fill green" style={{ width: '100%' }} /></div>
         <div className="demo-goal-meta">$450 / $450 · completado</div>
@@ -179,7 +180,7 @@ export function ProductDemo() {
                 className={`demo-tab ${active === d.id ? 'active' : ''}`}
                 onClick={() => setActive(d.id)}
               >
-                <span className="demo-tab-icon">{d.icon}</span>
+                <span className="demo-tab-icon"><InlineIcon icon={d.icon} size={16} /></span>
                 <span className="demo-tab-label">{d.label}</span>
               </button>
             ))}

@@ -18,6 +18,8 @@ import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRe
 import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '@/app/components/icons';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { Check, X } from 'lucide-react';
 import { CURRENCY_LIST } from '@/lib/currency';
 import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest, CurrencyCode } from '@/types';
 
@@ -49,25 +51,25 @@ const MetasPage = memo(function MetasPage() {
   const { t } = useTranslation(['metas', 'common']);
 
   const PLAN_TYPES: { value: PlanType; label: string; icon: string; color: string; desc: string }[] = [
-    { value: 'savings', label: t('metas:planTypes.savings'), icon: '💰', color: '#3DCC8E', desc: t('metas:planTypeDescriptions.savings') },
-    { value: 'expense', label: t('metas:planTypes.expense'), icon: '🛒', color: '#EF4444', desc: t('metas:planTypeDescriptions.expense') },
-    { value: 'recurring', label: t('metas:planTypes.recurring'), icon: '🔄', color: '#F59E0B', desc: t('metas:planTypeDescriptions.recurring') },
+    { value: 'savings', label: t('metas:planTypes.savings'), icon: 'Wallet', color: '#3DCC8E', desc: t('metas:planTypeDescriptions.savings') },
+    { value: 'expense', label: t('metas:planTypes.expense'), icon: 'ShoppingCart', color: '#EF4444', desc: t('metas:planTypeDescriptions.expense') },
+    { value: 'recurring', label: t('metas:planTypes.recurring'), icon: 'RefreshCw', color: '#F59E0B', desc: t('metas:planTypeDescriptions.recurring') },
   ];
 
   const PLAN_CATEGORIES: { value: PlanCategory; icon: string }[] = [
-    { value: 'Ahorro', icon: '💰' },
-    { value: 'Inversión', icon: '📈' },
-    { value: 'Educación', icon: '🎓' },
-    { value: 'Comida', icon: '🍔' },
-    { value: 'Tecnología', icon: '📱' },
-    { value: 'Vivienda', icon: '🏠' },
-    { value: 'Transporte', icon: '🚗' },
-    { value: 'Salud', icon: '💊' },
-    { value: 'Entretenimiento', icon: '🎬' },
-    { value: 'Suscripción', icon: '📺' },
-    { value: 'Alquiler', icon: '🏢' },
-    { value: 'Servicios', icon: '⚡' },
-    { value: 'Otro', icon: '📌' },
+    { value: 'Ahorro', icon: 'Wallet' },
+    { value: 'Inversión', icon: 'TrendingUp' },
+    { value: 'Educación', icon: 'GraduationCap' },
+    { value: 'Comida', icon: 'Utensils' },
+    { value: 'Tecnología', icon: 'Smartphone' },
+    { value: 'Vivienda', icon: 'Home' },
+    { value: 'Transporte', icon: 'Car' },
+    { value: 'Salud', icon: 'Pill' },
+    { value: 'Entretenimiento', icon: 'Video' },
+    { value: 'Suscripción', icon: 'Tv' },
+    { value: 'Alquiler', icon: 'Building2' },
+    { value: 'Servicios', icon: 'Zap' },
+    { value: 'Otro', icon: 'Pin' },
   ];
 
   const RECURRENCES: { value: RecurringFrequency; label: string }[] = [
@@ -228,7 +230,7 @@ const MetasPage = memo(function MetasPage() {
         deadline: formDeadline,
         status: 'pending',
         color: PLAN_TYPES.find(t => t.value === formType)?.color || '#3DCC8E',
-        icon: PLAN_CATEGORIES.find(c => c.value === formCategory)?.icon || '📌',
+        icon: PLAN_CATEGORIES.find(c => c.value === formCategory)?.icon || 'Pin',
         sharedWith: [],
         shareAmount: formShareAmount ? Number(formShareAmount) : 0,
         totalPaid: 0,
@@ -568,7 +570,7 @@ const MetasPage = memo(function MetasPage() {
           {/* Stats Cards */}
           <div className="plans-stats-grid">
             <div className="plans-stat-card plans-stat-savings">
-              <span className="plans-stat-icon">💰</span>
+              <span className="plans-stat-icon"><InlineIcon icon="Wallet" size={20} /></span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">{t('metas:stats.savings')}</span>
                 <span className="plans-stat-value">{formatAmount(totalSavingsCurrent)} <small>/ {formatAmount(totalSavingsTarget)}</small></span>
@@ -581,7 +583,7 @@ const MetasPage = memo(function MetasPage() {
               )}
             </div>
             <div className="plans-stat-card plans-stat-expense">
-              <span className="plans-stat-icon">🛒</span>
+              <span className="plans-stat-icon"><InlineIcon icon="ShoppingCart" size={20} /></span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">{t('metas:stats.expenses')}</span>
                 <span className="plans-stat-value">{formatAmount(totalExpenseCurrent)} <small>/ {formatAmount(totalExpenseTarget)}</small></span>
@@ -594,7 +596,7 @@ const MetasPage = memo(function MetasPage() {
               )}
             </div>
             <div className="plans-stat-card plans-stat-recurring">
-              <span className="plans-stat-icon">🔄</span>
+              <span className="plans-stat-icon"><InlineIcon icon="RefreshCw" size={20} /></span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">{t('metas:stats.recurring')}</span>
                 <span className="plans-stat-value">{formatAmount(totalRecurringMonthly)}<small>{t('metas:stats.perMonth')}</small></span>
@@ -602,7 +604,7 @@ const MetasPage = memo(function MetasPage() {
               </div>
             </div>
             <div className="plans-stat-card plans-stat-active">
-              <span className="plans-stat-icon">📊</span>
+              <span className="plans-stat-icon"><InlineIcon icon="BarChart3" size={20} /></span>
               <div className="plans-stat-info">
                 <span className="plans-stat-label">{t('metas:stats.statusGeneral')}</span>
                 <span className="plans-stat-value">{stats.active} {t('metas:stats.active')}</span>
@@ -617,7 +619,7 @@ const MetasPage = memo(function MetasPage() {
               <span className="plans-filter-label">{t('metas:filters.type')}</span>
               {(['all', 'savings', 'expense', 'recurring'] as const).map(ft => (
                 <button key={ft} className={`plans-filter-btn ${filter === ft ? 'active' : ''}`} onClick={() => setFilter(ft)}>
-                  {ft === 'all' ? t('metas:filters.all') : PLAN_TYPES.find(pt => pt.value === ft)?.icon} {ft === 'all' ? '' : PLAN_TYPES.find(pt => pt.value === ft)?.label}
+                  {ft === 'all' ? t('metas:filters.all') : <><InlineIcon icon={PLAN_TYPES.find(pt => pt.value === ft)?.icon || 'Pin'} size={14} /> {PLAN_TYPES.find(pt => pt.value === ft)?.label}</>}
                 </button>
               ))}
             </div>
@@ -634,7 +636,7 @@ const MetasPage = memo(function MetasPage() {
           {/* Received Requests */}
           {receivedRequests.filter(r => r.status === 'pending').length > 0 && (
             <div className="plans-requests-section">
-              <h3 className="plans-section-title">📬 {t('metas:requests.title')}</h3>
+              <h3 className="plans-section-title"><InlineIcon icon="MailOpen" size={16} /> {t('metas:requests.title')}</h3>
               <div className="plans-requests-list">
                 {receivedRequests.filter(r => r.status === 'pending').map(req => (
                   <div key={req.id} className="plans-request-card">
@@ -643,8 +645,8 @@ const MetasPage = memo(function MetasPage() {
                       <span className="plans-request-msg">{req.message}</span>
                     </div>
                     <div className="plans-request-actions">
-                      <button className="plans-req-btn plans-req-accept" onClick={() => handleRespondRequest(req, 'accepted')}>✓ {t('metas:requests.accept')}</button>
-                      <button className="plans-req-btn plans-req-reject" onClick={() => handleRespondRequest(req, 'rejected')}>✕ {t('metas:requests.reject')}</button>
+                      <button className="plans-req-btn plans-req-accept" onClick={() => handleRespondRequest(req, 'accepted')}><Check size={14} /> {t('metas:requests.accept')}</button>
+                      <button className="plans-req-btn plans-req-reject" onClick={() => handleRespondRequest(req, 'rejected')}><X size={14} /> {t('metas:requests.reject')}</button>
                     </div>
                   </div>
                 ))}
@@ -664,7 +666,7 @@ const MetasPage = memo(function MetasPage() {
                   <div key={plan.id} className="plan-card stagger-item" style={{ borderLeftColor: typeInfo?.color, animationDelay: `${index * 0.05}s` }}>
                     <div className="plan-card-header">
                       <div className="plan-card-icon" style={{ background: `${typeInfo?.color}20` }}>
-                        {catInfo?.icon || '📌'}
+                        <InlineIcon icon={catInfo?.icon || 'Pin'} size={16} />
                       </div>
                       <div className="plan-card-info">
                         <h3 className="plan-card-title">{plan.title}</h3>
@@ -712,7 +714,7 @@ const MetasPage = memo(function MetasPage() {
                         )}
                         {plan.deadline && plan.type !== 'recurring' && (
                           <span className="plan-card-meta-item">
-                            📅 {getDaysRemaining(plan.deadline)}
+                            <InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(plan.deadline)}
                           </span>
                         )}
                       </div>
@@ -735,7 +737,7 @@ const MetasPage = memo(function MetasPage() {
                       )}
                       {plan.type === 'recurring' && plan.status !== 'completed' && (
                         <button className="plan-action-btn plan-action-primary" onClick={() => { setShowRecordPaymentModal(plan); setPayAmount(''); setPayAccountId(''); }}>
-                          💳 {t('metas:planCard.pay')}
+                          <InlineIcon icon="CreditCard" size={14} /> {t('metas:planCard.pay')}
                         </button>
                       )}
                       {plan.type === 'expense' && plan.status !== 'completed' && (
@@ -765,7 +767,7 @@ const MetasPage = memo(function MetasPage() {
             </div>
           ) : (
             <div className="plans-empty">
-              <span className="plans-empty-icon">📋</span>
+              <span className="plans-empty-icon"><InlineIcon icon="ClipboardList" size={28} /></span>
               <h3>{t('metas:empty.title')}</h3>
               <p>{t('metas:empty.description')}</p>
               <button className="btn btn-primary" onClick={() => openNewModal()}>
@@ -783,14 +785,14 @@ const MetasPage = memo(function MetasPage() {
                     <h2 className="modal-title">{editingPlan ? t('metas:modals.editPlan.title') : t('metas:modals.newPlan.title')}</h2>
                     <p className="modal-subtitle">{editingPlan ? t('metas:modals.editPlan.subtitle') : t('metas:modals.newPlan.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>✕</button>
+                  <button className="modal-close" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   {/* Type selector */}
                   <div className="plan-type-selector">
                     {PLAN_TYPES.map(t => (
                       <button key={t.value} className={`plan-type-btn ${formType === t.value ? 'active' : ''}`} style={formType === t.value ? { borderColor: t.color, background: t.color + '12' } : {}} onClick={() => setFormType(t.value)}>
-                        <span className="plan-type-icon">{t.icon}</span>
+                        <span className="plan-type-icon"><InlineIcon icon={t.icon} size={18} /></span>
                         <span className="plan-type-label">{t.label}</span>
                         <span className="plan-type-desc">{t.desc}</span>
                       </button>
@@ -817,7 +819,7 @@ const MetasPage = memo(function MetasPage() {
                             className={`plan-category-btn ${formCategory === category.value ? 'active' : ''}`}
                             onClick={() => setFormCategory(category.value)}
                           >
-                            {category.icon} {t('metas:categories.' + category.value)}
+                            <InlineIcon icon={category.icon} size={14} /> {t('metas:categories.' + category.value)}
                           </button>
                         ))}
                       </div>
@@ -885,7 +887,7 @@ const MetasPage = memo(function MetasPage() {
                     <h2 className="modal-title">{t('metas:modals.addFunds.title', { title: showAddFundsModal.title })}</h2>
                     <p className="modal-subtitle">{t('metas:modals.addFunds.subtitle', { current: formatAmount(showAddFundsModal.current), target: formatAmount(showAddFundsModal.target) })}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowAddFundsModal(null)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowAddFundsModal(null)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
@@ -919,7 +921,7 @@ const MetasPage = memo(function MetasPage() {
                     <h2 className="modal-title">{t('metas:modals.recordPayment.title')}</h2>
                     <p className="modal-subtitle">{t('metas:modals.recordPayment.subtitle', { title: showRecordPaymentModal.title, target: formatAmount(showRecordPaymentModal.target), frequency: RECURRENCES.find(r => r.value === showRecordPaymentModal.frequency)?.label || '' })}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowRecordPaymentModal(null)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowRecordPaymentModal(null)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
@@ -953,7 +955,7 @@ const MetasPage = memo(function MetasPage() {
                     <h2 className="modal-title">{t('metas:modals.share.title')}</h2>
                     <p className="modal-subtitle">{t('metas:modals.share.subtitle', { title: showShareModal.title })}</p>
                   </div>
-                  <button className="modal-close" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}>✕</button>
+                  <button className="modal-close" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="plan-field">
@@ -1001,8 +1003,8 @@ const MetasPage = memo(function MetasPage() {
                         <span className="share-user-name">{shareFoundUser.displayName || t('metas:modals.share.userDefault')}</span>
                         <span className="share-user-email">{shareFoundUser.email}</span>
                       </div>
-                      <span className="share-user-check">✓</span>
-                      <button className="share-user-change" onClick={() => { setShareFoundUser(null); setShareEmail(''); setShareSearchResults([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.75rem', padding: '4px' }}>✕</button>
+                      <span className="share-user-check"><Check size={16} /></span>
+                      <button className="share-user-change" onClick={() => { setShareFoundUser(null); setShareEmail(''); setShareSearchResults([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '0.75rem', padding: '4px' }}><X size={14} /></button>
                     </div>
                   )}
 

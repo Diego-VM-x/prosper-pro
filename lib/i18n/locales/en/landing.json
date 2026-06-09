@@ -28,10 +28,22 @@
       "goToDashboard": "Go to Dashboard"
     },
     "stats": {
-      "multiCurrency": { "label": "Multi-currency", "value": "8 currencies" },
-      "realTime": { "label": "Real-time", "value": "Updated rates" },
-      "private": { "label": "Private", "value": "Only you see it" },
-      "secure": { "label": "Secure", "value": "Firebase Auth" }
+      "multiCurrency": {
+        "label": "Multi-currency",
+        "value": "8 currencies"
+      },
+      "realTime": {
+        "label": "Real-time",
+        "value": "Updated rates"
+      },
+      "private": {
+        "label": "Private",
+        "value": "Only you see it"
+      },
+      "secure": {
+        "label": "Secure",
+        "value": "Firebase Auth"
+      }
     }
   },
   "mockup": {
@@ -46,17 +58,51 @@
   },
   "trustBar": {
     "items": [
-      { "icon": "💱", "label": "8 Currencies", "desc": "USD, BS, EUR, COP, USDT, SOL, BTC, USDC" },
-      { "icon": "📊", "label": "Live rates", "desc": "Official BCV + Binance P2P" },
-      { "icon": "📸", "label": "VEPay OCR", "desc": "20+ Venezuelan banks" },
-
-      { "icon": "🔒", "label": "Private", "desc": "Only you see your data" },
-      { "icon": "⚡", "label": "100% Free", "desc": "No ads or limits" }
+      {
+        "icon": "ArrowLeftRight",
+        "label": "8 Currencies",
+        "desc": "USD, BS, EUR, COP, USDT, SOL, BTC, USDC"
+      },
+      {
+        "icon": "BarChart3",
+        "label": "Live rates",
+        "desc": "Official BCV + Binance P2P"
+      },
+      {
+        "icon": "Camera",
+        "label": "VEPay OCR",
+        "desc": "20+ Venezuelan banks"
+      },
+      {
+        "icon": "Lock",
+        "label": "Private",
+        "desc": "Only you see your data"
+      },
+      {
+        "icon": "Zap",
+        "label": "100% Free",
+        "desc": "No ads or limits"
+      }
     ],
     "counters": [
-      { "icon": "💰", "end": 8, "suffix": "", "label": "Supported currencies" },
-      { "icon": "🏦", "end": 20, "suffix": "+", "label": "Banks in VEPay OCR" },
-      { "icon": "🌍", "end": 100, "suffix": "%", "label": "Free forever" }
+      {
+        "icon": "Wallet",
+        "end": 8,
+        "suffix": "",
+        "label": "Supported currencies"
+      },
+      {
+        "icon": "Landmark",
+        "end": 20,
+        "suffix": "+",
+        "label": "Banks in VEPay OCR"
+      },
+      {
+        "icon": "Globe",
+        "end": 100,
+        "suffix": "%",
+        "label": "Free forever"
+      }
     ]
   },
   "productDemo": {
@@ -64,10 +110,34 @@
     "sectionTitle": "Explore every corner of Prosper",
     "sectionDesc": "Click the tabs to see how each section of the app looks.",
     "tabs": [
-      { "id": "dashboard", "icon": "📊", "label": "Dashboard", "title": "Your financial overview at a glance", "description": "View income, expenses, monthly balance, goals in progress, and quick access to all your tools." },
-      { "id": "finanzas", "icon": "💳", "label": "Finances", "title": "Total control of your accounts and transactions", "description": "Manage multiple currencies, record movements, transfer between accounts, and import receipts with OCR." },
-      { "id": "metas", "icon": "🎯", "label": "Goals", "title": "Financial plans you actually achieve", "description": "Create savings plans, planned expenses, and recurring payments. Share expenses and track visual progress." },
-      { "id": "calendario", "icon": "📅", "label": "Calendar", "title": "Never miss an important date again", "description": "View due dates, reminders, recurring payments, and plans with deadlines in a clear interface." }
+      {
+        "id": "dashboard",
+        "icon": "BarChart3",
+        "label": "Dashboard",
+        "title": "Your financial overview at a glance",
+        "description": "View income, expenses, monthly balance, goals in progress, and quick access to all your tools."
+      },
+      {
+        "id": "finanzas",
+        "icon": "CreditCard",
+        "label": "Finances",
+        "title": "Total control of your accounts and transactions",
+        "description": "Manage multiple currencies, record movements, transfer between accounts, and import receipts with OCR."
+      },
+      {
+        "id": "metas",
+        "icon": "Target",
+        "label": "Goals",
+        "title": "Financial plans you actually achieve",
+        "description": "Create savings plans, planned expenses, and recurring payments. Share expenses and track visual progress."
+      },
+      {
+        "id": "calendario",
+        "icon": "CalendarDays",
+        "label": "Calendar",
+        "title": "Never miss an important date again",
+        "description": "View due dates, reminders, recurring payments, and plans with deadlines in a clear interface."
+      }
     ]
   },
   "features": {
@@ -75,14 +145,104 @@
     "sectionTitle": "Everything you need to grow financially",
     "sectionDesc": "Powerful tools designed to simplify your financial life.",
     "items": [
-      { "icon": "📊", "title": "Multi-Currency Account Management", "description": "Manage all your accounts in one place. Supports fiat currencies and cryptocurrencies with automatic conversion.", "features": ["Independent multi-currency accounts", "Automatic conversion transfers", "Complete transaction history"], "visual": { "accounts": [{"name":"Savings","balance":"$1,240"},{"name":"Checking","balance":"$3,580"},{"name":"USDT","balance":"₮850"}] } },
-      { "icon": "🎯", "title": "Financial Plans", "description": "Create savings plans, planned expenses, and recurring payments. Track your progress visually.", "features": ["Goals with deadlines", "Automatic recurring payments", "Share expenses with others"], "visual": { "goals": [{"name":"Car","pct":"65%"},{"name":"Vacations","pct":"42%"}] } },
-      { "icon": "📈", "title": "Visual Analytics", "description": "Interactive charts showing your income, expenses, and savings by period.", "features": ["Charts by day, week, month, or year", "Instant currency conversion", "Detailed financial summary"] },
-      { "icon": "⚡", "title": "Real-Time Rates", "description": "Official BCV rates for fiat currencies and Binance P2P for cryptocurrencies.", "features": ["Updated BCV, EUR, COP", "P2P for USDT, SOL, BTC, USDC", "Official vs P2P mode per account"] },
-      { "icon": "📅", "title": "Smart Calendar", "description": "Organize reminders, payment dates, and deadlines for your financial plans.", "features": ["Customizable reminders", "Transaction integration", "Due date alerts"] },
-
-      { "icon": "📸", "title": "VEPay OCR", "description": "Capture Venezuelan bank receipts and extract data automatically.", "features": ["20+ supported banks", "Amount, ref. and date extraction", "Batch processing"] },
-      { "icon": "🤝", "title": "Expense Sharing", "description": "Split expenses with friends, family, or coworkers directly in the app.", "features": ["Email invitations", "Payment requests", "Real-time notifications"] }
+      {
+        "icon": "BarChart3",
+        "title": "Multi-Currency Account Management",
+        "description": "Manage all your accounts in one place. Supports fiat currencies and cryptocurrencies with automatic conversion.",
+        "features": [
+          "Independent multi-currency accounts",
+          "Automatic conversion transfers",
+          "Complete transaction history"
+        ],
+        "visual": {
+          "accounts": [
+            {
+              "name": "Savings",
+              "balance": "$1,240"
+            },
+            {
+              "name": "Checking",
+              "balance": "$3,580"
+            },
+            {
+              "name": "USDT",
+              "balance": "₮850"
+            }
+          ]
+        }
+      },
+      {
+        "icon": "Target",
+        "title": "Financial Plans",
+        "description": "Create savings plans, planned expenses, and recurring payments. Track your progress visually.",
+        "features": [
+          "Goals with deadlines",
+          "Automatic recurring payments",
+          "Share expenses with others"
+        ],
+        "visual": {
+          "goals": [
+            {
+              "name": "Car",
+              "pct": "65%"
+            },
+            {
+              "name": "Vacations",
+              "pct": "42%"
+            }
+          ]
+        }
+      },
+      {
+        "icon": "TrendingUp",
+        "title": "Visual Analytics",
+        "description": "Interactive charts showing your income, expenses, and savings by period.",
+        "features": [
+          "Charts by day, week, month, or year",
+          "Instant currency conversion",
+          "Detailed financial summary"
+        ]
+      },
+      {
+        "icon": "Zap",
+        "title": "Real-Time Rates",
+        "description": "Official BCV rates for fiat currencies and Binance P2P for cryptocurrencies.",
+        "features": [
+          "Updated BCV, EUR, COP",
+          "P2P for USDT, SOL, BTC, USDC",
+          "Official vs P2P mode per account"
+        ]
+      },
+      {
+        "icon": "CalendarDays",
+        "title": "Smart Calendar",
+        "description": "Organize reminders, payment dates, and deadlines for your financial plans.",
+        "features": [
+          "Customizable reminders",
+          "Transaction integration",
+          "Due date alerts"
+        ]
+      },
+      {
+        "icon": "Camera",
+        "title": "VEPay OCR",
+        "description": "Capture Venezuelan bank receipts and extract data automatically.",
+        "features": [
+          "20+ supported banks",
+          "Amount, ref. and date extraction",
+          "Batch processing"
+        ]
+      },
+      {
+        "icon": "Handshake",
+        "title": "Expense Sharing",
+        "description": "Split expenses with friends, family, or coworkers directly in the app.",
+        "features": [
+          "Email invitations",
+          "Payment requests",
+          "Real-time notifications"
+        ]
+      }
     ]
   },
   "tutorials": {
@@ -90,10 +250,46 @@
     "sectionTitle": "Learn to use Prosper in minutes",
     "sectionDesc": "Step-by-step guides to get the most out of every feature.",
     "items": [
-      { "id": "cuenta", "icon": "💳", "title": "Your first account", "steps": ["Sign up for free with Google or email in seconds.", "Create your first account: wallet, bank, or currency.", "Record income and expenses from the dashboard."] },
-      { "id": "plan", "icon": "🎯", "title": "Create a savings plan", "steps": ["Go to Financial Plans and choose Savings.", "Set target amount, deadline, and frequency.", "Track your visual progress and reach your goals."] },
-      { "id": "vepay", "icon": "📸", "title": "Use VEPay OCR", "steps": ["Take a screenshot of your bank payment.", "Upload it in Finances → Import Screenshot.", "Review extracted data and save the transaction."] },
-      { "id": "p2p", "icon": "⚖️", "title": "Understand P2P rates", "steps": ["When creating a crypto account (USDT, SOL, BTC, USDC) choose the mode.", "Official uses CoinGecko · P2P uses real Binance price.", "Switch modes from the dashboard in one click."] }
+      {
+        "id": "cuenta",
+        "icon": "CreditCard",
+        "title": "Your first account",
+        "steps": [
+          "Sign up for free with Google or email in seconds.",
+          "Create your first account: wallet, bank, or currency.",
+          "Record income and expenses from the dashboard."
+        ]
+      },
+      {
+        "id": "plan",
+        "icon": "Target",
+        "title": "Create a savings plan",
+        "steps": [
+          "Go to Financial Plans and choose Savings.",
+          "Set target amount, deadline, and frequency.",
+          "Track your visual progress and reach your goals."
+        ]
+      },
+      {
+        "id": "vepay",
+        "icon": "Camera",
+        "title": "Use VEPay OCR",
+        "steps": [
+          "Take a screenshot of your bank payment.",
+          "Upload it in Finances → Import Screenshot.",
+          "Review extracted data and save the transaction."
+        ]
+      },
+      {
+        "id": "p2p",
+        "icon": "Scale️",
+        "title": "Understand P2P rates",
+        "steps": [
+          "When creating a crypto account (USDT, SOL, BTC, USDC) choose the mode.",
+          "Official uses CoinGecko · P2P uses real Binance price.",
+          "Switch modes from the dashboard in one click."
+        ]
+      }
     ]
   },
   "howItWorks": {
@@ -101,10 +297,50 @@
     "sectionTitle": "Get started in 4 simple steps",
     "sectionDesc": "No complicated setup. Click each step to explore.",
     "steps": [
-      { "n": 1, "icon": "🚀", "title": "Create your account", "description": "Sign up for free with Google or email. Choose your preferred currency and customize your profile in seconds.", "details": ["No credit card required", "Email verification", "Customizable profile"] },
-      { "n": 2, "icon": "💳", "title": "Add your accounts", "description": "Create accounts in multiple currencies, record income and expenses. Everything syncs instantly in the cloud.", "details": ["8 supported currencies", "Transfers between accounts", "Import receipts with OCR"] },
-      { "n": 3, "icon": "🎯", "title": "Create plans and goals", "description": "Set savings goals, planned expenses, and recurring payments. Visualize your progress day by day.", "details": ["Goals with deadlines", "Recurring payments", "Share expenses with others"] },
-      { "n": 4, "icon": "🎓", "title": "Learn and grow", "description": "Complete courses in the Academy, check the due date calendar, and make smart financial decisions.", "details": ["Courses with progress", "Smart reminders", "Visual reports"] }
+      {
+        "n": 1,
+        "icon": "Rocket",
+        "title": "Create your account",
+        "description": "Sign up for free with Google or email. Choose your preferred currency and customize your profile in seconds.",
+        "details": [
+          "No credit card required",
+          "Email verification",
+          "Customizable profile"
+        ]
+      },
+      {
+        "n": 2,
+        "icon": "CreditCard",
+        "title": "Add your accounts",
+        "description": "Create accounts in multiple currencies, record income and expenses. Everything syncs instantly in the cloud.",
+        "details": [
+          "8 supported currencies",
+          "Transfers between accounts",
+          "Import receipts with OCR"
+        ]
+      },
+      {
+        "n": 3,
+        "icon": "Target",
+        "title": "Create plans and goals",
+        "description": "Set savings goals, planned expenses, and recurring payments. Visualize your progress day by day.",
+        "details": [
+          "Goals with deadlines",
+          "Recurring payments",
+          "Share expenses with others"
+        ]
+      },
+      {
+        "n": 4,
+        "icon": "GraduationCap",
+        "title": "Learn and grow",
+        "description": "Complete courses in the Academy, check the due date calendar, and make smart financial decisions.",
+        "details": [
+          "Courses with progress",
+          "Smart reminders",
+          "Visual reports"
+        ]
+      }
     ],
     "stepProgress": "Step {{current}} of {{total}}"
   },
@@ -113,12 +349,48 @@
     "sectionTitle": "What our users say",
     "sectionDesc": "Thousands of people already organize their finances with Prosper Pro.",
     "items": [
-      { "name": "Mariana R.", "role": "Freelancer", "avatar": "👩‍💻", "content": "Prosper helped me organize my income in USD and BS. The real-time rates are accurate and the dashboard is super clear.", "stars": 5 },
-      { "name": "Carlos G.", "role": "Entrepreneur", "avatar": "👨‍💼", "content": "VEPay OCR saves me hours every week. I upload my payment screenshots and Prosper extracts everything automatically.", "stars": 5 },
-      { "name": "Andrea P.", "role": "Student", "avatar": "👩‍🎓", "content": "For the first time I have total control of my finances. The dashboard and savings plans changed my life.", "stars": 5 },
-      { "name": "Luis M.", "role": "Engineer", "avatar": "👨‍🔧", "content": "Sharing expenses with my family has never been easier. Everyone sees their share and I have total control.", "stars": 5 },
-      { "name": "Sofía T.", "role": "Accountant", "avatar": "👩‍💼", "content": "I recommend Prosper to all my clients. The multi-currency and due date calendar are indispensable.", "stars": 5 },
-      { "name": "Daniel K.", "role": "Trader", "avatar": "👨‍💻", "content": "The P2P mode for crypto is accurate. Compared to other apps, Prosper has the most updated market rates.", "stars": 5 }
+      {
+        "name": "Mariana R.",
+        "role": "Freelancer",
+        "avatar": "User‍Laptop",
+        "content": "Prosper helped me organize my income in USD and BS. The real-time rates are accurate and the dashboard is super clear.",
+        "stars": 5
+      },
+      {
+        "name": "Carlos G.",
+        "role": "Entrepreneur",
+        "avatar": "User‍Briefcase",
+        "content": "VEPay OCR saves me hours every week. I upload my payment screenshots and Prosper extracts everything automatically.",
+        "stars": 5
+      },
+      {
+        "name": "Andrea P.",
+        "role": "Student",
+        "avatar": "User‍GraduationCap",
+        "content": "For the first time I have total control of my finances. The dashboard and savings plans changed my life.",
+        "stars": 5
+      },
+      {
+        "name": "Luis M.",
+        "role": "Engineer",
+        "avatar": "User‍Wrench",
+        "content": "Sharing expenses with my family has never been easier. Everyone sees their share and I have total control.",
+        "stars": 5
+      },
+      {
+        "name": "Sofía T.",
+        "role": "Accountant",
+        "avatar": "User‍Briefcase",
+        "content": "I recommend Prosper to all my clients. The multi-currency and due date calendar are indispensable.",
+        "stars": 5
+      },
+      {
+        "name": "Daniel K.",
+        "role": "Trader",
+        "avatar": "User‍Laptop",
+        "content": "The P2P mode for crypto is accurate. Compared to other apps, Prosper has the most updated market rates.",
+        "stars": 5
+      }
     ],
     "aria": {
       "viewTestimonial": "View testimonial {{n}}",
@@ -131,12 +403,36 @@
     "sectionTitle": "Your financial information is protected",
     "sectionDesc": "We designed Prosper with privacy and security from day one.",
     "items": [
-      { "icon": "🔒", "title": "Secure authentication", "description": "We use Firebase Authentication with support for Google Sign-In, email verification, and encrypted sessions." },
-      { "icon": "🛡️", "title": "Your data is yours alone", "description": "Each user has their own isolated space in Firestore. No one else can see your accounts, goals, or transactions." },
-      { "icon": "👁️", "title": "Private profile by default", "description": "You can choose whether your profile is public or private. In private mode, you can only be found by exact email." },
-      { "icon": "🌐", "title": "Encrypted connection", "description": "All communication between your browser and our servers uses HTTPS and TLS. Always." },
-      { "icon": "💾", "title": "Cloud backup", "description": "Your data syncs automatically to Firebase. If you switch devices, everything is there." },
-      { "icon": "🚫", "title": "No ads or trackers", "description": "We don't sell your information. We don't show ads. We don't use third-party cookies." }
+      {
+        "icon": "Lock",
+        "title": "Secure authentication",
+        "description": "We use Firebase Authentication with support for Google Sign-In, email verification, and encrypted sessions."
+      },
+      {
+        "icon": "Shield️",
+        "title": "Your data is yours alone",
+        "description": "Each user has their own isolated space in Firestore. No one else can see your accounts, goals, or transactions."
+      },
+      {
+        "icon": "Eye️",
+        "title": "Private profile by default",
+        "description": "You can choose whether your profile is public or private. In private mode, you can only be found by exact email."
+      },
+      {
+        "icon": "Globe2",
+        "title": "Encrypted connection",
+        "description": "All communication between your browser and our servers uses HTTPS and TLS. Always."
+      },
+      {
+        "icon": "Save",
+        "title": "Cloud backup",
+        "description": "Your data syncs automatically to Firebase. If you switch devices, everything is there."
+      },
+      {
+        "icon": "Ban",
+        "title": "No ads or trackers",
+        "description": "We don't sell your information. We don't show ads. We don't use third-party cookies."
+      }
     ]
   },
   "faq": {
@@ -144,12 +440,30 @@
     "sectionTitle": "Frequently asked questions",
     "sectionDesc": "Everything you need to know before you start.",
     "items": [
-      { "q": "Is Prosper Pro really free?", "a": "Yes. Prosper Pro is 100% free, with no ads and no limits on accounts or transactions. You can use all features from day one." },
-      { "q": "What currencies are supported?", "a": "We support fiat currencies (USD, BS, EUR, COP) and cryptocurrencies (USDT, SOL, BTC, USDC). You can also choose official or P2P rate for cryptos." },
-      { "q": "How does VEPay work?", "a": "VEPay uses OCR to read screenshots from Venezuelan banking apps. It automatically extracts bank, amount, reference, date, and concept, creating a ready-to-save transaction." },
-      { "q": "Is my data secure?", "a": "Yes. Your data is stored in Firebase with secure authentication. Only you have access to your financial information." },
-      { "q": "Can I share expenses with other people?", "a": "Yes. In shared expense plans you can invite other users by email and split amounts. Each person receives notifications and can accept or reject requests." },
-      { "q": "Do I need a credit card to sign up?", "a": "No. You only need an email or a Google account. We don't ask for or store payment information." }
+      {
+        "q": "Is Prosper Pro really free?",
+        "a": "Yes. Prosper Pro is 100% free, with no ads and no limits on accounts or transactions. You can use all features from day one."
+      },
+      {
+        "q": "What currencies are supported?",
+        "a": "We support fiat currencies (USD, BS, EUR, COP) and cryptocurrencies (USDT, SOL, BTC, USDC). You can also choose official or P2P rate for cryptos."
+      },
+      {
+        "q": "How does VEPay work?",
+        "a": "VEPay uses OCR to read screenshots from Venezuelan banking apps. It automatically extracts bank, amount, reference, date, and concept, creating a ready-to-save transaction."
+      },
+      {
+        "q": "Is my data secure?",
+        "a": "Yes. Your data is stored in Firebase with secure authentication. Only you have access to your financial information."
+      },
+      {
+        "q": "Can I share expenses with other people?",
+        "a": "Yes. In shared expense plans you can invite other users by email and split amounts. Each person receives notifications and can accept or reject requests."
+      },
+      {
+        "q": "Do I need a credit card to sign up?",
+        "a": "No. You only need an email or a Google account. We don't ask for or store payment information."
+      }
     ]
   },
   "cta": {
@@ -205,8 +519,8 @@
   "newsletter": {
     "placeholder": "you@email.com",
     "subscribe": "Subscribe",
-    "success": "✓ Thanks for subscribing!",
-    "error": "✗ Please enter a valid email"
+    "success": "Thanks for subscribing!",
+    "error": "Please enter a valid email"
   },
   "mobileNav": {
     "title": "Menu",

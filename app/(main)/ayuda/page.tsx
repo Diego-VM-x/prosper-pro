@@ -14,6 +14,7 @@ import {
   IconX,
 } from '@/app/components/icons';
 import { submitFeedback, getFeedbackByOwner } from '@/lib/firestore/feedback';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface QuickLink {
   icon: string;
@@ -207,13 +208,13 @@ export default function AyudaPage() {
           {filteredQuickLinks.length > 0 && (
             <section className="ayuda-section">
               <div className="ayuda-section-header">
-                <span className="ayuda-section-icon">⚡</span>
+                <span className="ayuda-section-icon"><InlineIcon icon="Zap" size={20} /></span>
                 <h2 className="ayuda-section-title">{t('quickLinks.title')}</h2>
               </div>
               <div className="ayuda-quick-grid">
                 {filteredQuickLinks.map((link, i) => (
                   <button key={i} className="ayuda-quick-card" onClick={() => router.push(link.route)}>
-                    <div className="ayuda-quick-card-icon">{link.icon}</div>
+                    <div className="ayuda-quick-card-icon"><InlineIcon icon={link.icon} size={20} /></div>
                     <span className="ayuda-quick-title">{link.title}</span>
                     <IconArrowForward width={14} height={14} className="ayuda-quick-arrow" />
                   </button>
@@ -226,7 +227,7 @@ export default function AyudaPage() {
           {filteredCategories.length > 0 && (
             <section className="ayuda-section">
               <div className="ayuda-section-header">
-                <span className="ayuda-section-icon">📚</span>
+                <span className="ayuda-section-icon"><InlineIcon icon="Library" size={20} /></span>
                 <h2 className="ayuda-section-title">{t('categories.title')}</h2>
               </div>
               <div className="ayuda-categories-grid">
@@ -234,7 +235,7 @@ export default function AyudaPage() {
                   <div key={i} className="ayuda-card">
                     <div className="ayuda-card-top">
                       <div className="ayuda-card-icon-wrap">
-                        <span className="ayuda-card-emoji">{cat.icon}</span>
+                        <span className="ayuda-card-emoji"><InlineIcon icon={cat.icon} size={18} /></span>
                       </div>
                       {cat.tag && <span className="ayuda-card-badge">{cat.tag}</span>}
                     </div>
@@ -262,7 +263,7 @@ export default function AyudaPage() {
             <div className="ayuda-vepay-card">
               <div className="ayuda-vepay-header">
                 <div className="ayuda-vepay-icon-wrap">
-                  <span className="ayuda-vepay-icon">📱</span>
+                  <span className="ayuda-vepay-icon"><InlineIcon icon="Smartphone" size={20} /></span>
                 </div>
                 <div className="ayuda-vepay-title-wrap">
                   <h2 className="ayuda-vepay-title">{t('vepay.title')}</h2>
@@ -294,7 +295,7 @@ export default function AyudaPage() {
           {/* FAQ - Grouped by Category */}
           <section className="ayuda-section">
             <div className="ayuda-section-header">
-              <span className="ayuda-section-icon">❓</span>
+              <span className="ayuda-section-icon"><InlineIcon icon="HelpCircle" size={20} /></span>
               <h2 className="ayuda-section-title">{t('faq.title')}</h2>
             </div>
             <div className="ayuda-faq-filters">
@@ -330,13 +331,13 @@ export default function AyudaPage() {
           {/* Support */}
           <section className="ayuda-section">
             <div className="ayuda-section-header">
-              <span className="ayuda-section-icon">💬</span>
+              <span className="ayuda-section-icon"><InlineIcon icon="MessageSquare" size={20} /></span>
               <h2 className="ayuda-section-title">{t('support.title')}</h2>
             </div>
             <div className="ayuda-support-grid">
               <div className="ayuda-support-card">
                 <div className="ayuda-support-icon-wrap">
-                  <span className="ayuda-support-emoji">📧</span>
+                  <span className="ayuda-support-emoji"><InlineIcon icon="Mail" size={20} /></span>
                 </div>
                 <h3 className="ayuda-support-title">{t('support.email.title')} <span style={{fontSize:'0.6rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>{t('support.email.badge')}</span></h3>
                 <p className="ayuda-support-desc">{t('support.email.description')}</p>
@@ -344,7 +345,7 @@ export default function AyudaPage() {
               </div>
               <div className="ayuda-support-card">
                 <div className="ayuda-support-icon-wrap">
-                  <span className="ayuda-support-emoji">📖</span>
+                  <span className="ayuda-support-emoji"><InlineIcon icon="BookOpen" size={20} /></span>
                 </div>
                 <h3 className="ayuda-support-title">{t('support.docs.title')}</h3>
                 <p className="ayuda-support-desc">{t('support.docs.description')}</p>
@@ -352,7 +353,7 @@ export default function AyudaPage() {
               </div>
               <div className="ayuda-support-card ayuda-support-card-chat" onClick={() => setShowChat(true)}>
                 <div className="ayuda-support-icon-wrap">
-                  <span className="ayuda-support-emoji">💬</span>
+                  <span className="ayuda-support-emoji"><InlineIcon icon="MessageSquare" size={20} /></span>
                 </div>
                 <h3 className="ayuda-support-title">{t('support.feedback.title')}</h3>
                 <p className="ayuda-support-desc">{t('support.feedback.description')}</p>
@@ -373,7 +374,7 @@ export default function AyudaPage() {
             <div className="chat-window" onClick={(e) => e.stopPropagation()}>
               <div className="chat-header">
                 <div className="chat-header-info">
-                  <span className="chat-header-icon">💬</span>
+                  <span className="chat-header-icon"><InlineIcon icon="MessageSquare" size={18} /></span>
                   <div>
                     <h3 className="chat-header-title">{t('chat.title')}</h3>
                     <p className="chat-header-subtitle">{t('chat.subtitle')}</p>
@@ -394,7 +395,7 @@ export default function AyudaPage() {
                   </div>
                 ) : chatMessages.length === 0 ? (
                   <div className="chat-empty">
-                    <span className="chat-empty-icon">{chatType === 'bug' ? '🐛' : '💡'}</span>
+                    <span className="chat-empty-icon"><InlineIcon icon={chatType === 'bug' ? 'Bug' : 'Lightbulb'} size={32} /></span>
                     <p>{chatType === 'bug' ? t('chat.bugPlaceholder') : t('chat.suggestionPlaceholder')}</p>
                     <p className="chat-empty-hint">{t('chat.hint')}</p>
                   </div>

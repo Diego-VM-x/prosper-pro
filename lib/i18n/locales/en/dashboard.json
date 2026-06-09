@@ -123,8 +123,8 @@
     "title": "Financial Flow",
     "subtitle": "Income vs Expenses",
     "tooltip": {
-      "income": "📥 Income",
-      "expense": "📤 Expenses",
+      "income": "Download Income",
+      "expense": "Send Expenses",
       "hidden": "Amounts hidden"
     },
     "toggle": {
@@ -139,8 +139,29 @@
       "month": "Month",
       "year": "Year"
     },
-    "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "days": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
+    "months": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ],
     "weekLabel": "Wk {{week}}",
     "summary": {
       "income": "Income",

@@ -81,22 +81,46 @@
     "back": "Volver"
   },
   "updateModal": {
-    "badge": "✨ Nueva versión",
-    "title": "¡Hay novedades! 🎉",
+    "badge": "Sparkles Nueva versión",
+    "title": "¡Hay novedades! Sparkles",
     "subtitle": "Actualización {{version}} — ya disponible para ti",
-    "primaryBtn": "¡Vamos! 🚀",
+    "primaryBtn": "¡Vamos! Rocket",
     "secondaryBtn": "No volver a mostrar",
     "closeAria": "Cerrar",
     "dialogAria": "Novedades de la versión",
     "notes": [
-      { "emoji": "🌍", "text": "Soporte completo de internacionalización (i18n) en inglés y español." },
-      { "emoji": "👤", "text": "Modo Invitado (Guest) para explorar la app sin necesidad de iniciar sesión." },
-      { "emoji": "📅", "text": "Frecuencia diaria añadida a los planes financieros recurrentes." },
-      { "emoji": "🔔", "text": "Notificaciones de cambio de tasa BCV en tiempo real." },
-      { "emoji": "🚀", "text": "Landing page rediseñada: más rápida, accesible y con animaciones suaves." },
-      { "emoji": "❓", "text": "Centro de ayuda renovado: 9 categorías, 41 preguntas frecuentes y tutoriales." },
-      { "emoji": "✉️", "text": "Suscripción a notificaciones de la app desde el footer de la landing." },
-      { "emoji": "🌐", "text": "Selector de idioma persistente que guarda tu preferencia en todo el sitio." }
+      {
+        "emoji": "Globe",
+        "text": "Soporte completo de internacionalización (i18n) en inglés y español."
+      },
+      {
+        "emoji": "User",
+        "text": "Modo Invitado (Guest) para explorar la app sin necesidad de iniciar sesión."
+      },
+      {
+        "emoji": "CalendarDays",
+        "text": "Frecuencia diaria añadida a los planes financieros recurrentes."
+      },
+      {
+        "emoji": "Bell",
+        "text": "Notificaciones de cambio de tasa BCV en tiempo real."
+      },
+      {
+        "emoji": "Rocket",
+        "text": "Landing page rediseñada: más rápida, accesible y con animaciones suaves."
+      },
+      {
+        "emoji": "HelpCircle",
+        "text": "Centro de ayuda renovado: 9 categorías, 41 preguntas frecuentes y tutoriales."
+      },
+      {
+        "emoji": "Mail️",
+        "text": "Suscripción a notificaciones de la app desde el footer de la landing."
+      },
+      {
+        "emoji": "Globe2",
+        "text": "Selector de idioma persistente que guarda tu preferencia en todo el sitio."
+      }
     ]
   }
 }

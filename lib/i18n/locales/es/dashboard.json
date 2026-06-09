@@ -123,8 +123,8 @@
     "title": "Flujo Financiero",
     "subtitle": "Ingresos vs Gastos",
     "tooltip": {
-      "income": "📥 Ingresos",
-      "expense": "📤 Gastos",
+      "income": "Download Ingresos",
+      "expense": "Send Gastos",
       "hidden": "Montos ocultos"
     },
     "toggle": {
@@ -139,8 +139,29 @@
       "month": "Mes",
       "year": "Año"
     },
-    "days": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
-    "months": ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+    "days": [
+      "Dom",
+      "Lun",
+      "Mar",
+      "Mié",
+      "Jue",
+      "Vie",
+      "Sáb"
+    ],
+    "months": [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic"
+    ],
     "weekLabel": "Sem {{week}}",
     "summary": {
       "income": "Ingresos",

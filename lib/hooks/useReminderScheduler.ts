@@ -86,7 +86,7 @@ function getReminderTimestamp(dateStr: string, timeStr: string): number | null {
 }
 
 function notify(reminder: Reminder) {
-  const title = `📅 ${reminder.title}`;
+  const title = `${reminder.title}`;
   const body = reminder.description 
     ? `${reminder.description} — ${reminder.date}` 
     : `Recordatorio programado para ${reminder.date}`;

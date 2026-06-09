@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
+import { InlineIcon } from '@/app/components/IconMap';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getCourses, getUserProgressByOwnerId, seedCoursesIfEmpty } from '@/lib/firestore/courses';
 import type { Course, UserCourseProgress } from '@/types';
@@ -70,7 +71,7 @@ export default function CoursesPage() {
                 <div style={{ position: 'relative' }}>
                   <img src={course.thumbnail} alt={course.title} loading="lazy" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
                   {isCompleted && (
-                    <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-prosper-green)', color: 'white', padding: '4px 8px', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700 }}>✅ Completado</div>
+                    <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-prosper-green)', color: 'white', padding: '4px 8px', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><InlineIcon icon="CheckCircle2" size={12} /> Completado</div>
                   )}
                 </div>
                 <div style={{ padding: 16 }}>

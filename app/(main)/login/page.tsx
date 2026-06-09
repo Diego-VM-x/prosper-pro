@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
 import { sendBrowserNotification } from '@/lib/firestore/notifications';
 import './auth.css';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface AuthFeature {
   icon: string;
@@ -125,7 +126,7 @@ export default function LoginPage() {
           <div className="auth-features">
             {features.map((f, i) => (
               <div className="auth-feature" key={i}>
-                <div className="auth-feature-icon">{f.icon}</div>
+                <div className="auth-feature-icon"><InlineIcon icon={f.icon} size={20} /></div>
                 <div>
                   <h3>{f.title}</h3>
                   <p>{f.desc}</p>
@@ -145,7 +146,7 @@ export default function LoginPage() {
             <div className="auth-content">
               {!auth && (
                 <div className="error-alert" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B' }}>
-                  ⚠️ <strong>{t('login.firebaseWarningStrong')}</strong> {t('login.firebaseWarningText')}
+                  <InlineIcon icon="AlertTriangle" size={16} /> <strong>{t('login.firebaseWarningStrong')}</strong> {t('login.firebaseWarningText')}
                 </div>
               )}
               {error && <div className="error-alert">{error}</div>}

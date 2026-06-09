@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { NewsletterForm } from './NewsletterForm';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface FooterProps {
   user: { uid: string } | null;
@@ -27,9 +28,9 @@ export function Footer({ user }: FooterProps) {
           </div>
           <p>{t('footer.description')}</p>
           <div className="footer-socials">
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.twitter')} className="footer-social">𝕏</a>
-            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.instagram')} className="footer-social">📸</a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.linkedin')} className="footer-social">💼</a>
+            <a href="https://twitter.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.twitter')} className="footer-social"><InlineIcon icon="X" size={16} /></a>
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.instagram')} className="footer-social"><InlineIcon icon="Camera" size={16} /></a>
+            <a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label={t('footer.socials.linkedin')} className="footer-social"><InlineIcon icon="Briefcase" size={16} /></a>
           </div>
         </div>
 

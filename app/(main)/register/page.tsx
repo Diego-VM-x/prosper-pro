@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import type { CurrencyCode } from '@/types';
 import '../login/auth.css';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface AuthFeature {
   icon: string;
@@ -98,7 +99,7 @@ export default function RegisterPage() {
           <div className="auth-features">
             {features.map((f, i) => (
               <div className="auth-feature" key={i}>
-                <div className="auth-feature-icon">{f.icon}</div>
+                <div className="auth-feature-icon"><InlineIcon icon={f.icon} size={20} /></div>
                 <div>
                   <h3>{f.title}</h3>
                   <p>{f.desc}</p>

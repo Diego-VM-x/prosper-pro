@@ -16,22 +16,23 @@ import { TestimonialCarousel } from './TestimonialCarousel';
 import { SecuritySection } from './SecuritySection';
 import { FaqAccordion } from './FaqAccordion';
 import { Footer } from './Footer';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 const FEATURE_VISUALS = [
   (
     <div className="feature-visual-accounts">
       <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
-        <span className="feature-account-icon">💵</span>
+        <span className="feature-account-icon"><InlineIcon icon="Banknote" size={16} /></span>
         <span className="feature-account-name">Efectivo</span>
         <span className="feature-account-balance">$1,240</span>
       </div>
       <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
-        <span className="feature-account-icon">🏦</span>
+        <span className="feature-account-icon"><InlineIcon icon="Landmark" size={16} /></span>
         <span className="feature-account-name">Banco</span>
         <span className="feature-account-balance">$3,580</span>
       </div>
       <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
-        <span className="feature-account-icon">💎</span>
+        <span className="feature-account-icon"><InlineIcon icon="Diamond" size={16} /></span>
         <span className="feature-account-name">USDT</span>
         <span className="feature-account-balance">₮850</span>
       </div>
@@ -40,11 +41,11 @@ const FEATURE_VISUALS = [
   (
     <div className="feature-visual-goals">
       <div className="feature-goal-mini">
-        <span>🚗 Auto</span>
+        <span><InlineIcon icon="Car" size={16} /> Auto</span>
         <div className="feature-goal-bar"><div className="feature-goal-fill" style={{ width: '65%' }} /></div>
       </div>
       <div className="feature-goal-mini">
-        <span>🏖️ Vacaciones</span>
+        <span><InlineIcon icon="Sunset" size={16} /> Vacaciones</span>
         <div className="feature-goal-bar"><div className="feature-goal-fill blue" style={{ width: '42%' }} /></div>
       </div>
     </div>
@@ -76,7 +77,7 @@ const FEATURE_VISUALS = [
         <div className="feature-ocr-row"><span>Banco</span><span>Banesco</span></div>
         <div className="feature-ocr-row"><span>Monto</span><span>$120.00</span></div>
         <div className="feature-ocr-row"><span>Ref.</span><span>00992344</span></div>
-        <div className="feature-ocr-status">✓ Verificado</div>
+        <div className="feature-ocr-status"><InlineIcon icon="CheckCircle2" size={16} /> Verificado</div>
       </div>
     </div>
   ),

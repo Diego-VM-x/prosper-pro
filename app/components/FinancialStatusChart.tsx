@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { InlineIcon } from '@/app/components/IconMap';
 
 type TimeRange = 'day' | 'week' | 'month' | 'year';
 
@@ -299,7 +300,7 @@ export function FinancialStatusChart() {
             }}
             title={showAmounts ? t('chart.toggle.hideAmounts') : t('chart.toggle.showAmounts')}
           >
-            {showAmounts ? '👁️' : '🙈'} {showAmounts ? t('chart.toggle.hide') : t('chart.toggle.show')}
+            <InlineIcon icon={showAmounts ? 'EyeOff' : 'Eye'} size={16} /> {showAmounts ? t('chart.toggle.hide') : t('chart.toggle.show')}
           </button>
 
           {/* Time Range Selector */}

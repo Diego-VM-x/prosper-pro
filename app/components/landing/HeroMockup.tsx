@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 export function HeroMockup() {
   const { t } = useTranslation('landing');
@@ -47,13 +48,13 @@ export function HeroMockup() {
 
         <div className="mockup-rate-float">
           <div className="mockup-rate-item">
-            <span className="mockup-rate-flag">🇺🇸</span>
+            <span className="mockup-rate-flag"><InlineIcon icon="Globe" size={16} /></span>
             <span className="mockup-rate-pair">{t('mockup.usdBs')}</span>
             <span className="mockup-rate-value">45.20</span>
           </div>
           <div className="mockup-rate-divider" />
           <div className="mockup-rate-item">
-            <span className="mockup-rate-flag">💎</span>
+            <span className="mockup-rate-flag"><InlineIcon icon="Diamond" size={16} /></span>
             <span className="mockup-rate-pair">{t('mockup.usdtBs')}</span>
             <span className="mockup-rate-value">46.80</span>
           </div>

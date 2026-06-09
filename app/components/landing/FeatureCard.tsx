@@ -2,6 +2,7 @@
 
 import { ReactNode, useState } from 'react';
 import { AnimatedSection } from '../AnimatedSection';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface FeatureCardProps {
   icon: string;
@@ -34,7 +35,7 @@ export function FeatureCard({
         {visual && <div className={`feature-card-visual ${isHovered ? 'active' : ''}`}>{visual}</div>}
         <div className="feature-card-content">
           <div className="feature-icon-wrapper">
-            <span className="feature-icon">{icon}</span>
+            <span className="feature-icon"><InlineIcon icon={icon} size={20} /></span>
           </div>
           <h3>{title}</h3>
           <p>{description}</p>

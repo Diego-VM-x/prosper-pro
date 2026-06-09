@@ -1,6 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { IconX } from '@/app/components/icons';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -57,10 +59,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const typeIcons: Record<ToastType, string> = {
-    success: '✓',
-    error: '✕',
-    warning: '⚠',
-    info: 'ℹ',
+    success: 'CheckCircle2',
+    error: 'XCircle',
+    warning: 'AlertTriangle',
+    info: 'HelpCircle',
   };
 
   const typeColors: Record<ToastType, { bg: string; border: string; icon: string }> = {
@@ -86,9 +88,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           const colors = typeColors[t.type];
           return (
             <div key={t.id} className="toast-item" data-type={t.type} style={{ background: colors.bg, borderLeftColor: colors.border }}>
-              <span className="toast-icon" style={{ color: colors.icon }}>{typeIcons[t.type]}</span>
+              <span className="toast-icon" style={{ color: colors.icon }}><InlineIcon icon={typeIcons[t.type]} size={18} /></span>
               <span className="toast-message">{t.message}</span>
-              <button className="toast-close" onClick={() => removeToast(t.id)}>✕</button>
+              <button className="toast-close" onClick={() => removeToast(t.id)}><IconX width={14} height={14} /></button>
             </div>
           );
         })}
@@ -204,7 +206,7 @@ export function ConfirmDialog({
       <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="confirm-header">
           <h3 className="confirm-title">{title}</h3>
-          <button className="confirm-close" onClick={onCancel}>✕</button>
+          <button className="confirm-close" onClick={onCancel}><IconX width={14} height={14} /></button>
         </div>
         <div className="confirm-body">
           <p>{message}</p>

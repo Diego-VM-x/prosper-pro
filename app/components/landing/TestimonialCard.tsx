@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
+import { Star } from 'lucide-react';
 import { AnimatedSection } from '../AnimatedSection';
 
 interface TestimonialItem {
@@ -31,7 +32,7 @@ export function Testimonials() {
               <div className="testimonial-card">
                 <div className="testimonial-stars">
                   {Array.from({ length: t.stars }).map((_, idx) => (
-                    <span key={idx}>⭐</span>
+                    <span key={idx}><Star size={14} style={{ color: '#F5B800' }} /></span>
                   ))}
                 </div>
                 <p className="testimonial-content">“{t.content}”</p>

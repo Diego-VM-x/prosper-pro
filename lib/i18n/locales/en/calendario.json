@@ -3,8 +3,29 @@
   "subtitle": "Your plans, reminders and financial movements in one place.",
   "goToday": "Go to Today",
   "new": "New",
-  "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  "days": [
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Sun"
+  ],
+  "months": [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
   "legend": {
     "plans": "Financial Plans",
     "reminders": "Reminders",

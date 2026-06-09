@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -129,7 +130,7 @@ export default function CourseDetailClient() {
                   color: completed ? 'white' : 'var(--text-secondary)',
                   fontSize: '0.875rem', fontWeight: 700, marginRight: 12, flexShrink: 0,
                 }}>
-                  {completed ? '✓' : mod.order}
+                  {completed ? <Check size={16} /> : mod.order}
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{mod.title}</p>
@@ -139,7 +140,7 @@ export default function CourseDetailClient() {
                   {completed && (
                     <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-prosper-green)', background: 'rgba(61,204,142,0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>Completado</span>
                   )}
-                  <span style={{ fontSize: '1.25rem', color: 'var(--text-tertiary)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+                  <span style={{ fontSize: '1.25rem', color: 'var(--text-tertiary)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><ChevronDown size={18} /></span>
                 </div>
               </div>
 

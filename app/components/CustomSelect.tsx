@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Check, X } from 'lucide-react';
+import { InlineIcon } from './IconMap';
 
 interface CustomSelectOption {
   value: string;
@@ -96,7 +98,7 @@ export function CustomSelect({
         <span className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}>
           {selectedOption ? (
             <>
-              {selectedOption.icon && <span className="custom-select-icon">{selectedOption.icon}</span>}
+              {selectedOption.icon && <span className="custom-select-icon"><InlineIcon icon={selectedOption.icon} size={16} /></span>}
               {selectedOption.label}
             </>
           ) : (
@@ -123,10 +125,10 @@ export function CustomSelect({
               />
               <div className="custom-input-actions">
                 <button className="custom-btn-cancel" onClick={() => { setShowCustomInput(false); setCustomValue(''); }}>
-                  ✕
+                  <X size={14} />
                 </button>
                 <button className={`custom-btn-add ${!customValue.trim() ? 'disabled' : ''}`} onClick={handleAddCustom} disabled={!customValue.trim()}>
-                  ✓ Añadir
+                  <Check size={14} /> Añadir
                 </button>
               </div>
             </div>
@@ -138,9 +140,9 @@ export function CustomSelect({
                   className={`custom-select-option ${value === option.value ? 'selected' : ''}`}
                   onClick={() => handleSelect(option.value)}
                 >
-                  {option.icon && <span className="custom-select-icon">{option.icon}</span>}
+                  {option.icon && <span className="custom-select-icon"><InlineIcon icon={option.icon} size={16} /></span>}
                   {option.label}
-                  {value === option.value && <span className="custom-select-check">✓</span>}
+                  {value === option.value && <span className="custom-select-check"><Check size={14} /></span>}
                 </button>
               ))}
               {allowCustom && (

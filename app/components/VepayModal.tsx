@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { InlineIcon } from '@/app/components/IconMap';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { mapReceiptToTransaction, VEPayReceipt, VEPAY_BANKS } from '@/lib/vepay-data';
 import { createTransaction } from '@/lib/firestore/transactions';
@@ -210,7 +211,7 @@ export function VepayModal({
               <h2 className="modal-title">Importar desde Captura</h2>
               <p className="modal-subtitle">Sube un recibo de pago móvil (Bancamiga, Banesco, BDV, Mercantil, Provincial)</p>
             </div>
-            <button className="modal-close" onClick={handleClose}>✕</button>
+            <button className="modal-close" onClick={handleClose}><InlineIcon icon="X" size={18} /></button>
           </div>
 
           {/* Upload area (desktop only) */}
@@ -383,7 +384,7 @@ export function VepayModal({
                       {receipt.payment.date_time.raw && <span>{receipt.payment.date_time.raw}</span>}
                     </div>
                     {!receipt.validation.is_complete && receipt.validation.missing_fields.length > 0 && (
-                      <p className="vepay-receipt-warning">⚠️ Campos incompletos: {receipt.validation.missing_fields.join(', ')}</p>
+                      <p className="vepay-receipt-warning"><InlineIcon icon="AlertTriangle" size={14} /> Campos incompletos: {receipt.validation.missing_fields.join(', ')}</p>
                     )}
                     <div className="vepay-receipt-actions">
                       <button className="btn btn-outline btn-sm" onClick={() => handleVepaySkip(receipt)}>Omitir</button>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface StepItem {
   n: number;
@@ -48,12 +49,12 @@ export function InteractiveSteps() {
 
           <AnimatedSection animationType="fade-up" delay={200} key={active}>
             <div className="step-detail-card">
-              <div className="step-detail-icon">{STEPS[active].icon}</div>
+              <div className="step-detail-icon"><InlineIcon icon={STEPS[active].icon} size={16} /></div>
               <h3>{STEPS[active].title}</h3>
               <p>{STEPS[active].description}</p>
               <ul className="step-detail-list">
                 {STEPS[active].details.map((d) => (
-                  <li key={d}>✓ {d}</li>
+                  <li key={d}><InlineIcon icon="CheckCircle2" size={16} /> {d}</li>
                 ))}
               </ul>
               <div className="step-progress">

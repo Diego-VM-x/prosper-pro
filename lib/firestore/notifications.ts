@@ -180,7 +180,7 @@ export async function notifyPlanInvite(
   planTitle: string,
   planId: string
 ) {
-  const title = '📋 Te invitaron a un plan';
+  const title = 'Te invitaron a un plan';
   const body = `${fromName} te invitó a colaborar en "${planTitle}"`;
   await addNotification({
     ownerId,
@@ -203,7 +203,7 @@ export async function notifyPlanContribution(
   amount: number,
   planId: string
 ) {
-  const title = '💰 Nuevo aporte a tu plan';
+  const title = 'Nuevo aporte a tu plan';
   const body = `${fromName} aportó ${amount} a "${planTitle}"`;
   await addNotification({
     ownerId,
@@ -225,7 +225,7 @@ export async function notifyPlanReminder(
   daysLeft: number,
   planId: string
 ) {
-  const title = '⏰ Recordatorio de plan';
+  const title = 'Recordatorio de plan';
   const body =
     daysLeft === 0
       ? `"${planTitle}" vence HOY`
@@ -250,7 +250,7 @@ export async function notifyPlanRejected(
   planTitle: string,
   reason: 'rejected' | 'removed' = 'rejected'
 ) {
-  const title = reason === 'rejected' ? '❌ Solicitud rechazada' : '🗑 Te eliminaron de un plan';
+  const title = reason === 'rejected' ? 'Solicitud rechazada' : 'Te eliminaron de un plan';
   const body =
     reason === 'rejected'
       ? `${fromName} rechazó tu solicitud en "${planTitle}"`
@@ -276,9 +276,9 @@ export async function notifyDollarChange(
 ) {
   const diff = newRate - oldRate;
   const pct = Math.abs(((diff / oldRate) * 100)).toFixed(2);
-  const direction = diff > 0 ? '⬆' : '⬇';
+  const direction = diff > 0 ? 'Subió' : 'Bajó';
   const sign = diff > 0 ? '+' : '';
-  const title = `${direction} Dólar BCV: ${newRate.toFixed(2)} Bs`;
+  const title = `${direction} el dólar BCV: ${newRate.toFixed(2)} Bs`;
   const body = `Actualización: ${newRate.toFixed(2)} Bs (${sign}${diff.toFixed(2)} / ${sign}${pct}%)`;
   await addNotification({
     ownerId,
@@ -299,7 +299,7 @@ export async function notifyDailyBalance(
   totalUSD: number,
   totalBS: number
 ) {
-  const title = '📊 Resumen diario de tus cuentas';
+  const title = 'Resumen diario de tus cuentas';
   const body = `Balance: $${totalUSD.toFixed(2)} USD / ${totalBS.toFixed(2)} Bs`;
   await addNotification({
     ownerId,
@@ -320,7 +320,7 @@ export async function notifyAppUpdate(
   version: string,
   summary: string
 ) {
-  const title = `🚀 Nueva versión: v${version}`;
+  const title = `Nueva versión: v${version}`;
   await addNotification({
     ownerId,
     title,
@@ -341,7 +341,7 @@ export async function notifyCalendarReminder(
   reminderId: string,
   date: string
 ) {
-  const title = '📅 Recordatorio de calendario';
+  const title = 'Recordatorio de calendario';
   const body = `${reminderTitle} — ${date}`;
   await addNotification({
     ownerId,
@@ -361,7 +361,7 @@ export async function notifyWelcome(
   ownerId: string,
   displayName: string
 ) {
-  const title = `👋 ¡Bienvenido, ${displayName}!`;
+  const title = `¡Bienvenido, ${displayName}!`;
   const body = 'Gracias por usar Prosper-Pro. ¡Comienza a organizar tus finanzas hoy!';
   await addNotification({
     ownerId,

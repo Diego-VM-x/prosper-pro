@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Star } from 'lucide-react';
 import { AnimatedSection } from '../AnimatedSection';
 
 interface TestimonialItem {
@@ -42,7 +43,7 @@ export function TestimonialCarousel() {
             <div className="testimonial-carousel-card" key={active}>
               <div className="testimonial-stars">
                 {Array.from({ length: current.stars }).map((_, i) => (
-                  <span key={i}>⭐</span>
+                  <span key={i}><Star size={14} style={{ color: '#F5B800' }} /></span>
                 ))}
               </div>
               <p className="testimonial-content">“{current.content}”</p>

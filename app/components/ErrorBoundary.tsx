@@ -1,6 +1,7 @@
 'use client';
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { InlineIcon } from '@/app/components/IconMap';
 
 interface Props {
   children: ReactNode;
@@ -44,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
           fontFamily: 'Inter, sans-serif',
           textAlign: 'center',
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}><InlineIcon icon="AlertTriangle" size={48} /></div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 8px 0' }}>
             Algo salió mal
           </h1>

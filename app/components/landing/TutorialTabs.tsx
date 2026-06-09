@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 const TUTORIAL_MOCKUPS = [
   (
@@ -28,7 +29,7 @@ const TUTORIAL_MOCKUPS = [
     <div className="tutorial-mockup">
       <div className="tm-goal">
         <div className="tm-goal-header">
-          <span>🚗 Auto nuevo</span>
+          <span><InlineIcon icon="Car" size={16} /> Auto nuevo</span>
           <span>65%</span>
         </div>
         <div className="tm-goal-bar"><div className="tm-goal-fill" style={{ width: '65%' }} /></div>
@@ -43,7 +44,7 @@ const TUTORIAL_MOCKUPS = [
         <div className="tm-receipt-row"><span>Monto</span><span>$120.00</span></div>
         <div className="tm-receipt-row"><span>Ref.</span><span>00992344</span></div>
         <div className="tm-receipt-row"><span>Fecha</span><span>06/06/2026</span></div>
-        <div className="tm-receipt-status">✓ Datos verificados</div>
+        <div className="tm-receipt-status"><InlineIcon icon="CheckCircle2" size={16} /> Datos verificados</div>
       </div>
     </div>
   ),
@@ -104,7 +105,7 @@ export function TutorialTabs() {
                 className={`tutorial-tab ${active === tItem.id ? 'active' : ''}`}
                 onClick={() => setActive(tItem.id)}
               >
-                <span className="tutorial-tab-icon">{tItem.icon}</span>
+                <span className="tutorial-tab-icon"><InlineIcon icon={tItem.icon} size={16} /></span>
                 <span className="tutorial-tab-title">{tItem.title}</span>
               </button>
             ))}

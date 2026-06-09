@@ -13,26 +13,125 @@
   "quickLinks": {
     "title": "Accesos Rápidos",
     "items": [
-      { "icon": "🎯", "title": "Crear plan", "route": "/metas" },
-      { "icon": "💰", "title": "Registrar transacción", "route": "/finanzas" },
-      { "icon": "📅", "title": "Añadir recordatorio", "route": "/calendario" },
-      { "icon": "🏦", "title": "Nueva cuenta", "route": "/finanzas" },
-      { "icon": "⚙️", "title": "Configurar perfil", "route": "/configuracion" },
-      { "icon": "📊", "title": "Ver tasas", "route": "/" }
+      {
+        "icon": "Target",
+        "title": "Crear plan",
+        "route": "/metas"
+      },
+      {
+        "icon": "Wallet",
+        "title": "Registrar transacción",
+        "route": "/finanzas"
+      },
+      {
+        "icon": "CalendarDays",
+        "title": "Añadir recordatorio",
+        "route": "/calendario"
+      },
+      {
+        "icon": "Landmark",
+        "title": "Nueva cuenta",
+        "route": "/finanzas"
+      },
+      {
+        "icon": "Settings️",
+        "title": "Configurar perfil",
+        "route": "/configuracion"
+      },
+      {
+        "icon": "BarChart3",
+        "title": "Ver tasas",
+        "route": "/"
+      }
     ]
   },
   "categories": {
     "title": "Guías por Categoría",
     "items": [
-      { "id": "gettingStarted", "title": "Primeros Pasos", "desc": "Crea tu cuenta, explora el modo invitado y personaliza tu experiencia.", "icon": "🚀", "tag": "Guía Esencial" },
-      { "id": "accountsAndCurrencies", "title": "Cuentas y Monedas", "desc": "Gestiona múltiples monedas fiduciarias y criptomonedas.", "icon": "💱", "tags": ["USD", "EUR", "VES", "Crypto"] },
-      { "id": "finances", "title": "Finanzas", "desc": "Registra transacciones, gestiona cuentas, favoritos y captura comprobantes.", "icon": "💰", "tags": ["Cuentas", "Transacciones", "VEPay"] },
-      { "id": "financialPlans", "title": "Planes Financieros", "desc": "Crea planes de ahorro, gastos planificados y pagos recurrentes.", "icon": "🎯", "tags": ["Ahorro", "Gastos", "Recurrentes"] },
-      { "id": "calendarAndReminders", "title": "Calendario y Recordatorios", "desc": "Configura recordatorios y visualiza vencimientos.", "icon": "📅", "tags": ["Recordatorios", "Recurrentes"] },
-      { "id": "settings", "title": "Configuración", "desc": "Personaliza perfil, idioma, tema, privacidad y preferencias de tasas.", "icon": "⚙️", "tags": ["Perfil", "Idioma", "Privacidad"] },
-      { "id": "notifications", "title": "Notificaciones", "desc": "Alertas de tasas, resumen diario y notificaciones del navegador.", "icon": "🔔", "tags": ["BCV", "Push"] },
-      { "id": "security", "title": "Seguridad", "desc": "Protocolos de encriptación, sincronización y protección de datos.", "icon": "🛡️" },
-      { "id": "general", "title": "General", "desc": "Información general sobre precios y acceso.", "icon": "❓" }
+      {
+        "id": "gettingStarted",
+        "title": "Primeros Pasos",
+        "desc": "Crea tu cuenta, explora el modo invitado y personaliza tu experiencia.",
+        "icon": "Rocket",
+        "tag": "Guía Esencial"
+      },
+      {
+        "id": "accountsAndCurrencies",
+        "title": "Cuentas y Monedas",
+        "desc": "Gestiona múltiples monedas fiduciarias y criptomonedas.",
+        "icon": "ArrowLeftRight",
+        "tags": [
+          "USD",
+          "EUR",
+          "VES",
+          "Crypto"
+        ]
+      },
+      {
+        "id": "finances",
+        "title": "Finanzas",
+        "desc": "Registra transacciones, gestiona cuentas, favoritos y captura comprobantes.",
+        "icon": "Wallet",
+        "tags": [
+          "Cuentas",
+          "Transacciones",
+          "VEPay"
+        ]
+      },
+      {
+        "id": "financialPlans",
+        "title": "Planes Financieros",
+        "desc": "Crea planes de ahorro, gastos planificados y pagos recurrentes.",
+        "icon": "Target",
+        "tags": [
+          "Ahorro",
+          "Gastos",
+          "Recurrentes"
+        ]
+      },
+      {
+        "id": "calendarAndReminders",
+        "title": "Calendario y Recordatorios",
+        "desc": "Configura recordatorios y visualiza vencimientos.",
+        "icon": "CalendarDays",
+        "tags": [
+          "Recordatorios",
+          "Recurrentes"
+        ]
+      },
+      {
+        "id": "settings",
+        "title": "Configuración",
+        "desc": "Personaliza perfil, idioma, tema, privacidad y preferencias de tasas.",
+        "icon": "Settings️",
+        "tags": [
+          "Perfil",
+          "Idioma",
+          "Privacidad"
+        ]
+      },
+      {
+        "id": "notifications",
+        "title": "Notificaciones",
+        "desc": "Alertas de tasas, resumen diario y notificaciones del navegador.",
+        "icon": "Bell",
+        "tags": [
+          "BCV",
+          "Push"
+        ]
+      },
+      {
+        "id": "security",
+        "title": "Seguridad",
+        "desc": "Protocolos de encriptación, sincronización y protección de datos.",
+        "icon": "Shield️"
+      },
+      {
+        "id": "general",
+        "title": "General",
+        "desc": "Información general sobre precios y acceso.",
+        "icon": "HelpCircle"
+      }
     ]
   },
   "tutorials": {
@@ -116,10 +215,22 @@
     "title": "VEPay — Captura de Comprobantes",
     "subtitle": "Sistema inteligente de extracción de datos de pagos móviles venezolanos",
     "steps": [
-      { "title": "Sube tu captura", "description": "Toma una captura de pantalla de tu app bancaria (BDV, Mercantil, Provincial, Banesco, etc.) y súbela a Prosper Pro." },
-      { "title": "OCR procesa automáticamente", "description": "El sistema usa reconocimiento óptico de caracteres para leer el texto. Soporta más de 20 bancos venezolanos." },
-      { "title": "Datos extraídos", "description": "Se extraen: <strong>banco</strong>, <strong>monto en Bs.</strong>, <strong>referencia</strong>, <strong>fecha</strong>, <strong>origen</strong>, <strong>destinatario</strong> y <strong>concepto</strong>." },
-      { "title": "Validación inteligente", "description": "El sistema valida cada comprobante y muestra campos faltantes. Puedes revisar el texto crudo y corregir." }
+      {
+        "title": "Sube tu captura",
+        "description": "Toma una captura de pantalla de tu app bancaria (BDV, Mercantil, Provincial, Banesco, etc.) y súbela a Prosper Pro."
+      },
+      {
+        "title": "OCR procesa automáticamente",
+        "description": "El sistema usa reconocimiento óptico de caracteres para leer el texto. Soporta más de 20 bancos venezolanos."
+      },
+      {
+        "title": "Datos extraídos",
+        "description": "Se extraen: <strong>banco</strong>, <strong>monto en Bs.</strong>, <strong>referencia</strong>, <strong>fecha</strong>, <strong>origen</strong>, <strong>destinatario</strong> y <strong>concepto</strong>."
+      },
+      {
+        "title": "Validación inteligente",
+        "description": "El sistema valida cada comprobante y muestra campos faltantes. Puedes revisar el texto crudo y corregir."
+      }
     ],
     "supportedBanks": "Bancos soportados"
   },
@@ -130,55 +241,211 @@
     },
     "empty": "No se encontraron resultados.",
     "items": [
-      { "categoryId": "gettingStarted", "q": "¿Cómo creo mi cuenta en Prosper Pro?", "a": "Puedes registrarte con tu dirección de correo electrónico y una contraseña, o usar el inicio de sesión rápido con Google. Una vez completado el registro, accederás automáticamente al dashboard principal." },
-      { "categoryId": "gettingStarted", "q": "¿Puedo usar la app sin iniciar sesión?", "a": "Sí. El modo Invitado (Guest) te permite explorar la app y ver todas las funcionalidades sin necesidad de crear una cuenta. Cuando estés listo, puedes registrarte y conservar tus datos." },
-      { "categoryId": "gettingStarted", "q": "¿Cómo cambio el idioma de la app?", "a": "Ve a Configuración y usa el selector de idioma para cambiar entre Español e Inglés. La preferencia se guarda automáticamente y se aplica de inmediato en toda la interfaz." },
-      { "categoryId": "gettingStarted", "q": "¿Cómo cambio entre modo claro y oscuro?", "a": "Haz clic en el icono de luna o sol en la barra superior. Puedes elegir entre modo claro, oscuro o AMOLED negro puro. Tu preferencia se guarda automáticamente en tu perfil." },
-      { "categoryId": "gettingStarted", "q": "¿Cómo configuro mi perfil y privacidad?", "a": "Ve a Configuración > Perfil. Allí puedes cambiar tu nombre, foto de perfil, moneda de visualización predeterminada y configurar si tu perfil es público o privado. Un perfil privado solo puede ser encontrado por email exacto." },
-      { "categoryId": "gettingStarted", "q": "¿Cómo navego por la aplicación?", "a": "El menú lateral te da acceso a Dashboard, Planes Financieros, Calendario, Finanzas, Configuración y Ayuda. En móvil, usa el botón de menú hamburguesa. La barra superior incluye acceso rápido a notificaciones, búsqueda y cambio de tema." },
-
-      { "categoryId": "accountsAndCurrencies", "q": "¿Cómo creo cuentas en diferentes monedas?", "a": "Ve a Finanzas > Nueva Cuenta. Selecciona la moneda deseada al crear la cuenta. Puedes tener múltiples cuentas en distintas monedas simultáneamente, cada una con su propio balance independiente." },
-      { "categoryId": "accountsAndCurrencies", "q": "¿Qué monedas y criptomonedas soporta la app?", "a": "Soportamos monedas fiduciarias: Dólar estadounidense (USD), Bolívar soberano (VES), Euro (EUR) y Peso colombiano (COP). También criptomonedas: Tether (USDT), Solana (SOL), Bitcoin (BTC) y USD Coin (USDC) con precios en tiempo real de Binance." },
-      { "categoryId": "accountsAndCurrencies", "q": "¿Puedo convertir saldos entre monedas?", "a": "Sí. En la sección de Finanzas puedes ver tus saldos convertidos a tu moneda de visualización preferida usando la tasa oficial del BCV o el precio P2P del mercado (Binance), según tu configuración." },
-      { "categoryId": "accountsAndCurrencies", "q": "¿Qué pasa con las transacciones si elimino una cuenta?", "a": "Al eliminar una cuenta, todas las transacciones asociadas a esa cuenta también se eliminan permanentemente. Te recomendamos exportar o revisar tu historial antes de borrar una cuenta. Esta acción no se puede deshacer." },
-
-      { "categoryId": "finances", "q": "¿Cómo registro una transacción?", "a": "Ve a Finanzas y haz clic en \"Nueva Transacción\". Selecciona el tipo (Ingreso, Gasto o Transferencia), la cuenta, la categoría, el monto y una descripción opcional. También puedes usar VEPay para capturar comprobantes automáticamente." },
-      { "categoryId": "finances", "q": "¿Cómo veo y oculto los balances de mis cuentas?", "a": "En Finanzas verás el balance de cada cuenta en tarjetas. Puedes tocar el icono del ojo junto a cualquier balance para ocultarlo o mostrarlo. Esto es útil en público o al compartir pantalla." },
-      { "categoryId": "finances", "q": "¿Cómo hago transferencias rápidas entre cuentas?", "a": "Usa la función \"Transferencia Rápida\" en Finanzas. Selecciona la cuenta de origen, la cuenta destino y el monto. El sistema registra automáticamente una salida en una cuenta y un ingreso en la otra." },
-      { "categoryId": "finances", "q": "¿Cómo filtro y busco transacciones?", "a": "Usa la barra de filtros superiores para filtrar por cuenta, tipo de transacción y categoría. También puedes usar el campo de búsqueda para encontrar transacciones por descripción, monto o fecha. El historial se carga de 5 en 5 para mayor velocidad." },
-      { "categoryId": "finances", "q": "¿Qué son las cuentas favoritas?", "a": "Puedes marcar hasta 3 cuentas como favoritas desde la sección Finanzas. El widget \"Mis Cuentas\" del Dashboard mostrará únicamente estas cuentas para una vista más limpia y enfocada. Puedes quitarlas de favoritos en cualquier momento." },
-      { "categoryId": "finances", "q": "¿Qué muestra la gráfica financiera?", "a": "La gráfica compara tus ingresos versus gastos en el período seleccionado (día, semana, mes o año). Usa barras de colores para visualizar tendencias y ver tu evolución financiera de un vistazo." },
-      { "categoryId": "finances", "q": "¿Qué es VEPay y cómo capturo comprobantes?", "a": "VEPay es el sistema OCR de Prosper Pro para capturar comprobantes de pago móvil venezolanos. Sube una captura de pantalla de tu app bancaria y el sistema extrae automáticamente el banco, monto, referencia, fecha, origen, destinatario y concepto." },
-
-      { "categoryId": "financialPlans", "q": "¿Cómo creo un plan de ahorro?", "a": "Ve a Planes Financieros > Nuevo Plan. Selecciona tipo \"Ahorro\", define un nombre, categoría, monto objetivo y fecha límite. El plan aparecerá en tu dashboard y calendario para que hagas seguimiento de tu progreso." },
-      { "categoryId": "financialPlans", "q": "¿Qué es un gasto planificado?", "a": "Es un plan tipo \"Gasto\" para organizar pagos futuros. Puedes abonar gradualmente y ver el progreso de pago en tiempo real. Ideal para organizar compras grandes, viajes o deudas." },
-      { "categoryId": "financialPlans", "q": "¿Cómo funcionan los pagos recurrentes?", "a": "Crea un plan tipo \"Recurrente\" y elige la frecuencia: diaria, semanal, quincenal, mensual, trimestral o anual. El sistema calcula automáticamente la próxima fecha de vencimiento y te permite registrar cada pago." },
-      { "categoryId": "financialPlans", "q": "¿Cómo añado fondos a un plan?", "a": "Haz clic en un plan de ahorro y presiona \"Añadir Fondos\". Selecciona la cuenta de origen y el monto. Se crea una transacción automáticamente y el progreso del plan se actualiza al instante." },
-      { "categoryId": "financialPlans", "q": "¿Puedo compartir gastos con otros usuarios?", "a": "Sí. Dentro de un plan, usa la opción \"Compartir\" e ingresa el nombre o email del usuario. Se envía una solicitud que puede aceptar o rechazar. Los planes compartidos muestran quién aportó y cuánto." },
-      { "categoryId": "financialPlans", "q": "¿Puedo usar categorías personalizadas?", "a": "Sí. Al crear un plan puedes elegir entre categorías predefinidas o escribir una nueva categoría personalizada. Esto te permite organizar tus planes exactamente como lo necesites." },
-      { "categoryId": "financialPlans", "q": "¿Qué estados pueden tener los planes?", "a": "Los planes pueden estar: Pendiente (sin fondos aún), En Progreso (con al menos un abono), Completado (objetivo alcanzado) o Cancelado (archivado sin completar). Puedes filtrar por estado en la lista de planes." },
-
-      { "categoryId": "calendarAndReminders", "q": "¿Cómo creo un recordatorio?", "a": "Ve al Calendario, selecciona un día y haz clic en \"+ Recordatorio\". Ingresa título, descripción, hora y tipo. También puedes configurar recordatorios recurrentes para que se repitan automáticamente." },
-      { "categoryId": "calendarAndReminders", "q": "¿Cómo veo mis metas y planes en el calendario?", "a": "Los planes con fecha límite y los recordatorios aparecen automáticamente en el calendario con sus colores originales. Puedes ver de un vistazo qué días tienen actividad financiera programada." },
-      { "categoryId": "calendarAndReminders", "q": "¿Puedo crear tipos de recordatorio personalizados?", "a": "Sí. Al crear un recordatorio, escribe un nombre nuevo en el selector de tipo si no encuentras el que necesitas. Tu tipo personalizado quedará disponible para futuros recordatorios." },
-      { "categoryId": "calendarAndReminders", "q": "¿Cómo funcionan los recordatorios recurrentes?", "a": "Al crear un recordatorio, activa la opción de recurrencia y selecciona la frecuencia (diaria, semanal, mensual, etc.). El sistema generará automáticamente las instancias futuras en el calendario." },
-
-      { "categoryId": "settings", "q": "¿Qué puedo configurar en mi perfil?", "a": "En Configuración > Perfil puedes cambiar tu nombre completo, foto de avatar, moneda de visualización predeterminada, idioma de la interfaz (español/inglés) y el tema visual (claro, oscuro o AMOLED)." },
-      { "categoryId": "settings", "q": "¿Cómo cambio el idioma entre español e inglés?", "a": "En Configuración encontrarás el selector de idioma. Al cambiarlo, toda la interfaz se traduce al instante, incluyendo menús, botones, notificaciones y contenido de ayuda. La preferencia se guarda en tu perfil." },
-      { "categoryId": "settings", "q": "¿Cómo configuro la privacidad de mi perfil?", "a": "En Configuración > Perfil usa el toggle Público/Privado. Si tu perfil es privado, otros usuarios solo podrán encontrarte si conocen tu email exacto. Esto protege tu identidad al compartir planes." },
-      { "categoryId": "settings", "q": "¿Qué diferencia hay entre tasa BCV y P2P?", "a": "La tasa BCV es la referencia oficial del Banco Central de Venezuela. La tasa P2P es el precio real del mercado según Binance. Puedes elegir cuál usar para convertir tus saldos en bolívares desde Configuración > Preferencias." },
-      { "categoryId": "settings", "q": "¿Cómo borro todos mis datos?", "a": "En Configuración > Zona de Peligro encontrarás la opción para eliminar tu cuenta y todos tus datos permanentemente de Firestore y Storage. También puedes usar \"Vaciar todo\" en Gestión Contable para resetear transacciones sin borrar la cuenta." },
-
-      { "categoryId": "notifications", "q": "¿Qué son las alertas de cambio de tasa BCV?", "a": "Recibes una notificación cuando la tasa oficial del BCV experimenta una variación significativa. Esto te ayuda a estar al tanto de cambios importantes que afectan el valor de tus saldos en bolívares." },
-      { "categoryId": "notifications", "q": "¿Qué es el resumen diario de balance?", "a": "Es una notificación automática que recibes al final del día con un resumen de tus balances totales, movimientos del día y estado de tus planes. Puedes activarla o desactivarla desde Configuración > Notificaciones." },
-      { "categoryId": "notifications", "q": "¿Cómo activo las notificaciones del navegador?", "a": "En Configuración > Notificaciones encontrarás el toggle para habilitar las notificaciones push del navegador. El sistema te pedirá permiso y luego podrá enviarte alertas incluso con la app cerrada." },
-
-      { "categoryId": "security", "q": "¿Mis datos están seguros?", "a": "Sí. Usamos Firebase con reglas de seguridad estrictas que aíslan los datos por ownerId. Solo tú puedes acceder a tu información. Las contraseñas se manejan mediante Firebase Auth con encriptación estándar de la industria." },
-      { "categoryId": "security", "q": "¿Puedo usar Prosper Pro en varios dispositivos?", "a": "Sí. Tus datos se sincronizan en tiempo real a través de Firestore. Puedes acceder desde tu celular, tablet o computadora y verás la misma información actualizada instantáneamente en todos los dispositivos." },
-      { "categoryId": "security", "q": "¿Cómo elimino mi cuenta permanentemente?", "a": "Ve a Configuración > Zona de Peligro y haz clic en \"Eliminar mi cuenta para siempre\". Se eliminarán todos tus datos de Firestore, Storage y Authentication. Esta acción es irreversible." },
-
-      { "categoryId": "general", "q": "¿Prosper Pro es gratuito?", "a": "Sí. Todas las funcionalidades actuales y futuras de Prosper Pro están disponibles sin costo. No hay planes de pago ni límites ocultos en el uso de la aplicación." },
-      { "categoryId": "general", "q": "¿En qué URL está el dashboard?", "a": "El dashboard principal está en la raíz (/). Cuando inicias sesión, la página de inicio se convierte automáticamente en tu panel de control personalizado." }
+      {
+        "categoryId": "gettingStarted",
+        "q": "¿Cómo creo mi cuenta en Prosper Pro?",
+        "a": "Puedes registrarte con tu dirección de correo electrónico y una contraseña, o usar el inicio de sesión rápido con Google. Una vez completado el registro, accederás automáticamente al dashboard principal."
+      },
+      {
+        "categoryId": "gettingStarted",
+        "q": "¿Puedo usar la app sin iniciar sesión?",
+        "a": "Sí. El modo Invitado (Guest) te permite explorar la app y ver todas las funcionalidades sin necesidad de crear una cuenta. Cuando estés listo, puedes registrarte y conservar tus datos."
+      },
+      {
+        "categoryId": "gettingStarted",
+        "q": "¿Cómo cambio el idioma de la app?",
+        "a": "Ve a Configuración y usa el selector de idioma para cambiar entre Español e Inglés. La preferencia se guarda automáticamente y se aplica de inmediato en toda la interfaz."
+      },
+      {
+        "categoryId": "gettingStarted",
+        "q": "¿Cómo cambio entre modo claro y oscuro?",
+        "a": "Haz clic en el icono de luna o sol en la barra superior. Puedes elegir entre modo claro, oscuro o AMOLED negro puro. Tu preferencia se guarda automáticamente en tu perfil."
+      },
+      {
+        "categoryId": "gettingStarted",
+        "q": "¿Cómo configuro mi perfil y privacidad?",
+        "a": "Ve a Configuración > Perfil. Allí puedes cambiar tu nombre, foto de perfil, moneda de visualización predeterminada y configurar si tu perfil es público o privado. Un perfil privado solo puede ser encontrado por email exacto."
+      },
+      {
+        "categoryId": "gettingStarted",
+        "q": "¿Cómo navego por la aplicación?",
+        "a": "El menú lateral te da acceso a Dashboard, Planes Financieros, Calendario, Finanzas, Configuración y Ayuda. En móvil, usa el botón de menú hamburguesa. La barra superior incluye acceso rápido a notificaciones, búsqueda y cambio de tema."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Cómo creo cuentas en diferentes monedas?",
+        "a": "Ve a Finanzas > Nueva Cuenta. Selecciona la moneda deseada al crear la cuenta. Puedes tener múltiples cuentas en distintas monedas simultáneamente, cada una con su propio balance independiente."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Qué monedas y criptomonedas soporta la app?",
+        "a": "Soportamos monedas fiduciarias: Dólar estadounidense (USD), Bolívar soberano (VES), Euro (EUR) y Peso colombiano (COP). También criptomonedas: Tether (USDT), Solana (SOL), Bitcoin (BTC) y USD Coin (USDC) con precios en tiempo real de Binance."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Puedo convertir saldos entre monedas?",
+        "a": "Sí. En la sección de Finanzas puedes ver tus saldos convertidos a tu moneda de visualización preferida usando la tasa oficial del BCV o el precio P2P del mercado (Binance), según tu configuración."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Qué pasa con las transacciones si elimino una cuenta?",
+        "a": "Al eliminar una cuenta, todas las transacciones asociadas a esa cuenta también se eliminan permanentemente. Te recomendamos exportar o revisar tu historial antes de borrar una cuenta. Esta acción no se puede deshacer."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Cómo registro una transacción?",
+        "a": "Ve a Finanzas y haz clic en \"Nueva Transacción\". Selecciona el tipo (Ingreso, Gasto o Transferencia), la cuenta, la categoría, el monto y una descripción opcional. También puedes usar VEPay para capturar comprobantes automáticamente."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Cómo veo y oculto los balances de mis cuentas?",
+        "a": "En Finanzas verás el balance de cada cuenta en tarjetas. Puedes tocar el icono del ojo junto a cualquier balance para ocultarlo o mostrarlo. Esto es útil en público o al compartir pantalla."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Cómo hago transferencias rápidas entre cuentas?",
+        "a": "Usa la función \"Transferencia Rápida\" en Finanzas. Selecciona la cuenta de origen, la cuenta destino y el monto. El sistema registra automáticamente una salida en una cuenta y un ingreso en la otra."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Cómo filtro y busco transacciones?",
+        "a": "Usa la barra de filtros superiores para filtrar por cuenta, tipo de transacción y categoría. También puedes usar el campo de búsqueda para encontrar transacciones por descripción, monto o fecha. El historial se carga de 5 en 5 para mayor velocidad."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Qué son las cuentas favoritas?",
+        "a": "Puedes marcar hasta 3 cuentas como favoritas desde la sección Finanzas. El widget \"Mis Cuentas\" del Dashboard mostrará únicamente estas cuentas para una vista más limpia y enfocada. Puedes quitarlas de favoritos en cualquier momento."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Qué muestra la gráfica financiera?",
+        "a": "La gráfica compara tus ingresos versus gastos en el período seleccionado (día, semana, mes o año). Usa barras de colores para visualizar tendencias y ver tu evolución financiera de un vistazo."
+      },
+      {
+        "categoryId": "finances",
+        "q": "¿Qué es VEPay y cómo capturo comprobantes?",
+        "a": "VEPay es el sistema OCR de Prosper Pro para capturar comprobantes de pago móvil venezolanos. Sube una captura de pantalla de tu app bancaria y el sistema extrae automáticamente el banco, monto, referencia, fecha, origen, destinatario y concepto."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Cómo creo un plan de ahorro?",
+        "a": "Ve a Planes Financieros > Nuevo Plan. Selecciona tipo \"Ahorro\", define un nombre, categoría, monto objetivo y fecha límite. El plan aparecerá en tu dashboard y calendario para que hagas seguimiento de tu progreso."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Qué es un gasto planificado?",
+        "a": "Es un plan tipo \"Gasto\" para organizar pagos futuros. Puedes abonar gradualmente y ver el progreso de pago en tiempo real. Ideal para organizar compras grandes, viajes o deudas."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Cómo funcionan los pagos recurrentes?",
+        "a": "Crea un plan tipo \"Recurrente\" y elige la frecuencia: diaria, semanal, quincenal, mensual, trimestral o anual. El sistema calcula automáticamente la próxima fecha de vencimiento y te permite registrar cada pago."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Cómo añado fondos a un plan?",
+        "a": "Haz clic en un plan de ahorro y presiona \"Añadir Fondos\". Selecciona la cuenta de origen y el monto. Se crea una transacción automáticamente y el progreso del plan se actualiza al instante."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Puedo compartir gastos con otros usuarios?",
+        "a": "Sí. Dentro de un plan, usa la opción \"Compartir\" e ingresa el nombre o email del usuario. Se envía una solicitud que puede aceptar o rechazar. Los planes compartidos muestran quién aportó y cuánto."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Puedo usar categorías personalizadas?",
+        "a": "Sí. Al crear un plan puedes elegir entre categorías predefinidas o escribir una nueva categoría personalizada. Esto te permite organizar tus planes exactamente como lo necesites."
+      },
+      {
+        "categoryId": "financialPlans",
+        "q": "¿Qué estados pueden tener los planes?",
+        "a": "Los planes pueden estar: Pendiente (sin fondos aún), En Progreso (con al menos un abono), Completado (objetivo alcanzado) o Cancelado (archivado sin completar). Puedes filtrar por estado en la lista de planes."
+      },
+      {
+        "categoryId": "calendarAndReminders",
+        "q": "¿Cómo creo un recordatorio?",
+        "a": "Ve al Calendario, selecciona un día y haz clic en \"+ Recordatorio\". Ingresa título, descripción, hora y tipo. También puedes configurar recordatorios recurrentes para que se repitan automáticamente."
+      },
+      {
+        "categoryId": "calendarAndReminders",
+        "q": "¿Cómo veo mis metas y planes en el calendario?",
+        "a": "Los planes con fecha límite y los recordatorios aparecen automáticamente en el calendario con sus colores originales. Puedes ver de un vistazo qué días tienen actividad financiera programada."
+      },
+      {
+        "categoryId": "calendarAndReminders",
+        "q": "¿Puedo crear tipos de recordatorio personalizados?",
+        "a": "Sí. Al crear un recordatorio, escribe un nombre nuevo en el selector de tipo si no encuentras el que necesitas. Tu tipo personalizado quedará disponible para futuros recordatorios."
+      },
+      {
+        "categoryId": "calendarAndReminders",
+        "q": "¿Cómo funcionan los recordatorios recurrentes?",
+        "a": "Al crear un recordatorio, activa la opción de recurrencia y selecciona la frecuencia (diaria, semanal, mensual, etc.). El sistema generará automáticamente las instancias futuras en el calendario."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Qué puedo configurar en mi perfil?",
+        "a": "En Configuración > Perfil puedes cambiar tu nombre completo, foto de avatar, moneda de visualización predeterminada, idioma de la interfaz (español/inglés) y el tema visual (claro, oscuro o AMOLED)."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Cómo cambio el idioma entre español e inglés?",
+        "a": "En Configuración encontrarás el selector de idioma. Al cambiarlo, toda la interfaz se traduce al instante, incluyendo menús, botones, notificaciones y contenido de ayuda. La preferencia se guarda en tu perfil."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Cómo configuro la privacidad de mi perfil?",
+        "a": "En Configuración > Perfil usa el toggle Público/Privado. Si tu perfil es privado, otros usuarios solo podrán encontrarte si conocen tu email exacto. Esto protege tu identidad al compartir planes."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Qué diferencia hay entre tasa BCV y P2P?",
+        "a": "La tasa BCV es la referencia oficial del Banco Central de Venezuela. La tasa P2P es el precio real del mercado según Binance. Puedes elegir cuál usar para convertir tus saldos en bolívares desde Configuración > Preferencias."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Cómo borro todos mis datos?",
+        "a": "En Configuración > Zona de Peligro encontrarás la opción para eliminar tu cuenta y todos tus datos permanentemente de Firestore y Storage. También puedes usar \"Vaciar todo\" en Gestión Contable para resetear transacciones sin borrar la cuenta."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "¿Qué son las alertas de cambio de tasa BCV?",
+        "a": "Recibes una notificación cuando la tasa oficial del BCV experimenta una variación significativa. Esto te ayuda a estar al tanto de cambios importantes que afectan el valor de tus saldos en bolívares."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "¿Qué es el resumen diario de balance?",
+        "a": "Es una notificación automática que recibes al final del día con un resumen de tus balances totales, movimientos del día y estado de tus planes. Puedes activarla o desactivarla desde Configuración > Notificaciones."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "¿Cómo activo las notificaciones del navegador?",
+        "a": "En Configuración > Notificaciones encontrarás el toggle para habilitar las notificaciones push del navegador. El sistema te pedirá permiso y luego podrá enviarte alertas incluso con la app cerrada."
+      },
+      {
+        "categoryId": "security",
+        "q": "¿Mis datos están seguros?",
+        "a": "Sí. Usamos Firebase con reglas de seguridad estrictas que aíslan los datos por ownerId. Solo tú puedes acceder a tu información. Las contraseñas se manejan mediante Firebase Auth con encriptación estándar de la industria."
+      },
+      {
+        "categoryId": "security",
+        "q": "¿Puedo usar Prosper Pro en varios dispositivos?",
+        "a": "Sí. Tus datos se sincronizan en tiempo real a través de Firestore. Puedes acceder desde tu celular, tablet o computadora y verás la misma información actualizada instantáneamente en todos los dispositivos."
+      },
+      {
+        "categoryId": "security",
+        "q": "¿Cómo elimino mi cuenta permanentemente?",
+        "a": "Ve a Configuración > Zona de Peligro y haz clic en \"Eliminar mi cuenta para siempre\". Se eliminarán todos tus datos de Firestore, Storage y Authentication. Esta acción es irreversible."
+      },
+      {
+        "categoryId": "general",
+        "q": "¿Prosper Pro es gratuito?",
+        "a": "Sí. Todas las funcionalidades actuales y futuras de Prosper Pro están disponibles sin costo. No hay planes de pago ni límites ocultos en el uso de la aplicación."
+      },
+      {
+        "categoryId": "general",
+        "q": "¿En qué URL está el dashboard?",
+        "a": "El dashboard principal está en la raíz (/). Cuando inicias sesión, la página de inicio se convierte automáticamente en tu panel de control personalizado."
+      }
     ]
   },
   "support": {
@@ -203,10 +470,10 @@
   "chat": {
     "title": "Feedback & Bugs",
     "subtitle": "Reporta bugs o envía sugerencias",
-    "bug": "🐛 Bug",
-    "suggestion": "💡 Sugerencia",
-    "bugReported": "🐛 Bug reportado",
-    "suggestionSent": "💡 Sugerencia enviada",
+    "bug": "Bug Bug",
+    "suggestion": "Lightbulb Sugerencia",
+    "bugReported": "Bug Bug reportado",
+    "suggestionSent": "Lightbulb Sugerencia enviada",
     "thanks": "Gracias por tu feedback. Lo revisaremos pronto.",
     "loading": "Cargando historial...",
     "bugPlaceholder": "Describe el bug que encontraste",
@@ -214,7 +481,7 @@
     "hint": "Sé detallado para que podamos ayudarte mejor.",
     "inputBugPlaceholder": "Describe el bug...",
     "inputSuggestionPlaceholder": "Escribe tu sugerencia...",
-    "error": "❌ Error al enviar. Inténtalo de nuevo."
+    "error": "XCircle Error al enviar. Inténtalo de nuevo."
   },
   "footer": {
     "label": "PROSPER PRO SUPPORT",
@@ -225,7 +492,7 @@
     }
   },
   "releaseNotes": {
-    "title": "📜 Notas de Versión",
+    "title": "ScrollText Notas de Versión",
     "history": "Historial",
     "preRelease": "PRE-release",
     "versions": [

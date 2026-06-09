@@ -20,6 +20,8 @@ import {
   IconZap,
   IconReceipt,
 } from './icons';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { Star } from 'lucide-react';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
@@ -36,7 +38,7 @@ const FinancialStatusChart = dynamic(() =>
 );
 import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction, AccountGroup, CurrencyCode } from '@/types';
 
-const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: '💰', Inversión: '📈', Educación: '🎓', Otro: '📌' };
+const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: 'Wallet', Inversión: 'TrendingUp', Educación: 'GraduationCap', Otro: 'Pin' };
 
 function parseDeadlineToISO(deadline: string): string | null {
   if (!deadline) return null;
@@ -91,11 +93,11 @@ function useCollapsedSections() {
 
 // ── Widget de Tasas de Cambio ───────────────────────────────────────
 const CRYPTO_LIST = [
-  { code: 'USDT', name: 'Tether', flag: '💎' },
-  { code: 'SOL', name: 'Solana', flag: '☀️' },
-  { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-  { code: 'ETH', name: 'Ethereum', flag: '💠' },
-  { code: 'USDC', name: 'USD Coin', flag: '🔷' },
+  { code: 'USDT', name: 'Tether', flag: 'Diamond' },
+  { code: 'SOL', name: 'Solana', flag: 'Sun' },
+  { code: 'BTC', name: 'Bitcoin', flag: 'Circle' },
+  { code: 'ETH', name: 'Ethereum', flag: 'Gem' },
+  { code: 'USDC', name: 'USD Coin', flag: 'Hexagon' },
 ] as const;
 
 const FIAT_LIST = [
@@ -154,7 +156,7 @@ function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').Exchan
               const displayBs = p2pMode && p2pRate ? p2pRate : bsRate;
               return (
                 <div className="rate-item" key={code}>
-                  <span className="rate-flag">{flag}</span>
+                  <span className="rate-flag"><InlineIcon icon={flag} size={16} /></span>
                   <span className="rate-name">{code}</span>
                   <div className="rate-values">
                     {usdPrice && (
@@ -269,7 +271,7 @@ export const Dashboard = memo(function Dashboard() {
     target: 0,
     deadline: '',
     color: '#3DCC8E',
-    icon: '🎯',
+    icon: 'Target',
   });
 
   useEffect(() => {
@@ -423,7 +425,7 @@ export const Dashboard = memo(function Dashboard() {
       icon: newGoal.icon,
     });
     setShowNewGoalModal(false);
-    setNewGoal({ title: '', category: 'savings' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: '🎯' });
+    setNewGoal({ title: '', category: 'savings' as GoalCategory, current: 0, target: 0, deadline: '', color: '#3DCC8E', icon: 'Target' });
   };
 
   const upcomingDeadlines = [...goals, ...plans]
@@ -588,14 +590,14 @@ export const Dashboard = memo(function Dashboard() {
         {/* Stats Pills - Grid visible */}
         <div className="stats-grid dash-stagger">
           <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/metas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}>🎯</div>
+            <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}><InlineIcon icon="Target" size={16} /></div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">{t('stats.savingsInPlans')}</span>
               <span className="stat-pill-value">{formatAmount(totalSavingsCurrent)}</span>
             </div>
           </div>
           <div className="stat-pill dash-item" style={{animationDelay: '0.17s'}} onClick={() => router.push('/metas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}>🔄</div>
+            <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}><InlineIcon icon="RefreshCw" size={16} /></div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">{t('stats.recurringPerMonth')}</span>
               <span className="stat-pill-value">{formatAmount(monthlyRecurring)}</span>
@@ -603,7 +605,7 @@ export const Dashboard = memo(function Dashboard() {
             {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
           </div>
           <div className="stat-pill dash-item" style={{animationDelay: '0.23s'}} onClick={() => router.push('/metas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}>✓</div>
+            <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}><InlineIcon icon="CheckCircle2" size={16} /></div>
             <div className="stat-pill-info">
               <span className="stat-pill-label">{t('stats.goalsAndPlans')}</span>
               <span className="stat-pill-value">{goals.filter(g => g.status === 'completed').length + plans.filter(p => p.status === 'completed').length}</span>
@@ -666,19 +668,19 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
                 <div className="quick-actions-grid">
                   <button className="quick-action-btn" onClick={() => router.push('/metas?action=add-plan')}>
-                    <span className="quick-action-icon">🎯</span>
+                    <IconBadge icon="Target" size={18} />
                     <span className="quick-action-label">{t('quickActions.newPlan')}</span>
                   </button>
                   <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-account')}>
-                    <span className="quick-action-icon">💳</span>
+                    <IconBadge icon="CreditCard" size={18} />
                     <span className="quick-action-label">{t('quickActions.newAccount')}</span>
                   </button>
                   <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-transaction')}>
-                    <span className="quick-action-icon">💸</span>
+                    <IconBadge icon="Banknote" size={18} />
                     <span className="quick-action-label">{t('quickActions.transaction')}</span>
                   </button>
                   <button className="quick-action-btn" onClick={() => router.push('/calendario')}>
-                    <span className="quick-action-icon">📅</span>
+                    <IconBadge icon="CalendarDays" size={18} />
                     <span className="quick-action-label">{t('quickActions.calendar')}</span>
                   </button>
                 </div>
@@ -697,19 +699,19 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
                 <div className="quick-actions-grid">
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <span className="quick-action-icon">💱</span>
+                    <IconBadge icon="ArrowLeftRight" size={18} />
                     <span className="quick-action-label">{t('tools.usdBs')}</span>
                   </div>
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <span className="quick-action-icon">🧾</span>
+                    <IconBadge icon="Receipt" size={18} />
                     <span className="quick-action-label">{t('tools.importInvoice')}</span>
                   </div>
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <span className="quick-action-icon">🛒</span>
+                    <IconBadge icon="ShoppingCart" size={18} />
                     <span className="quick-action-label">{t('tools.shoppingLists')}</span>
                   </div>
                   <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <span className="quick-action-icon">🤖</span>
+                    <IconBadge icon="Bot" size={18} />
                     <span className="quick-action-label">{t('tools.aiAssistant')}</span>
                   </div>
                 </div>
@@ -772,7 +774,7 @@ export const Dashboard = memo(function Dashboard() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { safeLocalStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? t('finances.hideBalances') : t('finances.showBalances')} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                      {showBalances ? ' ' + t('finances.hide') : '👁️ ' + t('finances.show')}
+                      {showBalances ? ' ' + t('finances.hide') : <><InlineIcon icon="Eye" size={14} />{' ' + t('finances.show')}</>}
                     </button>
                     <button className="content-card-action" onClick={() => router.push('/finanzas')}>
                       {t('finances.manage')}
@@ -790,11 +792,11 @@ export const Dashboard = memo(function Dashboard() {
                       );
                     }
                     return favoriteAccounts.map((acc) => {
-                      const typeIcons: Record<string, string> = { digital: '💳', bank: '🏦', foreign: '💱' };
+                      const typeIcons: Record<string, string> = { digital: 'CreditCard', bank: 'Landmark', foreign: 'ArrowLeftRight' };
                       return (
                         <div className="account-item" key={acc.id}>
                           <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
-                            {acc.icon || typeIcons[acc.type] || '💳'}
+                            <InlineIcon icon={acc.icon || typeIcons[acc.type] || 'CreditCard'} size={16} />
                           </div>
                           <div className="account-item-info">
                             <span className="account-item-name">{acc.name}</span>
@@ -816,7 +818,7 @@ export const Dashboard = memo(function Dashboard() {
                               title={t('aria.removeFavorite')}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#F59E0B', padding: 0, lineHeight: 1 }}
                             >
-                              ★
+                              <Star size={14} fill="#F59E0B" color="#F59E0B" />
                             </button>
                           </div>
                         </div>
@@ -839,13 +841,13 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
                 <div className="recent-tx-list">
                   {recentTransactions.length > 0 ? recentTransactions.map((tx) => {
-                    const txIcon = tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '💰';
+                    const txIcon = tx.type === 'income' ? 'Download' : tx.type === 'expense' ? 'Send' : 'Wallet';
                     const txAccount = accounts.find(a => a.id === tx.accountId);
                     const txCurr = txAccount?.currency || 'USD';
                     const isCrypto = ['BTC', 'ETH', 'SOL', 'USDT', 'USDC'].includes(txCurr);
                     return (
                       <div className="recent-tx-item" key={tx.id} onClick={() => router.push('/finanzas')}>
-                        <div className={`recent-tx-icon tx-${tx.type}`}>{txIcon}</div>
+                        <div className={`recent-tx-icon tx-${tx.type}`}><InlineIcon icon={txIcon} size={16} /></div>
                         <div className="recent-tx-info">
                           <span className="recent-tx-desc">{tx.description || tx.category}</span>
                           <span className="recent-tx-date">{tx.date ? new Date(tx.date).toLocaleDateString() : ''}</span>
@@ -966,14 +968,14 @@ export const Dashboard = memo(function Dashboard() {
                       recurring: 'var(--color-blue-500, #3B82F6)',
                     };
                     const typeIcons: Record<string, string> = {
-                      savings: '🏦',
-                      expense: '📋',
-                      recurring: '🔄',
+                      savings: 'Landmark',
+                      expense: 'ClipboardList',
+                      recurring: 'RefreshCw',
                     };
                     return (
                       <div className="plan-item" key={plan.id} onClick={() => router.push('/metas')}>
                         <div className="plan-item-header">
-                          <div className="plan-item-icon">{plan.icon || typeIcons[plan.type] || '📌'}</div>
+                          <div className="plan-item-icon"><InlineIcon icon={plan.icon || typeIcons[plan.type] || 'Pin'} size={16} /></div>
                           <div className="plan-item-info">
                             <span className="plan-item-title">{plan.title}</span>
                             <span className="plan-item-meta">{plan.category} · {t(`goals.planTypes.${plan.type}`, { defaultValue: plan.type })}</span>
@@ -1112,8 +1114,8 @@ export const Dashboard = memo(function Dashboard() {
               </div>
               <label className="form-label">{t('modal.iconLabel')}</label>
               <div style={{ display: 'flex', gap: 6 }}>
-                {['🎯', '💰', '📈', '🎓', '🏠', '🚗', '✈️'].map((icon) => (
-                  <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.25rem', padding: 6, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer' }}>{icon}</button>
+                {['Target', 'Wallet', 'TrendingUp', 'GraduationCap', 'Home', 'Car', 'Plane'].map((icon) => (
+                  <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.25rem', padding: 6, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer' }}><InlineIcon icon={icon} size={20} /></button>
                 ))}
               </div>
             </div>

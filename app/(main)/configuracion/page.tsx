@@ -12,6 +12,8 @@ import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import type { UserProfile, CurrencyCode } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock } from 'lucide-react';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
@@ -180,10 +182,10 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const photoURL = user?.photoURL;
 
   const tabs: { id: TabId; label: string; icon: string }[] = [
-    { id: 'perfil', label: t('tabs.perfil'), icon: '👤' },
-    { id: 'preferencias', label: t('tabs.preferencias'), icon: '⚙️' },
-    { id: 'notificaciones', label: t('tabs.notificaciones'), icon: '🔔' },
-    { id: 'seguridad', label: t('tabs.seguridad'), icon: '🔒' },
+    { id: 'perfil', label: t('tabs.perfil'), icon: 'User' },
+    { id: 'preferencias', label: t('tabs.preferencias'), icon: 'Settings' },
+    { id: 'notificaciones', label: t('tabs.notificaciones'), icon: 'Bell' },
+    { id: 'seguridad', label: t('tabs.seguridad'), icon: 'Lock' },
   ];
 
   return (
@@ -191,8 +193,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       <DashboardLayout>
         <div className="settings-page">
           {/* Toast */}
-          {successMsg && <div className="toast toast-success">✓ {successMsg}</div>}
-          {errorMsg && <div className="toast toast-error">⚠ {errorMsg}</div>}
+          {successMsg && <div className="toast toast-success"><Check size={14} /> {successMsg}</div>}
+          {errorMsg && <div className="toast toast-error"><AlertTriangle size={14} /> {errorMsg}</div>}
 
           {/* Header */}
           <div className="settings-header">
@@ -228,7 +230,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 className={`mobile-tab ${activeTab === tab.id ? 'active' : ''}`}
                 onClick={() => setActiveTab(tab.id)}
               >
-                <span className="mobile-tab-icon">{tab.icon}</span>
+                <span className="mobile-tab-icon"><InlineIcon icon={tab.icon} size={14} /></span>
                 <span className="mobile-tab-label">{tab.label}</span>
               </button>
             ))}
@@ -243,7 +245,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                   className={`sidebar-tab ${activeTab === tab.id ? 'active' : ''}`}
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <span className="sidebar-tab-icon">{tab.icon}</span>
+                  <span className="sidebar-tab-icon"><InlineIcon icon={tab.icon} size={16} /></span>
                   <span className="sidebar-tab-label">{tab.label}</span>
                 </button>
               ))}
@@ -322,15 +324,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     </div>
                     <div className="plan-features">
                       <div className="plan-feature">
-                        <span className="plan-feature-icon">🎯</span>
+                        <span className="plan-feature-icon"><InlineIcon icon="Target" size={16} /></span>
                         <span>{t('perfil.planFeatures.unlimitedGoals')}</span>
                       </div>
                       <div className="plan-feature">
-                        <span className="plan-feature-icon">📊</span>
+                        <span className="plan-feature-icon"><InlineIcon icon="BarChart3" size={16} /></span>
                         <span>{t('perfil.planFeatures.fullDashboard')}</span>
                       </div>
                       <div className="plan-feature">
-                        <span className="plan-feature-icon">📚</span>
+                        <span className="plan-feature-icon"><InlineIcon icon="Library" size={16} /></span>
                         <span>{t('perfil.planFeatures.courses')}</span>
                       </div>
                     </div>
@@ -401,15 +403,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         <label className="pref-label">{t('preferencias.ratesLabel')}</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>1 EUR = {rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>
                               1 USDT = ${(rates.rates.USDT / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
@@ -418,7 +420,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             </strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>
                               1 SOL = ${(rates.rates.SOL / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
@@ -427,7 +429,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             </strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>
                               1 BTC = ${(rates.rates.BTC / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
@@ -436,7 +438,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             </strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>
                               1 ETH = ${(rates.rates.ETH / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
@@ -445,7 +447,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             </strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>
                               1 USDC = ${(rates.rates.USDC / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
@@ -454,7 +456,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                             </strong>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>✓</span>
+                            <span><Check size={14} /></span>
                             <strong style={{ color: 'var(--text-primary)' }}>1 COP = {rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</strong>
                           </div>
                           {rates.p2pRates?.USDT && (
@@ -543,7 +545,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           try { safeLocalStorage.setItem('prosper_show_update_modal', newVal ? 'true' : 'false'); } catch {}
                         }}
                       >
-                        {showUpdateModalPref ? `✅ ${t('preferencias.yes')}` : `❌ ${t('preferencias.no')}`}
+                        {showUpdateModalPref ? <><CheckCircle2 size={14} /> {t('preferencias.yes')}</> : <><XCircle size={14} /> {t('preferencias.no')}</>}
                       </button>
                     </div>
 
@@ -556,7 +558,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         className={`theme-option ${showProfile ? 'active' : ''}`}
                         onClick={() => setShowProfile(!showProfile)}
                       >
-                        {showProfile ? `🌐 ${t('preferencias.publicProfile')}` : `🔒 ${t('preferencias.privateProfile')}`}
+                        {showProfile ? <><Globe2 size={14} /> {t('preferencias.publicProfile')}</> : <><Lock size={14} /> {t('preferencias.privateProfile')}</>}
                       </button>
                       <p style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '6px' }}>
                         {showProfile
@@ -579,7 +581,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
                     <div className="toggle-list">
                       <ToggleRow
-                        icon="🌐"
+                        icon="Globe2"
                         label={t('notificaciones.toggles.push.label')}
                         desc={t('notificaciones.toggles.push.desc')}
                         checked={notifEnabled}
@@ -593,70 +595,70 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         disabled={notifSaving}
                       />
                       <ToggleRow
-                        icon="📈"
+                        icon="TrendingUp"
                         label={t('notificaciones.toggles.priceAlerts.label')}
                         desc={t('notificaciones.toggles.priceAlerts.desc')}
                         checked={priceAlerts}
                         onChange={() => setPriceAlerts(!priceAlerts)}
                       />
                       <ToggleRow
-                        icon="💰"
+                        icon="Wallet"
                         label={t('notificaciones.toggles.budgetAlerts.label')}
                         desc={t('notificaciones.toggles.budgetAlerts.desc')}
                         checked={budgetAlerts}
                         onChange={() => setBudgetAlerts(!budgetAlerts)}
                       />
                       <ToggleRow
-                        icon="📋"
+                        icon="ClipboardList"
                         label={t('notificaciones.toggles.planInvite.label')}
                         desc={t('notificaciones.toggles.planInvite.desc')}
                         checked={planInviteNotif}
                         onChange={() => setPlanInviteNotif(!planInviteNotif)}
                       />
                       <ToggleRow
-                        icon="💚"
+                        icon="Heart"
                         label={t('notificaciones.toggles.planContribution.label')}
                         desc={t('notificaciones.toggles.planContribution.desc')}
                         checked={planContributionNotif}
                         onChange={() => setPlanContributionNotif(!planContributionNotif)}
                       />
                       <ToggleRow
-                        icon="⏰"
+                        icon="Clock"
                         label={t('notificaciones.toggles.planReminder.label')}
                         desc={t('notificaciones.toggles.planReminder.desc')}
                         checked={planReminderNotif}
                         onChange={() => setPlanReminderNotif(!planReminderNotif)}
                       />
                       <ToggleRow
-                        icon="❌"
+                        icon="XCircle"
                         label={t('notificaciones.toggles.planRejected.label')}
                         desc={t('notificaciones.toggles.planRejected.desc')}
                         checked={planRejectedNotif}
                         onChange={() => setPlanRejectedNotif(!planRejectedNotif)}
                       />
                       <ToggleRow
-                        icon="💲"
+                        icon="DollarSign"
                         label={t('notificaciones.toggles.dollarChange.label')}
                         desc={t('notificaciones.toggles.dollarChange.desc')}
                         checked={dollarChangeNotif}
                         onChange={() => setDollarChangeNotif(!dollarChangeNotif)}
                       />
                       <ToggleRow
-                        icon="📊"
+                        icon="BarChart3"
                         label={t('notificaciones.toggles.dailyBalance.label')}
                         desc={t('notificaciones.toggles.dailyBalance.desc')}
                         checked={dailyBalanceNotif}
                         onChange={() => setDailyBalanceNotif(!dailyBalanceNotif)}
                       />
                       <ToggleRow
-                        icon="🚀"
+                        icon="Rocket"
                         label={t('notificaciones.toggles.appUpdate.label')}
                         desc={t('notificaciones.toggles.appUpdate.desc')}
                         checked={appUpdateNotif}
                         onChange={() => setAppUpdateNotif(!appUpdateNotif)}
                       />
                       <ToggleRow
-                        icon="📅"
+                        icon="CalendarDays"
                         label={t('notificaciones.toggles.calendarReminder.label')}
                         desc={t('notificaciones.toggles.calendarReminder.desc')}
                         checked={calendarReminderNotif}
@@ -677,7 +679,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     </div>
 
                     <div className="session-card">
-                      <div className="session-icon">💻</div>
+                      <div className="session-icon"><InlineIcon icon="Laptop" size={20} /></div>
                       <div className="session-info">
                         <span className="session-name">{t('seguridad.thisDevice')}</span>
                         <span className="session-detail">{t('seguridad.sessionDetail')}</span>
@@ -689,7 +691,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                   <div className="panel-card danger-card">
                     <div className="panel-header">
                       <div className="danger-header">
-                        <div className="danger-icon-wrap">⚠️</div>
+                        <div className="danger-icon-wrap"><InlineIcon icon="AlertTriangle" size={20} /></div>
                         <div>
                           <h2 className="danger-title">{t('seguridad.deleteAccount.title')}</h2>
                           <p className="danger-desc">{t('seguridad.deleteAccount.desc')}</p>
@@ -738,7 +740,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                   <div className="panel-card warning-card">
                     <div className="panel-header">
                       <div className="warning-header">
-                        <div className="warning-icon-wrap">🗑️</div>
+                        <div className="warning-icon-wrap"><InlineIcon icon="Trash2" size={20} /></div>
                         <div>
                           <h2 className="warning-title">{t('seguridad.wipeData.title')}</h2>
                           <p className="warning-desc">{t('seguridad.wipeData.desc')}</p>
@@ -1747,7 +1749,7 @@ function ToggleRow({ icon, label, desc, checked, onChange, disabled }: { icon: s
   return (
     <div className="toggle-row">
       <div className="toggle-left">
-        <div className="toggle-icon">{icon}</div>
+        <div className="toggle-icon"><InlineIcon icon={icon} size={16} /></div>
         <div className="toggle-text">
           <span className="toggle-label">{label}</span>
           <span className="toggle-desc">{desc}</span>

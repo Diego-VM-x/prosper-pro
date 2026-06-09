@@ -81,22 +81,46 @@
     "back": "Back"
   },
   "updateModal": {
-    "badge": "✨ New version",
-    "title": "What's new! 🎉",
+    "badge": "Sparkles New version",
+    "title": "What's new! Sparkles",
     "subtitle": "Update {{version}} — available now",
-    "primaryBtn": "Let's go! 🚀",
+    "primaryBtn": "Let's go! Rocket",
     "secondaryBtn": "Don't show again",
     "closeAria": "Close",
     "dialogAria": "Version release notes",
     "notes": [
-      { "emoji": "🌍", "text": "Full English & Spanish internationalization (i18n) support." },
-      { "emoji": "👤", "text": "Guest Mode to explore the app without signing in." },
-      { "emoji": "📅", "text": "Daily frequency added to recurring financial plans." },
-      { "emoji": "🔔", "text": "Real-time BCV rate change notifications." },
-      { "emoji": "🚀", "text": "Landing page redesigned: faster, more accessible, and with smoother animations." },
-      { "emoji": "❓", "text": "Help center overhaul: 9 categories, 41 FAQs, and step-by-step tutorials." },
-      { "emoji": "✉️", "text": "App notifications subscription from the landing page footer." },
-      { "emoji": "🌐", "text": "Persistent language switcher that saves your preference across the site." }
+      {
+        "emoji": "Globe",
+        "text": "Full English & Spanish internationalization (i18n) support."
+      },
+      {
+        "emoji": "User",
+        "text": "Guest Mode to explore the app without signing in."
+      },
+      {
+        "emoji": "CalendarDays",
+        "text": "Daily frequency added to recurring financial plans."
+      },
+      {
+        "emoji": "Bell",
+        "text": "Real-time BCV rate change notifications."
+      },
+      {
+        "emoji": "Rocket",
+        "text": "Landing page redesigned: faster, more accessible, and with smoother animations."
+      },
+      {
+        "emoji": "HelpCircle",
+        "text": "Help center overhaul: 9 categories, 41 FAQs, and step-by-step tutorials."
+      },
+      {
+        "emoji": "Mail️",
+        "text": "App notifications subscription from the landing page footer."
+      },
+      {
+        "emoji": "Globe2",
+        "text": "Persistent language switcher that saves your preference across the site."
+      }
     ]
   }
 }

@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { safeLocalStorage, safeSessionStorage } from '@/lib/utils/safeStorage';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { IconX } from '@/app/components/icons';
 
 interface UpdateNote {
   emoji: string;
@@ -352,7 +354,7 @@ export function UpdateModal({
           <div className="um-header">
             <div className="um-header-dots" />
             <div className="um-badge">{t('updateModal.badge')}</div>
-            <button className="um-close" onClick={handleClose} aria-label={t('updateModal.closeAria')}>✕</button>
+            <button className="um-close" onClick={handleClose} aria-label={t('updateModal.closeAria')}><IconX width={18} height={18} /></button>
             <h2 className="um-title">{t('updateModal.title')}</h2>
             <p className="um-subtitle">{t('updateModal.subtitle', { version })}</p>
           </div>
@@ -360,7 +362,7 @@ export function UpdateModal({
           <div className="um-body">
             {notes.map((note, i) => (
               <div className="um-note" key={i}>
-                <span className="um-note-emoji">{note.emoji}</span>
+                <span className="um-note-emoji"><InlineIcon icon={note.emoji} size={18} /></span>
                 <p className="um-note-text">{note.text}</p>
               </div>
             ))}

@@ -31,6 +31,7 @@ import {
   IconAnalytics,
   IconHelp,
 } from './icons';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import type { Notification, Transaction } from '@/types';
 import Link from 'next/link';
 
@@ -193,13 +194,13 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
   // Rutas disponibles para búsqueda
   const searchRoutes = useMemo(() => [
-    { name: t('topbar.pageHome'), route: '/', icon: '🏠', keywords: 'inicio landing página principal' },
-    { name: t('sidebar.dashboard'), route: '/', icon: '📊', keywords: 'dashboard inicio principal' },
-    { name: t('sidebar.planes'), route: '/metas', icon: '🎯', keywords: 'planes metas objetivos tareas finanzas' },
-    { name: t('sidebar.calendario'), route: '/calendario', icon: '📅', keywords: 'calendario eventos fechas' },
-    { name: t('sidebar.finanzas'), route: '/finanzas', icon: '💰', keywords: 'finanzas dinero gastos ingresos cuentas' },
-    { name: t('sidebar.configuracion'), route: '/configuracion', icon: '⚙️', keywords: 'configuración ajustes preferencias' },
-    { name: t('sidebar.ayuda'), route: '/ayuda', icon: '❓', keywords: 'ayuda soporte ayuda' },
+    { name: t('topbar.pageHome'), route: '/', icon: 'Home', keywords: 'inicio landing página principal' },
+    { name: t('sidebar.dashboard'), route: '/', icon: 'BarChart3', keywords: 'dashboard inicio principal' },
+    { name: t('sidebar.planes'), route: '/metas', icon: 'Target', keywords: 'planes metas objetivos tareas finanzas' },
+    { name: t('sidebar.calendario'), route: '/calendario', icon: 'CalendarDays', keywords: 'calendario eventos fechas' },
+    { name: t('sidebar.finanzas'), route: '/finanzas', icon: 'Wallet', keywords: 'finanzas dinero gastos ingresos cuentas' },
+    { name: t('sidebar.configuracion'), route: '/configuracion', icon: 'Settings', keywords: 'configuración ajustes preferencias' },
+    { name: t('sidebar.ayuda'), route: '/ayuda', icon: 'HelpCircle', keywords: 'ayuda soporte ayuda' },
   ], [t]);
 
   // Memoizar resultados de búsqueda para evitar re-filtrado en cada render
@@ -318,7 +319,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     className="search-result-item"
                     onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
                   >
-                    <span className="search-result-icon">{r.icon}</span>
+                    <span className="search-result-icon"><InlineIcon icon={r.icon} size={16} /></span>
                     <div className="search-result-content">
                       <span className="search-result-name">{r.name}</span>
                     </div>
@@ -361,7 +362,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                   <span className="search-results-count">{txResults.length}</span>
                 </div>
                 {txResults.slice(0, 5).map((tx) => {
-                  const typeIcon = tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '💰';
+                  const typeIcon = tx.type === 'income' ? 'Download' : tx.type === 'expense' ? 'Send' : 'Wallet';
                   const typeLabel = tx.type === 'income' ? t('topbar.income') : tx.type === 'expense' ? t('topbar.expense') : t('topbar.savings');
                   return (
                     <div
@@ -369,7 +370,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       className="search-result-item"
                       onClick={() => { setSearchQuery(''); }}
                     >
-                      <span className="search-result-icon">{typeIcon}</span>
+                      <span className="search-result-icon"><InlineIcon icon={typeIcon} size={16} /></span>
                       <div className="search-result-content">
                         <span className="search-result-name">{tx.description}</span>
                         <span className="search-result-desc">{typeLabel} · {tx.category} · ${tx.amount.toLocaleString()}</span>
@@ -408,7 +409,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           title={t('topbar.theme.toggle', { mode: theme === 'light' ? t('topbar.theme.dark') : theme === 'dark' ? t('topbar.theme.amoled') : t('topbar.theme.light') })}
         >
           <span className="theme-toggle-icon">
-            {theme === 'light' ? '🌙' : theme === 'dark' ? '⚫' : '☀️'}
+            <InlineIcon icon={theme === 'light' ? 'Moon' : theme === 'dark' ? 'Circle' : 'Sun'} size={16} />
           </span>
           <span className="theme-toggle-label">
             {theme === 'light' ? t('topbar.theme.dark') : theme === 'dark' ? t('topbar.theme.amoled') : t('topbar.theme.light')}
@@ -449,7 +450,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <p className="notif-message">{notif.message}</p>
                   </div>
                   <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title={t('topbar.delete')}>
-                    ✕
+                    <IconX width={14} height={14} />
                   </button>
                 </div>
               )) : (
@@ -540,7 +541,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       <p className="notif-message">{notif.message}</p>
                     </div>
                     <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title={t('topbar.delete')}>
-                      ✕
+                      <IconX width={14} height={14} />
                     </button>
                   </div>
                 )) : (

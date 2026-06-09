@@ -13,10 +13,11 @@ import { addCustomReminderType, getUserPreferences } from '@/lib/firestore/users
 import { getTransactionsByOwnerId } from '@/lib/firestore/transactions';
 
 import { useReminderScheduler } from '@/lib/hooks/useReminderScheduler';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import type { Reminder, FinancialPlan, Transaction } from '@/types';
 
-const DEFAULT_TYPES: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
-const TYPE_ICONS: Record<string, string> = { mentor: '👨‍🏫', course: '📚', meeting: '🤝', other: '📌' };
+const DEFAULT_TYPES: Record<string, string> = { mentor: 'GraduationCap', course: 'Library', meeting: 'Handshake', other: 'Pin' };
+const TYPE_ICONS: Record<string, string> = { mentor: 'GraduationCap', course: 'Library', meeting: 'Handshake', other: 'Pin' };
 // TYPE_LABELS moved into component for i18n
 const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
 
@@ -98,7 +99,7 @@ const CalendarioPage = memo(function CalendarioPage() {
         if (!cancelled) {
           if (prefs.customReminderTypes) {
             setCustomTypes(prefs.customReminderTypes);
-            const typeIcons = ['📋', '🏃', '💼', '🎉', '📞', '🔔', '⚡', '🎯'];
+            const typeIcons = ['ClipboardList', 'Activity', 'Briefcase', 'Sparkles', 'Phone', 'Bell', 'Zap', 'Target'];
             const newTypes: Record<string, string> = {};
             prefs.customReminderTypes.forEach((t, i) => {
               newTypes[t] = typeIcons[i % typeIcons.length];
@@ -140,7 +141,7 @@ const CalendarioPage = memo(function CalendarioPage() {
         title: t('transactionSummary', { count: totals.count }),
         type: 'transaction_summary' as CalendarEventType,
         color: '#6B7280',
-        icon: '💳',
+        icon: 'CreditCard',
         data: { ...totals, details: details.join(' | ') }
       };
     });
@@ -159,7 +160,7 @@ const CalendarioPage = memo(function CalendarioPage() {
           title: t('eventTitles.recurringPayment', { title: plan.title }),
           type: 'plan',
           color: plan.color || '#F59E0B',
-          icon: plan.icon || '🔄',
+          icon: plan.icon || 'RefreshCw',
           data: plan
         });
       }
@@ -172,7 +173,7 @@ const CalendarioPage = memo(function CalendarioPage() {
           title: t('eventTitles.due', { title: plan.title }),
           type: 'plan',
           color: plan.color || '#3DCC8E',
-          icon: plan.icon || '🎯',
+          icon: plan.icon || 'Target',
           data: plan
         });
       }
@@ -188,7 +189,7 @@ const CalendarioPage = memo(function CalendarioPage() {
       title: r.title,
       type: 'reminder' as CalendarEventType,
       color: '#3B82F6',
-      icon: TYPE_ICONS[r.type] || '🔔',
+      icon: TYPE_ICONS[r.type] || 'Bell',
       data: r
     }));
     return [...pEvents, ...rEvents, ...transactionSummaries].sort((a, b) => a.date.localeCompare(b.date));
@@ -328,7 +329,7 @@ const CalendarioPage = memo(function CalendarioPage() {
                         return (
                           <div key={ev.id} className="cal-event-card cal-event-tx">
                             <div className="cal-event-icon-box" style={{ background: 'var(--bg-input)' }}>
-                              {ev.icon}
+                              <InlineIcon icon={ev.icon} size={16} />
                             </div>
                             <div className="cal-event-body">
                               <h4 className="cal-event-title">{ev.title}</h4>
@@ -344,7 +345,7 @@ const CalendarioPage = memo(function CalendarioPage() {
                         return (
                           <div key={ev.id} className="cal-event-card cal-event-plan" style={{ borderLeftColor: ev.color }}>
                             <div className="cal-event-icon-box" style={{ color: ev.color, background: ev.color + '15' }}>
-                              {ev.icon}
+                              <InlineIcon icon={ev.icon} size={16} />
                             </div>
                             <div className="cal-event-body">
                               <h4 className="cal-event-title">{ev.title}</h4>
@@ -365,7 +366,7 @@ const CalendarioPage = memo(function CalendarioPage() {
                       return (
                         <div key={ev.id} className="cal-event-card cal-event-rem">
                           <div className="cal-event-icon-box" style={{ background: 'var(--color-blue-500)', color: 'white' }}>
-                            {ev.icon}
+                            <InlineIcon icon={ev.icon} size={16} />
                           </div>
                           <div className="cal-event-body">
                             <div className="cal-event-header-row">
@@ -384,7 +385,7 @@ const CalendarioPage = memo(function CalendarioPage() {
                   </div>
                 ) : selectedDate ? (
                   <div className="cal-empty-state">
-                    <span className="cal-empty-icon">✨</span>
+                    <span className="cal-empty-icon"><InlineIcon icon="Sparkles" size={24} /></span>
                     <p>{t('agenda.noEvents')}</p>
                   </div>
                 ) : (
@@ -431,7 +432,7 @@ const CalendarioPage = memo(function CalendarioPage() {
                     if (uid) {
                       await addCustomReminderType(uid, value);
                       setCustomTypes(prev => [...prev, value]);
-                      const typeIcons = ['📋', '🏃', '💼', '🎉', '📞', '🔔', '⚡', '🎯'];
+                      const typeIcons = ['ClipboardList', 'Activity', 'Briefcase', 'Sparkles', 'Phone', 'Bell', 'Zap', 'Target'];
                       const newIcon = typeIcons[customTypes.length % typeIcons.length];
                       setAllTypes(prev => ({ ...prev, [value]: newIcon }));
                       TYPE_ICONS[value] = newIcon;

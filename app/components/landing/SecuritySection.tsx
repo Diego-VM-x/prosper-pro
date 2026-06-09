@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface SecurityItem {
   icon: string;
@@ -35,7 +36,7 @@ export function SecuritySection() {
                 onMouseEnter={() => setActive(i)}
               >
                 <div className="security-icon-wrapper">
-                  <span className="security-icon">{item.icon}</span>
+                  <span className="security-icon"><InlineIcon icon={item.icon} size={16} /></span>
                 </div>
                 <h3>{item.title}</h3>
                 <p className={`security-desc ${active === i ? 'expanded' : ''}`}>{item.description}</p>

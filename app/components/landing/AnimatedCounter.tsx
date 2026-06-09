@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface AnimatedCounterProps {
   end: number;
@@ -55,7 +56,7 @@ export function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000
 
   return (
     <div ref={ref} className="counter-card">
-      <span className="counter-icon">{icon}</span>
+      <span className="counter-icon"><InlineIcon icon={icon} size={20} /></span>
       <div className="counter-value">
         {prefix}{count.toLocaleString('es-VE')}{suffix}
       </div>

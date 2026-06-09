@@ -15,6 +15,8 @@ import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory,
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { IconPlus, IconX, IconTrash, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { X, Star } from 'lucide-react';
 import dynamic from 'next/dynamic';
 const FinancialStatusChart = dynamic(() => import('@/app/components/FinancialStatusChart').then(m => ({ default: m.FinancialStatusChart })), { ssr: false });
 const VepayModal = dynamic(() => import('@/app/components/VepayModal').then(m => ({ default: m.VepayModal })), { ssr: false });
@@ -23,9 +25,9 @@ import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import type { Transaction, FinancialAccount, AccountType, CurrencyCode, AccountGroup } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
-  income: ['💰 Salario', '💼 Freelance', '📊 Inversiones', '🏢 Negocio', '📌 Otro'],
-  expense: ['🍔 Comida', '🚗 Transporte', '🏠 Vivienda', '🎬 Entretenimiento', '💊 Salud', '🎓 Educación', '📌 Otro'],
-  saving: ['💵 Ahorro', '📈 Inversión', '🛡️ Fondo Emergencia', '📌 Otro'],
+  income: ['Salario', 'Freelance', 'Inversiones', 'Negocio', 'Otro'],
+  expense: ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Educación', 'Otro'],
+  saving: ['Ahorro', 'Inversión', 'Fondo Emergencia', 'Otro'],
 };
 
 const ACCOUNT_TYPE_COLORS: Record<string, string> = {
@@ -41,7 +43,7 @@ const ACCOUNT_COLORS = [
   '#64748B', '#C026D3', '#0891B2', '#B45309', '#1D4ED8', '#15803D',
 ];
 
-const TYPE_ICONS: Record<string, string> = { income: '📥', expense: '📤', saving: '💰' };
+const TYPE_ICONS: Record<string, string> = { income: 'Download', expense: 'Send', saving: 'Wallet' };
 
 const CATEGORIES: Record<string, string[]> = {
   income: ['Salario', 'Freelance', 'Inversiones', 'Negocio', 'Otro'],
@@ -553,7 +555,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       type: newAccount.type,
       balance: newAccount.balance,
       currency: newAccount.currency || 'BS',
-      icon: newAccount.type === 'digital' ? '💳' : newAccount.type === 'bank' ? '🏦' : '💱',
+      icon: newAccount.type === 'digital' ? 'CreditCard' : newAccount.type === 'bank' ? 'Landmark' : 'ArrowLeftRight',
       color: newAccount.color || ACCOUNT_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -896,7 +898,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const getAccountName = (accountId?: string) => {
     if (!accountId) return t('finanzas:modals.newTransaction.noAccount');
     const acc = accounts.find((a) => a.id === accountId);
-    return acc ? `${acc.icon} ${acc.name}` : t('finanzas:modals.newTransaction.noAccount');
+    return acc ? <><InlineIcon icon={acc.icon || 'Wallet'} size={12} /> {acc.name}</> : t('finanzas:modals.newTransaction.noAccount');
   };
 
   const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
@@ -971,7 +973,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               onClick={() => setRatesCollapsed(!ratesCollapsed)}
             >
               <div className="rates-section-header-left">
-                <span className="rates-section-icon">💱</span>
+                <span className="rates-section-icon"><InlineIcon icon="ArrowLeftRight" size={18} /></span>
                 <div>
                   <span className="rates-section-title">{t('finanzas:rates.title')}</span>
                   <span className="rates-section-subtitle">{t('finanzas:rates.subtitle')}</span>
@@ -1002,7 +1004,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                 <div className="rates-table-container">
                   <div className="rates-table-header">
                     <div className="rates-table-header-left">
-                      <span className="rates-table-icon">💱</span>
+                      <span className="rates-table-icon"><InlineIcon icon="ArrowLeftRight" size={18} /></span>
                       <div>
                         <span className="rates-table-title">{t('finanzas:rates.fiatTitle')}</span>
                         <span className="rates-table-subtitle">{t('finanzas:rates.fiatSubtitle')}</span>
@@ -1019,7 +1021,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       return (
                         <div key={code} className="rates-row">
                           <div className="rates-row-left">
-                            <span className="rates-row-flag">{flag}</span>
+                            <span className="rates-row-flag"><InlineIcon icon={flag} size={18} /></span>
                             <div className="rates-row-info">
                               <span className="rates-row-code">{code}</span>
                               <span className="rates-row-name">{name}</span>
@@ -1040,7 +1042,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                 <div className="rates-table-container">
                   <div className="rates-table-header">
                     <div className="rates-table-header-left">
-                      <span className="rates-table-icon">💎</span>
+                      <span className="rates-table-icon"><InlineIcon icon="Diamond" size={18} /></span>
                       <div>
                         <span className="rates-table-title">{t('finanzas:rates.cryptoTitle')}</span>
                         <span className="rates-table-subtitle">{t('finanzas:rates.cryptoSubtitle')}</span>
@@ -1049,11 +1051,11 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                   <div className="rates-list">
                     {[
-                      { code: 'USDT', name: 'Tether', flag: '💎' },
-                      { code: 'SOL', name: 'Solana', flag: '☀️' },
-                      { code: 'BTC', name: 'Bitcoin', flag: '🟠' },
-                      { code: 'ETH', name: 'Ethereum', flag: '💠' },
-                      { code: 'USDC', name: 'USD Coin', flag: '🔷' },
+                      { code: 'USDT', name: 'Tether', flag: 'Diamond' },
+                      { code: 'SOL', name: 'Solana', flag: 'Sun' },
+                      { code: 'BTC', name: 'Bitcoin', flag: 'Circle' },
+                      { code: 'ETH', name: 'Ethereum', flag: 'Gem' },
+                      { code: 'USDC', name: 'USD Coin', flag: 'Hexagon' },
                     ].map(({ code, name, flag }) => {
                       const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
                       const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
@@ -1117,7 +1119,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               const renderAccountCard = (acc: FinancialAccount, index: number) => (
                 <div key={acc.id} className="account-card stagger-item" style={{ borderLeftColor: acc.color, animationDelay: `${index * 0.05}s` }}>
                   <div className="account-card-header">
-                    <div className="account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</div>
+                    <div className="account-icon" style={{ background: `${acc.color}20` }}><InlineIcon icon={acc.icon || 'Wallet'} size={16} /></div>
                     <div className="account-info">
                       <span className="account-name">{acc.name}</span>
                       <span className="account-type">
@@ -1126,9 +1128,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                     </div>
                     <div className="account-actions-group">
                       <button className="account-action" onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }} title={acc.favorite ? t('finanzas:accounts.removeFavorite') : t('finanzas:accounts.addFavorite')} style={{ color: acc.favorite ? '#F59E0B' : 'var(--text-tertiary)' }}>
-                        {acc.favorite ? '★' : '☆'}
+                        {acc.favorite ? <Star size={14} fill="#F59E0B" color="#F59E0B" /> : <Star size={14} color="var(--text-tertiary)" />}
                       </button>
-                      <button className="account-action" onClick={() => setShowAssignGroupModal(acc.id)} title={t('finanzas:accounts.moveGroup')}>📁</button>
+                      <button className="account-action" onClick={() => setShowAssignGroupModal(acc.id)} title={t('finanzas:accounts.moveGroup')}><InlineIcon icon="Folder" size={14} /></button>
                       <button className="account-action" onClick={() => handleClearHistory(acc.id)} title={t('finanzas:accounts.archiveHistory')}><IconArchive width={14} /></button>
                       <button className="account-action" onClick={() => handleResetBalance(acc.id)} title={t('finanzas:accounts.resetBalance')}><IconReset width={14} /></button>
                     </div>
@@ -1163,8 +1165,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                             <span className="account-group-count">{groupAccs.length}</span>
                           </div>
                           <div className="account-group-actions" onClick={(e) => e.stopPropagation()}>
-                            <button className="account-group-btn" onClick={() => openGroupModal(group)} title={t('common:buttons.edit')}>✏️</button>
-                            <button className="account-group-btn" onClick={() => handleDeleteGroup(group)} title={t('common:buttons.delete')}>🗑️</button>
+                            <button className="account-group-btn" onClick={() => openGroupModal(group)} title={t('common:buttons.edit')}><InlineIcon icon="Pencil" size={12} /></button>
+                            <button className="account-group-btn" onClick={() => handleDeleteGroup(group)} title={t('common:buttons.delete')}><InlineIcon icon="Trash2" size={12} /></button>
                           </div>
                         </div>
                         {!isCollapsed && (
@@ -1211,7 +1213,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{t('finanzas:modals.editAccount.title')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.editAccount.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>✕</button>
+                  <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
@@ -1249,7 +1251,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{editingGroup ? t('finanzas:modals.group.editTitle') : t('finanzas:modals.group.newTitle')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.group.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}>✕</button>
+                  <button className="modal-close" onClick={() => { setShowGroupModal(false); setEditingGroup(null); setGroupFormName(''); }}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
@@ -1289,7 +1291,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{t('finanzas:modals.assignGroup.title')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.assignGroup.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowAssignGroupModal(null)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowAssignGroupModal(null)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="group-assign-list">
@@ -1349,7 +1351,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   value={selectedAccount}
                   onChange={(val) => setSelectedAccount(val)}
                   options={[
-                    { value: 'all', label: t('finanzas:filters.allF'), icon: '📊' },
+                    { value: 'all', label: t('finanzas:filters.allF'), icon: 'BarChart3' },
                     ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
                   ]}
                   placeholder={t('finanzas:filters.allF')}
@@ -1364,7 +1366,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       className={`tx-filter-pill ${filterType === type ? 'active' : ''}`} 
                       onClick={() => { setFilterType(type); setFilterCategory('Todas'); }}
                     >
-                      {type === 'Todos' ? t('finanzas:filters.allM') : `${TYPE_ICONS[type]}`}
+                      {type === 'Todos' ? t('finanzas:filters.allM') : <InlineIcon icon={TYPE_ICONS[type]} size={14} />}
                     </button>
                   ))}
                 </div>
@@ -1375,7 +1377,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                   value={filterCategory}
                   onChange={(val) => setFilterCategory(val)}
                   options={[
-                    { value: 'Todas', label: t('finanzas:filters.allF'), icon: '📋' },
+                    { value: 'Todas', label: t('finanzas:filters.allF'), icon: 'ClipboardList' },
                     ...categories.map((c) => ({ value: c, label: c })),
                   ]}
                   placeholder={t('finanzas:filters.allF')}
@@ -1416,7 +1418,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div className="tx-icon-box" style={{ background: TYPE_COLORS[tx.type] + '18', color: TYPE_COLORS[tx.type] }}>
-                            {TYPE_ICONS[tx.type]}
+                            <InlineIcon icon={TYPE_ICONS[tx.type]} size={16} />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{tx.description || '—'}</span>
@@ -1506,7 +1508,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{t('finanzas:modals.newTransaction.title')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.newTransaction.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowModal(false)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   {/* Tipo selector visual */}
@@ -1521,7 +1523,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                           setNewTx({ ...newTx, type, category: cats[0] });
                         }}
                       >
-                        <span className="tx-type-icon">{TYPE_ICONS[type]}</span>
+                        <span className="tx-type-icon"><InlineIcon icon={TYPE_ICONS[type]} size={18} /></span>
                         <span className="tx-type-label">{t(`finanzas:typeLabels.${type}`)}</span>
                       </button>
                     ))}
@@ -1623,7 +1625,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{t('finanzas:modals.transfer.title')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.transfer.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowTransferModal(false)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowTransferModal(false)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
@@ -1759,7 +1761,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{t('finanzas:modals.newAccount.title')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.newAccount.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowAccountModal(false)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowAccountModal(false)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   <div className="tx-field">
@@ -1772,9 +1774,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                       value={newAccount.type}
                       onChange={(val) => setNewAccount({ ...newAccount, type: val as AccountType })}
                       options={[
-                        { value: 'digital', label: t('finanzas:accounts.walletDigital'), icon: '💳' },
-                        { value: 'bank', label: t('finanzas:accounts.bank'), icon: '🏦' },
-                        { value: 'foreign', label: t('finanzas:accounts.foreign'), icon: '💱' },
+                        { value: 'digital', label: t('finanzas:accounts.walletDigital'), icon: 'CreditCard' },
+                        { value: 'bank', label: t('finanzas:accounts.bank'), icon: 'Landmark' },
+                        { value: 'foreign', label: t('finanzas:accounts.foreign'), icon: 'ArrowLeftRight' },
                       ]}
                       placeholder={t('finanzas:modals.newAccount.typePlaceholder')}
                     />
@@ -1788,8 +1790,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                         setNewAccount({ ...newAccount, currency: val === 'criptos' ? 'USDT' : 'BS' });
                       }}
                       options={[
-                        { value: 'monedas', label: t('finanzas:rates.fiatTitle'), icon: '💱' },
-                        { value: 'criptos', label: t('finanzas:rates.cryptoTitle'), icon: '₿' },
+                        { value: 'monedas', label: t('finanzas:rates.fiatTitle'), icon: 'ArrowLeftRight' },
+                        { value: 'criptos', label: t('finanzas:rates.cryptoTitle'), icon: 'Bitcoin' },
                       ]}
                       placeholder={t('finanzas:modals.newAccount.categoryPlaceholder')}
                     />
@@ -1802,10 +1804,10 @@ const FinanzasPage = memo(function FinanzasPage() {
                       options={
                         accountCategory === 'criptos'
                           ? [
-                              { value: 'USDT', label: 'Tether (USDT)', icon: '💎' },
-                              { value: 'SOL', label: 'Solana (SOL)', icon: '☀️' },
-                              { value: 'BTC', label: 'Bitcoin (BTC)', icon: '🟠' },
-                              { value: 'USDC', label: 'USD Coin (USDC)', icon: '💠' },
+                              { value: 'USDT', label: 'Tether (USDT)', icon: 'Diamond' },
+                              { value: 'SOL', label: 'Solana (SOL)', icon: 'Sun' },
+                              { value: 'BTC', label: 'Bitcoin (BTC)', icon: 'Circle' },
+                              { value: 'USDC', label: 'USD Coin (USDC)', icon: 'Gem' },
                             ]
                           : [
                               { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
@@ -1898,7 +1900,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <h2 className="modal-title">{t('finanzas:modals.accounting.title')}</h2>
                     <p className="modal-subtitle">{t('finanzas:modals.accounting.subtitle')}</p>
                   </div>
-                  <button className="modal-close" onClick={() => setShowAccountingModal(false)}>✕</button>
+                  <button className="modal-close" onClick={() => setShowAccountingModal(false)}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
                   {/* Sección: Acciones Globales */}
@@ -1907,35 +1909,35 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <p className="accounting-section-desc">{t('finanzas:modals.accounting.globalActionsDesc')}</p>
                     <div className="accounting-actions">
                       <button className="accounting-btn accounting-btn-danger" onClick={handleWipeAllUserTransactions} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon">🗑️</span>
+                        <span className="accounting-btn-icon"><InlineIcon icon="Trash2" size={18} /></span>
                         <div className="accounting-btn-content">
                           <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeAll')}</span>
                           <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeAllDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('income')} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon">📥</span>
+                        <span className="accounting-btn-icon"><InlineIcon icon="Download" size={18} /></span>
                         <div className="accounting-btn-content">
                           <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeIncome')}</span>
                           <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeIncomeDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('expense')} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon">📤</span>
+                        <span className="accounting-btn-icon"><InlineIcon icon="Send" size={18} /></span>
                         <div className="accounting-btn-content">
                           <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeExpenses')}</span>
                           <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeExpensesDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('saving')} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon">💰</span>
+                        <span className="accounting-btn-icon"><InlineIcon icon="Wallet" size={18} /></span>
                         <div className="accounting-btn-content">
                           <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeSavings')}</span>
                           <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeSavingsDesc')}</span>
                         </div>
                       </button>
                       <button className="accounting-btn accounting-btn-info" onClick={handleRecalculateAllBalances} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon">🔄</span>
+                        <span className="accounting-btn-icon"><InlineIcon icon="RefreshCw" size={18} /></span>
                         <div className="accounting-btn-content">
                           <span className="accounting-btn-label">{t('finanzas:modals.accounting.recalculate')}</span>
                           <span className="accounting-btn-desc">{t('finanzas:modals.accounting.recalculateDesc')}</span>
@@ -1953,7 +1955,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                         {accounts.map(acc => (
                           <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
                             <div className="accounting-account-header">
-                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}>{acc.icon}</span>
+                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}><InlineIcon icon={acc.icon || 'Wallet'} size={14} /></span>
                               <div className="accounting-account-info">
                                 <span className="accounting-account-name">{acc.name}</span>
                                 <span className="accounting-account-balance" style={{ color: acc.color }}>
@@ -1963,7 +1965,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                             </div>
                             <div className="accounting-account-actions">
                               <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleWipeAccountTransactions(acc.id, 'all')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyAccountTooltip')}>
-                                🗑️ Vaciar
+                                <InlineIcon icon="Trash2" size={12} /> Vaciar
                               </button>
                               <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'income')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyIncomeTooltip')}>
                                 {t('finanzas:modals.accounting.income')}
@@ -1983,7 +1985,7 @@ const FinanzasPage = memo(function FinanzasPage() {
 
                   {/* Info contable */}
                   <div className="accounting-info-box">
-                    <span className="accounting-info-icon">💡</span>
+                    <span className="accounting-info-icon"><InlineIcon icon="Lightbulb" size={18} /></span>
                     <div className="accounting-info-text">
                       <strong>{t('finanzas:modals.accounting.accountingLogic')}</strong> {t('finanzas:modals.accounting.accountingInfo')}
                     </div>
@@ -2654,35 +2656,35 @@ const FinanzasPage = memo(function FinanzasPage() {
         <div className={`mobile-fab-container ${fabOpen ? 'open' : ''}`}>
           <div className="mobile-fab-menu">
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowModal(true); }}>
-              <span className="mobile-fab-icon">💸</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="Banknote" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.newTransaction')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountModal(true); }}>
-              <span className="mobile-fab-icon">💳</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="CreditCard" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.newAccount')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowTransferModal(true); }}>
-              <span className="mobile-fab-icon">🔄</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="RefreshCw" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.transfer')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowVepayModal(true); }}>
-              <span className="mobile-fab-icon">📷</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="Camera" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.importScreenshot')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountingModal(true); }}>
-              <span className="mobile-fab-icon">📊</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="BarChart3" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.accounting')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); toggleShowAmounts(); }}>
-              <span className="mobile-fab-icon">{showAmounts ? '🙈' : '👁️'}</span>
+              <span className="mobile-fab-icon"><InlineIcon icon={showAmounts ? 'EyeOff' : 'Eye'} size={18} /></span>
               <span className="mobile-fab-label">{showAmounts ? t('finanzas:fab.hideBalances') : t('finanzas:fab.showBalances')}</span>
             </button>
             <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setP2pMode(!p2pMode); }}>
-              <span className="mobile-fab-icon">💱</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="ArrowLeftRight" size={18} /></span>
               <span className="mobile-fab-label">{p2pMode ? t('finanzas:fab.p2pMode') : t('finanzas:fab.officialMode')}</span>
             </button>
             <button className="mobile-fab-item mobile-fab-item-danger" onClick={() => { setFabOpen(false); handleClearAllHistory(); }}>
-              <span className="mobile-fab-icon">🗑️</span>
+              <span className="mobile-fab-icon"><InlineIcon icon="Trash2" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.clearHistory')}</span>
             </button>
           </div>

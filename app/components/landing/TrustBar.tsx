@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next';
 import { AnimatedSection } from '../AnimatedSection';
 import { AnimatedCounter } from './AnimatedCounter';
+import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface TrustItem {
   icon: string;
@@ -28,7 +29,7 @@ export function TrustBar() {
           <div className="trust-grid">
             {TRUST_ITEMS.map((item) => (
               <div key={item.label} className="trust-item">
-                <span className="trust-icon">{item.icon}</span>
+                <span className="trust-icon"><InlineIcon icon={item.icon} size={16} /></span>
                 <div className="trust-text">
                   <span className="trust-label">{item.label}</span>
                   <span className="trust-desc">{item.desc}</span>
