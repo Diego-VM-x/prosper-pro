@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/lib/contexts/AuthContext';
 
 import { AnimatedSection } from '../AnimatedSection';
 import { LandingHeader } from './LandingHeader';
@@ -114,7 +115,7 @@ interface FeatureItem {
 export function LandingPage() {
   const router = useRouter();
   const { t } = useTranslation('landing');
-  const user = null;
+  const { user } = useAuth();
 
   const FEATURES_DATA = t('features.items', { returnObjects: true }) as FeatureItem[];
   const FEATURES = FEATURES_DATA.map((f, i) => ({

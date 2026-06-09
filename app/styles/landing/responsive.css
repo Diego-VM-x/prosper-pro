@@ -92,12 +92,9 @@
   }
 
   .landing-nav,
-  .desktop-only {
-    display: none;
-  }
-
+  .desktop-only,
   .landing-header-actions {
-    gap: 8px;
+    display: none;
   }
 
   .landing-hero {

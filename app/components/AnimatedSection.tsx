@@ -49,13 +49,13 @@ export function AnimatedSection({
     'pulse': 'animate-pulse-soft',
     'float': 'animate-float'
   };
-  
+
   const animationClass = animationClassMap[animationType] || 'animate-fade-in-up';
 
   return (
     <div
       ref={ref}
-      className={`${animationClass} ${isInView ? 'animate-visible' : ''} ${className} delay-${delay}`}>
+      className={`animated-section ${animationClass} ${isInView ? 'animate-visible' : ''} ${className} delay-${delay}`}>
       {children}
     </div>
   );
