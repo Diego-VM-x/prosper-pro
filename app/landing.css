@@ -417,7 +417,7 @@
 
 .mockup-stat-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -599,7 +599,7 @@
 
 .trust-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -645,7 +645,7 @@
 
 .trust-counters {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -730,7 +730,7 @@
 
 .demo-stage {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 320px minmax(0, 1fr);
   gap: 40px;
   align-items: center;
   background: rgba(255, 255, 255, 0.02);
@@ -833,7 +833,7 @@
 
 .demo-stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -861,7 +861,7 @@
 
 .demo-widgets {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.2fr minmax(0, 1fr);
   gap: 10px;
   flex: 1;
 }
@@ -1115,7 +1115,7 @@
 
 .demo-cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -1224,7 +1224,7 @@
 }
 
 .features-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .feature-card {
@@ -1249,7 +1249,7 @@
 .feature-card-large {
   grid-column: span 2;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-items: center;
 }
@@ -1352,6 +1352,7 @@
   gap: 12px;
   color: white;
   animation: slideInRight 0.6s ease both;
+  min-width: 0;
 }
 
 .feature-account-card:nth-child(1) { animation-delay: 0s; }
@@ -1371,11 +1372,16 @@
   flex: 1;
   font-size: 0.8125rem;
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .feature-account-balance {
   font-size: 0.9375rem;
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: break-word;
+  flex-shrink: 0;
 }
 
 .feature-visual-goals {
@@ -1460,7 +1466,7 @@
   padding: 20px;
   background: rgba(0, 0, 0, 0.15);
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -1635,7 +1641,7 @@
 
 .tutorial-panel {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 40px;
   align-items: center;
   background: rgba(255, 255, 255, 0.02);
@@ -2178,7 +2184,7 @@
 
 .security-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -2468,7 +2474,7 @@
 
 .footer-links {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
 }
 
@@ -2626,11 +2632,11 @@
   }
 
   .trust-counters {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .landing-footer-inner {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .footer-newsletter {
