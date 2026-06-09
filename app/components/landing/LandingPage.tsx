@@ -21,13 +21,13 @@ const FEATURE_VISUALS = [
   (
     <div className="feature-visual-accounts">
       <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
-        <span className="feature-account-icon">💰</span>
-        <span className="feature-account-name">Ahorro</span>
+        <span className="feature-account-icon">💵</span>
+        <span className="feature-account-name">Efectivo</span>
         <span className="feature-account-balance">$1,240</span>
       </div>
       <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
         <span className="feature-account-icon">🏦</span>
-        <span className="feature-account-name">Corriente</span>
+        <span className="feature-account-name">Banco</span>
         <span className="feature-account-balance">$3,580</span>
       </div>
       <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>

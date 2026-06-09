@@ -165,7 +165,26 @@
   }
 
   .feature-visual-accounts {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .feature-account-card {
+    flex: 1 1 calc(33.333% - 7px);
+    padding: 14px 8px;
+    gap: 4px;
+  }
+
+  .feature-account-icon {
+    font-size: 1.25rem;
+  }
+
+  .feature-account-name {
+    font-size: 0.6875rem;
+  }
+
+  .feature-account-balance {
+    font-size: 0.875rem;
   }
 
   .feature-card {

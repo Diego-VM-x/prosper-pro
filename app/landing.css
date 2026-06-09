@@ -1338,19 +1338,26 @@
 /* Feature Visuals */
 .feature-visual-accounts {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 20px;
   background: rgba(0, 0, 0, 0.15);
+  align-items: stretch;
 }
 
 .feature-account-card {
-  padding: 14px 16px;
+  flex: 1 1 calc(33.333% - 8px);
+  min-width: 90px;
+  padding: 16px 12px;
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 6px;
   color: white;
+  text-align: center;
   animation: slideInRight 0.6s ease both;
   min-width: 0;
 }
@@ -1365,23 +1372,26 @@
 }
 
 .feature-account-icon {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .feature-account-name {
-  flex: 1;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   min-width: 0;
   overflow-wrap: break-word;
+  line-height: 1.2;
 }
 
 .feature-account-balance {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   min-width: 0;
   overflow-wrap: break-word;
-  flex-shrink: 0;
+  line-height: 1.2;
 }
 
 .feature-visual-goals {
