@@ -375,9 +375,7 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
   width: 100%;
-  max-width: 100vw;
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   background: var(--bg-primary);
@@ -386,9 +384,7 @@ html {
 }
 
 body {
-  overflow-x: hidden;
   width: 100%;
-  max-width: 100vw;
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   background: var(--bg-primary);
@@ -488,7 +484,6 @@ ul, ol {
   min-height: -webkit-fill-available;
   background: var(--bg-primary);
   transition: background var(--transition-base);
-  overflow-x: hidden;
   position: relative;
 }
 
@@ -909,7 +904,6 @@ ul, ol {
   margin-left: var(--sidebar-width);
   padding-top: var(--topbar-height);
   transition: margin var(--transition-base);
-  overflow-x: hidden;
   position: relative;
   z-index: 1;
 }
@@ -927,7 +921,6 @@ ul, ol {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
   max-width: 100vw;
   position: relative;
   z-index: 1;
@@ -1246,14 +1239,12 @@ ul, ol {
 .page-content {
   flex: 1;
   padding: 28px 24px;
-  overflow-x: hidden;
   position: relative;
   z-index: 1;
 }
 
 .page-content-overflow-fix {
   max-width: 100vw;
-  overflow-x: hidden;
 }
 
 .page-header {
