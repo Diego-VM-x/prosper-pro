@@ -9,7 +9,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getGoalsByOwnerId } from '@/lib/firestore/goals';
 import { useState, useEffect } from 'react';
@@ -43,6 +43,7 @@ interface SidebarProps {
  */
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const [activeGoalsCount, setActiveGoalsCount] = useState(0);
 
@@ -136,7 +137,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
               <p className="promo-sub">
                 Tu camino hacia la libertad financiera.
               </p>
-              <button className="promo-btn" id="promo-cta" onClick={() => window.open('https://prosper-pro.vercel.app', '_blank')}>
+              <button className="promo-btn" id="promo-cta" onClick={() => router.push('/inicio')}>
                 Visitar Web
               </button>
             </div>

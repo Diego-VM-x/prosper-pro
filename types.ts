@@ -123,7 +123,7 @@ export interface FinancialPlan {
 }
 
 // ─── Recurring Payments ───
-export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+export type RecurringFrequency = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
 
 export interface RecurringPayment {
   id: string;
