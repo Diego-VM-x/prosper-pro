@@ -25,8 +25,6 @@ import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { Star, Settings } from 'lucide-react';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
-import '../dashboard.css';
-import '../dashboard-customizer.css';
 import { useDashboardLayout } from '@/lib/contexts/DashboardLayoutContext';
 
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';

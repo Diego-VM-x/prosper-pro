@@ -1,4 +1,6 @@
 import '../animations.css';
+import '@/app/dashboard.css';
+import '@/app/dashboard-customizer.css';
 
 import { Suspense } from 'react';
 import { SearchProvider } from '@/lib/contexts/SearchContext';

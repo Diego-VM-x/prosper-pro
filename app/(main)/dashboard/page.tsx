@@ -1,5 +1,4 @@
 'use client';
-import '@/app/dashboard.css';
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';

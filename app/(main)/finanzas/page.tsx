@@ -1,5 +1,4 @@
 'use client';
-import '@/app/dashboard.css';
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
