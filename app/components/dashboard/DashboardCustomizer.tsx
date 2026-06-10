@@ -8,15 +8,11 @@ import { SizeSelector } from './SizeSelector';
 import { WIDGET_CATALOG, getWidgetMeta } from './widgetMeta';
 import { InlineIcon, getLucideIcon } from '@/app/components/IconMap';
 import type { WidgetSize, WidgetType, DashboardWidgetConfig, WidgetCategory } from '@/types';
-import { X, ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X } from 'lucide-react';
 
 type TabKey = 'categories' | 'catalog' | 'widgets';
 
-interface DashboardCustomizerProps {
-  onClose: () => void;
-}
-
-export function DashboardCustomizer({ onClose }: DashboardCustomizerProps) {
+export function DashboardCustomizer() {
   const { t } = useTranslation('dashboard');
   const {
     layout,
@@ -66,13 +62,11 @@ export function DashboardCustomizer({ onClose }: DashboardCustomizerProps) {
   const sortedCategories = [...layout.categories].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content dashboard-customizer" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="modal-header">
-          <h2 className="modal-title">{t('customize.title', { defaultValue: 'Personalizar Dashboard' })}</h2>
-          <button className="modal-close" onClick={onClose}><X size={20} /></button>
-        </div>
+    <div className="dashboard-customizer-page">
+      {/* Header */}
+      <div className="dashboard-customizer-header">
+        <h1 className="dashboard-customizer-title">{t('customize.title', { defaultValue: 'Personalizar Dashboard' })}</h1>
+      </div>
 
         {/* Tabs */}
         <div className="customizer-tabs">
@@ -322,8 +316,8 @@ export function DashboardCustomizer({ onClose }: DashboardCustomizerProps) {
               </div>
               <div className="modal-footer">
                 <button className="btn btn-outline btn-sm" onClick={() => setAddingWidget(null)}>
-                  {t('common:buttons.cancel', { defaultValue: 'Cancelar' })}
-                </button>
+            {t('common:buttons.cancel', { defaultValue: 'Cancelar' })}
+          </button>
                 <button className="btn btn-primary btn-sm" onClick={handleConfirmAddWidget}>
                   {t('customize.add', { defaultValue: 'Agregar' })}
                 </button>
@@ -331,7 +325,6 @@ export function DashboardCustomizer({ onClose }: DashboardCustomizerProps) {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

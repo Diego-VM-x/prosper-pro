@@ -28,8 +28,7 @@ import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
 import '../dashboard-customizer.css';
 import { useDashboardLayout } from '@/lib/contexts/DashboardLayoutContext';
-import { DashboardCustomizer } from './dashboard/DashboardCustomizer';
-import { getWidgetMeta } from './dashboard/widgetMeta';
+
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts, getTotalBalance, updateAccountBalance, subscribeToAccountGroups, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
@@ -230,7 +229,6 @@ export const Dashboard = memo(function Dashboard() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
-  const [showCustomizer, setShowCustomizer] = useState(false);
   const { layout } = useDashboardLayout();
   const [showBalances, setShowBalances] = useState(() => {
     try {
@@ -1079,11 +1077,9 @@ export const Dashboard = memo(function Dashboard() {
           );
         })}
 
-        <button className="dashboard-customize-btn" onClick={() => setShowCustomizer(true)}>
+        <button className="dashboard-customize-btn" onClick={() => router.push('/configuracion/dashboard')}>
           <Settings size={16} /> {t('customize.title', { defaultValue: 'Personalizar' })}
         </button>
-
-        {showCustomizer && <DashboardCustomizer onClose={() => setShowCustomizer(false)} />}
       </div>
 
       {/* Modal Nueva Meta */}

@@ -5,6 +5,7 @@ import { SearchProvider } from '@/lib/contexts/SearchContext';
 import { GoalsProvider } from '@/lib/contexts/GoalsContext';
 import { CurrencyProvider } from '@/lib/contexts/CurrencyContext';
 import { ToastProvider } from '@/app/components/Toast';
+import { DashboardLayoutProvider } from '@/lib/contexts/DashboardLayoutContext';
 
 function LoadingSkeleton() {
   return (
@@ -43,9 +44,11 @@ export default function MainLayout({
       <GoalsProvider>
         <SearchProvider>
           <ToastProvider>
-            <Suspense fallback={<LoadingSkeleton />}>
-              {children}
-            </Suspense>
+            <DashboardLayoutProvider>
+              <Suspense fallback={<LoadingSkeleton />}>
+                {children}
+              </Suspense>
+            </DashboardLayoutProvider>
           </ToastProvider>
         </SearchProvider>
       </GoalsProvider>

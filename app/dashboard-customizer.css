@@ -42,21 +42,25 @@
   }
 }
 
-/* ── Dashboard Customizer Modal ── */
-.dashboard-customizer {
-  max-width: 800px;
-  width: 92vw;
-  max-height: 90vh;
-  padding: 0;
-  overflow: hidden;
+/* ── Dashboard Customizer Page ── */
+.dashboard-customizer-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
 }
-.dashboard-customizer .modal-header {
-  padding: 20px 24px;
-  margin-bottom: 0;
+.dashboard-customizer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--border-default);
 }
-.dashboard-customizer .modal-title {
-  font-size: 1.125rem;
+.dashboard-customizer-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 .customizer-tabs {
@@ -442,19 +446,15 @@
 
 /* ── Responsive customizer ── */
 @media (max-width: 768px) {
-  .dashboard-customizer {
-    max-width: 100%;
-    width: 100%;
-    max-height: 92vh;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    animation: slideUp 0.3s ease;
+  .dashboard-customizer-page {
+    padding: 16px;
   }
-  .dashboard-customizer .modal-header {
-    padding: 16px 20px;
+  .dashboard-customizer-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  .dashboard-customizer-title {
+    font-size: 1.25rem;
   }
   .customizer-tabs {
     padding: 6px 12px;
