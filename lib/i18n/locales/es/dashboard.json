@@ -37,9 +37,13 @@
     "title": "Herramientas",
     "inDevelopment": "En Desarrollo",
     "usdBs": "USD/BS",
+    "usdBsDesc": "Conversión rápida entre dólares y bolívares al tipo de cambio actual",
     "importInvoice": "Importar factura",
+    "importInvoiceDesc": "Escanea y registra facturas automáticamente con OCR",
     "shoppingLists": "Listas de compras",
-    "aiAssistant": "Asistente AI"
+    "shoppingListsDesc": "Crea listas de compras inteligentes con presupuesto",
+    "aiAssistant": "Asistente AI",
+    "aiAssistantDesc": "Asistente virtual para consultas sobre tus finanzas"
   },
   "finances": {
     "monthlySummary": "Resumen del Mes",

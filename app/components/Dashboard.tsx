@@ -705,35 +705,49 @@ export const Dashboard = memo(function Dashboard() {
                 </div>
               </div>
 
-              {/* Herramientas */}
-              <div className="content-card quick-actions-card dash-item" style={{animationDelay: '0.65s'}}>
+              {/* Herramientas — widgets individuales */}
+              <div className="content-card tool-card dash-item" style={{animationDelay: '0.65s'}}>
                 <div className="content-card-header">
                   <div className="content-card-header-left">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-                    </svg>
-                    <h2 className="content-card-title">{t('tools.title')}</h2>
-                  </div>
-                  <span style={{fontSize:'0.6rem',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>{t('tools.inDevelopment')}</span>
-                </div>
-                <div className="quick-actions-grid">
-                  <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
                     <IconBadge icon="ArrowLeftRight" size={18} />
-                    <span className="quick-action-label">{t('tools.usdBs')}</span>
+                    <h2 className="content-card-title">{t('tools.usdBs')}</h2>
                   </div>
-                  <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <IconBadge icon="Receipt" size={18} />
-                    <span className="quick-action-label">{t('tools.importInvoice')}</span>
-                  </div>
-                  <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <IconBadge icon="ShoppingCart" size={18} />
-                    <span className="quick-action-label">{t('tools.shoppingLists')}</span>
-                  </div>
-                  <div className="quick-action-btn" style={{opacity:0.5,cursor:'default'}}>
-                    <IconBadge icon="Bot" size={18} />
-                    <span className="quick-action-label">{t('tools.aiAssistant')}</span>
-                  </div>
+                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
                 </div>
+                <p className="tool-desc">{t('tools.usdBsDesc')}</p>
+              </div>
+
+              <div className="content-card tool-card dash-item" style={{animationDelay: '0.7s'}}>
+                <div className="content-card-header">
+                  <div className="content-card-header-left">
+                    <IconBadge icon="Receipt" size={18} />
+                    <h2 className="content-card-title">{t('tools.importInvoice')}</h2>
+                  </div>
+                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
+                </div>
+                <p className="tool-desc">{t('tools.importInvoiceDesc')}</p>
+              </div>
+
+              <div className="content-card tool-card dash-item" style={{animationDelay: '0.75s'}}>
+                <div className="content-card-header">
+                  <div className="content-card-header-left">
+                    <IconBadge icon="ShoppingCart" size={18} />
+                    <h2 className="content-card-title">{t('tools.shoppingLists')}</h2>
+                  </div>
+                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
+                </div>
+                <p className="tool-desc">{t('tools.shoppingListsDesc')}</p>
+              </div>
+
+              <div className="content-card tool-card dash-item" style={{animationDelay: '0.8s'}}>
+                <div className="content-card-header">
+                  <div className="content-card-header-left">
+                    <IconBadge icon="Bot" size={18} />
+                    <h2 className="content-card-title">{t('tools.aiAssistant')}</h2>
+                  </div>
+                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
+                </div>
+                <p className="tool-desc">{t('tools.aiAssistantDesc')}</p>
               </div>
             </div>
         </div>

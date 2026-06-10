@@ -341,6 +341,7 @@
 .widgets-grid .summary-card { grid-column: span 1; }
 .widgets-grid .recent-tx-card { grid-column: span 1; }
 .widgets-grid .quick-actions-card { grid-column: span 1; }
+.widgets-grid .tool-card { grid-column: span 1; }
 .widgets-grid .transfer-card { grid-column: span 1; }
 .widgets-grid .rates-card { grid-column: span 1; }
 .widgets-grid .chart-card { grid-column: span 2; }
@@ -552,6 +553,37 @@
 }
 .quick-action-icon { font-size: 1.25rem; color: var(--text-primary); }
 .quick-action-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); }
+
+/* ════════════════════════════════════════════════════════════════════
+   TOOL CARDS (Herramientas en desarrollo)
+   ════════════════════════════════════════════════════════════════════ */
+.tool-card {
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+.tool-card:hover {
+  opacity: 1;
+}
+.tool-card .content-card-header {
+  margin-bottom: 12px;
+}
+.tool-badge {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(61,204,142,0.15);
+  color: #3DCC8E;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.tool-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
 
 /* ════════════════════════════════════════════════════════════════════
    WIDGET TASAS DE CAMBIO

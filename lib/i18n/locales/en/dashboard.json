@@ -37,9 +37,13 @@
     "title": "Tools",
     "inDevelopment": "In Development",
     "usdBs": "USD/BS",
+    "usdBsDesc": "Quick conversion between dollars and bolivars at current rate",
     "importInvoice": "Import invoice",
+    "importInvoiceDesc": "Scan and automatically register invoices with OCR",
     "shoppingLists": "Shopping lists",
-    "aiAssistant": "AI Assistant"
+    "shoppingListsDesc": "Create smart shopping lists with budget",
+    "aiAssistant": "AI Assistant",
+    "aiAssistantDesc": "Virtual assistant for your finance queries"
   },
   "finances": {
     "monthlySummary": "Monthly Summary",
