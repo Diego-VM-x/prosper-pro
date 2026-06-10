@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
@@ -718,18 +719,18 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 <span className="mobile-user-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</span>
               </div>
             </div>
-            {showUserMenu && (
+            {showUserMenu && typeof document !== 'undefined' && createPortal(
               <div className="user-dropdown mobile-user-dropdown">
-              <div className="user-dropdown-header">
-                <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
-                <p className="user-dropdown-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>
-              </div>
-              {!isGuest && (
-                <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
-                  <IconSettings /> {t('sidebar.configuracion')}
-                </Link>
-              )}
-               <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
+                <div className="user-dropdown-header">
+                  <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
+                  <p className="user-dropdown-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>
+                </div>
+                {!isGuest && (
+                  <Link href="/configuracion" className="user-dropdown-item" onClick={closeUserMenuDelayed}>
+                    <IconSettings /> {t('sidebar.configuracion')}
+                  </Link>
+                )}
+                <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
                   <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.light')} aria-label={t('topbar.theme.light')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5"></circle>
@@ -743,28 +744,28 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                   </button>
-
-                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.dark')} aria-label={t('topbar.theme.dark')}>
-                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                   </svg>
-                 </button>
-                 <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.amoled')} aria-label={t('topbar.theme.amoled')}>
-                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                     <circle cx="12" cy="12" r="10"></circle>
-                   </svg>
-                 </button>
-               </div>
-               <div className="user-dropdown-divider" />
-               <button
-                 className="user-dropdown-item user-dropdown-logout"
-                 onClick={() => { setShowUserMenu(false); logout(); }}
-                 style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
-               >
-                 <IconLogout width={20} height={20} /> {isGuest ? t('topbar.logoutGuest') : t('topbar.logout')}
-               </button>
-              </div>
-          )}
+                  <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('dark'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.dark')} aria-label={t('topbar.theme.dark')}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                  </button>
+                  <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('amoled'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.amoled')} aria-label={t('topbar.theme.amoled')}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <div className="user-dropdown-divider" />
+                <button
+                  className="user-dropdown-item user-dropdown-logout"
+                  onClick={() => { setShowUserMenu(false); logout(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '12px 16px', justifyContent: 'flex-start' }}
+                >
+                  <IconLogout width={20} height={20} /> {isGuest ? t('topbar.logoutGuest') : t('topbar.logout')}
+                </button>
+              </div>,
+              document.body
+            )}
           </div>
         </div>
       )}
