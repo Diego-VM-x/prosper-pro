@@ -2214,7 +2214,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           }
           .tx-type-btn:hover { border-color: var(--color-prosper-green); }
           .tx-type-btn.active { font-weight: 600; }
-          .tx-type-icon { font-size: 1.25rem; }
+          .tx-type-icon { font-size: 1.25rem; color: var(--text-primary); }
           .tx-type-label { font-size: 0.6875rem; color: var(--text-secondary); }
           .tx-type-btn.active .tx-type-label { color: var(--text-primary); }
 
@@ -2286,7 +2286,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           .account-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-lg); padding: 16px; transition: all var(--transition-fast); }
           .account-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
           .account-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-          .account-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; }
+          .account-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.125rem; color: var(--text-primary); }
           .account-info { flex: 1; }
           .account-name { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); display: block; }
           .account-type { font-size: 0.6875rem; color: var(--text-tertiary); text-transform: capitalize; }
@@ -2308,7 +2308,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           .rates-table-container { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
           .rates-table-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: linear-gradient(180deg, rgba(255,255,255,0.03), var(--bg-input)); border-bottom: 1px solid var(--border-default); }
           .rates-table-header-left { display: flex; align-items: center; gap: 12px; }
-          .rates-table-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; }
+          .rates-table-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; color: var(--text-primary); }
           .rates-table-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
           .rates-table-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
 
@@ -2375,7 +2375,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           }
           .rates-section-header:hover { border-color: rgba(61,204,142,0.3); }
           .rates-section-header-left { display: flex; align-items: center; gap: 12px; }
-          .rates-section-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; }
+          .rates-section-icon { font-size: 1.25rem; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(61,204,142,0.08); border-radius: 10px; color: var(--text-primary); }
           .rates-section-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
           .rates-section-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
 
@@ -2489,7 +2489,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           }
           .accounting-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
           .accounting-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-          .accounting-btn-icon { font-size: 1.125rem; flex-shrink: 0; }
+          .accounting-btn-icon { font-size: 1.125rem; flex-shrink: 0; color: var(--text-primary); }
           .accounting-btn-content { flex: 1; min-width: 0; }
           .accounting-btn-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); }
           .accounting-btn-desc { display: block; font-size: 0.625rem; color: var(--text-tertiary); margin-top: 2px; line-height: 1.3; }
@@ -2515,7 +2515,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             padding: 10px;
           }
           .accounting-account-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-          .accounting-account-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; }
+          .accounting-account-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; color: var(--text-primary); }
           .accounting-account-info { flex: 1; min-width: 0; }
           .accounting-account-name { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
           .accounting-account-balance { display: block; font-size: 0.8125rem; font-weight: 800; }
@@ -2547,7 +2547,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             border: 1px solid rgba(61,204,142,0.2);
             margin-top: 16px;
           }
-          .accounting-info-icon { font-size: 1.25rem; flex-shrink: 0; }
+          .accounting-info-icon { font-size: 1.25rem; flex-shrink: 0; color: var(--text-primary); }
           .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
           .accounting-info-text strong { color: var(--text-primary); }
 
@@ -2779,6 +2779,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             }
             .mobile-fab-icon {
               font-size: 1.125rem;
+              color: inherit;
             }
             .mobile-fab-label {
               font-size: 0.8125rem;

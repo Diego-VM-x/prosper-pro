@@ -401,6 +401,8 @@ export function VepayModal({
       </div>
       <style>{`
         .modal-vepay { max-width: 520px; }
+        .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .modal-close:hover { background: var(--bg-input); }
         .vepay-upload-area {
           border: 2px dashed var(--border-default);
           border-radius: 12px;

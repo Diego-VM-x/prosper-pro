@@ -1060,7 +1060,7 @@ const MetasPage = memo(function MetasPage() {
           .plans-stat-expense::before { background: #EF4444; }
           .plans-stat-recurring::before { background: #F59E0B; }
           .plans-stat-active::before { background: #3B82F6; }
-          .plans-stat-icon { font-size: 1.5rem; display: block; margin-bottom: 8px; }
+          .plans-stat-icon { font-size: 1.5rem; display: block; margin-bottom: 8px; color: var(--text-primary); }
           .plans-stat-info { display: flex; flex-direction: column; gap: 2px; }
           .plans-stat-label { font-size: 0.6875rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; }
           .plans-stat-value { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); }

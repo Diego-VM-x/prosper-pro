@@ -1116,7 +1116,7 @@ export const Dashboard = memo(function Dashboard() {
               <label className="form-label">{t('modal.iconLabel')}</label>
               <div style={{ display: 'flex', gap: 6 }}>
                 {['Target', 'Wallet', 'TrendingUp', 'GraduationCap', 'Home', 'Car', 'Plane'].map((icon) => (
-                  <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.25rem', padding: 6, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer' }}><InlineIcon icon={icon} size={20} /></button>
+                  <button key={icon} onClick={() => setNewGoal({ ...newGoal, icon })} style={{ fontSize: '1.25rem', padding: 6, borderRadius: 'var(--radius-md)', background: newGoal.icon === icon ? 'var(--bg-input)' : 'transparent', border: newGoal.icon === icon ? '2px solid var(--color-prosper-green)' : '2px solid transparent', cursor: 'pointer', color: 'var(--text-primary)' }}><InlineIcon icon={icon} size={20} /></button>
                 ))}
               </div>
             </div>

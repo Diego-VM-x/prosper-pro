@@ -181,7 +181,7 @@ export function CustomSelect({
         .custom-select-trigger.open { border-color: var(--color-prosper-green); box-shadow: 0 0 0 3px rgba(61,204,142,0.15); }
         .custom-select-value { display: flex; align-items: center; gap: 8px; flex: 1; }
         .custom-select-value.placeholder { color: var(--text-tertiary); }
-        .custom-select-icon { font-size: 1rem; }
+        .custom-select-icon { font-size: 1rem; color: var(--text-primary); }
         .custom-select-arrow {
           color: var(--text-secondary);
           transition: transform 0.2s ease;

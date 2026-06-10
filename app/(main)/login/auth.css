@@ -183,6 +183,7 @@
   justify-content: center;
   background: rgba(61, 204, 142, 0.15);
   border-radius: 12px;
+  color: white;
 }
 
 .auth-feature h3 {

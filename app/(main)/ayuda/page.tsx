@@ -426,7 +426,7 @@ export default function AyudaPage() {
           .ayuda-page { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
           .ayuda-section { margin-bottom: 36px; }
           .ayuda-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-          .ayuda-section-icon { font-size: 1.25rem; }
+          .ayuda-section-icon { font-size: 1.25rem; color: var(--text-primary); }
           .ayuda-section-title { font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0; }
 
           /* Hero */
@@ -463,7 +463,7 @@ export default function AyudaPage() {
           .ayuda-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
           .ayuda-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
           .ayuda-card-icon-wrap { width: 40px; height: 40px; border-radius: var(--radius-md); background: rgba(61, 204, 142, 0.12); display: flex; align-items: center; justify-content: center; }
-          .ayuda-card-emoji { font-size: 1.125rem; }
+          .ayuda-card-emoji { font-size: 1.125rem; color: var(--text-primary); }
           .ayuda-card-badge { font-size: 0.5625rem; font-weight: 700; color: var(--color-prosper-green); background: rgba(61, 204, 142, 0.12); padding: 3px 8px; border-radius: var(--radius-full); text-transform: uppercase; letter-spacing: 0.1em; }
           .ayuda-card-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
           .ayuda-card-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; margin: 0 0 10px; }
@@ -486,7 +486,7 @@ export default function AyudaPage() {
           .ayuda-vepay-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--color-prosper-green), var(--color-prosper-navy)); }
           .ayuda-vepay-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
           .ayuda-vepay-icon-wrap { width: 44px; height: 44px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--color-prosper-green), #2BA87A); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-          .ayuda-vepay-icon { font-size: 1.25rem; }
+          .ayuda-vepay-icon { font-size: 1.25rem; color: white; }
           .ayuda-vepay-title-wrap { flex: 1; }
           .ayuda-vepay-title { font-size: 1.125rem; font-weight: 800; color: var(--text-primary); margin: 0 0 2px; }
           .ayuda-vepay-subtitle { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
@@ -530,7 +530,7 @@ export default function AyudaPage() {
           .ayuda-support-card:hover { border-color: var(--color-prosper-green); box-shadow: var(--shadow-sm); transform: translateY(-1px); }
           .ayuda-support-card-chat { cursor: pointer; }
           .ayuda-support-icon-wrap { width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(61, 204, 142, 0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
-          .ayuda-support-emoji { font-size: 1.25rem; }
+          .ayuda-support-emoji { font-size: 1.25rem; color: var(--text-primary); }
           .ayuda-support-title { font-size: 0.9375rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
           .ayuda-support-desc { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 14px; flex: 1; }
           .ayuda-support-btn { width: 100%; padding: 10px; border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 600; cursor: pointer; border: none; transition: all var(--transition-fast); }
@@ -557,7 +557,7 @@ export default function AyudaPage() {
           @keyframes chatSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
           .chat-header { padding: 16px 18px; background: linear-gradient(135deg, var(--color-prosper-navy), #2A5A4E); display: flex; align-items: center; justify-content: space-between; }
           .chat-header-info { display: flex; align-items: center; gap: 10px; }
-          .chat-header-icon { font-size: 1.125rem; }
+          .chat-header-icon { font-size: 1.125rem; color: white; }
           .chat-header-title { font-size: 0.875rem; font-weight: 700; color: white; margin: 0; }
           .chat-header-subtitle { font-size: 0.6875rem; color: rgba(255,255,255,0.6); margin: 0; }
           .chat-close-btn { background: rgba(255,255,255,0.15); border: none; color: white; cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -568,7 +568,7 @@ export default function AyudaPage() {
           .chat-type-btn.active-suggestion { background: rgba(61,204,142,0.12); border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
           .chat-messages { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
           .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 12px; }
-          .chat-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+          .chat-empty-icon { font-size: 2rem; margin-bottom: 8px; color: var(--text-primary); }
           .chat-empty p { font-size: 0.8125rem; color: var(--text-secondary); margin: 0 0 2px; }
           .chat-empty-hint { font-size: 0.6875rem; color: var(--text-tertiary); }
           .chat-msg { display: flex; flex-direction: column; }

@@ -1341,6 +1341,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               align-items: center;
               justify-content: center;
               font-size: 1rem;
+              color: var(--text-primary);
             }
             .toggle-text { display: flex; flex-direction: column; }
             .toggle-label {
@@ -1387,7 +1388,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               border-radius: 10px;
               background: var(--bg-input);
             }
-            .session-icon { font-size: 1.5rem; }
+            .session-icon { font-size: 1.5rem; color: var(--text-primary); }
             .session-info {
               flex: 1;
               display: flex;
@@ -1447,6 +1448,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               justify-content: center;
               font-size: 1.25rem;
               flex-shrink: 0;
+              color: var(--text-primary);
             }
             .warning-title {
               font-size: 1rem;
@@ -1507,6 +1509,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               justify-content: center;
               font-size: 1.25rem;
               flex-shrink: 0;
+              color: var(--text-primary);
             }
             .danger-title {
               font-size: 1rem;

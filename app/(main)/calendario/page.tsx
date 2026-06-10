@@ -512,7 +512,7 @@ const CalendarioPage = memo(function CalendarioPage() {
           .cal-detail-events { display: flex; flex-direction: column; gap: 12px; }
           .cal-event-card { display: flex; gap: 12px; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: var(--radius-lg); align-items: center; transition: all var(--transition-fast); border-left-width: 4px; }
           .cal-event-card:hover { transform: translateX(2px); box-shadow: var(--shadow-sm); }
-          .cal-event-icon-box { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+          .cal-event-icon-box { width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; color: var(--text-primary); }
           .cal-event-body { flex: 1; min-width: 0; }
           .cal-event-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
           .cal-event-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -534,7 +534,7 @@ const CalendarioPage = memo(function CalendarioPage() {
 
           /* === EMPTY STATE === */
           .cal-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; height: 100%; color: var(--text-tertiary); }
-          .cal-empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
+          .cal-empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; color: var(--text-secondary); }
           
           /* === MODAL === */
           .cal-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); animation: calFadeIn 0.2s ease; }

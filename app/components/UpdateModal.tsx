@@ -246,6 +246,7 @@ export function UpdateModal({
           font-size: 1.2rem;
           line-height: 1.4;
           flex-shrink: 0;
+          color: var(--text-primary);
         }
         .um-note-text {
           font-size: 0.875rem;
