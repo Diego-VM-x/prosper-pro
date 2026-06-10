@@ -571,7 +571,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         </button>
 
         {/* Notificaciones */}
-        <div className="topbar-notif-wrapper">
+        <div className="topbar-notif-wrapper" ref={notifRef}>
           <button
             className="topbar-icon-btn"
             aria-label={t('topbar.notifications')}
@@ -583,7 +583,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           </button>
 
           {showNotifications && (
-            <div className="notifications-dropdown" ref={notifRef}>
+            <div className="notifications-dropdown">
               <div className="notifications-dropdown-header">
                 <span>{t('topbar.notifications')}</span>
                 <div className="notif-actions">
@@ -668,7 +668,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
       {(user || isGuest) && (
         <div className="mobile-user-actions">
           {/* Notificaciones móvil */}
-          <div className="mobile-notif-wrapper">
+          <div className="mobile-notif-wrapper" ref={notifRef}>
             <button
               className="topbar-icon-btn mobile-notif-btn"
               aria-label={t('topbar.notifications')}
@@ -678,7 +678,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               {unreadCount > 0 && <span className="topbar-notif-dot" />}
             </button>
             {showNotifications && (
-              <div className="notifications-dropdown mobile-notif-dropdown" ref={notifRef}>
+              <div className="notifications-dropdown mobile-notif-dropdown">
                 <div className="notifications-dropdown-header">
                   <span>{t('topbar.notifications')}</span>
                   {unreadCount > 0 && (
@@ -708,17 +708,18 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           </div>
 
           {/* Avatar con dropdown */}
-          <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
-            <div className="topbar-avatar" style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}>
-              {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
+          <div ref={mobileUserMenuRef}>
+            <div className="mobile-user-info" onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '2px 0' }}>
+              <div className="topbar-avatar" style={isGuest ? { background: 'linear-gradient(135deg, #F59E0B, #EF4444)' } : undefined}>
+                {user?.photoURL ? <img src={user.photoURL} alt="Avatar" width={32} height={32} loading="lazy" decoding="async" /> : userInitial}
+              </div>
+              <div className="mobile-user-text">
+                <span className="mobile-user-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</span>
+                <span className="mobile-user-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</span>
+              </div>
             </div>
-            <div className="mobile-user-text">
-              <span className="mobile-user-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</span>
-              <span className="mobile-user-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</span>
-            </div>
-          </div>
-          {showUserMenu && (
-            <div className="user-dropdown mobile-user-dropdown" ref={mobileUserMenuRef}>
+            {showUserMenu && (
+              <div className="user-dropdown mobile-user-dropdown">
               <div className="user-dropdown-header">
                 <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
                 <p className="user-dropdown-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>
@@ -764,6 +765,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                </button>
               </div>
           )}
+          </div>
         </div>
       )}
 
