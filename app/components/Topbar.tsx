@@ -71,6 +71,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const mobileUserMenuRef = useRef<HTMLDivElement>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : isGuest ? t('topbar.guest').charAt(0) : t('topbar.user').charAt(0));
@@ -93,7 +94,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   // Cerrar dropdowns al hacer click fuera (only one user menu hook active at a time)
   useClickOutside(notifRef, () => setShowNotifications(false), showNotifications);
   useClickOutside(userMenuRef, () => setShowUserMenu(false), showUserMenu && isDesktop);
-  useClickOutside(mobileUserMenuRef, () => setShowUserMenu(false), showUserMenu && !isDesktop);
+  useClickOutside([mobileUserMenuRef, mobileDropdownRef], () => setShowUserMenu(false), showUserMenu && !isDesktop);
   useClickOutside(searchRef, () => setShowSearch(false), showSearch);
   useEscape(() => {
     setShowNotifications(false);
@@ -720,7 +721,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               </div>
             </div>
             {showUserMenu && typeof document !== 'undefined' && createPortal(
-              <div className="user-dropdown mobile-user-dropdown">
+              <div ref={mobileDropdownRef} className="user-dropdown mobile-user-dropdown">
                 <div className="user-dropdown-header">
                   <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
                   <p className="user-dropdown-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</p>

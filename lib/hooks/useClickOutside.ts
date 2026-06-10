@@ -3,18 +3,20 @@
 import { useEffect, RefObject } from 'react';
 
 export function useClickOutside(
-  ref: RefObject<HTMLElement | null>,
+  refs: RefObject<HTMLElement | null> | RefObject<HTMLElement | null>[],
   handler: () => void,
   enabled: boolean = true
 ) {
   useEffect(() => {
     if (!enabled) return;
 
+    const refArray = Array.isArray(refs) ? refs : [refs];
     let justClickedInside = false;
 
     const handleMouseDown = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
-      if (ref.current && ref.current.contains(target)) {
+      const isInside = refArray.some((ref) => ref.current && ref.current.contains(target));
+      if (isInside) {
         justClickedInside = true;
         return;
       }
@@ -27,7 +29,8 @@ export function useClickOutside(
         justClickedInside = false;
         return;
       }
-      if (ref.current && !ref.current.contains(target)) {
+      const isOutside = refArray.every((ref) => !ref.current || !ref.current.contains(target));
+      if (isOutside) {
         handler();
       }
     };
@@ -43,5 +46,5 @@ export function useClickOutside(
       document.removeEventListener('mouseup', handleClick);
       document.removeEventListener('touchend', handleClick);
     };
-  }, [ref, handler, enabled]);
+  }, [refs, handler, enabled]);
 }
