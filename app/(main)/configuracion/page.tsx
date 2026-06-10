@@ -194,14 +194,22 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const handleRemoveDevice = async (deviceId: string) => {
     if (!user?.uid) return;
     setRemovingDevice(deviceId);
+    setSuccessMsg('');
+    setErrorMsg('');
     try {
       await removeDevice(user.uid, deviceId);
       if (deviceId === currentDeviceId) {
         // Cerrar sesión en este dispositivo
-        await logout();
+        setSuccessMsg(t('seguridad.deviceRemoved'));
+        setTimeout(() => logout(), 1200);
+      } else {
+        setSuccessMsg(t('seguridad.deviceRemovedRemote'));
+        setTimeout(() => setSuccessMsg(''), 4000);
       }
     } catch (e) {
       console.error('Error removing device:', e);
+      setErrorMsg(t('seguridad.deviceRemoveError'));
+      setTimeout(() => setErrorMsg(''), 4000);
     } finally {
       setRemovingDevice(null);
     }
@@ -216,6 +224,14 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     if (minutes < 60) return t('seguridad.device.minutesAgo', { count: minutes });
     if (hours < 24) return t('seguridad.device.hoursAgo', { count: hours });
     return t('seguridad.device.daysAgo', { count: days });
+  }
+
+  function isDeviceOnline(device: UserDevice): boolean {
+    // Si explícitamente está marcado offline, respetarlo
+    if (device.isOnline === false) return false;
+    // Si no ha reportado en 5 minutos, considerar offline
+    const diff = Date.now() - device.lastActive;
+    return diff < 5 * 60 * 1000;
   }
 
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
@@ -732,24 +748,39 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <div className="device-list">
                         {devices.map((device) => {
                           const isCurrent = device.deviceId === currentDeviceId;
+                          const online = isDeviceOnline(device);
                           return (
-                            <div key={device.deviceId} className={`session-card ${isCurrent ? 'session-current' : ''}`}>
-                              <div className="session-icon">
-                                <InlineIcon icon={getDeviceIcon(device.deviceType)} size={20} />
-                              </div>
-                              <div className="session-info">
-                                <span className="session-name">
-                                  {device.deviceName}
-                                  {isCurrent && <span className="session-badge-inline">{t('seguridad.currentBadge')}</span>}
-                                </span>
-                                <span className="session-detail">
-                                  {device.browser} · {device.os} · {formatLastActive(device.lastActive)}
-                                </span>
+                            <div
+                              key={device.deviceId}
+                              className={`session-card ${isCurrent ? 'session-current' : ''} ${!online ? 'session-offline' : ''}`}
+                            >
+                              <div className="session-main">
+                                <div className="session-icon">
+                                  <InlineIcon icon={getDeviceIcon(device.deviceType)} size={22} />
+                                </div>
+                                <div className="session-info">
+                                  <span className="session-name">
+                                    {device.deviceName}
+                                    {isCurrent && (
+                                      <span className="session-badge-inline">{t('seguridad.currentBadge')}</span>
+                                    )}
+                                    {!isCurrent && !online && (
+                                      <span className="session-badge-offline">{t('seguridad.device.offlineBadge')}</span>
+                                    )}
+                                  </span>
+                                  <span className="session-detail">
+                                    {device.browser} · {device.os}
+                                    <span className="session-detail-sep"> · </span>
+                                    <span className={online ? 'session-detail-active' : 'session-detail-inactive'}>
+                                      {online ? formatLastActive(device.lastActive) : t('seguridad.device.offlineDetail')}
+                                    </span>
+                                  </span>
+                                </div>
                               </div>
                               <button
                                 className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
                                 onClick={() => handleRemoveDevice(device.deviceId)}
-                                disabled={removingDevice === device.deviceId}
+                                disabled={removingDevice === device.deviceId || !online}
                                 title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
                               >
                                 {removingDevice === device.deviceId ? (
@@ -757,7 +788,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                 ) : (
                                   <>
                                     <LogOut size={14} />
-                                    {isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                                    <span className="session-action-text">
+                                      {isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                                    </span>
                                   </>
                                 )}
                               </button>
@@ -1477,6 +1510,17 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               border: 1px solid rgba(61,204,142,0.3);
               background: rgba(61,204,142,0.06);
             }
+            .session-card.session-offline {
+              opacity: 0.65;
+              background: var(--bg-card);
+            }
+            .session-main {
+              display: flex;
+              align-items: center;
+              gap: 14px;
+              flex: 1;
+              min-width: 0;
+            }
             .session-icon { font-size: 1.5rem; color: var(--text-primary); flex-shrink: 0; }
             .session-info {
               flex: 1;
@@ -1498,6 +1542,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               font-size: 0.6875rem;
               color: var(--text-tertiary);
             }
+            .session-detail-sep { margin: 0 2px; }
+            .session-detail-active { color: var(--color-prosper-green); }
+            .session-detail-inactive { color: var(--text-tertiary); font-style: italic; }
             .session-badge {
               padding: 4px 10px;
               border-radius: 6px;
@@ -1513,6 +1560,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               border-radius: 4px;
               background: rgba(61,204,142,0.12);
               color: var(--color-prosper-green);
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+            }
+            .session-badge-offline {
+              padding: 2px 8px;
+              border-radius: 4px;
+              background: rgba(156,163,175,0.15);
+              color: var(--text-tertiary);
               font-size: 0.625rem;
               font-weight: 700;
               text-transform: uppercase;
@@ -1544,8 +1600,11 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               background: rgba(245,158,11,0.06);
             }
             .session-action-btn:disabled {
-              opacity: 0.5;
+              opacity: 0.4;
               cursor: not-allowed;
+              border-color: var(--border-default);
+              color: var(--text-tertiary);
+              background: var(--bg-card);
             }
             .spinner-small {
               width: 14px;
@@ -1863,6 +1922,33 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               .settings-save-bar-inner { flex-direction: column; align-items: stretch; gap: 8px; }
               .settings-save-hint { text-align: center; }
               .btn-save { width: 100%; text-align: center; }
+              /* Device cards mobile */
+              .session-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 14px;
+              }
+              .session-main {
+                align-items: flex-start;
+                gap: 12px;
+              }
+              .session-icon { font-size: 1.25rem; }
+              .session-name {
+                font-size: 0.8125rem;
+                gap: 6px;
+              }
+              .session-detail {
+                font-size: 0.625rem;
+                line-height: 1.4;
+              }
+              .session-action-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 10px;
+                font-size: 0.8125rem;
+              }
+              .session-action-text { display: inline; }
             }
 
             /* ===== RESPONSIVE: Very Small (360px) ===== */
@@ -1884,6 +1970,13 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               .toggle-switch.active::after { transform: translateX(16px); }
               .btn-save { width: 100%; text-align: center; }
               .plan-content { flex-direction: column; align-items: flex-start; gap: 8px; }
+              /* Device cards very small */
+              .session-card { padding: 12px; gap: 10px; }
+              .session-main { gap: 10px; }
+              .session-icon { font-size: 1.125rem; }
+              .session-name { font-size: 0.75rem; }
+              .session-detail { font-size: 0.5625rem; }
+              .session-action-btn { padding: 8px; font-size: 0.75rem; }
             }
           `}</style>
         </div>

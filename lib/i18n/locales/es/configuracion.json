@@ -107,6 +107,20 @@
     "thisDevice": "Este Dispositivo",
     "sessionDetail": "Chrome · Activo ahora",
     "currentBadge": "Actual",
+    "logoutDevice": "Cerrar sesión",
+    "logoutThisDevice": "Cerrar sesión aquí",
+    "deviceRemoved": "Dispositivo desconectado",
+    "deviceRemovedRemote": "Sesión cerrada. El dispositivo se desconectará en breve.",
+    "deviceRemoveError": "Error al desconectar el dispositivo",
+    "noDevices": "No hay dispositivos registrados",
+    "device": {
+      "activeNow": "Activo ahora",
+      "minutesAgo": "Hace {{count}} min",
+      "hoursAgo": "Hace {{count}} h",
+      "daysAgo": "Hace {{count}} d",
+      "offlineBadge": "Inactivo",
+      "offlineDetail": "Sesión expirada"
+    },
     "deleteAccount": {
       "title": "Eliminar Cuenta",
       "desc": "Esta acción es irreversible. Se borrarán todos tus datos permanentemente.",

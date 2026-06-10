@@ -91,7 +91,28 @@ export async function updateDeviceLastActive(
   const index = devices.findIndex((d) => d.deviceId === deviceId);
 
   if (index >= 0) {
-    devices[index] = { ...devices[index], lastActive: Date.now() };
+    devices[index] = { ...devices[index], lastActive: Date.now(), isOnline: true };
+    await updateDoc(userRef, { devices });
+  }
+}
+
+/**
+ * Marca un dispositivo como offline (cuando cierra sesión o pierde conexión).
+ */
+export async function markDeviceOffline(
+  ownerId: string,
+  deviceId: string
+): Promise<void> {
+  const userRef = doc(db, COLLECTION, ownerId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+  const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+  if (index >= 0) {
+    devices[index] = { ...devices[index], isOnline: false };
     await updateDoc(userRef, { devices });
   }
 }

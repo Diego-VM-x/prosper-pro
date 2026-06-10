@@ -107,6 +107,20 @@
     "thisDevice": "This Device",
     "sessionDetail": "Chrome · Active now",
     "currentBadge": "Current",
+    "logoutDevice": "Sign out",
+    "logoutThisDevice": "Sign out here",
+    "deviceRemoved": "Device disconnected",
+    "deviceRemovedRemote": "Session closed. The device will disconnect shortly.",
+    "deviceRemoveError": "Error disconnecting device",
+    "noDevices": "No registered devices",
+    "device": {
+      "activeNow": "Active now",
+      "minutesAgo": "{{count}} min ago",
+      "hoursAgo": "{{count}} h ago",
+      "daysAgo": "{{count}} d ago",
+      "offlineBadge": "Inactive",
+      "offlineDetail": "Session expired"
+    },
     "deleteAccount": {
       "title": "Delete Account",
       "desc": "This action is irreversible. All your data will be permanently deleted.",

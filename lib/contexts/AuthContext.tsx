@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CurrencyCode } from '@/types';
-import { removeDevice, isDeviceRegistered } from '@/lib/firestore/devices';
+import { removeDevice, isDeviceRegistered, updateDeviceLastActive } from '@/lib/firestore/devices';
 import { getDeviceInfo, clearDeviceId } from '@/lib/utils/deviceInfo';
 
 interface AuthContextType {
@@ -226,6 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Heartbeat: verificar cada 60s si el dispositivo sigue registrado
+  // y actualizar lastActive + isOnline
   useEffect(() => {
     if (!user?.uid || isGuest) return;
 
@@ -241,12 +242,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearDeviceId();
           setUser(null);
           router.push('/login');
+          return;
         }
+        // Actualizar actividad (marca como online)
+        await updateDeviceLastActive(user.uid, deviceId);
       } catch {
         // Silenciar errores de red
       }
     };
 
+    // Primera ejecución inmediata
+    checkDevice();
     intervalId = setInterval(checkDevice, 60000);
     return () => clearInterval(intervalId);
   }, [user?.uid, isGuest, router]);

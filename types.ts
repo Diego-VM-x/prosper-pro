@@ -212,6 +212,7 @@ export interface UserDevice {
   os: string;
   lastActive: number;
   createdAt: number;
+  isOnline?: boolean;
 }
 
 // ─── User Profile ───
