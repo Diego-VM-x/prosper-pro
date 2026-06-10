@@ -98,39 +98,23 @@
     "notes": [
       {
         "emoji": "LayoutGrid",
-        "text": "Dashboard completamente personalizable: crea categorías, agrega widgets, cambia tamaños y elige iconos SVG."
-      },
-      {
-        "emoji": "Bell",
-        "text": "Notificaciones de nuevo inicio de sesión en todos tus dispositivos conectados."
-      },
-      {
-        "emoji": "Shield",
-        "text": "Gestión de dispositivos: heartbeat, estado online/offline y cierre remoto de sesiones."
-      },
-      {
-        "emoji": "Globe",
-        "text": "Soporte completo de internacionalización (i18n) en inglés y español."
+        "text": "Dashboard personalizable con widgets, categorías e iconos SVG."
       },
       {
         "emoji": "User",
-        "text": "Modo Invitado (Guest) para explorar la app sin necesidad de iniciar sesión."
+        "text": "Modo Invitado: explora la app sin iniciar sesión."
       },
       {
-        "emoji": "CalendarDays",
-        "text": "Frecuencia diaria añadida a los planes financieros recurrentes."
+        "emoji": "Bell",
+        "text": "Notificaciones de login y cambios de tasa BCV en tiempo real."
       },
       {
-        "emoji": "TrendingUp",
-        "text": "Notificaciones de cambio de tasa BCV corregidas y funcionando en tiempo real."
+        "emoji": "Globe",
+        "text": "Soporte completo en español e inglés."
       },
       {
         "emoji": "Rocket",
-        "text": "Landing page rediseñada: más rápida, accesible y con animaciones suaves."
-      },
-      {
-        "emoji": "HelpCircle",
-        "text": "Centro de ayuda renovado: 9 categorías, 56+ preguntas frecuentes y tutoriales."
+        "text": "Landing page y centro de ayuda rediseñados."
       }
     ]
   }

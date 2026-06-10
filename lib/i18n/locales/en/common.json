@@ -98,39 +98,23 @@
     "notes": [
       {
         "emoji": "LayoutGrid",
-        "text": "Fully customizable dashboard: create categories, add widgets, resize them, and pick SVG icons."
-      },
-      {
-        "emoji": "Bell",
-        "text": "New login notifications across all your connected devices."
-      },
-      {
-        "emoji": "Shield",
-        "text": "Device management: heartbeat, online/offline status, and remote session logout."
-      },
-      {
-        "emoji": "Globe",
-        "text": "Full English & Spanish internationalization (i18n) support."
+        "text": "Customizable dashboard with widgets, categories, and SVG icons."
       },
       {
         "emoji": "User",
-        "text": "Guest Mode to explore the app without signing in."
+        "text": "Guest Mode: explore the app without signing in."
       },
       {
-        "emoji": "CalendarDays",
-        "text": "Daily frequency added to recurring financial plans."
+        "emoji": "Bell",
+        "text": "Login and BCV rate change notifications in real time."
       },
       {
-        "emoji": "TrendingUp",
-        "text": "BCV rate change notifications fixed and working in real time."
+        "emoji": "Globe",
+        "text": "Full Spanish & English language support."
       },
       {
         "emoji": "Rocket",
-        "text": "Landing page redesigned: faster, more accessible, and with smoother animations."
-      },
-      {
-        "emoji": "HelpCircle",
-        "text": "Help center overhaul: 9 categories, 56+ FAQs, and step-by-step tutorials."
+        "text": "Redesigned landing page and help center."
       }
     ]
   }
