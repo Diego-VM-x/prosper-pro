@@ -115,7 +115,7 @@
         "icon": "BarChart3",
         "label": "Dashboard",
         "title": "Tu panorama financiero en un vistazo",
-        "description": "Visualiza ingresos, gastos, balance mensual, metas en progreso y accesos directos a todas tus herramientas."
+        "description": "Visualiza ingresos, gastos, balance mensual, metas en progreso y accesos directos. Personaliza el layout con widgets y categorías a tu medida."
       },
       {
         "id": "finanzas",
@@ -145,6 +145,16 @@
     "sectionTitle": "Todo lo que necesitas para crecer financieramente",
     "sectionDesc": "Herramientas poderosas diseñadas para simplificar tu vida financiera.",
     "items": [
+      {
+        "icon": "LayoutGrid",
+        "title": "Dashboard Personalizable",
+        "description": "Organiza tu panorama financiero a tu manera. Crea categorías, agrega widgets y ajusta tamaños para ver exactamente lo que necesitas.",
+        "features": [
+          "16 widgets disponibles",
+          "Categorías con iconos SVG",
+          "Tamaños ajustables: Pequeño, Mediano y Grande"
+        ]
+      },
       {
         "icon": "BarChart3",
         "title": "Gestión de Cuentas Multi-moneda",
@@ -288,6 +298,16 @@
           "Ve al Dashboard o Finanzas y selecciona Transferencia.",
           "Elige cuenta origen, destino y monto.",
           "Confirma y revisa el historial de movimientos."
+        ]
+      },
+      {
+        "id": "personalizar",
+        "icon": "LayoutGrid",
+        "title": "Personalizar tu dashboard",
+        "steps": [
+          "Haz clic en el botón verde 'Personalizar' en tu dashboard.",
+          "Crea categorías y agrega widgets desde el catálogo.",
+          "Ajusta tamaños, reordena y edita títulos a tu gusto."
         ]
       }
     ]

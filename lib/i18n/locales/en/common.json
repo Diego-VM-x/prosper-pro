@@ -97,6 +97,18 @@
     "dialogAria": "Version release notes",
     "notes": [
       {
+        "emoji": "LayoutGrid",
+        "text": "Fully customizable dashboard: create categories, add widgets, resize them, and pick SVG icons."
+      },
+      {
+        "emoji": "Bell",
+        "text": "New login notifications across all your connected devices."
+      },
+      {
+        "emoji": "Shield",
+        "text": "Device management: heartbeat, online/offline status, and remote session logout."
+      },
+      {
         "emoji": "Globe",
         "text": "Full English & Spanish internationalization (i18n) support."
       },
@@ -109,8 +121,8 @@
         "text": "Daily frequency added to recurring financial plans."
       },
       {
-        "emoji": "Bell",
-        "text": "Real-time BCV rate change notifications."
+        "emoji": "TrendingUp",
+        "text": "BCV rate change notifications fixed and working in real time."
       },
       {
         "emoji": "Rocket",
@@ -118,15 +130,7 @@
       },
       {
         "emoji": "HelpCircle",
-        "text": "Help center overhaul: 9 categories, 41 FAQs, and step-by-step tutorials."
-      },
-      {
-        "emoji": "Mail",
-        "text": "App notifications subscription from the landing page footer."
-      },
-      {
-        "emoji": "Globe2",
-        "text": "Persistent language switcher that saves your preference across the site."
+        "text": "Help center overhaul: 9 categories, 56+ FAQs, and step-by-step tutorials."
       }
     ]
   }

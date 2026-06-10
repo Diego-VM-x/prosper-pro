@@ -180,7 +180,15 @@
         "Usa el selector de idioma para cambiar entre Español e Inglés.",
         "Configura tu privacidad como Pública o Privada.",
         "Elige tu tasa preferida: BCV oficial o P2P de Binance.",
-        "Personaliza el tema visual: Claro, Oscuro o AMOLED."
+        "Personaliza el tema visual: Claro, Oscuro o AMOLED.",
+        "Personaliza tu dashboard desde Configuración > Dashboard o el botón flotante 'Personalizar'."
+      ],
+      "dashboard": [
+        "Haz clic en el botón verde 'Personalizar' en la esquina inferior derecha del dashboard.",
+        "Crea categorías con nombres e iconos SVG para organizar tus widgets.",
+        "Ve al Catálogo y haz clic en un widget para agregarlo a tu dashboard.",
+        "Ajusta el tamaño de cada widget: Pequeño (1 col), Mediano (2 cols) o Grande (3 cols).",
+        "Reordena widgets con las flechas y edita títulos haciendo clic en ellos."
       ],
       "notifications": [
         "Ve a Configuración > Notificaciones.",
@@ -408,6 +416,21 @@
       },
       {
         "categoryId": "settings",
+        "q": "¿Cómo personalizo mi dashboard?",
+        "a": "Haz clic en el botón verde 'Personalizar' en la esquina inferior derecha del dashboard. Desde allí puedes crear categorías, agregar widgets desde el catálogo, cambiar tamaños (Pequeño/Mediano/Grande), reordenar y eliminar widgets. También puedes acceder desde Configuración > Dashboard."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Qué widgets puedo agregar al dashboard?",
+        "a": "Disponemos de 16 widgets: Banner de Bienvenida, Estadísticas, Para Hoy, Acciones Rápidas, USD/BS, Importar Factura, Listas de Compra, Asistente IA, Resumen del Mes, Mis Cuentas, Últimos Movimientos, Transferencia Rápida, Planes Activos, Próximos Vencimientos, Tasas de Cambio y Rendimiento Financiero."
+      },
+      {
+        "categoryId": "settings",
+        "q": "¿Puedo crear mis propias categorías en el dashboard?",
+        "a": "Sí. En la pestaña 'Categorías' del personalizador puedes crear nuevas categorías con nombre e icono SVG personalizado. También puedes editar, reordenar y eliminar categorías existentes."
+      },
+      {
+        "categoryId": "settings",
         "q": "¿Qué puedo configurar en mi perfil?",
         "a": "En Configuración > Perfil puedes cambiar tu nombre completo, foto de avatar, moneda de visualización predeterminada, idioma de la interfaz (español/inglés) y el tema visual (claro, oscuro o AMOLED)."
       },
@@ -571,6 +594,21 @@
     "history": "Historial",
     "preRelease": "PRE-release",
     "versions": [
+      {
+        "version": "1.0.0",
+        "date": "2026-06-10",
+        "preRelease": false,
+        "items": [
+          "Dashboard completamente personalizable: crea categorías, agrega widgets, cambia tamaños y elige iconos SVG.",
+          "Notificaciones de nuevo inicio de sesión en todos tus dispositivos conectados.",
+          "Gestión de dispositivos: heartbeat, estado online/offline y cierre remoto de sesiones.",
+          "Corrección de notificaciones BCV que no se disparaban correctamente.",
+          "Landing page actualizada con la función de dashboard personalizable.",
+          "Centro de ayuda ampliado con guías sobre personalización del dashboard.",
+          "Soporte completo de internacionalización (i18n) en inglés y español.",
+          "Modo Invitado (Guest) para explorar la app sin necesidad de iniciar sesión."
+        ]
+      },
       {
         "version": "0.9.8",
         "date": "2026-06-09",

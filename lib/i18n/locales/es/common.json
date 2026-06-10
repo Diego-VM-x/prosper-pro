@@ -97,6 +97,18 @@
     "dialogAria": "Novedades de la versión",
     "notes": [
       {
+        "emoji": "LayoutGrid",
+        "text": "Dashboard completamente personalizable: crea categorías, agrega widgets, cambia tamaños y elige iconos SVG."
+      },
+      {
+        "emoji": "Bell",
+        "text": "Notificaciones de nuevo inicio de sesión en todos tus dispositivos conectados."
+      },
+      {
+        "emoji": "Shield",
+        "text": "Gestión de dispositivos: heartbeat, estado online/offline y cierre remoto de sesiones."
+      },
+      {
         "emoji": "Globe",
         "text": "Soporte completo de internacionalización (i18n) en inglés y español."
       },
@@ -109,8 +121,8 @@
         "text": "Frecuencia diaria añadida a los planes financieros recurrentes."
       },
       {
-        "emoji": "Bell",
-        "text": "Notificaciones de cambio de tasa BCV en tiempo real."
+        "emoji": "TrendingUp",
+        "text": "Notificaciones de cambio de tasa BCV corregidas y funcionando en tiempo real."
       },
       {
         "emoji": "Rocket",
@@ -118,15 +130,7 @@
       },
       {
         "emoji": "HelpCircle",
-        "text": "Centro de ayuda renovado: 9 categorías, 41 preguntas frecuentes y tutoriales."
-      },
-      {
-        "emoji": "Mail",
-        "text": "Suscripción a notificaciones de la app desde el footer de la landing."
-      },
-      {
-        "emoji": "Globe2",
-        "text": "Selector de idioma persistente que guarda tu preferencia en todo el sitio."
+        "text": "Centro de ayuda renovado: 9 categorías, 56+ preguntas frecuentes y tutoriales."
       }
     ]
   }

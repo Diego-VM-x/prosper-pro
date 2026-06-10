@@ -40,7 +40,7 @@ export default function Home() {
 
   return (
     <Suspense fallback={<LoadingHome />}>
-      <UpdateModal version="0.9.8" />
+      <UpdateModal version="1.0.0" />
       <Dashboard />
     </Suspense>
   );

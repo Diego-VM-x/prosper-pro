@@ -115,7 +115,7 @@
         "icon": "BarChart3",
         "label": "Dashboard",
         "title": "Your financial overview at a glance",
-        "description": "View income, expenses, monthly balance, goals in progress, and quick access to all your tools."
+        "description": "View income, expenses, monthly balance, goals in progress, and quick access. Customize the layout with widgets and categories tailored to you."
       },
       {
         "id": "finanzas",
@@ -145,6 +145,16 @@
     "sectionTitle": "Everything you need to grow financially",
     "sectionDesc": "Powerful tools designed to simplify your financial life.",
     "items": [
+      {
+        "icon": "LayoutGrid",
+        "title": "Customizable Dashboard",
+        "description": "Organize your financial overview your way. Create categories, add widgets, and adjust sizes to see exactly what you need.",
+        "features": [
+          "16 widgets available",
+          "Categories with SVG icons",
+          "Adjustable sizes: Small, Medium, and Large"
+        ]
+      },
       {
         "icon": "BarChart3",
         "title": "Multi-Currency Account Management",
@@ -288,6 +298,16 @@
           "When creating a crypto account (USDT, SOL, BTC, USDC) choose the mode.",
           "Official uses CoinGecko · P2P uses real Binance price.",
           "Switch modes from the dashboard in one click."
+        ]
+      },
+      {
+        "id": "personalizar",
+        "icon": "LayoutGrid",
+        "title": "Customize your dashboard",
+        "steps": [
+          "Click the green 'Customize' button on your dashboard.",
+          "Create categories and add widgets from the catalog.",
+          "Adjust sizes, reorder, and edit titles to your liking."
         ]
       }
     ]

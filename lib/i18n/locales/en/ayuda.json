@@ -180,7 +180,15 @@
         "Use the language selector to switch between Spanish and English.",
         "Set your privacy to Public or Private.",
         "Choose your preferred rate: official BCV or Binance P2P.",
-        "Customize the visual theme: Light, Dark, or AMOLED."
+        "Customize the visual theme: Light, Dark, or AMOLED.",
+        "Customize your dashboard from Settings > Dashboard or the floating 'Customize' button."
+      ],
+      "dashboard": [
+        "Click the green 'Customize' button at the bottom-right of the dashboard.",
+        "Create categories with names and SVG icons to organize your widgets.",
+        "Go to the Catalog and click a widget to add it to your dashboard.",
+        "Adjust each widget's size: Small (1 col), Medium (2 cols), or Large (3 cols).",
+        "Reorder widgets with arrows and edit titles by clicking on them."
       ],
       "notifications": [
         "Go to Settings > Notifications.",
@@ -408,6 +416,21 @@
       },
       {
         "categoryId": "settings",
+        "q": "How do I customize my dashboard?",
+        "a": "Click the green 'Customize' button at the bottom-right of the dashboard. From there you can create categories, add widgets from the catalog, change sizes (Small/Medium/Large), reorder and remove widgets. You can also access it from Settings > Dashboard."
+      },
+      {
+        "categoryId": "settings",
+        "q": "What widgets can I add to my dashboard?",
+        "a": "We offer 16 widgets: Welcome Banner, Stats, For Today, Quick Actions, USD/BS, Import Invoice, Shopping Lists, AI Assistant, Monthly Summary, My Accounts, Recent Transactions, Quick Transfer, Active Plans, Upcoming Deadlines, Exchange Rates, and Financial Performance."
+      },
+      {
+        "categoryId": "settings",
+        "q": "Can I create my own dashboard categories?",
+        "a": "Yes. In the 'Categories' tab of the customizer you can create new categories with a custom name and SVG icon. You can also edit, reorder, and delete existing categories."
+      },
+      {
+        "categoryId": "settings",
         "q": "What can I configure in my profile?",
         "a": "In Settings > Profile you can change your full name, avatar picture, default display currency, interface language (Spanish/English), and visual theme (light, dark, or AMOLED)."
       },
@@ -571,6 +594,21 @@
     "history": "History",
     "preRelease": "PRE-release",
     "versions": [
+      {
+        "version": "1.0.0",
+        "date": "2026-06-10",
+        "preRelease": false,
+        "items": [
+          "Fully customizable dashboard: create categories, add widgets, resize them, and pick SVG icons.",
+          "New login notifications across all your connected devices.",
+          "Device management: heartbeat, online/offline status, and remote session logout.",
+          "Fixed BCV rate change notifications that were not firing correctly.",
+          "Landing page updated with the customizable dashboard feature.",
+          "Help center expanded with dashboard customization guides.",
+          "Full English & Spanish internationalization (i18n) support.",
+          "Guest Mode to explore the app without signing in."
+        ]
+      },
       {
         "version": "0.9.8",
         "date": "2026-06-09",
