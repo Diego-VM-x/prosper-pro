@@ -60,7 +60,16 @@
     "allM": "Todos",
     "transactionsCount": "{{count}} transacción",
     "transactionsCount_plural": "{{count}} transacciones",
-    "clearFilters": "Limpiar filtros"
+    "clearFilters": "Limpiar filtros",
+    "active": "Activas",
+    "archived": "Archivadas",
+    "selectAll": "Seleccionar todas",
+    "deselectAll": "Deseleccionar",
+    "archiveSelected": "Archivar seleccionadas",
+    "unarchiveSelected": "Restaurar seleccionadas",
+    "deleteSelected": "Eliminar permanentemente",
+    "selectedCount": "{{count}} seleccionada",
+    "selectedCount_plural": "{{count}} seleccionadas"
   },
   "table": {
     "description": "Descripción",
@@ -70,6 +79,7 @@
     "actions": "Acciones",
     "completed": "COMPLETADO",
     "empty": "No hay transacciones. ¡Agrega tu primera!",
+    "emptyArchived": "No hay transacciones archivadas.",
     "viewMore": "Ver más",
     "remaining": "restantes"
   },
@@ -257,6 +267,9 @@
     "transactionDeletedHistory": "Transacción eliminada del historial",
     "historyCleared": "Historial borrado",
     "allHistoryCleared": "Historial completo borrado",
+    "transactionsArchived": "{{count}} transacciones archivadas",
+    "transactionsUnarchived": "{{count}} transacciones restauradas",
+    "transactionsDeletedPermanent": "{{count}} transacciones eliminadas permanentemente",
     "balanceReset": "Balance reseteado",
     "typesDeleted": "{{type}}s eliminados",
     "allTransactionsWiped": "Todas las transacciones eliminadas. Balances reseteados.",

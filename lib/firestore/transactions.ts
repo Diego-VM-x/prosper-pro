@@ -32,6 +32,7 @@ export function subscribeToWeeklyData(ownerId: string, callback: (data: WeeklyDa
     }
     snapshot.forEach((docSnap) => {
       const t = docSnap.data() as Transaction;
+      if (t.archived) return;
       const tDate = new Date(t.date);
       const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
       if (diff >= 0 && diff < 7) {
@@ -62,6 +63,7 @@ export async function getMonthlySavings(ownerId: string): Promise<number> {
     let total = 0;
     snapshot.forEach((docSnap) => {
       const t = docSnap.data() as Transaction;
+      if (t.archived) return;
       if (t.date >= startOfMonth) total += t.amount;
     });
     return total;
@@ -94,6 +96,45 @@ export async function getTransactionsByOwnerId(ownerId: string): Promise<Transac
   });
   transactions.sort((a, b) => b.date - a.date);
   return transactions;
+}
+
+export async function getArchivedTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('archived', '==', true));
+  const snapshot = await getDocs(q);
+  const transactions: Transaction[] = [];
+  snapshot.forEach((docSnap) => {
+    transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+  });
+  transactions.sort((a, b) => b.date - a.date);
+  return transactions;
+}
+
+export function subscribeToArchivedTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('archived', '==', true));
+  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const transactions: Transaction[] = [];
+    snapshot.forEach((docSnap) => {
+      transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+    });
+    transactions.sort((a, b) => b.date - a.date);
+    callback(transactions);
+  }, (error) => {
+    console.error('subscribeToArchivedTransactions error:', error);
+    callback([]);
+  });
+}
+
+export async function archiveTransactions(txIds: string[]) {
+  const now = Date.now();
+  await Promise.all(txIds.map((id) => updateDoc(doc(db, COLLECTION, id), { archived: true, archivedAt: now })));
+}
+
+export async function unarchiveTransactions(txIds: string[]) {
+  await Promise.all(txIds.map((id) => updateDoc(doc(db, COLLECTION, id), { archived: false, archivedAt: null })));
+}
+
+export async function deleteTransactionsPermanently(txIds: string[]) {
+  await Promise.all(txIds.map((id) => deleteDoc(doc(db, COLLECTION, id))));
 }
 
 // Obtener transacciones de ahorro vinculadas a una meta (por descripción que contiene el título de la meta)
@@ -173,6 +214,7 @@ export async function getMonthlySummary(ownerId: string) {
     let income = 0, expenses = 0, saving = 0;
     snapshot.forEach((docSnap) => {
       const t = docSnap.data() as Transaction;
+      if (t.archived) return;
       if (t.date >= startOfMonth) {
         if (t.type === 'income') income += t.amount;
         else if (t.type === 'expense') expenses += t.amount;

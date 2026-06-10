@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
-import { getTransactionsByOwnerId, createTransaction, deleteTransaction } from '@/lib/firestore/transactions';
+import { getTransactionsByOwnerId, getArchivedTransactionsByOwnerId, createTransaction, deleteTransaction, archiveTransactions, unarchiveTransactions, deleteTransactionsPermanently } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
 import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
@@ -123,9 +123,12 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [archivedTransactions, setArchivedTransactions] = useState<Transaction[]>([]);
+  const [txTab, setTxTab] = useState<'activas' | 'archivadas'>('activas');
   const [txLimit, setTxLimit] = useState(5);
   const [filterType, setFilterType] = useState<string>('Todos');
   const [filterCategory, setFilterCategory] = useState<string>('Todas');
+  const [selectedTxIds, setSelectedTxIds] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -312,10 +315,19 @@ const FinanzasPage = memo(function FinanzasPage() {
     } catch (e) { console.error(e); }
   }, [uid]);
 
+  const loadArchivedTransactions = useCallback(async () => {
+    if (!uid) return;
+    try {
+      const txs = await getArchivedTransactionsByOwnerId(uid);
+      setArchivedTransactions(txs);
+    } catch (e) { console.error(e); }
+  }, [uid]);
+
   useEffect(() => {
     if (!uid) return;
     loadTransactions();
-  }, [uid, loadTransactions]);
+    loadArchivedTransactions();
+  }, [uid, loadTransactions, loadArchivedTransactions]);
 
   // Auto-open modal from URL params
   useEffect(() => {
@@ -352,9 +364,10 @@ const FinanzasPage = memo(function FinanzasPage() {
   }, [p2pMode]);
 
   // Filtrar transacciones
+  const activeTxList = txTab === 'activas' ? transactions : archivedTransactions;
   const filteredByAccount = selectedAccount === 'all'
-    ? transactions
-    : transactions.filter((t) => t.accountId === selectedAccount);
+    ? activeTxList
+    : activeTxList.filter((t) => t.accountId === selectedAccount);
 
   const categories = filterType === 'Todos' ? Object.values(allCategories).flat() : (allCategories[filterType as keyof typeof allCategories] || []);
   const filteredTx = filteredByAccount.filter((t) => {
@@ -462,6 +475,73 @@ const FinanzasPage = memo(function FinanzasPage() {
         }
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       } : undefined,
+    });
+  };
+
+  // ── Selection & bulk archive handlers ──────────────────────────────
+  const toggleTxSelection = (txId: string) => {
+    setSelectedTxIds(prev => {
+      const next = new Set(prev);
+      if (next.has(txId)) next.delete(txId); else next.add(txId);
+      return next;
+    });
+  };
+
+  const selectAllVisible = () => {
+    const visibleIds = filteredTx.slice(0, txLimit).map(t => t.id);
+    setSelectedTxIds(new Set(visibleIds));
+  };
+
+  const deselectAll = () => setSelectedTxIds(new Set());
+
+  const handleArchiveSelected = async () => {
+    if (selectedTxIds.size === 0) return;
+    const ids = Array.from(selectedTxIds);
+    try {
+      await archiveTransactions(ids);
+      await loadTransactions();
+      await loadArchivedTransactions();
+      setSelectedTxIds(new Set());
+      success(t('finanzas:toast.transactionsArchived', { count: ids.length }));
+    } catch (e: any) {
+      error(t('finanzas:toast.deleteError', { message: e?.message || 'Error desconocido' }));
+    }
+  };
+
+  const handleUnarchiveSelected = async () => {
+    if (selectedTxIds.size === 0) return;
+    const ids = Array.from(selectedTxIds);
+    try {
+      await unarchiveTransactions(ids);
+      await loadTransactions();
+      await loadArchivedTransactions();
+      setSelectedTxIds(new Set());
+      success(t('finanzas:toast.transactionsUnarchived', { count: ids.length }));
+    } catch (e: any) {
+      error(t('finanzas:toast.deleteError', { message: e?.message || 'Error desconocido' }));
+    }
+  };
+
+  const handleDeleteSelectedPermanent = async () => {
+    if (selectedTxIds.size === 0) return;
+    const ids = Array.from(selectedTxIds);
+    setConfirmState({
+      isOpen: true,
+      title: t('finanzas:modals.confirm.deleteTransaction'),
+      message: `¿Eliminar permanentemente ${ids.length} transacciones? Esta acción no se puede deshacer.`,
+      variant: 'danger',
+      confirmText: t('common:buttons.delete'),
+      onConfirm: async () => {
+        try {
+          await deleteTransactionsPermanently(ids);
+          await loadArchivedTransactions();
+          setSelectedTxIds(new Set());
+          success(t('finanzas:toast.transactionsDeletedPermanent', { count: ids.length }));
+        } catch (e: any) {
+          error(t('finanzas:toast.deleteError', { message: e?.message || 'Error desconocido' }));
+        }
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
     });
   };
 
@@ -700,6 +780,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       onConfirm: async () => {
         await clearAccountHistory(id);
         await loadTransactions();
+        await loadArchivedTransactions();
         success(t('finanzas:toast.historyCleared'));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -751,6 +832,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         if (!uid) return;
         await clearAllTransactionHistory(uid);
         await loadTransactions();
+        await loadArchivedTransactions();
         success(t('finanzas:toast.allHistoryCleared'));
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -1343,6 +1425,22 @@ const FinanzasPage = memo(function FinanzasPage() {
             <FinancialStatusChart />
           </div>
 
+          {/* Tabs Activas / Archivadas */}
+          <div className="tx-tabs">
+            <button
+              className={`tx-tab ${txTab === 'activas' ? 'active' : ''}`}
+              onClick={() => { setTxTab('activas'); setSelectedTxIds(new Set()); setTxLimit(5); }}
+            >
+              {t('finanzas:filters.active')}
+            </button>
+            <button
+              className={`tx-tab ${txTab === 'archivadas' ? 'active' : ''}`}
+              onClick={() => { setTxTab('archivadas'); setSelectedTxIds(new Set()); setTxLimit(5); }}
+            >
+              {t('finanzas:filters.archived')}
+            </button>
+          </div>
+
           {/* Filtros - Compact Visual Design */}
           <div className="tx-filters">
             <div className="tx-filters-row">
@@ -1400,9 +1498,38 @@ const FinanzasPage = memo(function FinanzasPage() {
 
           {/* Tabla de transacciones */}
           <div className="transactions-table-wrapper">
+            {/* Bulk action bar */}
+            {selectedTxIds.size > 0 && (
+              <div className="tx-bulk-bar">
+                <span className="tx-bulk-count">
+                  {t('finanzas:filters.selectedCount', { count: selectedTxIds.size })}
+                </span>
+                <div className="tx-bulk-actions">
+                  <button className="tx-bulk-btn" onClick={selectAllVisible}>{t('finanzas:filters.selectAll')}</button>
+                  <button className="tx-bulk-btn" onClick={deselectAll}>{t('finanzas:filters.deselectAll')}</button>
+                  {txTab === 'activas' ? (
+                    <button className="tx-bulk-btn archive" onClick={handleArchiveSelected}>{t('finanzas:filters.archiveSelected')}</button>
+                  ) : (
+                    <>
+                      <button className="tx-bulk-btn restore" onClick={handleUnarchiveSelected}>{t('finanzas:filters.unarchiveSelected')}</button>
+                      <button className="tx-bulk-btn danger" onClick={handleDeleteSelectedPermanent}>{t('finanzas:filters.deleteSelected')}</button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             <table className="transactions-table">
               <thead>
                 <tr>
+                  <th scope="col" style={{ width: 40 }}>
+                    <input
+                      type="checkbox"
+                      className="tx-checkbox"
+                      checked={filteredTx.slice(0, txLimit).length > 0 && filteredTx.slice(0, txLimit).every(t => selectedTxIds.has(t.id))}
+                      onChange={(e) => e.target.checked ? selectAllVisible() : deselectAll()}
+                    />
+                  </th>
                   <th scope="col">{t('finanzas:table.description')}</th>
                   <th scope="col">{t('finanzas:table.category')}</th>
                   <th scope="col">{t('finanzas:table.status')}</th>
@@ -1416,6 +1543,14 @@ const FinanzasPage = memo(function FinanzasPage() {
                   const txCurrency = txAccount?.currency || 'USD';
                   return (
                     <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          className="tx-checkbox"
+                          checked={selectedTxIds.has(tx.id)}
+                          onChange={() => toggleTxSelection(tx.id)}
+                        />
+                      </td>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div className="tx-icon-box" style={{ background: TYPE_COLORS[tx.type] + '18', color: TYPE_COLORS[tx.type] }}>
@@ -1477,14 +1612,25 @@ const FinanzasPage = memo(function FinanzasPage() {
                         )}
                       </td>
                       <td>
-                        <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title={t('common:buttons.delete')}>
-                          <IconTrash width={14} />
-                        </button>
+                        {txTab === 'activas' ? (
+                          <button className="delete-tx-btn" onClick={() => handleDeleteTransaction(tx.id)} title={t('common:buttons.delete')}>
+                            <IconTrash width={14} />
+                          </button>
+                        ) : (
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="delete-tx-btn restore" onClick={() => { setSelectedTxIds(new Set([tx.id])); handleUnarchiveSelected(); }} title={t('finanzas:filters.unarchiveSelected')}>
+                              <InlineIcon icon="RefreshCw" size={14} />
+                            </button>
+                            <button className="delete-tx-btn danger" onClick={() => { setSelectedTxIds(new Set([tx.id])); handleDeleteSelectedPermanent(); }} title={t('finanzas:filters.deleteSelected')}>
+                              <IconTrash width={14} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   );
                 }) : (
-                  <tr><td colSpan={5} className="empty-state">{t('finanzas:table.empty')}</td></tr>
+                  <tr><td colSpan={6} className="empty-state">{txTab === 'archivadas' ? t('finanzas:table.emptyArchived') : t('finanzas:table.empty')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -2651,6 +2797,34 @@ const FinanzasPage = memo(function FinanzasPage() {
               to { opacity: 1; }
             }
           }
+
+          /* Tabs: Activas / Archivadas */
+          .tx-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+          .tx-tab { flex: 1; padding: 10px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+          .tx-tab:hover { background: var(--bg-input); color: var(--text-primary); }
+          .tx-tab.active { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
+
+          /* Bulk action bar */
+          .tx-bulk-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-input); border-bottom: 1px solid var(--border-default); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+          .tx-bulk-count { font-size: 0.8125rem; font-weight: 600; color: var(--text-primary); }
+          .tx-bulk-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+          .tx-bulk-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-default); background: var(--bg-card); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+          .tx-bulk-btn:hover { background: var(--bg-input); color: var(--text-primary); }
+          .tx-bulk-btn.archive { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.3); color: #3B82F6; }
+          .tx-bulk-btn.archive:hover { background: rgba(59,130,246,0.2); }
+          .tx-bulk-btn.restore { background: rgba(61,204,142,0.12); border-color: rgba(61,204,142,0.3); color: var(--color-prosper-green); }
+          .tx-bulk-btn.restore:hover { background: rgba(61,204,142,0.2); }
+          .tx-bulk-btn.danger { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: var(--color-error); }
+          .tx-bulk-btn.danger:hover { background: rgba(239,68,68,0.2); }
+
+          /* Checkboxes */
+          .tx-checkbox { width: 18px; height: 18px; accent-color: var(--color-prosper-green); cursor: pointer; }
+
+          /* Action buttons in archived tab */
+          .delete-tx-btn.restore { color: var(--color-prosper-green); }
+          .delete-tx-btn.restore:hover { background: rgba(61,204,142,0.15); }
+          .delete-tx-btn.danger { color: var(--color-error); }
+          .delete-tx-btn.danger:hover { background: rgba(239,68,68,0.15); }
         `}</style>
 
         {/* Mobile FAB - Fixed at bottom of page */}

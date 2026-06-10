@@ -60,7 +60,16 @@
     "allM": "All",
     "transactionsCount": "{{count}} transaction",
     "transactionsCount_plural": "{{count}} transactions",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "active": "Active",
+    "archived": "Archived",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "archiveSelected": "Archive selected",
+    "unarchiveSelected": "Restore selected",
+    "deleteSelected": "Delete permanently",
+    "selectedCount": "{{count}} selected",
+    "selectedCount_plural": "{{count}} selected"
   },
   "table": {
     "description": "Description",
@@ -70,6 +79,7 @@
     "actions": "Actions",
     "completed": "COMPLETED",
     "empty": "No transactions. Add your first one!",
+    "emptyArchived": "No archived transactions.",
     "viewMore": "View more",
     "remaining": "remaining"
   },
@@ -257,6 +267,9 @@
     "transactionDeletedHistory": "Transaction deleted from history",
     "historyCleared": "History cleared",
     "allHistoryCleared": "All history cleared",
+    "transactionsArchived": "{{count}} transactions archived",
+    "transactionsUnarchived": "{{count}} transactions restored",
+    "transactionsDeletedPermanent": "{{count}} transactions permanently deleted",
     "balanceReset": "Balance reset",
     "typesDeleted": "{{type}}s deleted",
     "allTransactionsWiped": "All transactions deleted. Balances reset.",
