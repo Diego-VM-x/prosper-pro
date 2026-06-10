@@ -8,11 +8,13 @@ import { SizeSelector } from './SizeSelector';
 import { WIDGET_CATALOG, getWidgetMeta } from './widgetMeta';
 import { InlineIcon, getLucideIcon } from '@/app/components/IconMap';
 import type { WidgetSize, WidgetType, DashboardWidgetConfig, WidgetCategory } from '@/types';
-import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 type TabKey = 'categories' | 'catalog' | 'widgets';
 
 export function DashboardCustomizer() {
+  const router = useRouter();
   const { t } = useTranslation('dashboard');
   const {
     layout,
@@ -65,7 +67,23 @@ export function DashboardCustomizer() {
     <div className="dashboard-customizer-page">
       {/* Header */}
       <div className="dashboard-customizer-header">
-        <h1 className="dashboard-customizer-title">{t('customize.title', { defaultValue: 'Personalizar Dashboard' })}</h1>
+        <div className="dashboard-customizer-header-left">
+          <button
+            className="dashboard-back-btn"
+            onClick={() => router.push('/')}
+            title={t('common:buttons.back', { defaultValue: 'Volver' })}
+          >
+            <ArrowLeft size={18} />
+            <span>{t('common:buttons.back', { defaultValue: 'Volver' })}</span>
+          </button>
+          <h1 className="dashboard-customizer-title">{t('customize.title', { defaultValue: 'Personalizar Dashboard' })}</h1>
+        </div>
+        <button
+          className="btn btn-primary btn-sm dashboard-back-btn-mobile"
+          onClick={() => router.push('/')}
+        >
+          <ArrowRight size={14} /> {t('common:buttons.back', { defaultValue: 'Volver' })}
+        </button>
       </div>
 
         {/* Tabs */}
