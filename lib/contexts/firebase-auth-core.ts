@@ -3,6 +3,8 @@
 import { auth, onAuthStateChanged, signOut, updateCurrentUser, type User } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
+import { registerDevice, updateDeviceLastActive } from '@/lib/firestore/devices';
+import { getDeviceInfo } from '@/lib/utils/deviceInfo';
 import type { CurrencyCode } from '@/types';
 
 function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }): User {
@@ -74,6 +76,13 @@ async function onUserReady(u: User) {
         showProfile: true,
       });
     }
+    // Registrar/actualizar dispositivo
+    try {
+      const deviceInfo = getDeviceInfo();
+      await registerDevice(u.uid, deviceInfo);
+    } catch (e) {
+      console.error('Error registering device:', e);
+    }
     try {
       const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
       await requestNotificationPermission();
@@ -122,6 +131,13 @@ export async function initAuth({
           const data = await getUserDataRest(tokens.idToken);
           if (data && data.localId) {
             await onUserReady(userObj);
+            // Actualizar lastActive del dispositivo en initAuth
+            try {
+              const deviceInfo = getDeviceInfo();
+              await updateDeviceLastActive(userObj.uid, deviceInfo.deviceId);
+            } catch (e) {
+              console.error('Error updating device lastActive:', e);
+            }
           } else {
             clearStoredTokens();
             setUser(null);

@@ -5,16 +5,18 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
+import { subscribeToDevices, removeDevice } from '@/lib/firestore/devices';
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
-import type { UserProfile, CurrencyCode } from '@/types';
+import { getDeviceInfo, getDeviceIcon } from '@/lib/utils/deviceInfo';
+import type { UserProfile, CurrencyCode, UserDevice } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
-import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock } from 'lucide-react';
+import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut } from 'lucide-react';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
@@ -51,7 +53,10 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [showWipeConfirm, setShowWipeConfirm] = useState(false);
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
+  const [devices, setDevices] = useState<UserDevice[]>([]);
+  const [removingDevice, setRemovingDevice] = useState<string | null>(null);
   const { t } = useTranslation(['configuracion', 'common']);
+  const currentDeviceId = typeof window !== 'undefined' ? getDeviceInfo().deviceId : '';
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -100,7 +105,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       }
     });
 
-    return () => unsub();
+    // Subscribe a dispositivos
+    const unsubDevices = subscribeToDevices(uid, (devs) => {
+      setDevices(devs);
+    });
+
+    return () => {
+      unsub();
+      unsubDevices();
+    };
   }, [user?.uid]);
 
   const handleSaveProfile = async () => {
@@ -177,6 +190,33 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       setWipingData(false);
     }
   };
+
+  const handleRemoveDevice = async (deviceId: string) => {
+    if (!user?.uid) return;
+    setRemovingDevice(deviceId);
+    try {
+      await removeDevice(user.uid, deviceId);
+      if (deviceId === currentDeviceId) {
+        // Cerrar sesión en este dispositivo
+        await logout();
+      }
+    } catch (e) {
+      console.error('Error removing device:', e);
+    } finally {
+      setRemovingDevice(null);
+    }
+  };
+
+  function formatLastActive(timestamp: number): string {
+    const diff = Date.now() - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    if (minutes < 1) return t('seguridad.device.activeNow');
+    if (minutes < 60) return t('seguridad.device.minutesAgo', { count: minutes });
+    if (hours < 24) return t('seguridad.device.hoursAgo', { count: hours });
+    return t('seguridad.device.daysAgo', { count: days });
+  }
 
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : 'U');
   const userEmail = user?.email || t('fallbacks.email');
@@ -675,18 +715,57 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">{t('seguridad.sessionsTitle')} <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>{t('preferencias.inDevelopment')}</span></h2>
+                      <h2 className="panel-title">{t('seguridad.sessionsTitle')}</h2>
                       <p className="panel-desc">{t('seguridad.sessionsDesc')}</p>
                     </div>
 
-                    <div className="session-card">
-                      <div className="session-icon"><InlineIcon icon="Laptop" size={20} /></div>
-                      <div className="session-info">
-                        <span className="session-name">{t('seguridad.thisDevice')}</span>
-                        <span className="session-detail">{t('seguridad.sessionDetail')}</span>
+                    {devices.length === 0 ? (
+                      <div className="session-card">
+                        <div className="session-icon"><InlineIcon icon="Laptop" size={20} /></div>
+                        <div className="session-info">
+                          <span className="session-name">{t('seguridad.thisDevice')}</span>
+                          <span className="session-detail">{t('seguridad.sessionDetail')}</span>
+                        </div>
+                        <span className="session-badge">{t('seguridad.currentBadge')}</span>
                       </div>
-                      <span className="session-badge">{t('seguridad.currentBadge')}</span>
-                    </div>
+                    ) : (
+                      <div className="device-list">
+                        {devices.map((device) => {
+                          const isCurrent = device.deviceId === currentDeviceId;
+                          return (
+                            <div key={device.deviceId} className={`session-card ${isCurrent ? 'session-current' : ''}`}>
+                              <div className="session-icon">
+                                <InlineIcon icon={getDeviceIcon(device.deviceType)} size={20} />
+                              </div>
+                              <div className="session-info">
+                                <span className="session-name">
+                                  {device.deviceName}
+                                  {isCurrent && <span className="session-badge-inline">{t('seguridad.currentBadge')}</span>}
+                                </span>
+                                <span className="session-detail">
+                                  {device.browser} · {device.os} · {formatLastActive(device.lastActive)}
+                                </span>
+                              </div>
+                              <button
+                                className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
+                                onClick={() => handleRemoveDevice(device.deviceId)}
+                                disabled={removingDevice === device.deviceId}
+                                title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                              >
+                                {removingDevice === device.deviceId ? (
+                                  <span className="spinner-small" />
+                                ) : (
+                                  <>
+                                    <LogOut size={14} />
+                                    {isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="panel-card danger-card">
@@ -1379,7 +1458,12 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
             }
             .toggle-switch.active::after { transform: translateX(20px); }
 
-            /* Session */
+            /* Session / Devices */
+            .device-list {
+              display: flex;
+              flex-direction: column;
+              gap: 10px;
+            }
             .session-card {
               display: flex;
               align-items: center;
@@ -1387,18 +1471,28 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               padding: 16px;
               border-radius: 10px;
               background: var(--bg-input);
+              transition: all 0.15s;
             }
-            .session-icon { font-size: 1.5rem; color: var(--text-primary); }
+            .session-card.session-current {
+              border: 1px solid rgba(61,204,142,0.3);
+              background: rgba(61,204,142,0.06);
+            }
+            .session-icon { font-size: 1.5rem; color: var(--text-primary); flex-shrink: 0; }
             .session-info {
               flex: 1;
               display: flex;
               flex-direction: column;
               gap: 2px;
+              min-width: 0;
             }
             .session-name {
               font-size: 0.875rem;
               font-weight: 600;
               color: var(--text-primary);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
             }
             .session-detail {
               font-size: 0.6875rem;
@@ -1412,6 +1506,54 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               font-size: 0.625rem;
               font-weight: 700;
               text-transform: uppercase;
+              flex-shrink: 0;
+            }
+            .session-badge-inline {
+              padding: 2px 8px;
+              border-radius: 4px;
+              background: rgba(61,204,142,0.12);
+              color: var(--color-prosper-green);
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+            }
+            .session-action-btn {
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              padding: 8px 14px;
+              border-radius: 8px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-card);
+              color: var(--text-secondary);
+              font-size: 0.75rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.15s;
+              flex-shrink: 0;
+              white-space: nowrap;
+            }
+            .session-action-btn:hover {
+              border-color: #EF4444;
+              color: #EF4444;
+              background: rgba(239,68,68,0.06);
+            }
+            .session-action-btn.session-action-current:hover {
+              border-color: #F59E0B;
+              color: #F59E0B;
+              background: rgba(245,158,11,0.06);
+            }
+            .session-action-btn:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+            .spinner-small {
+              width: 14px;
+              height: 14px;
+              border: 2px solid rgba(255,255,255,0.3);
+              border-top-color: currentColor;
+              border-radius: 50%;
+              animation: spin 0.6s linear infinite;
             }
 
             /* Danger */

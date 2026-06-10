@@ -203,6 +203,17 @@ export interface ExpenseRequest {
   respondedAt?: number;
 }
 
+// ─── User Device ───
+export interface UserDevice {
+  deviceId: string;
+  deviceName: string;
+  deviceType: 'desktop' | 'mobile' | 'tablet' | 'unknown';
+  browser: string;
+  os: string;
+  lastActive: number;
+  createdAt: number;
+}
+
 // ─── User Profile ───
 export interface UserProfile {
   uid: string;
@@ -215,6 +226,7 @@ export interface UserProfile {
   notifications?: NotificationPreferences;
   showProfile?: boolean;
   isSeeded?: boolean;
+  devices?: UserDevice[];
 }
 
 // ─── Courses ───
