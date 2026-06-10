@@ -37,7 +37,7 @@ const FinancialStatusChart = dynamic(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart })),
   { ssr: false }
 );
-import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction, AccountGroup, CurrencyCode } from '@/types';
+import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction, AccountGroup, CurrencyCode, ExpenseRequest } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: 'Wallet', Inversión: 'TrendingUp', Educación: 'GraduationCap', Otro: 'Pin' };
 
@@ -207,7 +207,7 @@ function SectionHeader({ icon, title, count, collapsed, onToggle }: {
 export const Dashboard = memo(function Dashboard() {
   const router = useRouter();
   const { query } = useSearch();
-  const { goals, plans, reminders, goalsToday, remindersToday, userId, addGoal } = useGoals();
+  const { goals, plans, reminders, goalsToday, plansToday, remindersToday, pendingRequests, userId, addGoal } = useGoals();
   const { user } = useAuth();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode } = useCurrency();
   const { t } = useTranslation(['dashboard', 'common']);
@@ -441,7 +441,9 @@ export const Dashboard = memo(function Dashboard() {
 
   const todayItems = [
     ...goalsToday.map((g) => ({ ...g, itemType: 'goal' as const })),
+    ...plansToday.map((p) => ({ ...p, itemType: 'plan' as const })),
     ...remindersToday.map((r) => ({ ...r, itemType: 'reminder' as const })),
+    ...pendingRequests.map((r) => ({ ...r, itemType: 'request' as const })),
   ];
 
   const greeting = () => {
@@ -629,15 +631,31 @@ export const Dashboard = memo(function Dashboard() {
                 <div
                   key={item.id}
                   className="today-item"
-                  onClick={() => router.push(item.itemType === 'goal' ? '/metas' : '/calendario')}
+                  onClick={() => router.push(item.itemType === 'reminder' ? '/calendario' : '/metas')}
                 >
-                  <div className="today-item-dot" style={{ background: item.itemType === 'goal' ? 'var(--color-prosper-green)' : 'var(--color-gold-500)' }} />
+                  <div className="today-item-dot" style={{
+                    background: item.itemType === 'goal'
+                      ? 'var(--color-prosper-green)'
+                      : item.itemType === 'plan'
+                        ? 'var(--color-purple-500, #8B5CF6)'
+                        : item.itemType === 'request'
+                          ? 'var(--color-blue-500, #3B82F6)'
+                          : 'var(--color-gold-500)'
+                  }} />
                   <div className="today-item-content">
-                    <span className="today-item-title">{item.title}</span>
+                    <span className="today-item-title">
+                      {item.itemType === 'request'
+                        ? t('today.planInvitation', { amount: formatAmount((item as ExpenseRequest).amount) })
+                        : item.title}
+                    </span>
                     <span className="today-item-desc">
                       {item.itemType === 'goal'
                         ? `${formatAmount((item as Goal).current)} de ${formatAmount((item as Goal).target)}`
-                        : (item as Reminder).type}
+                        : item.itemType === 'plan'
+                          ? `${(item as FinancialPlan).category} · ${Math.round(((item as FinancialPlan).current / (item as FinancialPlan).target) * 100)}%`
+                          : item.itemType === 'request'
+                            ? (item as ExpenseRequest).message || t('today.noMessage')
+                            : (item as Reminder).type}
                     </span>
                   </div>
                   <span className="today-item-arrow">›</span>

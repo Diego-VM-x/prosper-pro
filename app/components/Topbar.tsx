@@ -32,7 +32,7 @@ import {
   IconHelp,
 } from './icons';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
-import type { Notification, Transaction } from '@/types';
+import type { Notification, Transaction, FinancialAccount, ExpenseRequest } from '@/types';
 import Link from 'next/link';
 
 interface TopbarProps {
@@ -53,7 +53,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const { theme, setTheme, toggleTheme } = useTheme();
   const { user, logout, isGuest } = useAuth();
   const { query: searchQuery, setQuery: setSearchQuery } = useSearch();
-  const { goals } = useGoals();
+  const { goals, plans, reminders } = useGoals();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -62,6 +62,8 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [notifPermissioned, setNotifPermissioned] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<ExpenseRequest[]>([]);
   const { t } = useTranslation('common');
 
   // Refs para click-outside
@@ -123,19 +125,27 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     }
   }, [unreadCount, notifPermissioned]);
 
-  // Cargar transacciones para búsqueda (deferido para no bloquear render inicial)
+  // Cargar transacciones, cuentas y solicitudes para búsqueda (deferido para no bloquear render inicial)
   useEffect(() => {
     if (!user?.uid) return;
     const uid = user.uid;
     let cancelled = false;
     async function loadData() {
       try {
-        const [{ getTransactionsByOwnerId }] = await Promise.all([
+        const [{ getTransactionsByOwnerId }, { getAccountsByOwnerId }, { getReceivedRequests }] = await Promise.all([
           import('@/lib/firestore/transactions'),
+          import('@/lib/firestore/accounts'),
+          import('@/lib/firestore/requests'),
         ]);
-        const txData = await getTransactionsByOwnerId(uid);
+        const [txData, accData, reqData] = await Promise.all([
+          getTransactionsByOwnerId(uid),
+          getAccountsByOwnerId(uid),
+          getReceivedRequests(uid),
+        ]);
         if (!cancelled) {
           setTransactions(txData.slice(0, 50));
+          setAccounts(accData);
+          setReceivedRequests(reqData);
         }
       } catch (e) {
         // Silenciar error de carga de datos de búsqueda
@@ -234,8 +244,52 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     [searchQuery, transactions]
   );
 
-  const hasResults = searchResults.length > 0 || goalResults.length > 0 || txResults.length > 0;
-  const noData = goals.length === 0 && transactions.length === 0;
+  const planResults = useMemo(() =>
+    searchQuery.trim()
+      ? plans.filter(p =>
+          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        ).slice(0, 5)
+      : [],
+    [searchQuery, plans]
+  );
+
+  const reminderResults = useMemo(() =>
+    searchQuery.trim()
+      ? reminders.filter(r =>
+          r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          r.type.toLowerCase().includes(searchQuery.toLowerCase())
+        ).slice(0, 5)
+      : [],
+    [searchQuery, reminders]
+  );
+
+  const accountResults = useMemo(() =>
+    searchQuery.trim()
+      ? accounts.filter(a =>
+          a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          a.type.toLowerCase().includes(searchQuery.toLowerCase())
+        ).slice(0, 5)
+      : [],
+    [searchQuery, accounts]
+  );
+
+  const requestResults = useMemo(() =>
+    searchQuery.trim()
+      ? receivedRequests.filter(r =>
+          r.status === 'pending' && (
+            (r.message && r.message.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            r.amount.toString().includes(searchQuery)
+          )
+        ).slice(0, 5)
+      : [],
+    [searchQuery, receivedRequests]
+  );
+
+  const hasResults = searchResults.length > 0 || goalResults.length > 0 || txResults.length > 0 || planResults.length > 0 || reminderResults.length > 0 || accountResults.length > 0 || requestResults.length > 0;
+  const noData = goals.length === 0 && transactions.length === 0 && plans.length === 0 && reminders.length === 0 && accounts.length === 0 && receivedRequests.length === 0;
 
   return (
     <header className="topbar" id="main-topbar">
@@ -329,11 +383,11 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               </>
             )}
 
-            {/* Planes */}
+            {/* Metas */}
             {goalResults.length > 0 && (
               <>
                 <div className="search-results-header">
-                  <span>{t('topbar.plans')}</span>
+                  <span>{t('topbar.goals')}</span>
                   <span className="search-results-count">{goalResults.length}</span>
                 </div>
                 {goalResults.slice(0, 5).map((goal) => (
@@ -347,6 +401,106 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <div className="search-result-content">
                       <span className="search-result-name">{goal.title}</span>
                       <span className="search-result-desc">{goal.category} · ${goal.target.toLocaleString()}</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Planes */}
+            {planResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>{t('topbar.plans')}</span>
+                  <span className="search-results-count">{planResults.length}</span>
+                </div>
+                {planResults.map((plan) => (
+                  <Link
+                    key={plan.id}
+                    href="/metas"
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className="search-result-icon"><InlineIcon icon={plan.icon || 'Target'} size={16} /></span>
+                    <div className="search-result-content">
+                      <span className="search-result-name">{plan.title}</span>
+                      <span className="search-result-desc">{plan.category} · {plan.type === 'recurring' ? t('topbar.recurring') : plan.type === 'savings' ? t('topbar.savings') : t('topbar.expense')} · ${plan.target.toLocaleString()}</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Recordatorios */}
+            {reminderResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>{t('topbar.reminders')}</span>
+                  <span className="search-results-count">{reminderResults.length}</span>
+                </div>
+                {reminderResults.map((rem) => (
+                  <Link
+                    key={rem.id}
+                    href="/calendario"
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className="search-result-icon"><InlineIcon icon="Bell" size={16} /></span>
+                    <div className="search-result-content">
+                      <span className="search-result-name">{rem.title}</span>
+                      <span className="search-result-desc">{rem.date} {rem.reminderTime} · {rem.type}</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Cuentas */}
+            {accountResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>{t('topbar.accounts')}</span>
+                  <span className="search-results-count">{accountResults.length}</span>
+                </div>
+                {accountResults.map((acc) => (
+                  <Link
+                    key={acc.id}
+                    href="/finanzas"
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className="search-result-icon"><InlineIcon icon={acc.icon || 'Wallet'} size={16} /></span>
+                    <div className="search-result-content">
+                      <span className="search-result-name">{acc.name}</span>
+                      <span className="search-result-desc">{acc.type} · ${acc.balance?.toLocaleString()}</span>
+                    </div>
+                    <span className="search-result-arrow">→</span>
+                  </Link>
+                ))}
+              </>
+            )}
+
+            {/* Invitaciones */}
+            {requestResults.length > 0 && (
+              <>
+                <div className="search-results-header">
+                  <span>{t('topbar.invitations')}</span>
+                  <span className="search-results-count">{requestResults.length}</span>
+                </div>
+                {requestResults.map((req) => (
+                  <Link
+                    key={req.id}
+                    href="/metas"
+                    className="search-result-item"
+                    onClick={() => { setSearchQuery(''); setShowMobileMenu(false); }}
+                  >
+                    <span className="search-result-icon"><InlineIcon icon="MailOpen" size={16} /></span>
+                    <div className="search-result-content">
+                      <span className="search-result-name">{t('topbar.planInvitation')}</span>
+                      <span className="search-result-desc">${req.amount.toLocaleString()} · {req.message || t('topbar.noMessage')}</span>
                     </div>
                     <span className="search-result-arrow">→</span>
                   </Link>

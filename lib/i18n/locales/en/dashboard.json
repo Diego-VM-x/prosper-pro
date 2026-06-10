@@ -16,7 +16,9 @@
   "today": {
     "title": "For Today",
     "pending_one": "{{count}} pending",
-    "pending_other": "{{count}} pending"
+    "pending_other": "{{count}} pending",
+    "planInvitation": "Plan invitation — {{amount}}",
+    "noMessage": "No message"
   },
   "sections": {
     "actions": "Actions",

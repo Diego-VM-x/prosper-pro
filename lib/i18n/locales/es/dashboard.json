@@ -16,7 +16,9 @@
   "today": {
     "title": "Para Hoy",
     "pending_one": "{{count}} pendiente",
-    "pending_other": "{{count}} pendientes"
+    "pending_other": "{{count}} pendientes",
+    "planInvitation": "Invitación a plan — {{amount}}",
+    "noMessage": "Sin mensaje"
   },
   "sections": {
     "actions": "Acciones",

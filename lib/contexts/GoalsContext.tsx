@@ -5,7 +5,8 @@ import { useAuth } from './AuthContext';
 import { subscribeToGoals, createGoal, updateGoal, deleteGoal } from '@/lib/firestore/goals';
 import { subscribeToReminders, createReminder, updateReminder, deleteReminder } from '@/lib/firestore/reminders';
 import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans, subscribeToSharedPlans } from '@/lib/firestore/plans';
-import type { Goal, Reminder, FinancialPlan } from '@/types';
+import { getReceivedRequests } from '@/lib/firestore/requests';
+import type { Goal, Reminder, FinancialPlan, ExpenseRequest } from '@/types';
 
 interface GoalsContextType {
   userId: string;
@@ -22,7 +23,9 @@ interface GoalsContextType {
   updateReminderFn: (id: string, updates: Partial<Reminder>) => Promise<void>;
   deleteReminderFn: (id: string) => Promise<void>;
   goalsToday: Goal[];
+  plansToday: FinancialPlan[];
   remindersToday: Reminder[];
+  pendingRequests: ExpenseRequest[];
   refresh: () => void;
 }
 
@@ -41,7 +44,9 @@ const GoalsContext = createContext<GoalsContextType>({
   updateReminderFn: async () => {},
   deleteReminderFn: async () => {},
   goalsToday: [],
+  plansToday: [],
   remindersToday: [],
+  pendingRequests: [],
   refresh: () => {},
 });
 
@@ -76,6 +81,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [plans, setPlans] = useState<FinancialPlan[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<ExpenseRequest[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -139,6 +145,15 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsub();
   }, [user?.uid, loading]);
 
+  // Cargar solicitudes recibidas
+  useEffect(() => {
+    if (loading) return;
+    const uid = user?.uid;
+    if (!uid) { setReceivedRequests([]); return; }
+
+    getReceivedRequests(uid).then(setReceivedRequests);
+  }, [user?.uid, loading, refreshKey]);
+
   const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!goal.ownerId) throw new Error('Usuario no autenticado');
     const goalData = { ...goal, createdAt: Date.now(), updatedAt: Date.now() };
@@ -190,13 +205,20 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     refresh();
   }, [refresh]);
 
-  // Filtrar metas y recordatorios que vencen hoy
+  // Filtrar metas, planes y recordatorios que vencen hoy
   const todayISO = getTodayISO();
   const goalsToday = goals.filter((g) => {
     const iso = g.deadline ? parseDeadlineToISO(g.deadline) : null;
     return iso === todayISO && g.status !== 'completed';
   });
+  const plansToday = plans.filter((p) => {
+    if (p.status === 'completed' || p.status === 'cancelled') return false;
+    const dl = p.deadline ? parseDeadlineToISO(p.deadline) : null;
+    const nd = p.nextDueDate ? parseDeadlineToISO(p.nextDueDate) : null;
+    return dl === todayISO || nd === todayISO;
+  });
   const remindersToday = reminders.filter((r) => r.date === todayISO && r.isActive);
+  const pendingRequests = receivedRequests.filter((r) => r.status === 'pending');
 
   return (
     <GoalsContext.Provider value={{
@@ -214,7 +236,9 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
       updateReminderFn,
       deleteReminderFn,
       goalsToday,
+      plansToday,
       remindersToday,
+      pendingRequests,
       refresh,
     }}>
       {children}
