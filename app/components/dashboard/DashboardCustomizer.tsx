@@ -13,6 +13,9 @@ import { useRouter } from 'next/navigation';
 
 type TabKey = 'categories' | 'catalog' | 'widgets';
 
+const WELCOME_WIDGET_ID = 'w_welcome';
+const UNGROUPED_CATEGORY_ID = 'ungrouped';
+
 export function DashboardCustomizer() {
   const router = useRouter();
   const { t } = useTranslation('dashboard');
@@ -45,15 +48,16 @@ export function DashboardCustomizer() {
 
   const handleStartAddWidget = useCallback((type: WidgetType) => {
     setAddingWidget(type);
-    setAddWidgetCat(layout.categories[0]?.id || '');
+    // Default to ungrouped if available, otherwise first category
+    setAddWidgetCat(UNGROUPED_CATEGORY_ID);
     setAddWidgetSize('small');
-  }, [layout.categories]);
+  }, []);
 
   const handleConfirmAddWidget = useCallback(() => {
     if (!addingWidget || !addWidgetCat) return;
     const meta = getWidgetMeta(addingWidget);
     addWidget({
-      categoryId: addWidgetCat,
+      categoryId: addWidgetCat === UNGROUPED_CATEGORY_ID ? '' : addWidgetCat,
       type: addingWidget,
       title: meta.label,
       size: addWidgetSize,
@@ -62,6 +66,14 @@ export function DashboardCustomizer() {
   }, [addingWidget, addWidgetCat, addWidgetSize, addWidget]);
 
   const sortedCategories = [...layout.categories].sort((a, b) => a.order - b.order);
+
+  // Separate ungrouped widgets (empty categoryId)
+  const ungroupedWidgets = layout.widgets
+    .filter(w => !w.categoryId)
+    .sort((a, b) => a.order - b.order);
+
+  const isWelcomeWidget = (widget: DashboardWidgetConfig) => widget.type === 'welcome_banner';
+  const isFixedWidget = (widget: DashboardWidgetConfig) => isWelcomeWidget(widget);
 
   return (
     <div className="dashboard-customizer-page">
@@ -239,48 +251,62 @@ export function DashboardCustomizer() {
                   {t('customize.reset', { defaultValue: 'Restaurar' })}
                 </button>
               </div>
-              {sortedCategories.map(cat => {
-                const catWidgets = layout.widgets
-                  .filter(w => w.categoryId === cat.id)
-                  .sort((a, b) => a.order - b.order);
-                if (catWidgets.length === 0) return null;
-                return (
-                  <div key={cat.id} className="customizer-widget-group">
-                    <h4 className="customizer-widget-group-title">
-                      <InlineIcon icon={cat.icon} size={16} /> {cat.name}
-                    </h4>
-                    <div className="customizer-widget-list">
-                      {catWidgets.map((widget, idx) => (
-                        <div key={widget.id} className="customizer-widget-item">
-                          <div className="customizer-widget-item-left">
-                            <span className="customizer-widget-item-icon">
-                              <InlineIcon icon={getWidgetMeta(widget.type).icon} size={16} />
-                            </span>
-                            <input
-                              className="customizer-widget-item-title"
-                              value={widget.title}
-                              onChange={(e) => updateWidget(widget.id, { title: e.target.value })}
-                            />
-                          </div>
-                          <div className="customizer-widget-item-controls">
-                            <SizeSelector
-                              value={widget.size}
-                              onChange={(size) => updateWidget(widget.id, { size })}
-                            />
-                            <select
-                              className="form-input"
-                              value={widget.categoryId}
-                              onChange={(e) => changeWidgetCategory(widget.id, e.target.value)}
-                              style={{ width: 140, fontSize: '0.8125rem' }}
-                            >
-                              {sortedCategories.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                              ))}
-                            </select>
+
+              {/* Ungrouped widgets section */}
+              <div className="customizer-ungrouped-section">
+                <h4 className="customizer-ungrouped-section-title">
+                  <LayoutGrid size={16} /> {t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}
+                </h4>
+                <div className="customizer-widget-list">
+                  {ungroupedWidgets.length === 0 && (
+                    <p className="customizer-ungrouped-section-empty">
+                      {t('customize.noUngrouped', { defaultValue: 'No hay widgets sin grupo' })}
+                    </p>
+                  )}
+                  {ungroupedWidgets.map((widget, idx) => (
+                    <div
+                      key={widget.id}
+                      className={`customizer-widget-item ${isFixedWidget(widget) ? 'fixed-widget' : ''}`}
+                    >
+                      <div className="customizer-widget-item-left">
+                        <span className="customizer-widget-item-icon">
+                          <InlineIcon icon={getWidgetMeta(widget.type).icon} size={16} />
+                        </span>
+                        <input
+                          className="customizer-widget-item-title"
+                          value={widget.title}
+                          onChange={(e) => !isFixedWidget(widget) && updateWidget(widget.id, { title: e.target.value })}
+                          readOnly={isFixedWidget(widget)}
+                        />
+                      </div>
+                      <div className="customizer-widget-item-controls">
+                        <SizeSelector
+                          value={widget.size}
+                          onChange={(size) => updateWidget(widget.id, { size })}
+                        />
+                        <select
+                          className="form-input"
+                          value={widget.categoryId || UNGROUPED_CATEGORY_ID}
+                          onChange={(e) => {
+                            const newCat = e.target.value === UNGROUPED_CATEGORY_ID ? '' : e.target.value;
+                            if (!isFixedWidget(widget)) {
+                              changeWidgetCategory(widget.id, newCat);
+                            }
+                          }}
+                          disabled={isFixedWidget(widget)}
+                          style={{ width: 140, fontSize: '0.8125rem' }}
+                        >
+                          <option value={UNGROUPED_CATEGORY_ID}>{t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}</option>
+                          {sortedCategories.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                        {!isFixedWidget(widget) && (
+                          <>
                             <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'up')} disabled={idx === 0} title="Subir">
                               <ArrowUp size={14} />
                             </button>
-                            <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'down')} disabled={idx === catWidgets.length - 1} title="Bajar">
+                            <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'down')} disabled={idx === ungroupedWidgets.length - 1} title="Bajar">
                               <ArrowDown size={14} />
                             </button>
                             <button
@@ -294,6 +320,84 @@ export function DashboardCustomizer() {
                             >
                               <Trash2 size={14} />
                             </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {sortedCategories.map(cat => {
+                const catWidgets = layout.widgets
+                  .filter(w => w.categoryId === cat.id)
+                  .sort((a, b) => a.order - b.order);
+                if (catWidgets.length === 0) return null;
+                return (
+                  <div key={cat.id} className="customizer-widget-group">
+                    <h4 className="customizer-widget-group-title">
+                      <InlineIcon icon={cat.icon} size={16} /> {cat.name}
+                    </h4>
+                    <div className="customizer-widget-list">
+                      {catWidgets.map((widget, idx) => (
+                        <div
+                          key={widget.id}
+                          className={`customizer-widget-item ${isFixedWidget(widget) ? 'fixed-widget' : ''}`}
+                        >
+                          <div className="customizer-widget-item-left">
+                            <span className="customizer-widget-item-icon">
+                              <InlineIcon icon={getWidgetMeta(widget.type).icon} size={16} />
+                            </span>
+                            <input
+                              className="customizer-widget-item-title"
+                              value={widget.title}
+                              onChange={(e) => !isFixedWidget(widget) && updateWidget(widget.id, { title: e.target.value })}
+                              readOnly={isFixedWidget(widget)}
+                            />
+                          </div>
+                          <div className="customizer-widget-item-controls">
+                            <SizeSelector
+                              value={widget.size}
+                              onChange={(size) => updateWidget(widget.id, { size })}
+                            />
+                            <select
+                              className="form-input"
+                              value={widget.categoryId || UNGROUPED_CATEGORY_ID}
+                              onChange={(e) => {
+                                const newCat = e.target.value === UNGROUPED_CATEGORY_ID ? '' : e.target.value;
+                                if (!isFixedWidget(widget)) {
+                                  changeWidgetCategory(widget.id, newCat);
+                                }
+                              }}
+                              disabled={isFixedWidget(widget)}
+                              style={{ width: 140, fontSize: '0.8125rem' }}
+                            >
+                              <option value={UNGROUPED_CATEGORY_ID}>{t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}</option>
+                              {sortedCategories.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                              ))}
+                            </select>
+                            {!isFixedWidget(widget) && (
+                              <>
+                                <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'up')} disabled={idx === 0} title="Subir">
+                                  <ArrowUp size={14} />
+                                </button>
+                                <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'down')} disabled={idx === catWidgets.length - 1} title="Bajar">
+                                  <ArrowDown size={14} />
+                                </button>
+                                <button
+                                  className="customizer-list-btn danger"
+                                  onClick={() => {
+                                    if (confirm(t('customize.removeWidgetConfirm', { defaultValue: '¿Eliminar este widget?' }))) {
+                                      removeWidget(widget.id);
+                                    }
+                                  }}
+                                  title="Eliminar"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -325,6 +429,7 @@ export function DashboardCustomizer() {
                   onChange={(e) => setAddWidgetCat(e.target.value)}
                   style={{ marginBottom: 12 }}
                 >
+                  <option value={UNGROUPED_CATEGORY_ID}>{t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}</option>
                   {sortedCategories.map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}

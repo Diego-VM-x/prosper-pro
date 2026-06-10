@@ -205,7 +205,7 @@ export async function loginWithEmailImpl(email: string, pass: string) {
   return userCred.user;
 }
 
-export async function registerWithEmailImpl(email: string, pass: string, name: string, currency?: CurrencyCode) {
+export async function registerWithEmailImpl(email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) {
   if (!auth) return;
   const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
   const userCred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -226,6 +226,8 @@ export async function registerWithEmailImpl(email: string, pass: string, name: s
     createdAt: Date.now(),
     currency: currency || 'USD',
     showProfile: true,
+    language: language || 'es',
+    theme: theme || 'dark',
   });
   await onUserReady(userCred.user);
   return userCred.user;

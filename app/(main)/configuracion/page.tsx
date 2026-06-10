@@ -428,29 +428,37 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       </div>
                     </div>
 
+                    {/* Currency Selector */}
                     <div className="pref-section">
                       <label className="pref-label">{t('preferencias.currencyLabel')}</label>
-                      <div className="option-grid currency-grid">
+                      <div className="currency-cards-grid">
                         {CURRENCY_LIST.map(code => {
                           const cfg = CURRENCY_MAP[code];
                           const rateToBs = rates.rates[code];
                           const isBs = code === 'BS';
+                          const isActive = currency === code;
                           return (
                             <button
                               key={code}
-                              className={`option-btn ${currency === code ? 'active' : ''}`}
+                              className={`currency-card ${isActive ? 'active' : ''}`}
                               onClick={() => {
                                 setCurrency(code);
                                 setDisplayCurrency(code);
                               }}
-                              style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}
                             >
-                              <CurrencyFlag code={code} size={20} className="option-flag" />
-                              <span className="option-text">{cfg.symbol} {cfg.name}</span>
+                              <div className="currency-card-header">
+                                <CurrencyFlag code={code} size={24} />
+                                <span className="currency-card-code">{cfg.code}</span>
+                                {isActive && <span className="currency-card-check"><Check size={14} /></span>}
+                              </div>
+                              <div className="currency-card-body">
+                                <span className="currency-card-name">{cfg.name}</span>
+                                <span className="currency-card-symbol">{cfg.symbol}</span>
+                              </div>
                               {!isBs && rateToBs && rateToBs > 0 && (
-                                <span style={{ fontSize: '0.75rem', color: 'var(--color-prosper-green)', fontWeight: 500, marginLeft: '28px' }}>
+                                <div className="currency-card-rate">
                                   1 {cfg.code} ≈ {rateToBs.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })} Bs.
-                                </span>
+                                </div>
                               )}
                             </button>
                           );
@@ -458,90 +466,62 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       </div>
                     </div>
 
+                    {/* Exchange Rates */}
                     {rates.source === 'api' && (
                       <div className="pref-section">
                         <label className="pref-label">{t('preferencias.ratesLabel')}</label>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.875rem', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>1 USD = {rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                        <div className="rates-table">
+                          {/* Fiat Header */}
+                          <div className="rates-section-title">{t('market.fiat', { defaultValue: 'Fiat' })}</div>
+                          <div className="rates-row">
+                            <CurrencyFlag code="USD" size={18} />
+                            <span className="rates-name">USD</span>
+                            <span className="rates-value">{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>1 EUR = {rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
+                          <div className="rates-row">
+                            <CurrencyFlag code="EUR" size={18} />
+                            <span className="rates-name">EUR</span>
+                            <span className="rates-value">{rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>
-                              1 USDT = ${(rates.rates.USDT / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
-                                ≈ {rates.rates.USDT?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
+                          <div className="rates-row">
+                            <CurrencyFlag code="COP" size={18} />
+                            <span className="rates-name">COP</span>
+                            <span className="rates-value">{rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</span>
+                          </div>
+
+                          {/* Crypto Header */}
+                          <div className="rates-section-title" style={{ marginTop: '12px' }}>{t('market.cryptos', { defaultValue: 'Criptomonedas' })}</div>
+                          {[
+                            { code: 'USDT', usdPrice: rates.rates.USDT / rates.rates.USD, bsPrice: rates.rates.USDT },
+                            { code: 'SOL', usdPrice: rates.rates.SOL / rates.rates.USD, bsPrice: rates.rates.SOL },
+                            { code: 'BTC', usdPrice: rates.rates.BTC / rates.rates.USD, bsPrice: rates.rates.BTC },
+                            { code: 'ETH', usdPrice: rates.rates.ETH / rates.rates.USD, bsPrice: rates.rates.ETH },
+                            { code: 'USDC', usdPrice: rates.rates.USDC / rates.rates.USD, bsPrice: rates.rates.USDC },
+                          ].map(crypto => (
+                            <div className="rates-row" key={crypto.code}>
+                              <CurrencyFlag code={crypto.code} size={18} />
+                              <span className="rates-name">{crypto.code}</span>
+                              <span className="rates-value">
+                                ${crypto.usdPrice?.toLocaleString('es-VE', { maximumFractionDigits: 2 })}
+                                <span className="rates-sub">≈ {crypto.bsPrice?.toLocaleString('es-VE', { maximumFractionDigits: 2 })} Bs.</span>
                               </span>
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>
-                              1 SOL = ${(rates.rates.SOL / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
-                                ≈ {rates.rates.SOL?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
-                              </span>
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>
-                              1 BTC = ${(rates.rates.BTC / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
-                                ≈ {rates.rates.BTC?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
-                              </span>
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>
-                              1 ETH = ${(rates.rates.ETH / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
-                                ≈ {rates.rates.ETH?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
-                              </span>
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>
-                              1 USDC = ${(rates.rates.USDC / rates.rates.USD)?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '6px' }}>
-                                ≈ {rates.rates.USDC?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.
-                              </span>
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span><Check size={14} /></span>
-                            <strong style={{ color: 'var(--text-primary)' }}>1 COP = {rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</strong>
-                          </div>
-                          {rates.p2pRates?.USDT && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
-                              <strong style={{ color: 'var(--text-primary)' }}>1 USDT = {rates.p2pRates.USDT.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
                             </div>
-                          )}
-                          {rates.p2pRates?.SOL && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
-                              <strong style={{ color: 'var(--text-primary)' }}>1 SOL = {rates.p2pRates.SOL.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
-                            </div>
-                          )}
-                          {rates.p2pRates?.BTC && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
-                              <strong style={{ color: 'var(--text-primary)' }}>1 BTC = {rates.p2pRates.BTC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
-                            </div>
-                          )}
-                          {rates.p2pRates?.USDC && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '10px', background: 'var(--color-prosper-green)', color: '#fff', padding: '2px 6px', borderRadius: '4px' }}>P2P Binance</span>
-                              <strong style={{ color: 'var(--text-primary)' }}>1 USDC = {rates.p2pRates.USDC.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</strong>
-                            </div>
+                          ))}
+
+                          {/* P2P Rates */}
+                          {rates.p2pRates && Object.keys(rates.p2pRates).length > 0 && (
+                            <>
+                              <div className="rates-section-title" style={{ marginTop: '12px' }}>
+                                <span className="rates-p2p-badge">P2P Binance</span>
+                              </div>
+                              {Object.entries(rates.p2pRates).map(([code, rate]) => (
+                                <div className="rates-row" key={`p2p-${code}`}>
+                                  <CurrencyFlag code={code} size={18} />
+                                  <span className="rates-name">{code}</span>
+                                  <span className="rates-value p2p">{rate?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                                </div>
+                              ))}
+                            </>
                           )}
                         </div>
                       </div>
@@ -790,7 +770,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                               <button
                                 className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
                                 onClick={() => handleRemoveDevice(device.deviceId)}
-                                disabled={removingDevice === device.deviceId || !online}
+                                disabled={removingDevice === device.deviceId}
                                 title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
                               >
                                 {removingDevice === device.deviceId ? (
@@ -1862,6 +1842,142 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               color: var(--text-tertiary);
             }
 
+            /* ════════════════════════════════════════════════════════════════════
+               CURRENCY CARDS GRID — Clean & Organized
+               ════════════════════════════════════════════════════════════════════ */
+            .currency-cards-grid {
+              display: grid;
+              grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+              gap: 10px;
+            }
+            .currency-card {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              padding: 14px 12px;
+              border-radius: 12px;
+              border: 1.5px solid var(--border-default);
+              background: var(--bg-input);
+              cursor: pointer;
+              transition: all 0.2s ease;
+              text-align: left;
+              font-family: inherit;
+              position: relative;
+            }
+            .currency-card:hover {
+              border-color: rgba(61, 204, 142, 0.4);
+              transform: translateY(-2px);
+              box-shadow: 0 4px 16px rgba(61, 204, 142, 0.08);
+            }
+            .currency-card.active {
+              border-color: var(--color-prosper-green);
+              background: rgba(61, 204, 142, 0.06);
+              box-shadow: 0 0 0 3px rgba(61, 204, 142, 0.1);
+            }
+            .currency-card-header {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .currency-card-code {
+              font-size: 0.8125rem;
+              font-weight: 700;
+              color: var(--text-primary);
+            }
+            .currency-card-check {
+              margin-left: auto;
+              color: var(--color-prosper-green);
+              display: flex;
+              align-items: center;
+            }
+            .currency-card-body {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .currency-card-name {
+              font-size: 0.75rem;
+              font-weight: 500;
+              color: var(--text-secondary);
+            }
+            .currency-card-symbol {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+            }
+            .currency-card-rate {
+              font-size: 0.6875rem;
+              font-weight: 600;
+              color: var(--color-prosper-green);
+              margin-top: 2px;
+              padding-top: 6px;
+              border-top: 1px solid var(--border-default);
+            }
+
+            /* ════════════════════════════════════════════════════════════════════
+               RATES TABLE — Clean list layout
+               ════════════════════════════════════════════════════════════════════ */
+            .rates-table {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+              background: var(--bg-input);
+              border-radius: 12px;
+              padding: 16px;
+              border: 1px solid var(--border-default);
+            }
+            .rates-section-title {
+              font-size: 0.625rem;
+              font-weight: 700;
+              color: var(--text-tertiary);
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              margin-bottom: 6px;
+              padding-bottom: 6px;
+              border-bottom: 1px solid var(--border-default);
+            }
+            .rates-row {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 8px 0;
+              border-bottom: 1px solid rgba(255,255,255,0.03);
+            }
+            .rates-row:last-child {
+              border-bottom: none;
+            }
+            .rates-name {
+              font-size: 0.8125rem;
+              font-weight: 600;
+              color: var(--text-primary);
+              min-width: 50px;
+            }
+            .rates-value {
+              margin-left: auto;
+              font-size: 0.8125rem;
+              font-weight: 700;
+              color: var(--color-prosper-green);
+              text-align: right;
+            }
+            .rates-value .rates-sub {
+              font-size: 0.6875rem;
+              font-weight: 500;
+              color: var(--text-secondary);
+              margin-left: 6px;
+            }
+            .rates-value.p2p {
+              color: #F59E0B;
+            }
+            .rates-p2p-badge {
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.06em;
+              padding: 3px 8px;
+              border-radius: 6px;
+              background: rgba(245, 158, 11, 0.15);
+              color: #F59E0B;
+            }
+
             /* ===== RESPONSIVE: Tablet (1024px) ===== */
             @media (min-width: 768px) {
               .settings-page { padding: 24px 20px; }
@@ -1907,6 +2023,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               .option-text { font-size: 0.625rem; }
               .theme-selector { grid-template-columns: 1fr 1fr; gap: 10px; }
               .theme-preview { height: 60px; }
+              .currency-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+              .currency-card { padding: 10px; }
+              .currency-card-code { font-size: 0.75rem; }
+              .currency-card-name { font-size: 0.6875rem; }
+              .currency-card-rate { font-size: 0.625rem; }
+              .rates-table { padding: 12px; }
+              .rates-row { padding: 6px 0; }
+              .rates-name { font-size: 0.75rem; }
+              .rates-value { font-size: 0.75rem; }
               .toggle-row { padding: 12px; }
               .toggle-icon { width: 32px; height: 32px; font-size: 0.875rem; }
               .toggle-label { font-size: 0.75rem; }
@@ -1971,6 +2096,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               .option-grid { grid-template-columns: repeat(2, 1fr); }
               .currency-grid { grid-template-columns: repeat(2, 1fr); }
               .theme-selector { grid-template-columns: 1fr; }
+              .currency-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+              .currency-card { padding: 8px; border-radius: 10px; }
+              .rates-table { padding: 10px; border-radius: 10px; }
               .toggle-row { padding: 10px; gap: 10px; }
               .toggle-icon { width: 28px; height: 28px; font-size: 0.75rem; border-radius: 8px; }
               .toggle-label { font-size: 0.6875rem; }

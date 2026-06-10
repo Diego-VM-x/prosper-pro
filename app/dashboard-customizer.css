@@ -27,11 +27,25 @@
   grid-template-columns: repeat(3, 1fr);
 }
 
-@media (max-width: 1024px) {
+/* ════════════════════════════════════════════════════════════════════
+   WIDGET RESPONSIVE SIZES — coherent across breakpoints
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Desktop (≥1025px): 3 columns */
+@media (min-width: 1025px) {
+  .widgets-grid .widget-small { grid-column: span 1; }
+  .widgets-grid .widget-medium { grid-column: span 2; }
+  .widgets-grid .widget-large { grid-column: span 3; }
+}
+
+/* Tablet (768px–1024px): 2 columns */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .widgets-grid .widget-small { grid-column: span 1; }
   .widgets-grid .widget-medium { grid-column: span 2; }
   .widgets-grid .widget-large { grid-column: span 2; }
 }
 
+/* Mobile (≤768px): 1 column, all full width */
 @media (max-width: 768px) {
   .widgets-grid .widget-small,
   .widgets-grid .widget-medium,
@@ -41,6 +55,116 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   WIDGET INTERNAL RESPONSIVE STYLES per size
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ---- Welcome Banner sizes ---- */
+.widget-small.welcome-banner { padding: 20px 24px; min-height: 100px; }
+.widget-small.welcome-banner .welcome-title { font-size: 1.25rem; }
+.widget-small.welcome-banner .welcome-subtitle { font-size: 0.8125rem; }
+.widget-small.welcome-banner .welcome-actions { display: none; }
+
+.widget-medium.welcome-banner { padding: 28px 32px; min-height: 120px; }
+.widget-medium.welcome-banner .welcome-title { font-size: 1.5rem; }
+.widget-medium.welcome-banner .welcome-subtitle { font-size: 0.875rem; }
+
+.widget-large.welcome-banner { padding: 32px 40px; min-height: 140px; }
+.widget-large.welcome-banner .welcome-title { font-size: 1.75rem; }
+
+/* ---- Stats Pills sizes ---- */
+.widget-small.stats-grid { grid-template-columns: 1fr; gap: 8px; }
+.widget-small.stats-grid .stat-pill { padding: 12px 14px; gap: 10px; }
+.widget-small.stats-grid .stat-pill-icon { width: 36px; height: 36px; }
+.widget-small.stats-grid .stat-pill-value { font-size: 0.9375rem; }
+
+.widget-medium.stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.widget-medium.stats-grid .stat-pill { padding: 14px 16px; }
+.widget-medium.stats-grid .stat-pill-icon { width: 40px; height: 40px; }
+
+.widget-large.stats-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+/* ---- Today Section sizes ---- */
+.widget-small.today-section { padding: 14px 16px; }
+.widget-small.today-section .today-item { padding: 8px 10px; }
+.widget-small.today-section .today-item-title { font-size: 0.8125rem; }
+
+.widget-medium.today-section { padding: 18px 20px; }
+
+/* ---- Quick Actions sizes ---- */
+.widget-small.quick-actions-card .quick-actions-grid { grid-template-columns: 1fr; gap: 6px; }
+.widget-small.quick-actions-card .quick-action-btn { padding: 10px 6px; }
+.widget-small.quick-actions-card .quick-action-label { font-size: 0.625rem; }
+
+.widget-medium.quick-actions-card .quick-actions-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+
+/* ---- Tool Cards sizes ---- */
+.widget-small.tool-card { padding: 16px; }
+.widget-small.tool-card .content-card-header { margin-bottom: 8px; }
+.widget-small.tool-card .tool-desc { font-size: 0.6875rem; }
+
+.widget-medium.tool-card { padding: 20px; }
+
+/* ---- Monthly Summary sizes ---- */
+.widget-small.summary-card { padding: 16px; }
+.widget-small.summary-card .summary-row { gap: 4px; }
+.widget-small.summary-card .summary-value { font-size: 0.8125rem; }
+
+.widget-medium.summary-card { padding: 20px; }
+
+/* ---- Accounts sizes ---- */
+.widget-small.accounts-section { padding: 16px; }
+.widget-small.accounts-section .account-item { padding: 8px 10px; gap: 8px; }
+.widget-small.accounts-section .account-item-icon { width: 32px; height: 32px; }
+.widget-small.accounts-section .account-item-balance { font-size: 0.8125rem; }
+
+.widget-medium.accounts-section { padding: 20px; }
+
+/* ---- Recent Transactions sizes ---- */
+.widget-small.recent-tx-card { padding: 16px; }
+.widget-small.recent-tx-card .recent-tx-item { padding: 6px 8px; }
+.widget-small.recent-tx-card .recent-tx-desc { font-size: 0.6875rem; }
+.widget-small.recent-tx-card .recent-tx-amount { font-size: 0.75rem; }
+
+.widget-medium.recent-tx-card { padding: 20px; }
+
+/* ---- Quick Transfer sizes ---- */
+.widget-small.transfer-card { padding: 16px; }
+.widget-small.transfer-card .form-input { font-size: 0.8125rem; padding: 8px 10px; }
+
+.widget-medium.transfer-card { padding: 20px; }
+
+/* ---- Active Plans sizes ---- */
+.widget-small.plans-card { padding: 16px; }
+.widget-small.plans-card .plan-item-header { margin-bottom: 6px; }
+.widget-small.plans-card .plan-item-title { font-size: 0.8125rem; }
+.widget-small.plans-card .plan-progress-info { flex-direction: column; align-items: flex-start; gap: 2px; }
+
+.widget-medium.plans-card { padding: 20px; }
+
+/* ---- Deadlines sizes ---- */
+.widget-small.deadlines-section { padding: 16px; }
+.widget-small.deadlines-section .deadline-item { padding: 8px 10px; }
+.widget-small.deadlines-section .deadline-badge { width: 38px; height: 38px; }
+.widget-small.deadlines-section .deadline-title { font-size: 0.8125rem; }
+
+.widget-medium.deadlines-section { padding: 20px; }
+
+/* ---- Exchange Rates sizes ---- */
+.widget-small.rates-card { padding: 16px; }
+.widget-small.rates-card .rate-item { padding: 6px 8px; }
+.widget-small.rates-card .rate-name { font-size: 0.75rem; }
+.widget-small.rates-card .rate-value { font-size: 0.75rem; }
+
+.widget-medium.rates-card { padding: 20px; }
+
+/* ---- Financial Chart sizes ---- */
+.widget-small.chart-card { padding: 16px; }
+.widget-small.chart-card .chart-skeleton { height: 180px !important; }
+
+.widget-medium.chart-card { padding: 20px; }
+.widget-medium.chart-card .chart-skeleton { height: 220px !important; }
 
 /* ── Dashboard Customizer Page ── */
 .dashboard-customizer-page {
@@ -486,6 +610,104 @@
 .dashboard-customize-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 24px rgba(61, 204, 142, 0.4);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   CUSTOM SELECT / DROPDOWN STYLES
+   ════════════════════════════════════════════════════════════════════ */
+.customizer-body select.form-input,
+.modal-body select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 10px 36px 10px 12px;
+  transition: all 0.15s ease;
+  min-width: 140px;
+}
+.customizer-body select.form-input:hover,
+.modal-body select.form-input:hover {
+  border-color: var(--color-prosper-green);
+  box-shadow: 0 0 0 3px rgba(61, 204, 142, 0.08);
+}
+.customizer-body select.form-input:focus,
+.modal-body select.form-input:focus {
+  border-color: var(--color-prosper-green);
+  box-shadow: 0 0 0 3px rgba(61, 204, 142, 0.12);
+  outline: none;
+}
+[data-theme="dark"] .customizer-body select.form-input,
+[data-theme="dark"] .modal-body select.form-input,
+[data-theme="amoled"] .customizer-body select.form-input,
+[data-theme="amoled"] .modal-body select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-color: var(--bg-input);
+}
+.customizer-body select.form-input option,
+.modal-body select.form-input option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 0.875rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   FIXED WIDGET (Welcome) — visual indicator
+   ════════════════════════════════════════════════════════════════════ */
+.customizer-widget-item.fixed-widget {
+  border-color: rgba(61, 204, 142, 0.25);
+  background: linear-gradient(90deg, var(--bg-card) 0%, rgba(61, 204, 142, 0.03) 100%);
+}
+.customizer-widget-item.fixed-widget .customizer-widget-item-icon {
+  background: rgba(61, 204, 142, 0.12);
+}
+.customizer-widget-item.fixed-widget .customizer-widget-item-title {
+  color: var(--color-prosper-green);
+  cursor: default;
+}
+.customizer-widget-item.fixed-widget .customizer-widget-item-title:focus {
+  background: transparent;
+  box-shadow: none;
+}
+.customizer-widget-item.fixed-widget .customizer-widget-item-controls .customizer-list-btn.danger,
+.customizer-widget-item.fixed-widget .customizer-widget-item-controls .customizer-list-btn[title="Eliminar"] {
+  display: none;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   UNGROUPED WIDGETS SECTION
+   ════════════════════════════════════════════════════════════════════ */
+.customizer-ungrouped-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-card) 100%);
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-xl);
+}
+.customizer-ungrouped-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0 0 12px 0;
+}
+.customizer-ungrouped-section-empty {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 16px;
+  margin: 0;
 }
 
 /* ── Responsive customizer ── */

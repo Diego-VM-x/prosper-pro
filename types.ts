@@ -224,6 +224,8 @@ export interface UserProfile {
   displayName?: string | null;
   photoURL?: string | null;
   currency?: CurrencyCode;
+  language?: string;
+  theme?: string;
   createdAt?: number;
   updatedAt?: number;
   notifications?: NotificationPreferences;

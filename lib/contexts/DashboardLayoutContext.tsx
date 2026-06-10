@@ -71,6 +71,24 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
   const [isLoading, setIsLoading] = useState(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Ensure welcome banner always exists
+  const ensureWelcomeWidget = useCallback((layout: DashboardLayout): DashboardLayout => {
+    const hasWelcome = layout.widgets.some(w => w.type === 'welcome_banner');
+    if (hasWelcome) return layout;
+    const welcomeWidget: DashboardWidgetConfig = {
+      id: generateId('w'),
+      categoryId: layout.categories[0]?.id || '',
+      type: 'welcome_banner',
+      title: 'Bienvenido',
+      size: 'large',
+      order: -1,
+    };
+    return {
+      ...layout,
+      widgets: [welcomeWidget, ...layout.widgets],
+    };
+  }, []);
+
   // Load layout on mount
   useEffect(() => {
     let unsub: (() => void) | undefined;
@@ -81,8 +99,9 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
         if (user?.uid) {
           const firestoreLayout = await getDashboardLayout(user.uid);
           if (firestoreLayout) {
-            setLayout(firestoreLayout);
-            safeLocalStorage.setItem(LS_KEY, JSON.stringify(firestoreLayout));
+            const ensured = ensureWelcomeWidget(firestoreLayout);
+            setLayout(ensured);
+            safeLocalStorage.setItem(LS_KEY, JSON.stringify(ensured));
             setIsLoading(false);
             return;
           }
@@ -92,7 +111,8 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
         if (saved) {
           const parsed = JSON.parse(saved) as DashboardLayout;
           if (parsed.categories?.length && parsed.widgets?.length) {
-            setLayout(parsed);
+            const ensured = ensureWelcomeWidget(parsed);
+            setLayout(ensured);
             setIsLoading(false);
             return;
           }
@@ -108,7 +128,7 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
     }
     load();
     return () => unsub?.();
-  }, [user?.uid]);
+  }, [user?.uid, ensureWelcomeWidget]);
 
   // Persist layout changes
   const persist = useCallback((nextLayout: DashboardLayout) => {
@@ -197,10 +217,15 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
   }, [setLayoutAndPersist]);
 
   const removeWidget = useCallback((id: string) => {
-    setLayoutAndPersist(prev => ({
-      ...prev,
-      widgets: prev.widgets.filter(w => w.id !== id),
-    }));
+    setLayoutAndPersist(prev => {
+      const widget = prev.widgets.find(w => w.id === id);
+      // Prevent removing the welcome banner widget
+      if (widget?.type === 'welcome_banner') return prev;
+      return {
+        ...prev,
+        widgets: prev.widgets.filter(w => w.id !== id),
+      };
+    });
   }, [setLayoutAndPersist]);
 
   const moveWidget = useCallback((id: string, direction: 'up' | 'down') => {
@@ -225,6 +250,8 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
     setLayoutAndPersist(prev => {
       const widget = prev.widgets.find(w => w.id === widgetId);
       if (!widget) return prev;
+      // Prevent moving welcome banner out of its category
+      if (widget.type === 'welcome_banner') return prev;
       const newCatWidgets = prev.widgets.filter(w => w.categoryId === newCategoryId);
       return {
         ...prev,

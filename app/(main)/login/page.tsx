@@ -65,6 +65,24 @@ export default function LoginPage() {
       return;
     }
 
+    // Password requirements validation
+    if (password.length < 8) {
+      setError(t('login.errors.passwordTooShort', { defaultValue: 'La contraseña debe tener al menos 8 caracteres' }));
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setError(t('login.errors.passwordNoUppercase', { defaultValue: 'La contraseña debe tener al menos una mayúscula' }));
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      setError(t('login.errors.passwordNoLowercase', { defaultValue: 'La contraseña debe tener al menos una minúscula' }));
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError(t('login.errors.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -172,6 +190,20 @@ export default function LoginPage() {
                 <div className="form-group">
                   <label>{t('login.passwordLabel')}</label>
                   <input type="password" placeholder={t('login.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+                  <div className="password-hints">
+                    <span className={`password-hint ${password.length >= 8 ? 'valid' : ''}`}>
+                      {password.length >= 8 ? '✓' : '•'} {t('login.passwordHints.minLength', { defaultValue: 'Mínimo 8 caracteres' })}
+                    </span>
+                    <span className={`password-hint ${/[A-Z]/.test(password) ? 'valid' : ''}`}>
+                      {/[A-Z]/.test(password) ? '✓' : '•'} {t('login.passwordHints.uppercase', { defaultValue: 'Una mayúscula' })}
+                    </span>
+                    <span className={`password-hint ${/[a-z]/.test(password) ? 'valid' : ''}`}>
+                      {/[a-z]/.test(password) ? '✓' : '•'} {t('login.passwordHints.lowercase', { defaultValue: 'Una minúscula' })}
+                    </span>
+                    <span className={`password-hint ${/[0-9]/.test(password) ? 'valid' : ''}`}>
+                      {/[0-9]/.test(password) ? '✓' : '•'} {t('login.passwordHints.number', { defaultValue: 'Un número' })}
+                    </span>
+                  </div>
                 </div>
                 <button type="submit" className="login-btn" disabled={loading || !auth}>
                   {loading ? (

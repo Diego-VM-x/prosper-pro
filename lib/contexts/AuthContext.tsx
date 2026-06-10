@@ -13,7 +13,7 @@ interface AuthContextType {
   isGuest: boolean;
   loginWithGoogle: () => Promise<any | null>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
   wipeAllData: () => Promise<{ success: boolean; wiped?: string[]; errors?: string[]; error?: string }>;
@@ -177,10 +177,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(firebaseUser);
   }, []);
 
-  const registerWithEmail = useCallback(async (email: string, pass: string, name: string, currency?: CurrencyCode) => {
+  const registerWithEmail = useCallback(async (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) => {
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
-    const firebaseUser = await core.registerWithEmailImpl(email, pass, name, currency);
+    const firebaseUser = await core.registerWithEmailImpl(email, pass, name, currency, language, theme);
     setUser(firebaseUser);
   }, []);
 

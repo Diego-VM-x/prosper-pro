@@ -328,23 +328,28 @@
 }
 .content-card-action:hover { opacity: 0.8; }
 
-/* Grid column spans */
+/* Grid column spans — now controlled by widget-size classes in dashboard-customizer.css */
 .widgets-grid .content-card { min-width: 0; }
-.widgets-grid .plans-card { grid-column: span 1; }
-.widgets-grid .deadlines-section { grid-column: span 1; }
-/* Metas section - horizontal symmetric layout */
+
+/* Remove old fixed spans so widget-small/medium/large classes work */
+.widgets-grid .plans-card,
+.widgets-grid .deadlines-section,
+.widgets-grid .accounts-section,
+.widgets-grid .summary-card,
+.widgets-grid .recent-tx-card,
+.widgets-grid .quick-actions-card,
+.widgets-grid .tool-card,
+.widgets-grid .transfer-card,
+.widgets-grid .rates-card,
+.widgets-grid .chart-card {
+  grid-column: auto;
+}
+
+/* Metas section - default 3-col layout, widgets control their own span */
 .dash-section:has(.plans-card) .widgets-grid,
 .dash-section:has(.deadlines-section) .widgets-grid {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
 }
-.widgets-grid .accounts-section { grid-column: span 2; }
-.widgets-grid .summary-card { grid-column: span 1; }
-.widgets-grid .recent-tx-card { grid-column: span 1; }
-.widgets-grid .quick-actions-card { grid-column: span 1; }
-.widgets-grid .tool-card { grid-column: span 1; }
-.widgets-grid .transfer-card { grid-column: span 1; }
-.widgets-grid .rates-card { grid-column: span 1; }
-.widgets-grid .chart-card { grid-column: span 2; }
 
 /* Plans List */
 .plans-list { display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto; }
@@ -685,10 +690,6 @@ select.form-input { cursor: pointer; }
   .welcome-title { font-size: 1.5rem; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .widgets-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  .widgets-grid .plans-card { grid-column: span 1; }
-  .widgets-grid .deadlines-section { grid-column: span 1; }
-  .widgets-grid .accounts-section { grid-column: span 2; }
-  .widgets-grid .chart-card { grid-column: span 2; }
   .chart-card { min-height: auto; }
 }
 @media (max-width: 768px) {
@@ -698,10 +699,6 @@ select.form-input { cursor: pointer; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .stat-pill { padding: 14px 16px; }
   .widgets-grid { grid-template-columns: 1fr; gap: 14px; }
-  .widgets-grid .plans-card { grid-column: span 1; }
-  .widgets-grid .deadlines-section { grid-column: span 1; }
-  .widgets-grid .accounts-section { grid-column: span 1; }
-  .widgets-grid .chart-card { grid-column: span 1; }
   .widgets-grid .content-card { min-width: 0; }
   .content-card { padding: 16px; }
   .today-section { padding: 16px 20px; }
@@ -721,10 +718,6 @@ select.form-input { cursor: pointer; }
   .stat-pill-value { font-size: 0.875rem; word-break: break-word; line-height: 1.2; }
   .stat-pill-label { font-size: 0.5625rem; }
   .widgets-grid { grid-template-columns: 1fr; gap: 12px; }
-  .widgets-grid .plans-card { grid-column: span 1; }
-  .widgets-grid .deadlines-section { grid-column: span 1; }
-  .widgets-grid .accounts-section { grid-column: span 1; }
-  .widgets-grid .chart-card { grid-column: span 1; }
   .content-card { padding: 16px; border-radius: var(--radius-lg); }
   .quick-actions-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .quick-action-btn { padding: 12px 6px; }

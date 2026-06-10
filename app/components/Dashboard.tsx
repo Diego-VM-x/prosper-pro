@@ -1049,12 +1049,33 @@ export const Dashboard = memo(function Dashboard() {
 
   const sortedCategories = [...layout.categories].sort((a, b) => a.order - b.order);
 
+  // Ungrouped widgets (no categoryId)
+  const ungroupedWidgets = layout.widgets
+    .filter(w => !w.categoryId)
+    .sort((a, b) => a.order - b.order);
+
   return (
     <DashboardLayout>
       {isDesktop && (
         <div className="cursor-glow" ref={glowRef} />
       )}
       <div className="dashboard-container" onMouseMove={handleMouseMove}>
+        {/* Ungrouped widgets section */}
+        {ungroupedWidgets.length > 0 && (
+          <div className="dash-section">
+            <SectionHeader
+              icon={<InlineIcon icon="LayoutGrid" size={18} />}
+              title={t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}
+              count={ungroupedWidgets.length}
+              collapsed={collapsed['ungrouped'] || false}
+              onToggle={() => toggle('ungrouped')}
+            />
+            <div className={`widgets-grid dash-stagger ${collapsed['ungrouped'] ? 'dash-section-collapsed' : ''}`}>
+              {ungroupedWidgets.map(widget => renderWidget(widget))}
+            </div>
+          </div>
+        )}
+
         {sortedCategories.map(cat => {
           const catWidgets = layout.widgets
             .filter(w => w.categoryId === cat.id)
