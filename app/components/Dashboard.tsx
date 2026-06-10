@@ -22,10 +22,14 @@ import {
 } from './icons';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
-import { Star } from 'lucide-react';
+import { Star, Settings } from 'lucide-react';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
 import '../dashboard.css';
+import '../dashboard-customizer.css';
+import { useDashboardLayout } from '@/lib/contexts/DashboardLayoutContext';
+import { DashboardCustomizer } from './dashboard/DashboardCustomizer';
+import { getWidgetMeta } from './dashboard/widgetMeta';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts, getTotalBalance, updateAccountBalance, subscribeToAccountGroups, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
@@ -37,7 +41,7 @@ const FinancialStatusChart = dynamic(() =>
   import('./FinancialStatusChart').then((m) => ({ default: m.FinancialStatusChart })),
   { ssr: false }
 );
-import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction, AccountGroup, CurrencyCode, ExpenseRequest } from '@/types';
+import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Transaction, AccountGroup, CurrencyCode, ExpenseRequest, DashboardWidgetConfig, WidgetCategory } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: 'Wallet', Inversión: 'TrendingUp', Educación: 'GraduationCap', Otro: 'Pin' };
 
@@ -63,25 +67,31 @@ function getDaysUntil(dateStr: string): number {
 }
 
 // ── Secciones colapsables ───────────────────────────────────────────
-const SECTION_KEYS = {
-  finanzas: 'dashboard-section-finanzas',
-  metas: 'dashboard-section-metas',
-  mercado: 'dashboard-section-mercado',
-  acciones: 'dashboard-section-acciones',
-};
-
-type SectionKey = keyof typeof SECTION_KEYS;
-
-function useCollapsedSections() {
-  const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>(() => {
+function useCollapsedSections(categoryIds: string[]) {
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     try {
       const saved = safeLocalStorage.getItem('dashboard-collapsed-sections');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure all current categories exist
+        categoryIds.forEach(id => { if (!(id in parsed)) parsed[id] = false; });
+        return parsed;
+      }
     } catch {}
-    return { finanzas: false, metas: false, mercado: false, acciones: false };
+    const initial: Record<string, boolean> = {};
+    categoryIds.forEach(id => initial[id] = false);
+    return initial;
   });
 
-  const toggle = useCallback((key: SectionKey) => {
+  useEffect(() => {
+    setCollapsed(prev => {
+      const next = { ...prev };
+      categoryIds.forEach(id => { if (!(id in next)) next[id] = false; });
+      return next;
+    });
+  }, [categoryIds.join(',')]);
+
+  const toggle = useCallback((key: string) => {
     setCollapsed(prev => {
       const next = { ...prev, [key]: !prev[key] };
       try { safeLocalStorage.setItem('dashboard-collapsed-sections', JSON.stringify(next)); } catch {}
@@ -107,14 +117,14 @@ const FIAT_LIST = [
   { code: 'COP', name: 'Peso Col.', flag: '🇨🇴' },
 ] as const;
 
-function WidgetTasasCambio({ rates, p2pMode }: { rates: import('@/types').ExchangeRates; p2pMode: boolean }) {
+function WidgetTasasCambio({ rates, p2pMode, className = '' }: { rates: import('@/types').ExchangeRates; p2pMode: boolean; className?: string }) {
   const { t } = useTranslation('dashboard');
   const oficialRate = rates.rates.USD || 40;
   const eurRate = rates.rates.EUR || 48.5;
   const copRate = rates.rates.COP || 0.0105;
 
   return (
-    <div className="content-card rates-card dash-item" style={{ animationDelay: '0.7s' }}>
+    <div className={`content-card rates-card dash-item ${className}`} style={{ animationDelay: '0.7s' }}>
       <div className="content-card-header">
         <div className="content-card-header-left">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -220,6 +230,8 @@ export const Dashboard = memo(function Dashboard() {
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [accountGroups, setAccountGroups] = useState<AccountGroup[]>([]);
   const [showNewGoalModal, setShowNewGoalModal] = useState(false);
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const { layout } = useDashboardLayout();
   const [showBalances, setShowBalances] = useState(() => {
     try {
       const saved = safeLocalStorage.getItem('dashboard-show-balances');
@@ -244,7 +256,8 @@ export const Dashboard = memo(function Dashboard() {
     }
   };
 
-  const { collapsed, toggle } = useCollapsedSections();
+  const categoryIds = useMemo(() => layout.categories.map(c => c.id), [layout.categories]);
+  const { collapsed, toggle } = useCollapsedSections(categoryIds);
 
   const totalBalance = useMemo(() => {
     return accounts.reduce((sum, acc) => {
@@ -562,100 +575,81 @@ export const Dashboard = memo(function Dashboard() {
     );
   };
 
-  return (
-    <DashboardLayout>
-      {isDesktop && (
-        <div
-          className="cursor-glow"
-          ref={glowRef}
-        />
-      )}
-      <div className="dashboard-container" onMouseMove={handleMouseMove}>
-        {/* Welcome Banner */}
-        <div className="welcome-banner dash-item" style={{animationDelay: '0s'}}>
-          <div className="welcome-content">
-            <p className="welcome-greeting">{greeting()},</p>
-            <h1 className="welcome-title">{user?.displayName || t('common:user')}</h1>
-            <p className="welcome-subtitle">{t('welcome.subtitle')}</p>
+  const renderWidget = (widget: DashboardWidgetConfig) => {
+    const sizeClass = `widget-${widget.size}`;
+    switch (widget.type) {
+      case 'welcome_banner':
+        return (
+          <div key={widget.id} className={`welcome-banner dash-item ${sizeClass}`}>
+            <div className="welcome-content">
+              <p className="welcome-greeting">{greeting()},</p>
+              <h1 className="welcome-title">{user?.displayName || t('common:user')}</h1>
+              <p className="welcome-subtitle">{t('welcome.subtitle')}</p>
+            </div>
+            <div className="welcome-actions">
+              <button className="btn btn-primary btn-sm" onClick={() => router.push('/metas')}>
+                <IconPlus width={14} /> {t('welcome.newPlan')}
+              </button>
+            </div>
+            <div className="welcome-bg-shapes">
+              <div className="welcome-shape welcome-shape-1" />
+              <div className="welcome-shape welcome-shape-2" />
+              <div className="welcome-shape welcome-shape-3" />
+            </div>
           </div>
-          <div className="welcome-actions">
-            <button className="btn btn-primary btn-sm" onClick={() => router.push('/metas')}>
-              <IconPlus width={14} /> {t('welcome.newPlan')}
-            </button>
-          </div>
-          <div className="welcome-bg-shapes">
-            <div className="welcome-shape welcome-shape-1" />
-            <div className="welcome-shape welcome-shape-2" />
-            <div className="welcome-shape welcome-shape-3" />
-          </div>
-        </div>
+        );
 
-        {/* Stats Pills - Grid visible */}
-        <div className="stats-grid dash-stagger">
-          <div className="stat-pill dash-item" style={{animationDelay: '0.05s'}} onClick={() => router.push('/metas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}><InlineIcon icon="Target" size={16} /></div>
-            <div className="stat-pill-info">
-              <span className="stat-pill-label">{t('stats.savingsInPlans')}</span>
-              <span className="stat-pill-value">{formatAmount(totalSavingsCurrent)}</span>
+      case 'stats_pills':
+        return (
+          <div key={widget.id} className={`stats-grid dash-stagger ${sizeClass}`}>
+            <div className="stat-pill dash-item" style={{ animationDelay: '0.05s' }} onClick={() => router.push('/metas')}>
+              <div className="stat-pill-icon" style={{ background: 'rgba(139,92,246,0.15)' }}><InlineIcon icon="Target" size={16} /></div>
+              <div className="stat-pill-info">
+                <span className="stat-pill-label">{t('stats.savingsInPlans')}</span>
+                <span className="stat-pill-value">{formatAmount(totalSavingsCurrent)}</span>
+              </div>
+            </div>
+            <div className="stat-pill dash-item" style={{ animationDelay: '0.17s' }} onClick={() => router.push('/metas')}>
+              <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}><InlineIcon icon="RefreshCw" size={16} /></div>
+              <div className="stat-pill-info">
+                <span className="stat-pill-label">{t('stats.recurringPerMonth')}</span>
+                <span className="stat-pill-value">{formatAmount(monthlyRecurring)}</span>
+              </div>
+              {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
+            </div>
+            <div className="stat-pill dash-item" style={{ animationDelay: '0.23s' }} onClick={() => router.push('/metas')}>
+              <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}><InlineIcon icon="CheckCircle2" size={16} /></div>
+              <div className="stat-pill-info">
+                <span className="stat-pill-label">{t('stats.goalsAndPlans')}</span>
+                <span className="stat-pill-value">{goals.filter(g => g.status === 'completed').length + plans.filter(p => p.status === 'completed').length}</span>
+              </div>
             </div>
           </div>
-          <div className="stat-pill dash-item" style={{animationDelay: '0.17s'}} onClick={() => router.push('/metas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(245,158,11,0.15)' }}><InlineIcon icon="RefreshCw" size={16} /></div>
-            <div className="stat-pill-info">
-              <span className="stat-pill-label">{t('stats.recurringPerMonth')}</span>
-              <span className="stat-pill-value">{formatAmount(monthlyRecurring)}</span>
-            </div>
-            {dueRecurringCount > 0 && <span className="stat-pill-badge">{dueRecurringCount}</span>}
-          </div>
-          <div className="stat-pill dash-item" style={{animationDelay: '0.23s'}} onClick={() => router.push('/metas')}>
-            <div className="stat-pill-icon" style={{ background: 'rgba(236,72,153,0.15)' }}><InlineIcon icon="CheckCircle2" size={16} /></div>
-            <div className="stat-pill-info">
-              <span className="stat-pill-label">{t('stats.goalsAndPlans')}</span>
-              <span className="stat-pill-value">{goals.filter(g => g.status === 'completed').length + plans.filter(p => p.status === 'completed').length}</span>
-            </div>
-          </div>
-        </div>
+        );
 
-        {/* Today Section - Avisos */}
-        {todayItems.length > 0 && (
-          <div className="today-section dash-item" style={{animationDelay: '0.3s'}}>
+      case 'today_section':
+        if (todayItems.length === 0) return null;
+        return (
+          <div key={widget.id} className={`today-section dash-item ${sizeClass}`} style={{ animationDelay: '0.3s' }}>
             <div className="section-header">
               <div className="section-header-left">
                 <IconCalendar width={18} />
-                <h2 className="section-title">{t('today.title')}</h2>
+                <h2 className="section-title">{widget.title}</h2>
               </div>
               <span className="section-count">{t('today.pending', { count: todayItems.length })}</span>
             </div>
             <div className="today-list">
               {todayItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="today-item"
-                  onClick={() => router.push(item.itemType === 'reminder' ? '/calendario' : '/metas')}
-                >
+                <div key={item.id} className="today-item" onClick={() => router.push(item.itemType === 'reminder' ? '/calendario' : '/metas')}>
                   <div className="today-item-dot" style={{
-                    background: item.itemType === 'goal'
-                      ? 'var(--color-prosper-green)'
-                      : item.itemType === 'plan'
-                        ? 'var(--color-purple-500, #8B5CF6)'
-                        : item.itemType === 'request'
-                          ? 'var(--color-blue-500, #3B82F6)'
-                          : 'var(--color-gold-500)'
+                    background: item.itemType === 'goal' ? 'var(--color-prosper-green)' : item.itemType === 'plan' ? 'var(--color-purple-500, #8B5CF6)' : item.itemType === 'request' ? 'var(--color-blue-500, #3B82F6)' : 'var(--color-gold-500)'
                   }} />
                   <div className="today-item-content">
                     <span className="today-item-title">
-                      {item.itemType === 'request'
-                        ? t('today.planInvitation', { amount: formatAmount((item as ExpenseRequest).amount) })
-                        : item.title}
+                      {item.itemType === 'request' ? t('today.planInvitation', { amount: formatAmount((item as ExpenseRequest).amount) }) : item.title}
                     </span>
                     <span className="today-item-desc">
-                      {item.itemType === 'goal'
-                        ? `${formatAmount((item as Goal).current)} de ${formatAmount((item as Goal).target)}`
-                        : item.itemType === 'plan'
-                          ? `${(item as FinancialPlan).category} · ${Math.round(((item as FinancialPlan).current / (item as FinancialPlan).target) * 100)}%`
-                          : item.itemType === 'request'
-                            ? (item as ExpenseRequest).message || t('today.noMessage')
-                            : (item as Reminder).type}
+                      {item.itemType === 'goal' ? `${formatAmount((item as Goal).current)} de ${formatAmount((item as Goal).target)}` : item.itemType === 'plan' ? `${(item as FinancialPlan).category} · ${Math.round(((item as FinancialPlan).current / (item as FinancialPlan).target) * 100)}%` : item.itemType === 'request' ? (item as ExpenseRequest).message || t('today.noMessage') : (item as Reminder).type}
                     </span>
                   </div>
                   <span className="today-item-arrow">›</span>
@@ -663,444 +657,433 @@ export const Dashboard = memo(function Dashboard() {
               ))}
             </div>
           </div>
-        )}
+        );
 
-
-        {/* ═══════════════════════════════════════════════════════════════
-            SECCIÓN: ⚡ ACCIONES
-            ═══════════════════════════════════════════════════════════════ */}
-        <div className="dash-section">
-          <SectionHeader
-            icon={<IconZap width={18} />}
-            title={t('sections.actions')}
-            collapsed={collapsed.acciones}
-            onToggle={() => toggle('acciones')}
-          />
-          <div className={`widgets-grid dash-stagger ${collapsed.acciones ? 'dash-section-collapsed' : ''}`}>
-              {/* Acciones Rápidas */}
-              <div className="content-card quick-actions-card dash-item" style={{animationDelay: '0.6s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconZap width={18} />
-                    <h2 className="content-card-title">{t('quickActions.title')}</h2>
-                  </div>
-                </div>
-                <div className="quick-actions-grid">
-                  <button className="quick-action-btn" onClick={() => router.push('/metas?action=add-plan')}>
-                    <IconBadge icon="Target" size={18} />
-                    <span className="quick-action-label">{t('quickActions.newPlan')}</span>
-                  </button>
-                  <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-account')}>
-                    <IconBadge icon="CreditCard" size={18} />
-                    <span className="quick-action-label">{t('quickActions.newAccount')}</span>
-                  </button>
-                  <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-transaction')}>
-                    <IconBadge icon="Banknote" size={18} />
-                    <span className="quick-action-label">{t('quickActions.transaction')}</span>
-                  </button>
-                  <button className="quick-action-btn" onClick={() => router.push('/calendario')}>
-                    <IconBadge icon="CalendarDays" size={18} />
-                    <span className="quick-action-label">{t('quickActions.calendar')}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Herramientas — widgets individuales */}
-              <div className="content-card tool-card dash-item" style={{animationDelay: '0.65s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconBadge icon="ArrowLeftRight" size={18} />
-                    <h2 className="content-card-title">{t('tools.usdBs')}</h2>
-                  </div>
-                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
-                </div>
-                <p className="tool-desc">{t('tools.usdBsDesc')}</p>
-              </div>
-
-              <div className="content-card tool-card dash-item" style={{animationDelay: '0.7s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconBadge icon="Receipt" size={18} />
-                    <h2 className="content-card-title">{t('tools.importInvoice')}</h2>
-                  </div>
-                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
-                </div>
-                <p className="tool-desc">{t('tools.importInvoiceDesc')}</p>
-              </div>
-
-              <div className="content-card tool-card dash-item" style={{animationDelay: '0.75s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconBadge icon="ShoppingCart" size={18} />
-                    <h2 className="content-card-title">{t('tools.shoppingLists')}</h2>
-                  </div>
-                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
-                </div>
-                <p className="tool-desc">{t('tools.shoppingListsDesc')}</p>
-              </div>
-
-              <div className="content-card tool-card dash-item" style={{animationDelay: '0.8s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconBadge icon="Bot" size={18} />
-                    <h2 className="content-card-title">{t('tools.aiAssistant')}</h2>
-                  </div>
-                  <span className="tool-badge">{t('tools.inDevelopment')}</span>
-                </div>
-                <p className="tool-desc">{t('tools.aiAssistantDesc')}</p>
+      case 'quick_actions':
+        return (
+          <div key={widget.id} className={`content-card quick-actions-card dash-item ${sizeClass}`} style={{ animationDelay: '0.6s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconZap width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
               </div>
             </div>
-        </div>
+            <div className="quick-actions-grid">
+              <button className="quick-action-btn" onClick={() => router.push('/metas?action=add-plan')}>
+                <IconBadge icon="Target" size={18} />
+                <span className="quick-action-label">{t('quickActions.newPlan')}</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-account')}>
+                <IconBadge icon="CreditCard" size={18} />
+                <span className="quick-action-label">{t('quickActions.newAccount')}</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => router.push('/finanzas?action=add-transaction')}>
+                <IconBadge icon="Banknote" size={18} />
+                <span className="quick-action-label">{t('quickActions.transaction')}</span>
+              </button>
+              <button className="quick-action-btn" onClick={() => router.push('/calendario')}>
+                <IconBadge icon="CalendarDays" size={18} />
+                <span className="quick-action-label">{t('quickActions.calendar')}</span>
+              </button>
+            </div>
+          </div>
+        );
 
-        {/* ═══════════════════════════════════════════════════════════════
-            SECCIÓN: 💰 FINANZAS
-            ═══════════════════════════════════════════════════════════════ */}
-        <div className="dash-section">
-          <SectionHeader
-            icon={<IconWallet width={18} />}
-            title={t('sections.finances')}
-            count={accounts.length}
-            collapsed={collapsed.finanzas}
-            onToggle={() => toggle('finanzas')}
-          />
-          <div className={`widgets-grid dash-stagger ${collapsed.finanzas ? 'dash-section-collapsed' : ''}`}>
-              {/* Resumen del Mes */}
-              <div className="content-card summary-card dash-item" style={{animationDelay: '0.35s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconWallet width={18} />
-                    <h2 className="content-card-title">{t('finances.monthlySummary')}</h2>
+      case 'tool_converter':
+        return (
+          <div key={widget.id} className={`content-card tool-card dash-item ${sizeClass}`} style={{ animationDelay: '0.65s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconBadge icon="ArrowLeftRight" size={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <span className="tool-badge">{t('tools.inDevelopment')}</span>
+            </div>
+            <p className="tool-desc">{t('tools.usdBsDesc')}</p>
+          </div>
+        );
+
+      case 'tool_invoice':
+        return (
+          <div key={widget.id} className={`content-card tool-card dash-item ${sizeClass}`} style={{ animationDelay: '0.7s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconBadge icon="Receipt" size={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <span className="tool-badge">{t('tools.inDevelopment')}</span>
+            </div>
+            <p className="tool-desc">{t('tools.importInvoiceDesc')}</p>
+          </div>
+        );
+
+      case 'tool_shopping':
+        return (
+          <div key={widget.id} className={`content-card tool-card dash-item ${sizeClass}`} style={{ animationDelay: '0.75s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconBadge icon="ShoppingCart" size={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <span className="tool-badge">{t('tools.inDevelopment')}</span>
+            </div>
+            <p className="tool-desc">{t('tools.shoppingListsDesc')}</p>
+          </div>
+        );
+
+      case 'tool_ai':
+        return (
+          <div key={widget.id} className={`content-card tool-card dash-item ${sizeClass}`} style={{ animationDelay: '0.8s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconBadge icon="Bot" size={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <span className="tool-badge">{t('tools.inDevelopment')}</span>
+            </div>
+            <p className="tool-desc">{t('tools.aiAssistantDesc')}</p>
+          </div>
+        );
+
+      case 'monthly_summary':
+        return (
+          <div key={widget.id} className={`content-card summary-card dash-item ${sizeClass}`} style={{ animationDelay: '0.35s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconWallet width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+            </div>
+            <div className="summary-body">
+              <div className="summary-row">
+                <span className="summary-label">{t('finances.income')}</span>
+                <span className="summary-value income">{formatInCurrency(monthlyIncome, displayCurrency)}</span>
+              </div>
+              <div className="summary-row">
+                <span className="summary-label">{t('finances.expenses')}</span>
+                <span className="summary-value expense">{formatInCurrency(monthlyExpenses, displayCurrency)}</span>
+              </div>
+              {(monthlyIncome + monthlyExpenses) > 0 && (
+                <div className="summary-bar">
+                  <div className="summary-bar-track">
+                    <div className="summary-bar-fill income-fill" style={{ width: `${(monthlyIncome / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
+                    <div className="summary-bar-fill expense-fill" style={{ width: `${(monthlyExpenses / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
                   </div>
                 </div>
-                <div className="summary-body">
-                  <div className="summary-row">
-                    <span className="summary-label">{t('finances.income')}</span>
-                    <span className="summary-value income">{formatInCurrency(monthlyIncome, displayCurrency)}</span>
-                  </div>
-                  <div className="summary-row">
-                    <span className="summary-label">{t('finances.expenses')}</span>
-                    <span className="summary-value expense">{formatInCurrency(monthlyExpenses, displayCurrency)}</span>
-                  </div>
-                  {(monthlyIncome + monthlyExpenses) > 0 && (
-                    <div className="summary-bar">
-                      <div className="summary-bar-track">
-                        <div className="summary-bar-fill income-fill" style={{ width: `${(monthlyIncome / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
-                        <div className="summary-bar-fill expense-fill" style={{ width: `${(monthlyExpenses / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
+              )}
+              <div className="summary-row summary-total">
+                <span className="summary-label">{t('finances.balance')}</span>
+                <span className={`summary-value ${monthlyIncome - monthlyExpenses >= 0 ? 'income' : 'expense'}`}>
+                  {formatInCurrency(monthlyIncome - monthlyExpenses, displayCurrency)}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'accounts':
+        return (
+          <div key={widget.id} className={`content-card accounts-section dash-item ${sizeClass}`} style={{ animationDelay: '0.42s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconWallet width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { safeLocalStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? t('finances.hideBalances') : t('finances.showBalances')} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
+                  {showBalances ? ' ' + t('finances.hide') : <><InlineIcon icon="Eye" size={14} />{' ' + t('finances.show')}</>}
+                </button>
+                <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                  {t('finances.manage')}
+                </button>
+              </div>
+            </div>
+            <div className="accounts-list">
+              {(() => {
+                const favoriteAccounts = accounts.filter((a) => a.favorite).slice(0, 3);
+                if (favoriteAccounts.length === 0) {
+                  return (
+                    <p className="empty-msg" style={{ textAlign: 'center', padding: '16px 0' }}>
+                      <Trans i18nKey="dashboard:finances.noFavorites" components={{ strong: <strong /> }} />
+                    </p>
+                  );
+                }
+                return favoriteAccounts.map((acc) => {
+                  const typeIcons: Record<string, string> = { digital: 'CreditCard', bank: 'Landmark', foreign: 'ArrowLeftRight' };
+                  return (
+                    <div className="account-item" key={acc.id}>
+                      <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
+                        <InlineIcon icon={acc.icon || typeIcons[acc.type] || 'CreditCard'} size={16} />
                       </div>
-                    </div>
-                  )}
-                  <div className="summary-row summary-total">
-                    <span className="summary-label">{t('finances.balance')}</span>
-                    <span className={`summary-value ${monthlyIncome - monthlyExpenses >= 0 ? 'income' : 'expense'}`}>
-                      {formatInCurrency(monthlyIncome - monthlyExpenses, displayCurrency)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Mis Cuentas - solo favoritas (max 3) */}
-              <div className="content-card accounts-section dash-item" style={{animationDelay: '0.42s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconWallet width={18} />
-                    <h2 className="content-card-title">{t('finances.myAccounts')}</h2>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button className="content-card-action" onClick={() => { const next = !showBalances; setShowBalances(next); try { safeLocalStorage.setItem('dashboard-show-balances', String(next)); } catch {} }} title={showBalances ? t('finances.hideBalances') : t('finances.showBalances')} style={{ padding: '6px 10px', fontSize: '0.75rem' }}>
-                      {showBalances ? ' ' + t('finances.hide') : <><InlineIcon icon="Eye" size={14} />{' ' + t('finances.show')}</>}
-                    </button>
-                    <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                      {t('finances.manage')}
-                    </button>
-                  </div>
-                </div>
-                <div className="accounts-list">
-                  {(() => {
-                    const favoriteAccounts = accounts.filter((a) => a.favorite).slice(0, 3);
-                    if (favoriteAccounts.length === 0) {
-                      return (
-                        <p className="empty-msg" style={{ textAlign: 'center', padding: '16px 0' }}>
-                          <Trans i18nKey="dashboard:finances.noFavorites" components={{ strong: <strong /> }} />
-                        </p>
-                      );
-                    }
-                    return favoriteAccounts.map((acc) => {
-                      const typeIcons: Record<string, string> = { digital: 'CreditCard', bank: 'Landmark', foreign: 'ArrowLeftRight' };
-                      return (
-                        <div className="account-item" key={acc.id}>
-                          <div className="account-item-icon" style={{ background: `${acc.color}20` }}>
-                            <InlineIcon icon={acc.icon || typeIcons[acc.type] || 'CreditCard'} size={16} />
-                          </div>
-                          <div className="account-item-info">
-                            <span className="account-item-name">{acc.name}</span>
-                            <span className="account-item-type">
-                              {t(`finances.accountTypes.${acc.type}`, { defaultValue: acc.type })} • {acc.currency || 'BS'}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                            <span className="account-item-balance" style={{ color: showBalances ? (acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)', fontWeight: 600 }}>
-                              {showBalances ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                            </span>
-                            {showBalances && acc.currency !== displayCurrency && (
-                              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
-                                ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
-                              </span>
-                            )}
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }}
-                              title={t('aria.removeFavorite')}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#F59E0B', padding: 0, lineHeight: 1 }}
-                            >
-                              <Star size={14} fill="#F59E0B" color="#F59E0B" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-
-              {/* Últimos Movimientos - con crypto */}
-              <div className="content-card recent-tx-card dash-item" style={{animationDelay: '0.5s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconReceipt width={18} />
-                    <h2 className="content-card-title">{t('finances.recentTransactions')}</h2>
-                  </div>
-                  <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                    {t('finances.viewAll')}
-                  </button>
-                </div>
-                <div className="recent-tx-list">
-                  {recentTransactions.length > 0 ? recentTransactions.map((tx) => {
-                    const txIcon = tx.type === 'income' ? 'Download' : tx.type === 'expense' ? 'Send' : 'Wallet';
-                    const txAccount = accounts.find(a => a.id === tx.accountId);
-                    const txCurr = txAccount?.currency || 'USD';
-                    const isCrypto = ['BTC', 'ETH', 'SOL', 'USDT', 'USDC'].includes(txCurr);
-                    return (
-                      <div className="recent-tx-item" key={tx.id} onClick={() => router.push('/finanzas')}>
-                        <div className={`recent-tx-icon tx-${tx.type}`}><InlineIcon icon={txIcon} size={16} /></div>
-                        <div className="recent-tx-info">
-                          <span className="recent-tx-desc">{tx.description || tx.category}</span>
-                          <span className="recent-tx-date">{tx.date ? new Date(tx.date).toLocaleDateString() : ''}</span>
-                          {isCrypto && formatCryptoTx(tx, txCurr)}
-                        </div>
-                        <span className={`recent-tx-amount tx-${tx.type}`}>
-                          {tx.type === 'income' ? '+' : '-'}{formatInCurrency(tx.amount, txCurr)}
+                      <div className="account-item-info">
+                        <span className="account-item-name">{acc.name}</span>
+                        <span className="account-item-type">
+                          {t(`finances.accountTypes.${acc.type}`, { defaultValue: acc.type })} • {acc.currency || 'BS'}
                         </span>
                       </div>
-                    );
-                  }) : (
-                    <p className="empty-msg" style={{ padding: '24px 0' }}>{t('finances.noRecentTransactions')}</p>
-                  )}
-                </div>
-              </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                        <span className="account-item-balance" style={{ color: showBalances ? (acc.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)') : 'var(--text-tertiary)', fontWeight: 600 }}>
+                          {showBalances ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
+                        </span>
+                        {showBalances && acc.currency !== displayCurrency && (
+                          <span style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '1px' }}>
+                            ≈ {formatInCurrency(convertCurrency(acc.balance, acc.currency || 'USD', displayCurrency, getAccountRates(acc, rates, p2pMode)), displayCurrency)}
+                          </span>
+                        )}
+                        <button onClick={(e) => { e.stopPropagation(); handleToggleFavorite(acc.id); }} title={t('aria.removeFavorite')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#F59E0B', padding: 0, lineHeight: 1 }}>
+                          <Star size={14} fill="#F59E0B" color="#F59E0B" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        );
 
-              {/* Transferencia Rápida */}
-              <div className="content-card transfer-card dash-item" style={{animationDelay: '0.55s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="17 1 21 5 17 9" />
-                      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                      <polyline points="7 23 3 19 7 15" />
-                      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                    </svg>
-                    <h2 className="content-card-title">{t('finances.quickTransfer')}</h2>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                      <CustomSelect
-                        value={transferFrom}
-                        onChange={(v) => { setTransferFrom(v); if (v === transferTo) setTransferTo(''); }}
-                        options={accounts.map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
-                        placeholder={t('finances.fromPlaceholder')}
-                      />
+      case 'recent_transactions':
+        return (
+          <div key={widget.id} className={`content-card recent-tx-card dash-item ${sizeClass}`} style={{ animationDelay: '0.5s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconReceipt width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                {t('finances.viewAll')}
+              </button>
+            </div>
+            <div className="recent-tx-list">
+              {recentTransactions.length > 0 ? recentTransactions.map((tx) => {
+                const txIcon = tx.type === 'income' ? 'Download' : tx.type === 'expense' ? 'Send' : 'Wallet';
+                const txAccount = accounts.find(a => a.id === tx.accountId);
+                const txCurr = txAccount?.currency || 'USD';
+                const isCrypto = ['BTC', 'ETH', 'SOL', 'USDT', 'USDC'].includes(txCurr);
+                return (
+                  <div className="recent-tx-item" key={tx.id} onClick={() => router.push('/finanzas')}>
+                    <div className={`recent-tx-icon tx-${tx.type}`}><InlineIcon icon={txIcon} size={16} /></div>
+                    <div className="recent-tx-info">
+                      <span className="recent-tx-desc">{tx.description || tx.category}</span>
+                      <span className="recent-tx-date">{tx.date ? new Date(tx.date).toLocaleDateString() : ''}</span>
+                      {isCrypto && formatCryptoTx(tx, txCurr)}
                     </div>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="17 1 21 5 17 9" />
-                      <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                      <polyline points="7 23 3 19 7 15" />
-                      <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                    </svg>
-                    <div style={{ flex: 1 }}>
-                      <CustomSelect
-                        value={transferTo}
-                        onChange={setTransferTo}
-                        options={accounts.filter((a: FinancialAccount) => a.id !== transferFrom).map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
-                        placeholder={t('finances.toPlaceholder')}
-                      />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div style={{ flex: 1, position: 'relative' }}>
-                      <input
-                        className="form-input"
-                        type="number"
-                        placeholder={t('finances.amountPlaceholder')}
-                        value={transferAmount}
-                        onChange={(e) => setTransferAmount(e.target.value)}
-                        style={{ width: '100%' }}
-                      />
-                      {transferFrom && transferTo && (() => {
-                        const f = accounts.find(a => a.id === transferFrom);
-                        const t = accounts.find(a => a.id === transferTo);
-                        if (!f || !t || f.currency === t.currency) return null;
-                        const amt = parseFloat(transferAmount);
-                        if (!amt || amt <= 0) return null;
-                        const converted = convertBetween(amt, f.currency || 'USD', t.currency || 'USD');
-                        return <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: '0.7rem', color: 'var(--text-tertiary)', pointerEvents: 'none' }}>≈ {formatInCurrency(converted, t.currency || 'USD')}</span>;
-                      })()}
-                    </div>
-                    <button className="btn btn-primary btn-sm" onClick={handleTransfer} disabled={transferring || !transferFrom || !transferTo || !transferAmount} style={{ whiteSpace: 'nowrap', height: 36 }}>
-                      {transferring ? t('finances.transferLoading') : t('finances.transfer')}
-                    </button>
-                  </div>
-                  {transferMsg && (
-                    <span style={{ fontSize: '0.75rem', color: transferMsg.includes('Error') || transferMsg.includes('insuficiente') || transferMsg.includes('insufficient') ? 'var(--color-error)' : transferMsg.includes('realizada') || transferMsg.includes('completed') ? 'var(--color-prosper-green)' : 'var(--text-secondary)' }}>
-                      {transferMsg}
+                    <span className={`recent-tx-amount tx-${tx.type}`}>
+                      {tx.type === 'income' ? '+' : '-'}{formatInCurrency(tx.amount, txCurr)}
                     </span>
-                  )}
-                </div>
+                  </div>
+                );
+              }) : (
+                <p className="empty-msg" style={{ padding: '24px 0' }}>{t('finances.noRecentTransactions')}</p>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'quick_transfer':
+        return (
+          <div key={widget.id} className={`content-card transfer-card dash-item ${sizeClass}`} style={{ animationDelay: '0.55s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                <h2 className="content-card-title">{widget.title}</h2>
               </div>
             </div>
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════════
-            SECCIÓN: 🎯 METAS
-            ═══════════════════════════════════════════════════════════════ */}
-        <div className="dash-section">
-          <SectionHeader
-            icon={<IconTasks width={18} />}
-            title={t('sections.goals')}
-            count={activePlans.length + upcomingDeadlines.length}
-            collapsed={collapsed.metas}
-            onToggle={() => toggle('metas')}
-          />
-          <div className={`widgets-grid dash-stagger ${collapsed.metas ? 'dash-section-collapsed' : ''}`}>
-              {/* Planes Activos */}
-              <div className="content-card plans-card dash-item" style={{animationDelay: '0.35s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconTasks width={18} />
-                    <h2 className="content-card-title">{t('goals.activePlans')}</h2>
-                  </div>
-                  <button className="content-card-action" onClick={() => router.push('/metas')}>
-                    {t('finances.viewAll')}
-                  </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0' }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <CustomSelect
+                    value={transferFrom}
+                    onChange={(v) => { setTransferFrom(v); if (v === transferTo) setTransferTo(''); }}
+                    options={accounts.map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
+                    placeholder={t('finances.fromPlaceholder')}
+                  />
                 </div>
-                <div className="plans-list">
-                  {activePlans.slice(0, 5).map((plan: FinancialPlan) => {
-                    const pct = Math.min((plan.current / plan.target) * 100, 100);
-                    const typeColors: Record<string, string> = {
-                      savings: 'var(--color-prosper-green)',
-                      expense: 'var(--color-gold-500)',
-                      recurring: 'var(--color-blue-500, #3B82F6)',
-                    };
-                    const typeIcons: Record<string, string> = {
-                      savings: 'Landmark',
-                      expense: 'ClipboardList',
-                      recurring: 'RefreshCw',
-                    };
-                    return (
-                      <div className="plan-item" key={plan.id} onClick={() => router.push('/metas')}>
-                        <div className="plan-item-header">
-                          <div className="plan-item-icon"><InlineIcon icon={plan.icon || typeIcons[plan.type] || 'Pin'} size={16} /></div>
-                          <div className="plan-item-info">
-                            <span className="plan-item-title">{plan.title}</span>
-                            <span className="plan-item-meta">{plan.category} · {t(`goals.planTypes.${plan.type}`, { defaultValue: plan.type })}</span>
-                          </div>
-                        </div>
-                        <div className="plan-item-progress">
-                          <div className="plan-progress-track">
-                            <div
-                              className="plan-progress-fill"
-                              style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${typeColors[plan.type]}, ${typeColors[plan.type]}dd)` }}
-                            />
-                          </div>
-                          <div className="plan-progress-info">
-                            <span className="plan-progress-pct" style={{ color: typeColors[plan.type] }}>{Math.round(pct)}%</span>
-                            <span className="plan-progress-amounts">{formatInCurrency(plan.current, plan.currency || displayCurrency)} / {formatInCurrency(plan.target, plan.currency || displayCurrency)}</span>
-                          </div>
-                        </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="17 1 21 5 17 9" />
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                  <polyline points="7 23 3 19 7 15" />
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                <div style={{ flex: 1 }}>
+                  <CustomSelect
+                    value={transferTo}
+                    onChange={setTransferTo}
+                    options={accounts.filter((a: FinancialAccount) => a.id !== transferFrom).map((a: FinancialAccount) => ({ value: a.id, label: `${a.name} (${formatInCurrency(a.balance, a.currency || 'USD')})` }))}
+                    placeholder={t('finances.toPlaceholder')}
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <input className="form-input" type="number" placeholder={t('finances.amountPlaceholder')} value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} style={{ width: '100%' }} />
+                  {transferFrom && transferTo && (() => {
+                    const f = accounts.find(a => a.id === transferFrom);
+                    const t = accounts.find(a => a.id === transferTo);
+                    if (!f || !t || f.currency === t.currency) return null;
+                    const amt = parseFloat(transferAmount);
+                    if (!amt || amt <= 0) return null;
+                    const converted = convertBetween(amt, f.currency || 'USD', t.currency || 'USD');
+                    return <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: '0.7rem', color: 'var(--text-tertiary)', pointerEvents: 'none' }}>≈ {formatInCurrency(converted, t.currency || 'USD')}</span>;
+                  })()}
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={handleTransfer} disabled={transferring || !transferFrom || !transferTo || !transferAmount} style={{ whiteSpace: 'nowrap', height: 36 }}>
+                  {transferring ? t('finances.transferLoading') : t('finances.transfer')}
+                </button>
+              </div>
+              {transferMsg && (
+                <span style={{ fontSize: '0.75rem', color: transferMsg.includes('Error') || transferMsg.includes('insuficiente') || transferMsg.includes('insufficient') ? 'var(--color-error)' : transferMsg.includes('realizada') || transferMsg.includes('completed') ? 'var(--color-prosper-green)' : 'var(--text-secondary)' }}>
+                  {transferMsg}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'active_plans':
+        return (
+          <div key={widget.id} className={`content-card plans-card dash-item ${sizeClass}`} style={{ animationDelay: '0.35s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconTasks width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/metas')}>
+                {t('finances.viewAll')}
+              </button>
+            </div>
+            <div className="plans-list">
+              {activePlans.slice(0, 5).map((plan: FinancialPlan) => {
+                const pct = Math.min((plan.current / plan.target) * 100, 100);
+                const typeColors: Record<string, string> = { savings: 'var(--color-prosper-green)', expense: 'var(--color-gold-500)', recurring: 'var(--color-blue-500, #3B82F6)' };
+                const typeIcons: Record<string, string> = { savings: 'Landmark', expense: 'ClipboardList', recurring: 'RefreshCw' };
+                return (
+                  <div className="plan-item" key={plan.id} onClick={() => router.push('/metas')}>
+                    <div className="plan-item-header">
+                      <div className="plan-item-icon"><InlineIcon icon={plan.icon || typeIcons[plan.type] || 'Pin'} size={16} /></div>
+                      <div className="plan-item-info">
+                        <span className="plan-item-title">{plan.title}</span>
+                        <span className="plan-item-meta">{plan.category} · {t(`goals.planTypes.${plan.type}`, { defaultValue: plan.type })}</span>
                       </div>
-                    );
-                  })}
-                  {activePlans.length === 0 && (
-                    <div className="plans-empty">
-                      <p>{t('goals.noActivePlans')}</p>
-                      <button className="plans-empty-btn" onClick={() => router.push('/metas')}>{t('goals.createFirstPlan')}</button>
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Próximos Vencimientos */}
-              <div className="content-card deadlines-section dash-item" style={{animationDelay: '0.42s'}}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconClock width={18} />
-                    <h2 className="content-card-title">{t('goals.upcomingDeadlines')}</h2>
-                  </div>
-                </div>
-                <div className="deadlines-list">
-                  {upcomingDeadlines.length > 0 ? upcomingDeadlines.map((item) => {
-                    const daysLeft = getDaysUntil(item.iso as string);
-                    const urgency = daysLeft <= 0 ? 'urgent' : daysLeft <= 7 ? 'warning' : 'normal';
-                    return (
-                      <div className="deadline-item" key={item.id} onClick={() => router.push('/metas')}>
-                        <div className={`deadline-badge ${urgency}`}>
-                          <span className="deadline-badge-days">{daysLeft <= 0 ? '!' : daysLeft}</span>
-                          <span className="deadline-badge-label">{daysLeft <= 0 ? t('goals.overdue') : t('goals.day', { count: daysLeft })}</span>
-                        </div>
-                        <div className="deadline-info">
-                          <span className="deadline-title">{item.title}</span>
-                          <span className="deadline-amount">{formatAmount(item.current)} / {formatAmount(item.target)}</span>
-                        </div>
+                    <div className="plan-item-progress">
+                      <div className="plan-progress-track">
+                        <div className="plan-progress-fill" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${typeColors[plan.type]}, ${typeColors[plan.type]}dd)` }} />
                       </div>
-                    );
-                  }) : (
-                    <p className="empty-msg">{t('goals.noUpcomingDeadlines')}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-        </div>
-
-        {/* ═══════════════════════════════════════════════════════════════
-            SECCIÓN: 📊 MERCADO
-            ═══════════════════════════════════════════════════════════════ */}
-        <div className="dash-section">
-          <SectionHeader
-            icon={<IconTrendUp width={18} />}
-            title={t('sections.market')}
-            collapsed={collapsed.mercado}
-            onToggle={() => toggle('mercado')}
-          />
-          <div className={`widgets-grid dash-stagger ${collapsed.mercado ? 'dash-section-collapsed' : ''}`}>
-              {/* Tasas de Cambio */}
-              <WidgetTasasCambio rates={rates} p2pMode={p2pMode} />
-
-              {/* Rendimiento Financiero */}
-              <div className="content-card chart-card dash-item" style={{ animationDelay: '0.75s', gridColumn: 'span 2' }}>
-                <div className="content-card-header">
-                  <div className="content-card-header-left">
-                    <IconTrendUp width={18} />
-                    <h2 className="content-card-title">{t('market.financialPerformance')}</h2>
+                      <div className="plan-progress-info">
+                        <span className="plan-progress-pct" style={{ color: typeColors[plan.type] }}>{Math.round(pct)}%</span>
+                        <span className="plan-progress-amounts">{formatInCurrency(plan.current, plan.currency || displayCurrency)} / {formatInCurrency(plan.target, plan.currency || displayCurrency)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <button className="content-card-action" onClick={() => router.push('/finanzas')}>
-                    {t('market.viewDetails')} <IconArrowForward width={14} />
-                  </button>
+                );
+              })}
+              {activePlans.length === 0 && (
+                <div className="plans-empty">
+                  <p>{t('goals.noActivePlans')}</p>
+                  <button className="plans-empty-btn" onClick={() => router.push('/metas')}>{t('goals.createFirstPlan')}</button>
                 </div>
-                <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
-                  <FinancialStatusChart />
-                </Suspense>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'upcoming_deadlines':
+        return (
+          <div key={widget.id} className={`content-card deadlines-section dash-item ${sizeClass}`} style={{ animationDelay: '0.42s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconClock width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
               </div>
             </div>
-        </div>
+            <div className="deadlines-list">
+              {upcomingDeadlines.length > 0 ? upcomingDeadlines.map((item) => {
+                const daysLeft = getDaysUntil(item.iso as string);
+                const urgency = daysLeft <= 0 ? 'urgent' : daysLeft <= 7 ? 'warning' : 'normal';
+                return (
+                  <div className="deadline-item" key={item.id} onClick={() => router.push('/metas')}>
+                    <div className={`deadline-badge ${urgency}`}>
+                      <span className="deadline-badge-days">{daysLeft <= 0 ? '!' : daysLeft}</span>
+                      <span className="deadline-badge-label">{daysLeft <= 0 ? t('goals.overdue') : t('goals.day', { count: daysLeft })}</span>
+                    </div>
+                    <div className="deadline-info">
+                      <span className="deadline-title">{item.title}</span>
+                      <span className="deadline-amount">{formatAmount(item.current)} / {formatAmount(item.target)}</span>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <p className="empty-msg">{t('goals.noUpcomingDeadlines')}</p>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'exchange_rates':
+        return <WidgetTasasCambio key={widget.id} rates={rates} p2pMode={p2pMode} className={sizeClass} />;
+
+      case 'financial_chart':
+        return (
+          <div key={widget.id} className={`content-card chart-card dash-item ${sizeClass}`} style={{ animationDelay: '0.75s' }}>
+            <div className="content-card-header">
+              <div className="content-card-header-left">
+                <IconTrendUp width={18} />
+                <h2 className="content-card-title">{widget.title}</h2>
+              </div>
+              <button className="content-card-action" onClick={() => router.push('/finanzas')}>
+                {t('market.viewDetails')} <IconArrowForward width={14} />
+              </button>
+            </div>
+            <Suspense fallback={<div className="chart-skeleton" style={{ width: '100%', height: '280px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)', animation: 'pulse 1.5s ease-in-out infinite' }} />}>
+              <FinancialStatusChart />
+            </Suspense>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const sortedCategories = [...layout.categories].sort((a, b) => a.order - b.order);
+
+  return (
+    <DashboardLayout>
+      {isDesktop && (
+        <div className="cursor-glow" ref={glowRef} />
+      )}
+      <div className="dashboard-container" onMouseMove={handleMouseMove}>
+        {sortedCategories.map(cat => {
+          const catWidgets = layout.widgets
+            .filter(w => w.categoryId === cat.id)
+            .sort((a, b) => a.order - b.order);
+          return (
+            <div className="dash-section" key={cat.id}>
+              <SectionHeader
+                icon={<InlineIcon icon={cat.icon} size={18} />}
+                title={cat.name}
+                count={catWidgets.length}
+                collapsed={collapsed[cat.id] || false}
+                onToggle={() => toggle(cat.id)}
+              />
+              <div className={`widgets-grid dash-stagger ${collapsed[cat.id] ? 'dash-section-collapsed' : ''}`}>
+                {catWidgets.map(widget => renderWidget(widget))}
+              </div>
+            </div>
+          );
+        })}
+
+        <button className="dashboard-customize-btn" onClick={() => setShowCustomizer(true)}>
+          <Settings size={16} /> {t('customize.title', { defaultValue: 'Personalizar' })}
+        </button>
+
+        {showCustomizer && <DashboardCustomizer onClose={() => setShowCustomizer(false)} />}
       </div>
 
       {/* Modal Nueva Meta */}
@@ -1159,8 +1142,6 @@ export const Dashboard = memo(function Dashboard() {
           </div>
         </div>
       )}
-
-
     </DashboardLayout>
   );
 });

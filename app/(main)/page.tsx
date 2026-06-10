@@ -4,6 +4,7 @@ import '@/app/dashboard.css';
 import { useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { DashboardLayoutProvider } from '@/lib/contexts/DashboardLayoutContext';
 
 const UpdateModal = lazy(() => import('@/app/components/UpdateModal').then(m => ({ default: m.UpdateModal })));
 const Dashboard = lazy(() => import('@/app/components/Dashboard').then(m => ({ default: m.Dashboard })));
@@ -39,8 +40,10 @@ export default function Home() {
 
   return (
     <Suspense fallback={<LoadingHome />}>
-      <UpdateModal version="0.9.8" />
-      <Dashboard />
+      <DashboardLayoutProvider>
+        <UpdateModal version="0.9.8" />
+        <Dashboard />
+      </DashboardLayoutProvider>
     </Suspense>
   );
 }

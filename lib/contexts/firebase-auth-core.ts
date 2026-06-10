@@ -78,25 +78,22 @@ async function onUserReady(u: User) {
       });
     }
     // Registrar/actualizar dispositivo
-    let isNewDevice = false;
     try {
       const deviceInfo = getDeviceInfo();
       const existingDevices = await getUserDevices(u.uid);
-      isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
+      const isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
       await registerDevice(u.uid, deviceInfo);
       // Notificar a otros dispositivos sobre el nuevo inicio de sesión
-      if (isNewDevice) {
-        try {
-          await notifyNewLogin(
-            u.uid,
-            deviceInfo.deviceName,
-            deviceInfo.deviceType,
-            deviceInfo.browser,
-            deviceInfo.os
-          );
-        } catch (e) {
-          console.error('Error sending new login notification:', e);
-        }
+      try {
+        await notifyNewLogin(
+          u.uid,
+          deviceInfo.deviceName,
+          deviceInfo.deviceType,
+          deviceInfo.browser,
+          deviceInfo.os
+        );
+      } catch (e) {
+        console.error('Error sending new login notification:', e);
       }
     } catch (e) {
       console.error('Error registering device:', e);

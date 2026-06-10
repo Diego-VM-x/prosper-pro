@@ -186,5 +186,31 @@
     "Inversión": "Inversión",
     "Educación": "Educación",
     "Otro": "Otro"
+  },
+  "customize": {
+    "title": "Personalizar",
+    "categories": "Categorías",
+    "catalog": "Catálogo",
+    "myWidgets": "Mis Widgets",
+    "newCategory": "Nueva categoría",
+    "editCategory": "Editar categoría",
+    "deleteCategory": "Eliminar categoría",
+    "deleteCategoryConfirm": "Esta categoría tiene widgets. ¿Eliminar de todos modos?",
+    "addWidget": "Agregar widget",
+    "removeWidget": "Eliminar widget",
+    "removeWidgetConfirm": "¿Eliminar este widget?",
+    "widgetSize": {
+      "small": "Pequeño",
+      "medium": "Mediano",
+      "large": "Grande"
+    },
+    "categoryName": "Nombre de categoría",
+    "icon": "Icono",
+    "add": "Agregar",
+    "size": "Tamaño",
+    "catalogDesc": "Haz clic en un widget para agregarlo a tu dashboard.",
+    "added": "Agregado",
+    "reset": "Restaurar",
+    "category": "Categoría"
   }
 }

@@ -1,0 +1,337 @@
+'use client';
+
+import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDashboardLayout } from '@/lib/contexts/DashboardLayoutContext';
+import { IconPicker } from './IconPicker';
+import { SizeSelector } from './SizeSelector';
+import { WIDGET_CATALOG, getWidgetMeta } from './widgetMeta';
+import { InlineIcon, getLucideIcon } from '@/app/components/IconMap';
+import type { WidgetSize, WidgetType, DashboardWidgetConfig, WidgetCategory } from '@/types';
+import { X, ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle } from 'lucide-react';
+
+type TabKey = 'categories' | 'catalog' | 'widgets';
+
+interface DashboardCustomizerProps {
+  onClose: () => void;
+}
+
+export function DashboardCustomizer({ onClose }: DashboardCustomizerProps) {
+  const { t } = useTranslation('dashboard');
+  const {
+    layout,
+    addCategory, updateCategory, removeCategory, moveCategory,
+    addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory,
+    resetToDefault,
+  } = useDashboardLayout();
+
+  const [activeTab, setActiveTab] = useState<TabKey>('widgets');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [newCatForm, setNewCatForm] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatIcon, setNewCatIcon] = useState('LayoutGrid');
+  const [editingCat, setEditingCat] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+
+  const [addingWidget, setAddingWidget] = useState<WidgetType | null>(null);
+  const [addWidgetCat, setAddWidgetCat] = useState('');
+  const [addWidgetSize, setAddWidgetSize] = useState<WidgetSize>('small');
+
+  const handleAddCategory = useCallback(() => {
+    if (!newCatName.trim()) return;
+    addCategory(newCatName.trim(), newCatIcon);
+    setNewCatName('');
+    setNewCatIcon('LayoutGrid');
+    setNewCatForm(false);
+  }, [newCatName, newCatIcon, addCategory]);
+
+  const handleStartAddWidget = useCallback((type: WidgetType) => {
+    setAddingWidget(type);
+    setAddWidgetCat(layout.categories[0]?.id || '');
+    setAddWidgetSize('small');
+  }, [layout.categories]);
+
+  const handleConfirmAddWidget = useCallback(() => {
+    if (!addingWidget || !addWidgetCat) return;
+    const meta = getWidgetMeta(addingWidget);
+    addWidget({
+      categoryId: addWidgetCat,
+      type: addingWidget,
+      title: meta.label,
+      size: addWidgetSize,
+    });
+    setAddingWidget(null);
+  }, [addingWidget, addWidgetCat, addWidgetSize, addWidget]);
+
+  const sortedCategories = [...layout.categories].sort((a, b) => a.order - b.order);
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content dashboard-customizer" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="modal-header">
+          <h2 className="modal-title">{t('customize.title', { defaultValue: 'Personalizar Dashboard' })}</h2>
+          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+        </div>
+
+        {/* Tabs */}
+        <div className="customizer-tabs">
+          <button className={`customizer-tab ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
+            <Settings size={16} /> {t('customize.categories', { defaultValue: 'Categorías' })}
+          </button>
+          <button className={`customizer-tab ${activeTab === 'catalog' ? 'active' : ''}`} onClick={() => setActiveTab('catalog')}>
+            <LayoutGrid size={16} /> {t('customize.catalog', { defaultValue: 'Catálogo' })}
+          </button>
+          <button className={`customizer-tab ${activeTab === 'widgets' ? 'active' : ''}`} onClick={() => setActiveTab('widgets')}>
+            <Puzzle size={16} /> {t('customize.myWidgets', { defaultValue: 'Mis Widgets' })}
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="customizer-body">
+          {/* ── TAB: Categorías ── */}
+          {activeTab === 'categories' && (
+            <div className="customizer-tab-content">
+              <div className="customizer-section-header">
+                <h3>{t('customize.categories', { defaultValue: 'Categorías' })}</h3>
+                {!newCatForm && (
+                  <button className="btn btn-primary btn-sm" onClick={() => setNewCatForm(true)}>
+                    <Plus size={14} /> {t('customize.newCategory', { defaultValue: 'Nueva' })}
+                  </button>
+                )}
+              </div>
+
+              {newCatForm && (
+                <div className="customizer-form">
+                  <input
+                    className="form-input"
+                    placeholder={t('customize.categoryName', { defaultValue: 'Nombre de categoría' })}
+                    value={newCatName}
+                    onChange={(e) => setNewCatName(e.target.value)}
+                  />
+                  <div className="customizer-form-row">
+                    <span className="form-label">{t('customize.icon', { defaultValue: 'Icono' })}</span>
+                    <IconPicker selected={newCatIcon} onSelect={setNewCatIcon} />
+                  </div>
+                  <div className="customizer-form-actions">
+                    <button className="btn btn-outline btn-sm" onClick={() => { setNewCatForm(false); setNewCatName(''); }}>
+                      {t('common:buttons.cancel', { defaultValue: 'Cancelar' })}
+                    </button>
+                    <button className="btn btn-primary btn-sm" onClick={handleAddCategory} disabled={!newCatName.trim()}>
+                      {t('customize.add', { defaultValue: 'Agregar' })}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="customizer-list">
+                {sortedCategories.map((cat, idx) => (
+                  <div key={cat.id} className="customizer-list-item">
+                    <div className="customizer-list-item-left">
+                      <span className="customizer-list-icon">
+                        <InlineIcon icon={cat.icon} size={18} />
+                      </span>
+                      {editingCat === cat.id ? (
+                        <input
+                          className="form-input"
+                          value={editCatName}
+                          onChange={(e) => setEditCatName(e.target.value)}
+                          onBlur={() => {
+                            if (editCatName.trim()) updateCategory(cat.id, { name: editCatName.trim() });
+                            setEditingCat(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              if (editCatName.trim()) updateCategory(cat.id, { name: editCatName.trim() });
+                              setEditingCat(null);
+                            }
+                          }}
+                          autoFocus
+                        />
+                      ) : (
+                        <span className="customizer-list-name" onClick={() => { setEditingCat(cat.id); setEditCatName(cat.name); }}>
+                          {cat.name}
+                        </span>
+                      )}
+                    </div>
+                    <div className="customizer-list-actions">
+                      <button className="customizer-list-btn" onClick={() => moveCategory(cat.id, 'up')} disabled={idx === 0} title="Subir">
+                        <ArrowUp size={14} />
+                      </button>
+                      <button className="customizer-list-btn" onClick={() => moveCategory(cat.id, 'down')} disabled={idx === sortedCategories.length - 1} title="Bajar">
+                        <ArrowDown size={14} />
+                      </button>
+                      <button className="customizer-list-btn" onClick={() => { setEditingCat(cat.id); setEditCatName(cat.name); }} title="Editar">
+                        <InlineIcon icon="Pencil" size={14} />
+                      </button>
+                      <button
+                        className="customizer-list-btn danger"
+                        onClick={() => {
+                          const hasWidgets = layout.widgets.some(w => w.categoryId === cat.id);
+                          if (hasWidgets) {
+                            if (confirm(t('customize.deleteCategoryConfirm', { defaultValue: 'Esta categoría tiene widgets. ¿Eliminar de todos modos?' }))) {
+                              removeCategory(cat.id);
+                            }
+                          } else {
+                            removeCategory(cat.id);
+                          }
+                        }}
+                        title="Eliminar"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: Catálogo ── */}
+          {activeTab === 'catalog' && (
+            <div className="customizer-tab-content">
+              <h3>{t('customize.catalog', { defaultValue: 'Catálogo de Widgets' })}</h3>
+              <p className="customizer-desc">{t('customize.catalogDesc', { defaultValue: 'Haz clic en un widget para agregarlo a tu dashboard.' })}</p>
+              <div className="widget-catalog-grid">
+                {WIDGET_CATALOG.map(meta => {
+                  const isAdded = layout.widgets.some(w => w.type === meta.type);
+                  const Icon = getLucideIcon(meta.icon);
+                  return (
+                    <button
+                      key={meta.type}
+                      className={`widget-catalog-card ${isAdded ? 'added' : ''}`}
+                      onClick={() => !isAdded && handleStartAddWidget(meta.type)}
+                      disabled={isAdded}
+                    >
+                      <span className="widget-catalog-icon">
+                        <Icon size={24} />
+                      </span>
+                      <span className="widget-catalog-name">{meta.label}</span>
+                      <span className="widget-catalog-desc">{meta.description}</span>
+                      {isAdded && (
+                        <span className="widget-catalog-badge">{t('customize.added', { defaultValue: 'Agregado' })}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: Mis Widgets ── */}
+          {activeTab === 'widgets' && (
+            <div className="customizer-tab-content">
+              <div className="customizer-section-header">
+                <h3>{t('customize.myWidgets', { defaultValue: 'Mis Widgets' })}</h3>
+                <button className="btn btn-outline btn-sm" onClick={resetToDefault}>
+                  {t('customize.reset', { defaultValue: 'Restaurar' })}
+                </button>
+              </div>
+              {sortedCategories.map(cat => {
+                const catWidgets = layout.widgets
+                  .filter(w => w.categoryId === cat.id)
+                  .sort((a, b) => a.order - b.order);
+                if (catWidgets.length === 0) return null;
+                return (
+                  <div key={cat.id} className="customizer-widget-group">
+                    <h4 className="customizer-widget-group-title">
+                      <InlineIcon icon={cat.icon} size={16} /> {cat.name}
+                    </h4>
+                    <div className="customizer-widget-list">
+                      {catWidgets.map((widget, idx) => (
+                        <div key={widget.id} className="customizer-widget-item">
+                          <div className="customizer-widget-item-left">
+                            <span className="customizer-widget-item-icon">
+                              <InlineIcon icon={getWidgetMeta(widget.type).icon} size={16} />
+                            </span>
+                            <input
+                              className="customizer-widget-item-title"
+                              value={widget.title}
+                              onChange={(e) => updateWidget(widget.id, { title: e.target.value })}
+                            />
+                          </div>
+                          <div className="customizer-widget-item-controls">
+                            <SizeSelector
+                              value={widget.size}
+                              onChange={(size) => updateWidget(widget.id, { size })}
+                            />
+                            <select
+                              className="form-input"
+                              value={widget.categoryId}
+                              onChange={(e) => changeWidgetCategory(widget.id, e.target.value)}
+                              style={{ width: 140, fontSize: '0.8125rem' }}
+                            >
+                              {sortedCategories.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                              ))}
+                            </select>
+                            <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'up')} disabled={idx === 0} title="Subir">
+                              <ArrowUp size={14} />
+                            </button>
+                            <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'down')} disabled={idx === catWidgets.length - 1} title="Bajar">
+                              <ArrowDown size={14} />
+                            </button>
+                            <button
+                              className="customizer-list-btn danger"
+                              onClick={() => {
+                                if (confirm(t('customize.removeWidgetConfirm', { defaultValue: '¿Eliminar este widget?' }))) {
+                                  removeWidget(widget.id);
+                                }
+                              }}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Add widget confirmation (from catalog) */}
+        {addingWidget && (
+          <div className="modal-overlay" onClick={() => setAddingWidget(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+              <div className="modal-header">
+                <h3 className="modal-title">{t('customize.addWidget', { defaultValue: 'Agregar Widget' })}</h3>
+                <button className="modal-close" onClick={() => setAddingWidget(null)}><X size={20} /></button>
+              </div>
+              <div className="modal-body">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <InlineIcon icon={getWidgetMeta(addingWidget).icon} size={24} />
+                  <span style={{ fontWeight: 600 }}>{getWidgetMeta(addingWidget).label}</span>
+                </div>
+                <label className="form-label">{t('customize.category', { defaultValue: 'Categoría' })}</label>
+                <select
+                  className="form-input"
+                  value={addWidgetCat}
+                  onChange={(e) => setAddWidgetCat(e.target.value)}
+                  style={{ marginBottom: 12 }}
+                >
+                  {sortedCategories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <label className="form-label">{t('customize.size', { defaultValue: 'Tamaño' })}</label>
+                <SizeSelector value={addWidgetSize} onChange={setAddWidgetSize} />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-outline btn-sm" onClick={() => setAddingWidget(null)}>
+                  {t('common:buttons.cancel', { defaultValue: 'Cancelar' })}
+                </button>
+                <button className="btn btn-primary btn-sm" onClick={handleConfirmAddWidget}>
+                  {t('customize.add', { defaultValue: 'Agregar' })}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

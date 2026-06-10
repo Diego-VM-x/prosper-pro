@@ -419,3 +419,46 @@ export interface VEPaySource {
   type: 'camera' | 'gallery' | 'clipboard' | 'manual';
   timestamp: number;
 }
+
+// ─── Dashboard Widget System ───
+export type WidgetSize = 'small' | 'medium' | 'large';
+
+export type WidgetType =
+  | 'welcome_banner'
+  | 'stats_pills'
+  | 'today_section'
+  | 'quick_actions'
+  | 'tool_converter'
+  | 'tool_invoice'
+  | 'tool_shopping'
+  | 'tool_ai'
+  | 'monthly_summary'
+  | 'accounts'
+  | 'recent_transactions'
+  | 'quick_transfer'
+  | 'active_plans'
+  | 'upcoming_deadlines'
+  | 'exchange_rates'
+  | 'financial_chart';
+
+export interface WidgetCategory {
+  id: string;
+  name: string;
+  icon: string;
+  order: number;
+}
+
+export interface DashboardWidgetConfig {
+  id: string;
+  categoryId: string;
+  type: WidgetType;
+  title: string;
+  size: WidgetSize;
+  order: number;
+  config?: Record<string, unknown>;
+}
+
+export interface DashboardLayout {
+  categories: WidgetCategory[];
+  widgets: DashboardWidgetConfig[];
+}

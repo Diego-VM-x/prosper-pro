@@ -186,5 +186,31 @@
     "Inversión": "Investment",
     "Educación": "Education",
     "Otro": "Other"
+  },
+  "customize": {
+    "title": "Customize",
+    "categories": "Categories",
+    "catalog": "Catalog",
+    "myWidgets": "My Widgets",
+    "newCategory": "New category",
+    "editCategory": "Edit category",
+    "deleteCategory": "Delete category",
+    "deleteCategoryConfirm": "This category has widgets. Delete anyway?",
+    "addWidget": "Add widget",
+    "removeWidget": "Remove widget",
+    "removeWidgetConfirm": "Remove this widget?",
+    "widgetSize": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "categoryName": "Category name",
+    "icon": "Icon",
+    "add": "Add",
+    "size": "Size",
+    "catalogDesc": "Click a widget to add it to your dashboard.",
+    "added": "Added",
+    "reset": "Reset",
+    "category": "Category"
   }
 }
