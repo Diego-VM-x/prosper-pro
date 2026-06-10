@@ -43,6 +43,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [dailyBalanceNotif, setDailyBalanceNotif] = useState(true);
   const [appUpdateNotif, setAppUpdateNotif] = useState(true);
   const [calendarReminderNotif, setCalendarReminderNotif] = useState(true);
+  const [newLoginNotif, setNewLoginNotif] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -102,6 +103,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
         setDailyBalanceNotif((p as any).notifications?.dailyBalance ?? true);
         setAppUpdateNotif((p as any).notifications?.appUpdate ?? true);
         setCalendarReminderNotif((p as any).notifications?.calendarReminder ?? true);
+        setNewLoginNotif((p as any).notifications?.newLogin ?? true);
       }
     });
 
@@ -140,6 +142,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
           dailyBalance: dailyBalanceNotif,
           appUpdate: appUpdateNotif,
           calendarReminder: calendarReminderNotif,
+          newLogin: newLoginNotif,
         },
       } as any);
       // Also update display currency in context
@@ -720,6 +723,13 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         desc={t('notificaciones.toggles.calendarReminder.desc')}
                         checked={calendarReminderNotif}
                         onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
+                      />
+                      <ToggleRow
+                        icon="ShieldAlert"
+                        label={t('notificaciones.toggles.newLogin.label')}
+                        desc={t('notificaciones.toggles.newLogin.desc')}
+                        checked={newLoginNotif}
+                        onChange={() => setNewLoginNotif(!newLoginNotif)}
                       />
                     </div>
                   </div>

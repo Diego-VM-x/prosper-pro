@@ -3,8 +3,9 @@
 import { auth, onAuthStateChanged, signOut, updateCurrentUser, type User } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
-import { registerDevice, updateDeviceLastActive } from '@/lib/firestore/devices';
+import { registerDevice, updateDeviceLastActive, getUserDevices } from '@/lib/firestore/devices';
 import { getDeviceInfo } from '@/lib/utils/deviceInfo';
+import { notifyNewLogin } from '@/lib/firestore/notifications';
 import type { CurrencyCode } from '@/types';
 
 function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }): User {
@@ -77,9 +78,26 @@ async function onUserReady(u: User) {
       });
     }
     // Registrar/actualizar dispositivo
+    let isNewDevice = false;
     try {
       const deviceInfo = getDeviceInfo();
+      const existingDevices = await getUserDevices(u.uid);
+      isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
       await registerDevice(u.uid, deviceInfo);
+      // Notificar a otros dispositivos sobre el nuevo inicio de sesión
+      if (isNewDevice) {
+        try {
+          await notifyNewLogin(
+            u.uid,
+            deviceInfo.deviceName,
+            deviceInfo.deviceType,
+            deviceInfo.browser,
+            deviceInfo.os
+          );
+        } catch (e) {
+          console.error('Error sending new login notification:', e);
+        }
+      }
     } catch (e) {
       console.error('Error registering device:', e);
     }

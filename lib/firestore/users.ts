@@ -40,7 +40,26 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
 }
 
 export async function createUserProfile(profile: UserProfile) {
-  await setDoc(doc(db, COLLECTION, profile.uid), profile);
+  const profileWithDefaults: UserProfile = {
+    ...profile,
+    notifications: {
+      pushEnabled: true,
+      priceAlerts: true,
+      budgetAlerts: true,
+      planInvite: true,
+      planContribution: true,
+      planReminder: true,
+      planRejected: true,
+      dollarChange: true,
+      dailyBalance: true,
+      appUpdate: true,
+      calendarReminder: true,
+      welcome: true,
+      newLogin: true,
+      ...profile.notifications,
+    },
+  };
+  await setDoc(doc(db, COLLECTION, profile.uid), profileWithDefaults);
 }
 
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {

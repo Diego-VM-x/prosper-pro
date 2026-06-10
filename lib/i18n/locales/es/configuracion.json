@@ -98,6 +98,10 @@
       "calendarReminder": {
         "label": "Recordatorios de Calendario",
         "desc": "En desarrollo"
+      },
+      "newLogin": {
+        "label": "Nuevos inicios de sesión",
+        "desc": "Cuando alguien inicie sesión en tu cuenta"
       }
     }
   },

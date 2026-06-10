@@ -160,7 +160,8 @@ export type NotificationType =
   | 'calendar_reminder'
   | 'welcome'
   | 'transfer'
-  | 'info';
+  | 'info'
+  | 'new_login';
 
 export interface Notification {
   id: string;
@@ -186,6 +187,7 @@ export interface NotificationPreferences {
   appUpdate: boolean;
   calendarReminder: boolean;
   welcome: boolean;
+  newLogin: boolean;
 }
 
 // ─── Expense Requests ───
