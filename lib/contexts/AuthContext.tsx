@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { CurrencyCode } from '@/types';
 import { removeDevice, isDeviceRegistered, updateDeviceLastActive } from '@/lib/firestore/devices';
 import { getDeviceInfo, clearDeviceId } from '@/lib/utils/deviceInfo';
+import { db } from '@/lib/firebase';
 
 interface AuthContextType {
   user: any | null;
@@ -112,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsGuest(false);
     setUser(null);
     try { localStorage.removeItem('prosper_guest'); } catch {}
+    try { sessionStorage.removeItem('prosper_guest'); } catch {}
   }, []);
 
   // Fast init: check localStorage synchronously, load Firebase only if needed
@@ -190,6 +192,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await removeDevice(user.uid, deviceId);
       } catch {}
     }
+    // Limpiar caché offline de Firestore para evitar datos stale
+    try {
+      const { clearIndexedDbPersistence } = await import('firebase/firestore');
+      await clearIndexedDbPersistence(db);
+    } catch {}
     clearStoredTokens();
     clearDeviceId();
     exitGuestMode();
@@ -238,8 +245,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const stillRegistered = await isDeviceRegistered(user.uid, deviceId);
         if (!stillRegistered) {
           // Sesión cerrada remotamente
+          try {
+            const { clearIndexedDbPersistence } = await import('firebase/firestore');
+            await clearIndexedDbPersistence(db);
+          } catch {}
           clearStoredTokens();
           clearDeviceId();
+          exitGuestMode();
           setUser(null);
           router.push('/login');
           return;
