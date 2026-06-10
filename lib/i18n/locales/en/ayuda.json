@@ -292,6 +292,21 @@
         "a": "When you delete an account, all transactions associated with that account are also permanently deleted. We recommend exporting or reviewing your history before deleting an account. This action cannot be undone."
       },
       {
+        "categoryId": "accountsAndCurrencies",
+        "q": "Can I change the currency of an existing account?",
+        "a": "No, you cannot change the currency of an already created account. If you need an account in another currency, you must create a new one. This prevents confusion in the transaction history and maintains balance integrity."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "What are account groups?",
+        "a": "Groups let you organize your accounts by categories like 'Banks', 'Cryptos', or 'Cash'. Go to Finances, select an account, and use 'Move to group'. You can create, edit, and delete groups from the same panel."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "How does the P2P rate work for cryptocurrencies?",
+        "a": "The P2P rate uses real market prices from Binance. When creating a crypto account (USDT, SOL, BTC, USDC) you can choose whether to use the official BCV rate or P2P. You can switch modes at any time from the Finances toggle or Settings."
+      },
+      {
         "categoryId": "finances",
         "q": "How do I record a transaction?",
         "a": "Go to Finances and click \"New Transaction\". Select the type (Income, Expense, or Transfer), account, category, amount, and an optional description. You can also use VEPay to capture receipts automatically."
@@ -382,6 +397,16 @@
         "a": "When creating a reminder, enable the recurrence option and select the frequency (daily, weekly, monthly, etc.). The system will automatically generate future instances on the calendar."
       },
       {
+        "categoryId": "calendarAndReminders",
+        "q": "Can I edit or delete a reminder after creating it?",
+        "a": "Yes. Go to the Calendar, select the day where the reminder is, and click on it. A panel will open where you can edit any field or delete it permanently. Recurring reminders are edited as a single entity."
+      },
+      {
+        "categoryId": "calendarAndReminders",
+        "q": "Do plans with due dates automatically appear on the calendar?",
+        "a": "Yes. Any financial plan with a due date is automatically displayed on the calendar with a visual indicator. Scheduled recurring payments also appear, so you have all your financial activity in one view."
+      },
+      {
         "categoryId": "settings",
         "q": "What can I configure in my profile?",
         "a": "In Settings > Profile you can change your full name, avatar picture, default display currency, interface language (Spanish/English), and visual theme (light, dark, or AMOLED)."
@@ -422,6 +447,21 @@
         "a": "In Settings > Notifications you'll find the toggle to enable browser push notifications. The system will ask for permission and then can send you alerts even when the app is closed."
       },
       {
+        "categoryId": "notifications",
+        "q": "What notifications do I get when someone invites me to a plan?",
+        "a": "You'll receive a push notification when someone invites you to collaborate on a financial plan. From the notification you can accept or reject directly. If you reject it, the plan disappears from your list."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "Can I turn off only some notifications?",
+        "a": "Yes. In Settings > Notifications you can individually enable or disable: BCV rate change alerts, daily balance summary, plan invitations, plan contributions, and browser push notifications."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "Do notifications work on mobile?",
+        "a": "Yes, push notifications work on mobile devices if you use Chrome, Safari, or Edge and have granted permission. If you don't see notifications, check that your browser has permissions enabled in the system settings."
+      },
+      {
         "categoryId": "security",
         "q": "Is my data secure?",
         "a": "Yes. We use Firebase with strict security rules that isolate data by ownerId. Only you can access your information. Passwords are handled through Firebase Auth with industry-standard encryption."
@@ -437,6 +477,21 @@
         "a": "Go to Settings > Danger Zone and click \"Delete my account forever\". All your data from Firestore, Storage, and Authentication will be deleted. This action is irreversible."
       },
       {
+        "categoryId": "security",
+        "q": "What if I forget my password?",
+        "a": "On the sign-in screen, click \"Forgot your password?\". Enter your email and you'll receive a secure link to reset it. If you used Google Sign-In, recover your account directly from Google."
+      },
+      {
+        "categoryId": "security",
+        "q": "Who can see my financial data?",
+        "a": "No one but you. Your transactions, accounts, and plans are isolated by ownerId in Firebase. Not even Prosper Pro administrators can access your personal or financial information."
+      },
+      {
+        "categoryId": "security",
+        "q": "Is it safe to use my account on public networks?",
+        "a": "Yes. All communication uses HTTPS and TLS. However, as a precaution we recommend not using public Wi-Fi networks for sensitive transactions, and always logging out on shared devices."
+      },
+      {
         "categoryId": "general",
         "q": "Is Prosper Pro free?",
         "a": "Yes. All current and future Prosper Pro features are available at no cost. There are no paid plans or hidden usage limits."
@@ -445,6 +500,26 @@
         "categoryId": "general",
         "q": "What URL is the dashboard on?",
         "a": "The main dashboard is at the root (/). When you sign in, the home page automatically becomes your personalized control panel."
+      },
+      {
+        "categoryId": "general",
+        "q": "Does Prosper Pro work without an internet connection?",
+        "a": "No. Prosper Pro is a web application that requires an internet connection to sync your data with Firebase. However, once loaded, some views may remain visible thanks to the browser cache."
+      },
+      {
+        "categoryId": "general",
+        "q": "Can I export my data?",
+        "a": "There is currently no automatic export function, but you can copy your balances and transactions manually. We are working on an Excel/CSV export feature for future versions."
+      },
+      {
+        "categoryId": "general",
+        "q": "How do I report a bug or suggest an improvement?",
+        "a": "In the Help section you'll find the Feedback & Bugs chat. You can send bug reports or suggestions directly. Our team reviews them regularly and incorporates them into updates."
+      },
+      {
+        "categoryId": "general",
+        "q": "How often is the app updated?",
+        "a": "We release updates every few days with improvements, fixes, and new features. You can see the full history in Help > Release Notes. The what's new modal will automatically notify you of each new version."
       }
     ]
   },
@@ -506,7 +581,7 @@
           "Daily frequency added to recurring financial plans.",
           "Real-time BCV rate change notifications.",
           "Landing page redesigned: faster, more accessible, and with smoother animations.",
-          "Help center overhaul: 9 categories, 41 FAQs, and step-by-step tutorials.",
+          "Help center overhaul: 9 categories, 56 FAQs, and step-by-step tutorials.",
           "App notifications subscription from the landing page footer.",
           "Persistent language switcher that saves your preference across the site."
         ]

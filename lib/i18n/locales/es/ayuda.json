@@ -292,6 +292,21 @@
         "a": "Al eliminar una cuenta, todas las transacciones asociadas a esa cuenta también se eliminan permanentemente. Te recomendamos exportar o revisar tu historial antes de borrar una cuenta. Esta acción no se puede deshacer."
       },
       {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Puedo cambiar la moneda de una cuenta existente?",
+        "a": "No es posible cambiar la moneda de una cuenta ya creada. Si necesitas una cuenta en otra moneda, debes crear una nueva. Esto evita confusiones en el historial de transacciones y mantiene la integridad de los balances."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Qué son los grupos de cuentas?",
+        "a": "Los grupos te permiten organizar tus cuentas por categorías como 'Bancos', 'Criptos' o 'Efectivo'. Ve a Finanzas, selecciona una cuenta y usa 'Mover de grupo'. Puedes crear, editar y eliminar grupos desde el mismo panel."
+      },
+      {
+        "categoryId": "accountsAndCurrencies",
+        "q": "¿Cómo funciona la tasa P2P para criptomonedas?",
+        "a": "La tasa P2P usa precios reales del mercado según Binance. Al crear una cuenta crypto (USDT, SOL, BTC, USDC) puedes elegir si usar la tasa oficial BCV o P2P. En cualquier momento puedes cambiar el modo desde el toggle de Finanzas o Configuración."
+      },
+      {
         "categoryId": "finances",
         "q": "¿Cómo registro una transacción?",
         "a": "Ve a Finanzas y haz clic en \"Nueva Transacción\". Selecciona el tipo (Ingreso, Gasto o Transferencia), la cuenta, la categoría, el monto y una descripción opcional. También puedes usar VEPay para capturar comprobantes automáticamente."
@@ -382,6 +397,16 @@
         "a": "Al crear un recordatorio, activa la opción de recurrencia y selecciona la frecuencia (diaria, semanal, mensual, etc.). El sistema generará automáticamente las instancias futuras en el calendario."
       },
       {
+        "categoryId": "calendarAndReminders",
+        "q": "¿Puedo editar o eliminar un recordatorio después de crearlo?",
+        "a": "Sí. Ve al Calendario, selecciona el día donde está el recordatorio y haz clic en él. Se abrirá un panel donde puedes editar cualquier campo o eliminarlo definitivamente. Los recordatorios recurrentes se editan como una sola entidad."
+      },
+      {
+        "categoryId": "calendarAndReminders",
+        "q": "¿Los planes con fecha límite aparecen automáticamente en el calendario?",
+        "a": "Sí. Cualquier plan financiero con fecha límite se muestra automáticamente en el calendario con un indicador visual. También aparecen los pagos recurrentes programados, para que tengas toda tu actividad financiera en una sola vista."
+      },
+      {
         "categoryId": "settings",
         "q": "¿Qué puedo configurar en mi perfil?",
         "a": "En Configuración > Perfil puedes cambiar tu nombre completo, foto de avatar, moneda de visualización predeterminada, idioma de la interfaz (español/inglés) y el tema visual (claro, oscuro o AMOLED)."
@@ -422,6 +447,21 @@
         "a": "En Configuración > Notificaciones encontrarás el toggle para habilitar las notificaciones push del navegador. El sistema te pedirá permiso y luego podrá enviarte alertas incluso con la app cerrada."
       },
       {
+        "categoryId": "notifications",
+        "q": "¿Qué notificaciones recibo cuando alguien me invita a un plan?",
+        "a": "Recibirás una notificación push cuando alguien te invite a colaborar en un plan financiero. Desde la notificación puedes aceptar o rechazar directamente. Si la rechazas, el plan desaparece de tu lista."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "¿Puedo desactivar solo algunas notificaciones?",
+        "a": "Sí. En Configuración > Notificaciones puedes activar o desactivar individualmente: alertas de cambio de tasa BCV, resumen diario de balance, invitaciones a planes, aportes a planes y notificaciones push del navegador."
+      },
+      {
+        "categoryId": "notifications",
+        "q": "¿Las notificaciones funcionan en móvil?",
+        "a": "Sí, las notificaciones push funcionan en dispositivos móviles si usas Chrome, Safari o Edge y has concedido permiso. Si no ves notificaciones, verifica que tu navegador tenga permisos habilitados en la configuración del sistema."
+      },
+      {
         "categoryId": "security",
         "q": "¿Mis datos están seguros?",
         "a": "Sí. Usamos Firebase con reglas de seguridad estrictas que aíslan los datos por ownerId. Solo tú puedes acceder a tu información. Las contraseñas se manejan mediante Firebase Auth con encriptación estándar de la industria."
@@ -437,6 +477,21 @@
         "a": "Ve a Configuración > Zona de Peligro y haz clic en \"Eliminar mi cuenta para siempre\". Se eliminarán todos tus datos de Firestore, Storage y Authentication. Esta acción es irreversible."
       },
       {
+        "categoryId": "security",
+        "q": "¿Qué pasa si olvido mi contraseña?",
+        "a": "En la pantalla de inicio de sesión haz clic en \"¿Olvidaste tu contraseña?\". Ingresa tu email y recibirás un enlace seguro para restablecerla. Si usaste Google Sign-In, recupera tu cuenta directamente desde Google."
+      },
+      {
+        "categoryId": "security",
+        "q": "¿Quién puede ver mis datos financieros?",
+        "a": "Nadie más que tú. Tus transacciones, cuentas y planes están aislados por ownerId en Firebase. Ni siquiera los administradores de Prosper Pro pueden acceder a tu información personal o financiera."
+      },
+      {
+        "categoryId": "security",
+        "q": "¿Es seguro usar mi cuenta en redes públicas?",
+        "a": "Sí. Toda la comunicación usa HTTPS y TLS. Sin embargo, por precaución te recomendamos no usar redes Wi-Fi públicas para transacciones sensibles, y siempre cerrar sesión en dispositivos compartidos."
+      },
+      {
         "categoryId": "general",
         "q": "¿Prosper Pro es gratuito?",
         "a": "Sí. Todas las funcionalidades actuales y futuras de Prosper Pro están disponibles sin costo. No hay planes de pago ni límites ocultos en el uso de la aplicación."
@@ -445,6 +500,26 @@
         "categoryId": "general",
         "q": "¿En qué URL está el dashboard?",
         "a": "El dashboard principal está en la raíz (/). Cuando inicias sesión, la página de inicio se convierte automáticamente en tu panel de control personalizado."
+      },
+      {
+        "categoryId": "general",
+        "q": "¿Prosper Pro funciona sin conexión a internet?",
+        "a": "No. Prosper Pro es una aplicación web que requiere conexión a internet para sincronizar tus datos con Firebase. Sin embargo, una vez cargada, algunas vistas pueden permanecer visibles gracias al caché del navegador."
+      },
+      {
+        "categoryId": "general",
+        "q": "¿Puedo exportar mis datos?",
+        "a": "Actualmente no hay una función de exportación automática, pero puedes copiar tus balances y transacciones manualmente. Estamos trabajando en una función de exportación a Excel/CSV para futuras versiones."
+      },
+      {
+        "categoryId": "general",
+        "q": "¿Cómo reporto un bug o sugiero una mejora?",
+        "a": "En la sección de Ayuda encontrarás el chat de Feedback & Bugs. Puedes enviar reportes de errores o sugerencias directamente. Nuestro equipo las revisa regularmente y las incorpora en las actualizaciones."
+      },
+      {
+        "categoryId": "general",
+        "q": "¿Con qué frecuencia se actualiza la app?",
+        "a": "Lanzamos actualizaciones cada pocos días con mejoras, correcciones y nuevas funcionalidades. Puedes ver el historial completo en Ayuda > Notas de Versión. El modal de novedades te avisará automáticamente de cada versión nueva."
       }
     ]
   },
@@ -506,7 +581,7 @@
           "Frecuencia diaria añadida a los planes financieros recurrentes.",
           "Notificaciones de cambio de tasa BCV en tiempo real.",
           "Landing page rediseñada: más rápida, accesible y con animaciones suaves.",
-          "Centro de ayuda renovado: 9 categorías, 41 preguntas frecuentes y tutoriales.",
+          "Centro de ayuda renovado: 9 categorías, 56 preguntas frecuentes y tutoriales.",
           "Suscripción a notificaciones de la app desde el footer de la landing.",
           "Selector de idioma persistente que guarda tu preferencia en todo el sitio."
         ]

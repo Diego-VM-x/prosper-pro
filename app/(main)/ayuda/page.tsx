@@ -63,6 +63,7 @@ export default function AyudaPage() {
   }, [categories]);
 
   const [openFaqCategory, setOpenFaqCategory] = useState<string | null>(null);
+  const [openFaqQuestion, setOpenFaqQuestion] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY);
   const [openTutorial, setOpenTutorial] = useState<string | null>(null);
@@ -313,11 +314,11 @@ export default function AyudaPage() {
                     <div className="ayuda-faq-group-list">
                       {items.map((faq, i) => (
                         <div key={i} className="ayuda-faq-item">
-                          <button className="ayuda-faq-question" onClick={() => setOpenFaqCategory(`${categoryId}-${i}`)}>
+                          <button className="ayuda-faq-question" onClick={() => setOpenFaqQuestion(openFaqQuestion === `${categoryId}-${i}` ? null : `${categoryId}-${i}`)}>
                             <span className="ayuda-faq-q">{faq.q}</span>
-                            <IconChevronDown width={16} height={16} className={`ayuda-faq-chevron ${openFaqCategory === `${categoryId}-${i}` ? 'ayuda-faq-chevron-open' : ''}`} />
+                            <IconChevronDown width={16} height={16} className={`ayuda-faq-chevron ${openFaqQuestion === `${categoryId}-${i}` ? 'ayuda-faq-chevron-open' : ''}`} />
                           </button>
-                          {openFaqCategory === `${categoryId}-${i}` && <div className="ayuda-faq-answer"><p>{faq.a}</p></div>}
+                          {openFaqQuestion === `${categoryId}-${i}` && <div className="ayuda-faq-answer"><p>{faq.a}</p></div>}
                         </div>
                       ))}
                     </div>
