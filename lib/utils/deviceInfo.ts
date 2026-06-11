@@ -96,14 +96,85 @@ function parseUA(): {
   return { browser, os, deviceType };
 }
 
+/**
+ * Obtiene la IP pública del dispositivo.
+ */
+export async function getPublicIP(): Promise<string | undefined> {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    const data = await res.json();
+    return data.ip as string;
+  } catch {
+    return undefined;
+  }
+}
+
+const SESSION_TOKEN_KEY = 'prosper_session_token';
+
+/**
+ * Genera un nuevo sessionToken y lo guarda en sessionStorage.
+ * Cada login genera un token único para esta sesión.
+ */
+export function generateSessionToken(): string {
+  const token = crypto.randomUUID();
+  try {
+    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+  } catch {}
+  return token;
+}
+
+/**
+ * Obtiene el sessionToken de la sesión actual.
+ */
+export function getSessionToken(): string | null {
+  try {
+    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function clearSessionToken(): void {
+  try {
+    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  } catch {}
+}
+
+/**
+ * Obtiene la info del dispositivo para login/registro.
+ * Genera un nuevo sessionToken único para esta sesión.
+ */
 export async function getDeviceInfo(userId?: string) {
   const { browser, os, deviceType } = parseUA();
+  const [deviceId, ipAddress] = await Promise.all([
+    getDeviceId(userId),
+    getPublicIP(),
+  ]);
   return {
-    deviceId: await getDeviceId(userId),
+    deviceId,
     deviceName: `${browser} en ${os}`,
     deviceType,
     browser,
     os,
+    ipAddress,
+    sessionToken: generateSessionToken(),
+  };
+}
+
+/**
+ * Obtiene la info del dispositivo para el heartbeat.
+ * Reusa el sessionToken existente sin generar uno nuevo.
+ */
+export async function getDeviceInfoForHeartbeat(userId?: string) {
+  const { browser, os, deviceType } = parseUA();
+  const deviceId = await getDeviceId(userId);
+  return {
+    deviceId,
+    deviceName: `${browser} en ${os}`,
+    deviceType,
+    browser,
+    os,
+    sessionToken: getSessionToken(),
   };
 }
 

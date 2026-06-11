@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CurrencyCode } from '@/types';
-import { removeDevice, isDeviceRegistered, updateDeviceLastActive, isAdminDevice, setAdminDevice } from '@/lib/firestore/devices';
-import { getDeviceInfo, clearDeviceId } from '@/lib/utils/deviceInfo';
+import { removeDevice, isDeviceRegistered, updateDeviceLastActive, isAdminDevice, setAdminDevice, getUserDevices } from '@/lib/firestore/devices';
+import { getDeviceInfo, getDeviceInfoForHeartbeat, clearDeviceId, getSessionToken } from '@/lib/utils/deviceInfo';
 import { db } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 2. Remove device from Firestore
     if (user?.uid) {
       try {
-        const { deviceId } = await getDeviceInfo(user.uid);
+        const { deviceId } = await getDeviceInfoForHeartbeat(user.uid);
         await removeDevice(user.uid, deviceId);
       } catch {
         // If removal fails, device becomes a ghost — but user is already signed out
@@ -247,9 +247,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const checkDevice = async () => {
       try {
         const { deviceId } = await getDeviceInfo(user.uid);
-        const stillRegistered = await isDeviceRegistered(user.uid, deviceId);
-        if (!stillRegistered) {
-          // Sesión cerrada remotamente
+        const localSessionToken = getSessionToken();
+        const devices = await getUserDevices(user.uid);
+        const device = devices.find((d) => d.deviceId === deviceId);
+
+        // If device not registered or sessionToken doesn't match, another session kicked us out
+        if (!device || (device.sessionToken && device.sessionToken !== localSessionToken)) {
           try {
             const { clearIndexedDbPersistence } = await import('firebase/firestore');
             await clearIndexedDbPersistence(db);
@@ -261,7 +264,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.push('/login');
           return;
         }
-        // Actualizar actividad (marca como online)
+
+        // Update activity (marks as online)
         await updateDeviceLastActive(user.uid, deviceId);
       } catch {
         // Silenciar errores de red

@@ -220,6 +220,10 @@ export interface UserDevice {
   adminTransferRequestedAt?: number;
   /** Whether the email verification was completed for the transfer request */
   adminTransferVerified?: boolean;
+  /** Unique session token per login. If another session overwrites this, the old session is kicked out */
+  sessionToken?: string;
+  /** Public IP of the device */
+  ipAddress?: string;
 }
 
 // ─── User Profile ───
