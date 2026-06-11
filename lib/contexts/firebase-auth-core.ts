@@ -301,3 +301,27 @@ export async function enableNotificationsImpl() {
   const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
   return requestNotificationPermission();
 }
+
+export async function sendEmailVerificationImpl() {
+  if (!auth || !auth.currentUser) return { success: false, error: 'No hay usuario autenticado.' };
+  try {
+    const { sendEmailVerification } = await import('firebase/auth');
+    await sendEmailVerification(auth.currentUser, {
+      url: typeof window !== 'undefined' ? `${window.location.origin}/configuracion?tab=seguridad` : 'https://prosper-pro.vercel.app/configuracion?tab=seguridad',
+      handleCodeInApp: false,
+    });
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Error al enviar el correo de verificación.' };
+  }
+}
+
+export async function reloadUserImpl() {
+  if (!auth || !auth.currentUser) return { success: false, error: 'No hay usuario autenticado.' };
+  try {
+    await auth.currentUser.reload();
+    return { success: true, emailVerified: auth.currentUser.emailVerified };
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Error al actualizar el usuario.' };
+  }
+}

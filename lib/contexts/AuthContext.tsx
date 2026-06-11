@@ -18,6 +18,8 @@ interface AuthContextType {
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
   wipeAllData: () => Promise<{ success: boolean; wiped?: string[]; errors?: string[]; error?: string }>;
+  sendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
+  reloadUser: () => Promise<{ success: boolean; emailVerified?: boolean; error?: string }>;
   enableNotifications: () => Promise<boolean>;
   enterGuestMode: () => void;
   exitGuestMode: () => void;
@@ -34,6 +36,8 @@ const AuthContext = createContext<AuthContextType>({
   changePassword: async () => ({ success: false, error: 'No disponible' }),
   deleteAccount: async () => ({ success: false, error: 'No disponible' }),
   wipeAllData: async () => ({ success: false, error: 'No disponible' }),
+  sendVerificationEmail: async () => ({ success: false, error: 'No disponible' }),
+  reloadUser: async () => ({ success: false, error: 'No disponible' }),
   enableNotifications: async () => false,
   enterGuestMode: () => {},
   exitGuestMode: () => {},
@@ -273,6 +277,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return core.enableNotificationsImpl();
   }, []);
 
+  const sendVerificationEmail = useCallback(async () => {
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    return core.sendEmailVerificationImpl();
+  }, []);
+
+  const reloadUser = useCallback(async () => {
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    const result = await core.reloadUserImpl();
+    if (result.success && result.emailVerified !== undefined) {
+      setUser((prev: any) => prev ? { ...prev, emailVerified: result.emailVerified } : prev);
+    }
+    return result;
+  }, []);
+
   // Heartbeat: verificar cada 60s si el dispositivo sigue registrado
   // y actualizar lastActive + isOnline
   useEffect(() => {
@@ -322,6 +342,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       deleteAccount,
       wipeAllData,
+      sendVerificationEmail,
+      reloadUser,
       enableNotifications,
       enterGuestMode,
       exitGuestMode,

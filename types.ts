@@ -216,6 +216,10 @@ export interface UserDevice {
   createdAt: number;
   isOnline?: boolean;
   isAdmin?: boolean;
+  /** Timestamp when this device requested admin transfer */
+  adminTransferRequestedAt?: number;
+  /** Whether the email verification was completed for the transfer request */
+  adminTransferVerified?: boolean;
 }
 
 // ─── User Profile ───

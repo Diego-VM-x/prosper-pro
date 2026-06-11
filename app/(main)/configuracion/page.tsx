@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
-import { subscribeToDevices, removeDevice, setAdminDevice } from '@/lib/firestore/devices';
+import { subscribeToDevices, removeDevice, setAdminDevice, requestAdminTransfer, verifyAdminTransfer, cancelAdminTransfer } from '@/lib/firestore/devices';
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
@@ -16,12 +16,12 @@ import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
-import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut } from 'lucide-react';
+import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut, Shield, Mail, Clock, UserCheck } from 'lucide-react';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
 const ConfiguracionPage = memo(function ConfiguracionPage() {
-  const { user, logout, changePassword, deleteAccount, wipeAllData, enableNotifications } = useAuth();
+  const { user, logout, changePassword, deleteAccount, wipeAllData, enableNotifications, sendVerificationEmail, reloadUser } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -58,6 +58,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [removingDevice, setRemovingDevice] = useState<string | null>(null);
   const [isCurrentDeviceAdmin, setIsCurrentDeviceAdmin] = useState(false);
   const [settingAdmin, setSettingAdmin] = useState<string | null>(null);
+  const [requestingAdmin, setRequestingAdmin] = useState(false);
+  const [verifyingAdmin, setVerifyingAdmin] = useState(false);
+  const [adminRequestSent, setAdminRequestSent] = useState(false);
   const { t } = useTranslation(['configuracion', 'common']);
   const currentDeviceId = typeof window !== 'undefined' ? getDeviceInfo().deviceId : '';
 
@@ -243,6 +246,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     setErrorMsg('');
     try {
       await setAdminDevice(user.uid, deviceId);
+      // Clear any pending transfer requests on the new admin device
+      await cancelAdminTransfer(user.uid, deviceId);
       setSuccessMsg(t('seguridad.adminSet', { defaultValue: 'Dispositivo administrador actualizado' }));
       setTimeout(() => setSuccessMsg(''), 4000);
     } catch (e) {
@@ -251,6 +256,71 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       setTimeout(() => setErrorMsg(''), 4000);
     } finally {
       setSettingAdmin(null);
+    }
+  };
+
+  const handleRequestAdmin = async () => {
+    if (!user?.uid || !currentDeviceId || isCurrentDeviceAdmin) return;
+    setRequestingAdmin(true);
+    setSuccessMsg('');
+    setErrorMsg('');
+    try {
+      // Step 1: Register the transfer request in Firestore
+      await requestAdminTransfer(user.uid, currentDeviceId);
+      // Step 2: Send email verification
+      const result = await sendVerificationEmail();
+      if (result.success) {
+        setAdminRequestSent(true);
+        setSuccessMsg(t('seguridad.adminRequestSent', { defaultValue: 'Solicitud enviada. Revisa tu correo para verificar.' }));
+      } else {
+        setErrorMsg(result.error || t('seguridad.adminRequestError', { defaultValue: 'Error al enviar la solicitud' }));
+        await cancelAdminTransfer(user.uid, currentDeviceId);
+      }
+    } catch (e) {
+      console.error('Error requesting admin:', e);
+      setErrorMsg(t('seguridad.adminRequestError', { defaultValue: 'Error al enviar la solicitud' }));
+    } finally {
+      setRequestingAdmin(false);
+      setTimeout(() => { setSuccessMsg(''); setErrorMsg(''); }, 5000);
+    }
+  };
+
+  const handleVerifyAndConfirmAdmin = async () => {
+    if (!user?.uid || !currentDeviceId || isCurrentDeviceAdmin) return;
+    setVerifyingAdmin(true);
+    setSuccessMsg('');
+    setErrorMsg('');
+    try {
+      // Reload user to get latest emailVerified status
+      const reloadResult = await reloadUser();
+      if (!reloadResult.success || !reloadResult.emailVerified) {
+        setErrorMsg(t('seguridad.emailNotVerified', { defaultValue: 'Tu correo aún no está verificado. Revisa tu bandeja de entrada.' }));
+        setVerifyingAdmin(false);
+        setTimeout(() => setErrorMsg(''), 5000);
+        return;
+      }
+      // Mark as verified in Firestore
+      await verifyAdminTransfer(user.uid, currentDeviceId);
+      setSuccessMsg(t('seguridad.adminRequestVerified', { defaultValue: 'Correo verificado. El administrador puede aprobar tu solicitud.' }));
+      setAdminRequestSent(false);
+    } catch (e) {
+      console.error('Error verifying admin request:', e);
+      setErrorMsg(t('seguridad.adminVerifyError', { defaultValue: 'Error al verificar la solicitud' }));
+    } finally {
+      setVerifyingAdmin(false);
+      setTimeout(() => { setSuccessMsg(''); setErrorMsg(''); }, 5000);
+    }
+  };
+
+  const handleCancelAdminRequest = async () => {
+    if (!user?.uid || !currentDeviceId) return;
+    try {
+      await cancelAdminTransfer(user.uid, currentDeviceId);
+      setAdminRequestSent(false);
+      setSuccessMsg(t('seguridad.adminRequestCancelled', { defaultValue: 'Solicitud cancelada' }));
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (e) {
+      console.error('Error cancelling admin request:', e);
     }
   };
 
@@ -816,6 +886,70 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <p className="panel-desc">{t('seguridad.sessionsDesc')}</p>
                     </div>
 
+                    {/* Admin Info Banner */}
+                    {devices.length > 0 && (
+                      <div className="admin-info-banner">
+                        <Shield size={18} />
+                        <div className="admin-info-text">
+                          <strong>{t('seguridad.adminInfo.title', { defaultValue: 'Dispositivo Administrador' })}</strong>
+                          <span>{t('seguridad.adminInfo.desc', { defaultValue: 'Solo el dispositivo admin puede cambiar contraseñas, borrar datos y aprobar transferencias.' })}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pending Admin Requests - visible only to current admin */}
+                    {isCurrentDeviceAdmin && devices.some(d => d.adminTransferRequestedAt && !d.isAdmin && d.deviceId !== currentDeviceId) && (
+                      <div className="admin-requests-section">
+                        <h4 className="admin-requests-title">
+                          <UserCheck size={16} />
+                          {t('seguridad.pendingRequests', { defaultValue: 'Solicitudes pendientes' })}
+                        </h4>
+                        {devices
+                          .filter(d => d.adminTransferRequestedAt && !d.isAdmin && d.deviceId !== currentDeviceId)
+                          .map(device => {
+                            const online = isDeviceOnline(device);
+                            return (
+                              <div key={device.deviceId} className={`admin-request-card ${device.adminTransferVerified ? 'verified' : ''}`}>
+                                <div className="admin-request-info">
+                                  <InlineIcon icon={getDeviceIcon(device.deviceType)} size={18} />
+                                  <div>
+                                    <span className="admin-request-name">{device.deviceName}</span>
+                                    <span className="admin-request-detail">
+                                      {device.browser} · {device.os}
+                                      {device.adminTransferVerified ? (
+                                        <span className="admin-request-status verified">
+                                          <CheckCircle2 size={12} /> {t('seguridad.verified', { defaultValue: 'Verificado' })}
+                                        </span>
+                                      ) : (
+                                        <span className="admin-request-status pending">
+                                          <Clock size={12} /> {t('seguridad.awaitingVerification', { defaultValue: 'Esperando verificación de correo' })}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                                {device.adminTransferVerified && (
+                                  <button
+                                    className="session-action-btn session-action-admin"
+                                    onClick={() => handleSetAdminDevice(device.deviceId)}
+                                    disabled={settingAdmin === device.deviceId}
+                                  >
+                                    {settingAdmin === device.deviceId ? (
+                                      <span className="spinner-small" />
+                                    ) : (
+                                      <>
+                                        <UserCheck size={14} />
+                                        <span className="session-action-text">{t('seguridad.approve', { defaultValue: 'Aprobar' })}</span>
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+
                     {devices.length === 0 ? (
                       <div className="session-card">
                         <div className="session-icon"><InlineIcon icon="Laptop" size={20} /></div>
@@ -827,13 +961,21 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       </div>
                     ) : (
                       <div className="device-list">
-                        {devices.map((device) => {
+                        {/* Sort: admin first, then by lastActive */}
+                        {[...devices]
+                          .sort((a, b) => {
+                            if (a.isAdmin && !b.isAdmin) return -1;
+                            if (!a.isAdmin && b.isAdmin) return 1;
+                            return b.lastActive - a.lastActive;
+                          })
+                          .map((device) => {
                           const isCurrent = device.deviceId === currentDeviceId;
                           const online = isDeviceOnline(device);
+                          const hasPendingRequest = device.adminTransferRequestedAt && !device.isAdmin;
                           return (
                             <div
                               key={device.deviceId}
-                              className={`session-card ${isCurrent ? 'session-current' : ''} ${!online ? 'session-offline' : ''}`}
+                              className={`session-card ${isCurrent ? 'session-current' : ''} ${!online ? 'session-offline' : ''} ${device.isAdmin ? 'session-admin' : ''} ${hasPendingRequest ? 'session-pending' : ''}`}
                             >
                               <div className="session-main">
                                 <div className="session-icon">
@@ -848,6 +990,16 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                     {!isCurrent && !online && (
                                       <span className="session-badge-offline">{t('seguridad.device.offlineBadge')}</span>
                                     )}
+                                    {device.isAdmin && (
+                                      <span className="session-badge-admin-inline">
+                                        <Lock size={10} /> {t('seguridad.adminBadge', { defaultValue: 'Admin' })}
+                                      </span>
+                                    )}
+                                    {hasPendingRequest && device.adminTransferVerified && (
+                                      <span className="session-badge-verified-inline">
+                                        <CheckCircle2 size={10} /> {t('seguridad.verified', { defaultValue: 'Verificado' })}
+                                      </span>
+                                    )}
                                   </span>
                                   <span className="session-detail">
                                     {device.browser} · {device.os}
@@ -859,12 +1011,76 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                 </div>
                               </div>
                               <div className="session-actions">
-                                {device.isAdmin && (
-                                  <span className="session-admin-badge">
-                                    <Lock size={12} /> {t('seguridad.adminBadge', { defaultValue: 'Admin' })}
-                                  </span>
+                                {/* Non-admin current device: show request button */}
+                                {isCurrent && !isCurrentDeviceAdmin && !hasPendingRequest && (
+                                  <button
+                                    className="session-action-btn session-action-request"
+                                    onClick={handleRequestAdmin}
+                                    disabled={requestingAdmin}
+                                  >
+                                    {requestingAdmin ? (
+                                      <span className="spinner-small" />
+                                    ) : (
+                                      <>
+                                        <Shield size={14} />
+                                        <span className="session-action-text">{t('seguridad.requestAdmin', { defaultValue: 'Solicitar admin' })}</span>
+                                      </>
+                                    )}
+                                  </button>
                                 )}
-                                {isCurrentDeviceAdmin && !isCurrent && !device.isAdmin && (
+                                {/* Non-admin current device with pending request: show verify/confirm */}
+                                {isCurrent && !isCurrentDeviceAdmin && hasPendingRequest && (
+                                  <>
+                                    {!device.adminTransferVerified ? (
+                                      <button
+                                        className="session-action-btn session-action-verify"
+                                        onClick={handleVerifyAndConfirmAdmin}
+                                        disabled={verifyingAdmin}
+                                      >
+                                        {verifyingAdmin ? (
+                                          <span className="spinner-small" />
+                                        ) : (
+                                          <>
+                                            <Mail size={14} />
+                                            <span className="session-action-text">{t('seguridad.verifyEmail', { defaultValue: 'Verificar correo' })}</span>
+                                          </>
+                                        )}
+                                      </button>
+                                    ) : (
+                                      <span className="session-action-btn session-action-waiting" style={{ cursor: 'default' }}>
+                                        <Clock size={14} />
+                                        <span className="session-action-text">{t('seguridad.awaitingApproval', { defaultValue: 'Esperando aprobación' })}</span>
+                                      </span>
+                                    )}
+                                    <button
+                                      className="session-action-btn session-action-cancel"
+                                      onClick={handleCancelAdminRequest}
+                                      title={t('seguridad.cancelRequest', { defaultValue: 'Cancelar solicitud' })}
+                                    >
+                                      <XCircle size={14} />
+                                    </button>
+                                  </>
+                                )}
+                                {/* Admin viewing other device with verified request: quick approve */}
+                                {isCurrentDeviceAdmin && !isCurrent && !device.isAdmin && device.adminTransferVerified && (
+                                  <button
+                                    className="session-action-btn session-action-admin"
+                                    onClick={() => handleSetAdminDevice(device.deviceId)}
+                                    disabled={settingAdmin === device.deviceId}
+                                    title={t('seguridad.approve', { defaultValue: 'Aprobar transferencia' })}
+                                  >
+                                    {settingAdmin === device.deviceId ? (
+                                      <span className="spinner-small" />
+                                    ) : (
+                                      <>
+                                        <UserCheck size={14} />
+                                        <span className="session-action-text">{t('seguridad.approve', { defaultValue: 'Aprobar' })}</span>
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                                {/* Admin viewing other device without request: direct transfer (legacy) */}
+                                {isCurrentDeviceAdmin && !isCurrent && !device.isAdmin && !device.adminTransferVerified && (
                                   <button
                                     className="session-action-btn session-action-admin"
                                     onClick={() => handleSetAdminDevice(device.deviceId)}
@@ -1720,6 +1936,38 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               opacity: 0.65;
               background: var(--bg-card);
             }
+            .session-card.session-admin {
+              border: 1.5px solid rgba(245, 158, 11, 0.35);
+              background: rgba(245, 158, 11, 0.04);
+            }
+            .session-card.session-pending {
+              border: 1px solid rgba(139, 92, 246, 0.25);
+              background: rgba(139, 92, 246, 0.03);
+            }
+            .session-badge-admin-inline {
+              padding: 2px 8px;
+              border-radius: 4px;
+              background: rgba(245, 158, 11, 0.12);
+              color: #F59E0B;
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              display: inline-flex;
+              align-items: center;
+              gap: 3px;
+            }
+            .session-badge-verified-inline {
+              padding: 2px 8px;
+              border-radius: 4px;
+              background: rgba(61, 204, 142, 0.12);
+              color: var(--color-prosper-green);
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              display: inline-flex;
+              align-items: center;
+              gap: 3px;
+            }
             .session-main {
               display: flex;
               align-items: center;
@@ -1829,6 +2077,27 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               color: var(--color-prosper-green);
               background: rgba(61,204,142,0.06);
             }
+            .session-action-btn.session-action-request:hover {
+              border-color: #3B82F6;
+              color: #3B82F6;
+              background: rgba(59,130,246,0.06);
+            }
+            .session-action-btn.session-action-verify:hover {
+              border-color: #8B5CF6;
+              color: #8B5CF6;
+              background: rgba(139,92,246,0.06);
+            }
+            .session-action-btn.session-action-waiting {
+              border-color: rgba(245,158,11,0.3);
+              color: #F59E0B;
+              background: rgba(245,158,11,0.06);
+              cursor: default;
+            }
+            .session-action-btn.session-action-cancel:hover {
+              border-color: #EF4444;
+              color: #EF4444;
+              background: rgba(239,68,68,0.06);
+            }
             .session-action-btn:disabled {
               opacity: 0.4;
               cursor: not-allowed;
@@ -1843,6 +2112,114 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               border-top-color: currentColor;
               border-radius: 50%;
               animation: spin 0.6s linear infinite;
+            }
+
+            /* Admin Info Banner */
+            .admin-info-banner {
+              display: flex;
+              align-items: flex-start;
+              gap: 12px;
+              padding: 14px 16px;
+              border-radius: 10px;
+              background: rgba(245, 158, 11, 0.06);
+              border: 1px solid rgba(245, 158, 11, 0.15);
+              margin-bottom: 16px;
+              color: #F59E0B;
+            }
+            .admin-info-banner svg { flex-shrink: 0; margin-top: 1px; }
+            .admin-info-text {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .admin-info-text strong {
+              font-size: 0.8125rem;
+              font-weight: 600;
+              color: var(--text-primary);
+            }
+            .admin-info-text span {
+              font-size: 0.75rem;
+              color: var(--text-secondary);
+              line-height: 1.4;
+            }
+
+            /* Admin Requests Section */
+            .admin-requests-section {
+              margin-bottom: 16px;
+              padding: 14px 16px;
+              border-radius: 10px;
+              background: var(--bg-card);
+              border: 1px solid var(--border-default);
+            }
+            .admin-requests-title {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 0.8125rem;
+              font-weight: 600;
+              color: var(--text-primary);
+              margin: 0 0 12px 0;
+              padding-bottom: 10px;
+              border-bottom: 1px solid var(--border-default);
+            }
+            .admin-request-card {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 12px;
+              padding: 12px;
+              border-radius: 8px;
+              background: var(--bg-input);
+              margin-bottom: 8px;
+            }
+            .admin-request-card:last-child { margin-bottom: 0; }
+            .admin-request-card.verified {
+              border: 1px solid rgba(61, 204, 142, 0.2);
+              background: rgba(61, 204, 142, 0.04);
+            }
+            .admin-request-info {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              flex: 1;
+              min-width: 0;
+            }
+            .admin-request-info > div {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+              min-width: 0;
+            }
+            .admin-request-name {
+              font-size: 0.8125rem;
+              font-weight: 600;
+              color: var(--text-primary);
+            }
+            .admin-request-detail {
+              font-size: 0.6875rem;
+              color: var(--text-tertiary);
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .admin-request-status {
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+              padding: 2px 8px;
+              border-radius: 4px;
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+            }
+            .admin-request-status.pending {
+              background: rgba(139, 92, 246, 0.1);
+              color: #8B5CF6;
+            }
+            .admin-request-status.verified {
+              background: rgba(61, 204, 142, 0.1);
+              color: var(--color-prosper-green);
             }
 
             /* Password Change Form */

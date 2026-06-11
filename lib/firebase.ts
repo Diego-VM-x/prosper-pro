@@ -27,6 +27,7 @@ export {
   onAuthStateChanged,
   signOut,
   updateCurrentUser,
+  sendEmailVerification,
   type User,
 } from 'firebase/auth';
 

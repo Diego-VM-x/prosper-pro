@@ -188,3 +188,79 @@ export function subscribeToDevices(
     }
   );
 }
+
+/**
+ * Marca un dispositivo como que solicitó transferencia de admin.
+ * Esto se usa cuando un dispositivo no-admin quiere solicitar ser admin.
+ */
+export async function requestAdminTransfer(
+  ownerId: string,
+  deviceId: string
+): Promise<void> {
+  const userRef = doc(db, COLLECTION, ownerId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+  const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+  if (index >= 0) {
+    devices[index] = {
+      ...devices[index],
+      adminTransferRequestedAt: Date.now(),
+      adminTransferVerified: false,
+    };
+    await updateDoc(userRef, { devices });
+  }
+}
+
+/**
+ * Marca un dispositivo como verificado para transferencia de admin.
+ * Se llama después de que el usuario verifica su email.
+ */
+export async function verifyAdminTransfer(
+  ownerId: string,
+  deviceId: string
+): Promise<void> {
+  const userRef = doc(db, COLLECTION, ownerId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+  const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+  if (index >= 0) {
+    devices[index] = {
+      ...devices[index],
+      adminTransferVerified: true,
+    };
+    await updateDoc(userRef, { devices });
+  }
+}
+
+/**
+ * Cancela una solicitud de transferencia de admin.
+ */
+export async function cancelAdminTransfer(
+  ownerId: string,
+  deviceId: string
+): Promise<void> {
+  const userRef = doc(db, COLLECTION, ownerId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+  const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+  if (index >= 0) {
+    devices[index] = {
+      ...devices[index],
+      adminTransferRequestedAt: undefined,
+      adminTransferVerified: undefined,
+    };
+    await updateDoc(userRef, { devices });
+  }
+}
