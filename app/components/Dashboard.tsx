@@ -630,9 +630,9 @@ export const Dashboard = memo(function Dashboard() {
             <div className="section-header">
               <div className="section-header-left">
                 <IconCalendar width={18} />
-                <h2 className="section-title">{widget.title}</h2>
+                <h2 className="today-section-title">{widget.title}</h2>
               </div>
-              <span className="section-count">{t('today.pending', { count: todayItems.length })}</span>
+              <span className="today-section-count">{t('today.pending', { count: todayItems.length })}</span>
             </div>
             <div className="today-list">
               {todayItems.map((item) => (
