@@ -1122,18 +1122,33 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     )}
                   </div>
 
-                  {/* Password Change Section */}
+                  {/* Password Change Section - Admin only */}
                   {isEmailUser && (
-                    <div className="panel-card">
+                    <div className={`panel-card ${!isCurrentDeviceAdmin ? 'panel-disabled' : ''}`}>
                       <div className="panel-header">
-                        <h2 className="panel-title">{t('seguridad.changePassword.title', { defaultValue: 'Cambiar Contraseña' })}</h2>
+                        <h2 className="panel-title">
+                          <Lock size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
+                          {t('seguridad.changePassword.title', { defaultValue: 'Cambiar Contraseña' })}
+                          {!isCurrentDeviceAdmin && (
+                            <span className="admin-only-badge">
+                              <Shield size={10} /> {t('seguridad.adminOnly', { defaultValue: 'Solo Admin' })}
+                            </span>
+                          )}
+                        </h2>
                         <p className="panel-desc">{t('seguridad.changePassword.desc', { defaultValue: 'Actualiza tu contraseña de acceso' })}</p>
                       </div>
 
                       {!showPasswordForm ? (
                         <button
                           className="btn-outline-security"
-                          onClick={() => setShowPasswordForm(true)}
+                          onClick={() => {
+                            if (!isCurrentDeviceAdmin) {
+                              setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede cambiar la contraseña' }));
+                              setTimeout(() => setErrorMsg(''), 4000);
+                              return;
+                            }
+                            setShowPasswordForm(true);
+                          }}
                         >
                           <Lock size={14} /> {t('seguridad.changePassword.btn', { defaultValue: 'Cambiar contraseña' })}
                         </button>
@@ -2045,6 +2060,33 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               align-items: center;
               gap: 8px;
               flex-shrink: 0;
+            }
+
+            /* Admin-only badge for restricted sections */
+            .admin-only-badge {
+              display: inline-flex;
+              align-items: center;
+              gap: 3px;
+              padding: 2px 8px;
+              border-radius: 4px;
+              background: rgba(245, 158, 11, 0.12);
+              color: #F59E0B;
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              margin-left: 8px;
+              vertical-align: middle;
+            }
+            .panel-disabled {
+              opacity: 0.6;
+              pointer-events: none;
+              filter: grayscale(0.3);
+            }
+            .panel-disabled .btn-outline-security,
+            .panel-disabled .btn-danger,
+            .panel-disabled .btn-warning {
+              opacity: 0.5;
+              cursor: not-allowed;
             }
             .session-action-btn {
               display: flex;
