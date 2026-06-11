@@ -268,10 +268,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // Primera ejecución inmediata
-    checkDevice();
-    intervalId = setInterval(checkDevice, 60000);
-    return () => clearInterval(intervalId);
+    // Delay first check by 5s to give onUserReady time to register the device
+    // Prevents race condition where heartbeat runs before device registration
+    const timeoutId = setTimeout(() => {
+      checkDevice();
+      intervalId = setInterval(checkDevice, 60000);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [user?.uid, isGuest, router]);
 
   return (

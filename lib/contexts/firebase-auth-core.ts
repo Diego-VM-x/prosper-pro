@@ -114,8 +114,10 @@ export async function initAuth({
       setUser(firebaseUser);
       await onUserReady(firebaseUser);
     } else {
-      // No authenticated Firebase session — clear any stale tokens
-      clearStoredTokens();
+      // No authenticated Firebase session
+      // Do NOT clear stored tokens here — onAuthStateChanged fires with null
+      // during Firebase initialization before it verifies the persisted session.
+      // Tokens are only cleared on explicit logout.
       setUser(null);
     }
     setLoading(false);
