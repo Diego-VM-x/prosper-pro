@@ -8,25 +8,42 @@
 
 const DEVICE_ID_KEY = 'prosper_device_id';
 
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+/**
+ * Genera un ID determinístico basado en la huella del navegador + SO.
+ * Esto evita duplicados cuando el mismo dispositivo crea múltiples sesiones.
+ */
+function generateDeviceFingerprint(): string {
+  const ua = navigator.userAgent;
+  const platform = navigator.platform || '';
+  const language = navigator.language || '';
+  const screenRes = `${screen.width}x${screen.height}`;
+  const colorDepth = screen.colorDepth;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+
+  // Crear un hash simple del string combinado
+  const raw = `${ua}|${platform}|${language}|${screenRes}|${colorDepth}|${tz}`;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const char = raw.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convertir a 32bit
+  }
+  // Convertir a hex positivo y tomar los primeros 16 chars
+  const hashHex = Math.abs(hash).toString(16).padStart(8, '0');
+  return `dev-${hashHex}`;
 }
 
 export function getDeviceId(): string {
   try {
     let id = localStorage.getItem(DEVICE_ID_KEY);
     if (!id) {
-      id = generateUUID();
+      id = generateDeviceFingerprint();
       localStorage.setItem(DEVICE_ID_KEY, id);
     }
     return id;
   } catch {
     // Fallback si localStorage no está disponible
-    return generateUUID();
+    return generateDeviceFingerprint();
   }
 }
 

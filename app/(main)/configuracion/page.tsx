@@ -211,8 +211,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
   const handleRemoveDevice = async (deviceId: string) => {
     if (!user?.uid) return;
-    // Only admin can remove other devices; any device can remove itself
-    if (deviceId !== currentDeviceId && !isCurrentDeviceAdmin) {
+    // Nobody can remove the admin device (except the admin themselves from their own device)
+    const targetDevice = devices.find(d => d.deviceId === deviceId);
+    if (targetDevice?.isAdmin && deviceId !== currentDeviceId) {
+      setErrorMsg(t('seguridad.cannotRemoveAdmin', { defaultValue: 'No puedes cerrar la sesión del dispositivo administrador' }));
+      setTimeout(() => setErrorMsg(''), 4000);
+      return;
+    }
+    // Any device can remove itself; any device can remove non-admin devices
+    if (deviceId !== currentDeviceId && targetDevice?.isAdmin) {
       setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede cerrar sesiones de otros dispositivos' }));
       setTimeout(() => setErrorMsg(''), 4000);
       return;
@@ -1098,10 +1105,16 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                   </button>
                                 )}
                                 <button
-                                  className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
+                                  className={`session-action-btn ${isCurrent ? 'session-action-current' : ''} ${device.isAdmin && !isCurrent ? 'session-action-disabled' : ''}`}
                                   onClick={() => handleRemoveDevice(device.deviceId)}
-                                  disabled={removingDevice === device.deviceId}
-                                  title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                                  disabled={removingDevice === device.deviceId || (device.isAdmin && !isCurrent)}
+                                  title={
+                                    device.isAdmin && !isCurrent
+                                      ? t('seguridad.cannotRemoveAdmin', { defaultValue: 'No puedes cerrar la sesión del dispositivo administrador' })
+                                      : isCurrent
+                                        ? t('seguridad.logoutThisDevice')
+                                        : t('seguridad.logoutDevice')
+                                  }
                                 >
                                   {removingDevice === device.deviceId ? (
                                     <span className="spinner-small" />
@@ -2139,6 +2152,12 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               border-color: #EF4444;
               color: #EF4444;
               background: rgba(239,68,68,0.06);
+            }
+            .session-action-btn.session-action-disabled {
+              opacity: 0.35;
+              cursor: not-allowed;
+              border-color: var(--border-default);
+              color: var(--text-tertiary);
             }
             .session-action-btn:disabled {
               opacity: 0.4;
