@@ -8,7 +8,8 @@ import { SizeSelector } from './SizeSelector';
 import { WIDGET_CATALOG, getWidgetMeta } from './widgetMeta';
 import { InlineIcon, getLucideIcon } from '@/app/components/IconMap';
 import type { WidgetSize, WidgetType, DashboardWidgetConfig, WidgetCategory } from '@/types';
-import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X, ArrowRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X, ArrowRight, Lock } from 'lucide-react';
+import { CustomSelect } from '@/app/components/CustomSelect';
 import { useRouter } from 'next/navigation';
 
 type TabKey = 'categories' | 'catalog' | 'widgets';
@@ -284,23 +285,20 @@ export function DashboardCustomizer() {
                           value={widget.size}
                           onChange={(size) => updateWidget(widget.id, { size })}
                         />
-                        <select
-                          className="form-input"
+                        <CustomSelect
                           value={widget.categoryId || UNGROUPED_CATEGORY_ID}
-                          onChange={(e) => {
-                            const newCat = e.target.value === UNGROUPED_CATEGORY_ID ? '' : e.target.value;
+                          onChange={(val) => {
+                            const newCat = val === UNGROUPED_CATEGORY_ID ? '' : val;
                             if (!isFixedWidget(widget)) {
                               changeWidgetCategory(widget.id, newCat);
                             }
                           }}
-                          disabled={isFixedWidget(widget)}
-                          style={{ width: 140, fontSize: '0.8125rem' }}
-                        >
-                          <option value={UNGROUPED_CATEGORY_ID}>{t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}</option>
-                          {sortedCategories.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
+                          options={[
+                            { value: UNGROUPED_CATEGORY_ID, label: t('customize.ungrouped', { defaultValue: 'Sin Grupo' }) },
+                            ...sortedCategories.map(c => ({ value: c.id, label: c.name })),
+                          ]}
+                          className="widget-category-select"
+                        />
                         {!isFixedWidget(widget) && (
                           <>
                             <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'up')} disabled={idx === 0} title="Subir">
@@ -360,23 +358,20 @@ export function DashboardCustomizer() {
                               value={widget.size}
                               onChange={(size) => updateWidget(widget.id, { size })}
                             />
-                            <select
-                              className="form-input"
+                            <CustomSelect
                               value={widget.categoryId || UNGROUPED_CATEGORY_ID}
-                              onChange={(e) => {
-                                const newCat = e.target.value === UNGROUPED_CATEGORY_ID ? '' : e.target.value;
+                              onChange={(val) => {
+                                const newCat = val === UNGROUPED_CATEGORY_ID ? '' : val;
                                 if (!isFixedWidget(widget)) {
                                   changeWidgetCategory(widget.id, newCat);
                                 }
                               }}
-                              disabled={isFixedWidget(widget)}
-                              style={{ width: 140, fontSize: '0.8125rem' }}
-                            >
-                              <option value={UNGROUPED_CATEGORY_ID}>{t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}</option>
-                              {sortedCategories.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                              ))}
-                            </select>
+                              options={[
+                                { value: UNGROUPED_CATEGORY_ID, label: t('customize.ungrouped', { defaultValue: 'Sin Grupo' }) },
+                                ...sortedCategories.map(c => ({ value: c.id, label: c.name })),
+                              ]}
+                              className="widget-category-select"
+                            />
                             {!isFixedWidget(widget) && (
                               <>
                                 <button className="customizer-list-btn" onClick={() => moveWidget(widget.id, 'up')} disabled={idx === 0} title="Subir">
@@ -423,17 +418,17 @@ export function DashboardCustomizer() {
                   <span style={{ fontWeight: 600 }}>{getWidgetMeta(addingWidget).label}</span>
                 </div>
                 <label className="form-label">{t('customize.category', { defaultValue: 'Categoría' })}</label>
-                <select
-                  className="form-input"
-                  value={addWidgetCat}
-                  onChange={(e) => setAddWidgetCat(e.target.value)}
-                  style={{ marginBottom: 12 }}
-                >
-                  <option value={UNGROUPED_CATEGORY_ID}>{t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}</option>
-                  {sortedCategories.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+                <div style={{ marginBottom: 12 }}>
+                  <CustomSelect
+                    value={addWidgetCat}
+                    onChange={setAddWidgetCat}
+                    options={[
+                      { value: UNGROUPED_CATEGORY_ID, label: t('customize.ungrouped', { defaultValue: 'Sin Grupo' }) },
+                      ...sortedCategories.map(c => ({ value: c.id, label: c.name })),
+                    ]}
+                    className="widget-category-select"
+                  />
+                </div>
                 <label className="form-label">{t('customize.size', { defaultValue: 'Tamaño' })}</label>
                 <SizeSelector value={addWidgetSize} onChange={setAddWidgetSize} />
               </div>

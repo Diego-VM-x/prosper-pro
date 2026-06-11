@@ -615,6 +615,57 @@
 /* ════════════════════════════════════════════════════════════════════
    CUSTOM SELECT / DROPDOWN STYLES
    ════════════════════════════════════════════════════════════════════ */
+
+/* Compact CustomSelect for widget category picker */
+.widget-category-select .custom-select-trigger {
+  padding: 6px 10px;
+  font-size: 0.8125rem;
+  min-width: 140px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+.widget-category-select .custom-select-trigger:hover {
+  border-color: var(--color-prosper-green);
+}
+.widget-category-select .custom-select-trigger.open {
+  border-color: var(--color-prosper-green);
+  box-shadow: 0 0 0 3px rgba(61, 204, 142, 0.12);
+}
+.widget-category-select .custom-select-dropdown {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 10001;
+}
+.widget-category-select .custom-select-option {
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+}
+.widget-category-select .custom-select-option:hover {
+  background: var(--bg-input);
+}
+.widget-category-select .custom-select-option.selected {
+  background: rgba(61, 204, 142, 0.12);
+  color: var(--color-prosper-green);
+  font-weight: 600;
+}
+.widget-category-select .custom-select-check {
+  color: var(--color-prosper-green);
+}
+[data-theme="dark"] .widget-category-select .custom-select-dropdown,
+[data-theme="amoled"] .widget-category-select .custom-select-dropdown {
+  background: var(--bg-card);
+  border-color: var(--border-default);
+}
+
+/* Modal-specific dropdown z-index fix */
+.modal-content .widget-category-select .custom-select-dropdown {
+  z-index: 10001;
+}
 .customizer-body select.form-input,
 .modal-body select.form-input {
   appearance: none;
