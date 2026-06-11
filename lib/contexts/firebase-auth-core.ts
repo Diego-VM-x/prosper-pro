@@ -79,7 +79,7 @@ async function onUserReady(u: User) {
     }
     // Registrar/actualizar dispositivo
     try {
-      const deviceInfo = getDeviceInfo();
+      const deviceInfo = getDeviceInfo(u.uid);
       const existingDevices = await getUserDevices(u.uid);
       const isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
       const isFirstDevice = existingDevices.length === 0;
@@ -158,7 +158,7 @@ export async function initAuth({
             await onUserReady(userObj);
             // Actualizar lastActive del dispositivo en initAuth
             try {
-              const deviceInfo = getDeviceInfo();
+              const deviceInfo = getDeviceInfo(userObj.uid);
               await updateDeviceLastActive(userObj.uid, deviceInfo.deviceId);
             } catch (e) {
               console.error('Error updating device lastActive:', e);

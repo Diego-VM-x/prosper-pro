@@ -194,7 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Eliminar dispositivo de Firestore antes de limpiar tokens
     if (user?.uid) {
       try {
-        const { deviceId } = getDeviceInfo();
+        const { deviceId } = getDeviceInfo(user.uid);
         await removeDevice(user.uid, deviceId);
       } catch {}
     }
@@ -204,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await clearIndexedDbPersistence(db);
     } catch {}
     clearStoredTokens();
-    clearDeviceId();
+    clearDeviceId(user?.uid);
     exitGuestMode();
     setUser(null);
     if (coreRef.current) {
@@ -217,7 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
     // Check admin device
     try {
-      const { deviceId } = getDeviceInfo();
+      const { deviceId } = getDeviceInfo(user.uid);
       const isAdmin = await isAdminDevice(user.uid, deviceId);
       if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede cambiar la contraseña' };
     } catch {
@@ -240,7 +240,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
     // Check admin device
     try {
-      const { deviceId } = getDeviceInfo();
+      const { deviceId } = getDeviceInfo(user.uid);
       const isAdmin = await isAdminDevice(user.uid, deviceId);
       if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede eliminar la cuenta' };
     } catch {
@@ -260,7 +260,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
     // Check admin device
     try {
-      const { deviceId } = getDeviceInfo();
+      const { deviceId } = getDeviceInfo(user.uid);
       const isAdmin = await isAdminDevice(user.uid, deviceId);
       if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede borrar los datos' };
     } catch {
@@ -298,7 +298,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.uid || isGuest) return;
 
-    const { deviceId } = getDeviceInfo();
+    const { deviceId } = getDeviceInfo(user.uid);
     let intervalId: ReturnType<typeof setInterval>;
 
     const checkDevice = async () => {
@@ -311,7 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             await clearIndexedDbPersistence(db);
           } catch {}
           clearStoredTokens();
-          clearDeviceId();
+          clearDeviceId(user.uid);
           exitGuestMode();
           setUser(null);
           router.push('/login');

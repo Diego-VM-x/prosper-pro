@@ -62,7 +62,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [verifyingAdmin, setVerifyingAdmin] = useState(false);
   const [adminRequestSent, setAdminRequestSent] = useState(false);
   const { t } = useTranslation(['configuracion', 'common']);
-  const currentDeviceId = typeof window !== 'undefined' ? getDeviceInfo().deviceId : '';
+  const currentDeviceId = typeof window !== 'undefined' && user?.uid ? getDeviceInfo(user.uid).deviceId : '';
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
