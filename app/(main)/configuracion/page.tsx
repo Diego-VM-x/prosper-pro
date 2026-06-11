@@ -2831,13 +2831,31 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 font-size: 0.625rem;
                 line-height: 1.4;
               }
-              .session-action-btn {
+              .session-actions {
+                flex-wrap: wrap;
                 width: 100%;
-                justify-content: center;
-                padding: 10px;
-                font-size: 0.8125rem;
               }
-              .session-action-text { display: inline; }
+              .session-action-btn {
+                flex: 1 1 auto;
+                min-width: 0;
+                justify-content: center;
+                padding: 8px 10px;
+                font-size: 0.75rem;
+              }
+              .session-action-text {
+                display: inline;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .admin-request-card {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+              }
+              .admin-request-info {
+                width: 100%;
+              }
             }
 
             /* ===== RESPONSIVE: Very Small (360px) ===== */

@@ -179,7 +179,7 @@
 }
 .section-header-left { display: flex; align-items: center; gap: 8px; }
 .section-header-left svg { color: var(--color-prosper-green); filter: drop-shadow(0 0 6px rgba(61,204,142,0.4)); }
-.section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+.section-title { font-size: clamp(0.875rem, 2.5vw, 1rem); font-weight: 700; color: var(--text-primary); margin: 0; }
 .section-count { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-input); padding: 4px 10px; border-radius: var(--radius-full); }
 .today-list { display: flex; flex-direction: column; gap: 8px; }
 .today-item {
@@ -232,7 +232,7 @@
   filter: drop-shadow(0 0 6px rgba(61,204,142,0.4));
 }
 .dash-section-title {
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -313,7 +313,7 @@
 }
 .content-card-header-left { display: flex; align-items: center; gap: 8px; }
 .content-card-header-left svg { color: var(--color-prosper-green); filter: drop-shadow(0 0 6px rgba(61,204,142,0.4)); }
-.content-card-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+.content-card-title { font-size: clamp(0.875rem, 2.5vw, 1rem); font-weight: 700; color: var(--text-primary); margin: 0; }
 .content-card-action {
   background: none;
   border: none;
