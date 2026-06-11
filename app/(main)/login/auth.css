@@ -547,6 +547,11 @@
   outline: none;
   transition: all 0.2s;
   background: #f8fafc;
+  color: #1e293b;
+}
+
+.form-group input::placeholder {
+  color: #94a3b8;
 }
 
 .form-group input:hover {
@@ -625,6 +630,43 @@
 
 .auth-footer a:hover {
   color: #2BA876;
+  text-decoration: underline;
+}
+
+/* Terms & Conditions checkbox */
+.terms-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.terms-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin-top: 2px;
+  accent-color: #3DCC8E;
+  cursor: pointer;
+}
+
+.terms-group label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  line-height: 1.5;
+  cursor: pointer;
+  user-select: none;
+}
+
+.terms-group label a {
+  color: #3DCC8E;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.terms-group label a:hover {
   text-decoration: underline;
 }
 

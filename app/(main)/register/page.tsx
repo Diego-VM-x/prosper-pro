@@ -28,6 +28,7 @@ export default function RegisterPage() {
   const [currency, setCurrency] = useState<CurrencyCode>('USD');
   const [language, setLanguage] = useState('es');
   const [theme, setThemeState] = useState<'light' | 'dark' | 'amoled'>('dark');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { loginWithGoogle, registerWithEmail, user, loading: authLoading } = useAuth();
   const { setTheme } = useTheme();
   const router = useRouter();
@@ -70,6 +71,10 @@ export default function RegisterPage() {
     }
     if (!/[0-9]/.test(password)) {
       setError(t('register.errors.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
+      return;
+    }
+    if (!acceptedTerms) {
+      setError(t('register.errors.termsRequired'));
       return;
     }
 
@@ -257,6 +262,25 @@ export default function RegisterPage() {
                     })}
                   </div>
                 </div>
+
+                {/* Terms & Conditions */}
+                <div className="terms-group">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    disabled={loading}
+                  />
+                  <label htmlFor="terms">
+                    {t('register.termsLabel')}
+                    <a href="/terminos" target="_blank" rel="noopener noreferrer">{t('register.termsLink')}</a>
+                    {t('register.termsAnd')}
+                    <a href="/privacidad" target="_blank" rel="noopener noreferrer">{t('register.privacyLink')}</a>
+                    {t('register.termsSuffix')}
+                  </label>
+                </div>
+
                 <button type="submit" className="login-btn" disabled={loading}>
                   {loading ? (
                     <span className="login-btn-loading">
