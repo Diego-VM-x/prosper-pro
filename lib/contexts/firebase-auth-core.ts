@@ -103,7 +103,8 @@ export async function initAuth({
     if (firebaseUser) {
       // Firebase Auth is the single source of truth — user is verified
       setUser(firebaseUser);
-      await onUserReady(firebaseUser);
+      // onUserReady runs in the background so it never blocks the UI
+      onUserReady(firebaseUser).catch(() => {});
     } else {
       // No authenticated Firebase session
       // Do NOT clear stored tokens here — onAuthStateChanged fires with null
@@ -132,7 +133,7 @@ export async function loginWithGoogleImpl() {
       refreshToken: (result.user as any).refreshToken || '',
       providerId: 'google.com',
     });
-    await onUserReady(result.user);
+    onUserReady(result.user).catch(() => {});
   }
   return result.user;
 }
@@ -151,7 +152,7 @@ export async function loginWithEmailImpl(email: string, pass: string) {
     refreshToken: (userCred.user as any).refreshToken || '',
     providerId: 'password',
   });
-  await onUserReady(userCred.user);
+  onUserReady(userCred.user).catch(() => {});
   return userCred.user;
 }
 

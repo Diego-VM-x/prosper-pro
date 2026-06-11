@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CurrencyCode } from '@/types';
-import { removeDevice, updateDeviceLastActive, getUserDevices } from '@/lib/firestore/devices';
-import { getDeviceInfoForHeartbeat, clearDeviceId, getSessionToken, clearSessionToken } from '@/lib/utils/deviceInfo';
+import { removeDevice, updateDeviceLastActive, getUserDevices, registerDevice } from '@/lib/firestore/devices';
+import { getDeviceInfo, getDeviceInfoForHeartbeat, clearDeviceId, getSessionToken, clearSessionToken } from '@/lib/utils/deviceInfo';
 import { db } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -220,32 +220,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user?.uid || isGuest) return;
 
     let intervalId: ReturnType<typeof setInterval>;
+    let missedChecks = 0;
 
     const checkDevice = async () => {
       try {
         const { deviceId } = await getDeviceInfoForHeartbeat(user.uid);
         const localSessionToken = getSessionToken();
-        const devices = await getUserDevices(user.uid);
+        let devices: import('@/types').UserDevice[];
+        try {
+          devices = await getUserDevices(user.uid);
+        } catch {
+          // Network error reading devices — don't force logout, just skip this beat
+          return;
+        }
         const device = devices.find((d) => d.deviceId === deviceId);
 
-        // If device not registered, another session kicked us out.
-        // Only enforce sessionToken check if the device has one stored AND we have one locally.
-        // This prevents false logouts for legacy sessions without tokens.
-        const tokenMismatch = device?.sessionToken && localSessionToken && device.sessionToken !== localSessionToken;
-        if (!device || tokenMismatch) {
+        // Device not found: try to re-register instead of forcing logout.
+        // This handles cases where onUserReady hasn't finished yet,
+        // the device was cleaned up by another session, or localStorage changed.
+        if (!device) {
           try {
-            const { clearIndexedDbPersistence } = await import('firebase/firestore');
-            await clearIndexedDbPersistence(db);
-          } catch {}
-          clearStoredTokens();
-          clearSessionToken();
-          clearDeviceId(user.uid);
-          exitGuestMode();
-          setUser(null);
-          router.push('/login');
+            const deviceInfo = await getDeviceInfo(user.uid);
+            if (deviceInfo.sessionToken) {
+              const { storeSessionToken } = await import('@/lib/utils/deviceInfo');
+              storeSessionToken(deviceInfo.sessionToken);
+            }
+            await registerDevice(user.uid, deviceInfo);
+          } catch {
+            // If re-registration fails, ignore and retry next beat
+          }
+          missedChecks = 0;
           return;
         }
 
+        // Only enforce sessionToken check if the device has one stored AND we have one locally.
+        // This prevents false logouts for legacy sessions without tokens.
+        const tokenMismatch = device.sessionToken && localSessionToken && device.sessionToken !== localSessionToken;
+        if (tokenMismatch) {
+          missedChecks++;
+          // Require 2 consecutive mismatches before forcing logout (prevents single-beat false positives)
+          if (missedChecks >= 2) {
+            try {
+              const { clearIndexedDbPersistence } = await import('firebase/firestore');
+              await clearIndexedDbPersistence(db);
+            } catch {}
+            clearStoredTokens();
+            clearSessionToken();
+            clearDeviceId(user.uid);
+            exitGuestMode();
+            setUser(null);
+            router.push('/login');
+          }
+          return;
+        }
+
+        missedChecks = 0;
         // Update activity (marks as online)
         await updateDeviceLastActive(user.uid, deviceId);
       } catch {
@@ -253,12 +282,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // Delay first check by 5s to give onUserReady time to register the device
+    // Delay first check by 8s to give onUserReady time to register the device
     // Prevents race condition where heartbeat runs before device registration
     const timeoutId = setTimeout(() => {
       checkDevice();
       intervalId = setInterval(checkDevice, 60000);
-    }, 5000);
+    }, 8000);
 
     return () => {
       clearTimeout(timeoutId);

@@ -97,11 +97,18 @@ function parseUA(): {
 }
 
 /**
- * Obtiene la IP pública del dispositivo.
+ * Obtiene la IP pública del dispositivo con timeout de 2s.
+ * Nunca bloquea el login por un fetch lento.
  */
 export async function getPublicIP(): Promise<string | undefined> {
   try {
-    const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch('https://api.ipify.org?format=json', {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
     const data = await res.json();
     return data.ip as string;
   } catch {
