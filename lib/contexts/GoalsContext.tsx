@@ -5,6 +5,7 @@ import { useAuth } from './AuthContext';
 import { subscribeToGoals, createGoal, updateGoal, deleteGoal } from '@/lib/firestore/goals';
 import { subscribeToReminders, createReminder, updateReminder, deleteReminder } from '@/lib/firestore/reminders';
 import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans, subscribeToSharedPlans } from '@/lib/firestore/plans';
+import { checkAndResetRecurringPlans } from '@/lib/firestore/recurring';
 import { getReceivedRequests } from '@/lib/firestore/requests';
 import type { Goal, Reminder, FinancialPlan, ExpenseRequest } from '@/types';
 
@@ -105,6 +106,14 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     const uid = user?.uid;
     if (!uid) { setPlans([]); return; }
 
+    // Reiniciar planes recurrentes vencidos al cargar
+    checkAndResetRecurringPlans(uid).catch(() => {});
+
+    // Verificar cada hora mientras la app está abierta (por si pasa medianoche)
+    const intervalId = setInterval(() => {
+      checkAndResetRecurringPlans(uid).catch(() => {});
+    }, 3600000); // 1 hora
+
     const unsubOwn = subscribeToPlans(uid, (ownPlans) => {
       const ownIds = new Set(ownPlans.map(p => p.id));
       setPlans(prev => {
@@ -127,6 +136,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => {
+      clearInterval(intervalId);
       unsubOwn();
       unsubShared();
     };

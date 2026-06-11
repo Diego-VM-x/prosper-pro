@@ -720,7 +720,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                 <span className="mobile-user-email">{isGuest ? t('topbar.readOnlyMode') : user?.email}</span>
               </div>
             </div>
-            {showUserMenu && typeof document !== 'undefined' && createPortal(
+            {showUserMenu && !isDesktop && typeof document !== 'undefined' && createPortal(
               <div ref={mobileDropdownRef} className="user-dropdown mobile-user-dropdown">
                 <div className="user-dropdown-header">
                   <p className="user-dropdown-name">{isGuest ? t('topbar.guest') : (user?.displayName || t('topbar.user'))}</p>
@@ -1440,6 +1440,10 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
         }
         .mobile-user-dropdown {
           z-index: 10002 !important;
+          display: none;
+        }
+        @media (max-width: 1024px) {
+          .mobile-user-dropdown { display: block; }
         }
         .mobile-notif-wrapper {
           position: relative;

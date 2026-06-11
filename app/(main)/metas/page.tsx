@@ -14,6 +14,7 @@ import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accou
 import { createTransaction } from '@/lib/firestore/transactions';
 import { db, getDoc, doc, updateDoc } from '@/lib/firebase';
 import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
+import { calculateNextDueDate } from '@/lib/firestore/recurring';
 import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '@/app/components/icons';
@@ -377,17 +378,7 @@ const MetasPage = memo(function MetasPage() {
       const totalPaid = (plan.totalPaid || 0) + amount;
 
       // Calcular next due date
-      let nextDue = plan.nextDueDate || todayISO();
-      const d = new Date(nextDue + 'T12:00:00');
-      switch (plan.frequency) {
-        case 'daily': d.setDate(d.getDate() + 1); break;
-        case 'weekly': d.setDate(d.getDate() + 7); break;
-        case 'biweekly': d.setDate(d.getDate() + 14); break;
-        case 'monthly': d.setMonth(d.getMonth() + 1); break;
-        case 'quarterly': d.setMonth(d.getMonth() + 3); break;
-        case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
-      }
-      const nextDueStr = d.toISOString().split('T')[0];
+      const nextDueStr = calculateNextDueDate(plan.nextDueDate || todayISO(), plan.frequency || 'monthly');
 
       await updatePlanFn(plan.id, {
         current: newCurrent,

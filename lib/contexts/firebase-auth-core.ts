@@ -3,8 +3,8 @@
 import { auth, onAuthStateChanged, signOut, type User } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
-import { registerDevice, updateDeviceLastActive, getUserDevices } from '@/lib/firestore/devices';
-import { getDeviceInfo } from '@/lib/utils/deviceInfo';
+import { registerDevice } from '@/lib/firestore/devices';
+import { getDeviceInfo, storeSessionToken } from '@/lib/utils/deviceInfo';
 import { notifyNewLogin } from '@/lib/firestore/notifications';
 import type { CurrencyCode } from '@/types';
 
@@ -56,19 +56,10 @@ async function onUserReady(u: User) {
     // Registrar/actualizar dispositivo
     try {
       const deviceInfo = await getDeviceInfo(u.uid);
-      const existingDevices = await getUserDevices(u.uid);
-      const isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
-      const isFirstDevice = existingDevices.length === 0;
-      await registerDevice(u.uid, deviceInfo);
-      // Auto-assign admin to first device
-      if (isFirstDevice || isNewDevice) {
-        const devicesAfter = await getUserDevices(u.uid);
-        const hasAdmin = devicesAfter.some((d) => d.isAdmin === true);
-        if (!hasAdmin) {
-          const { setAdminDevice } = await import('@/lib/firestore/devices');
-          await setAdminDevice(u.uid, deviceInfo.deviceId);
-        }
+      if (deviceInfo.sessionToken) {
+        storeSessionToken(deviceInfo.sessionToken);
       }
+      await registerDevice(u.uid, deviceInfo);
       // Notificar a otros dispositivos sobre el nuevo inicio de sesión
       try {
         await notifyNewLogin(

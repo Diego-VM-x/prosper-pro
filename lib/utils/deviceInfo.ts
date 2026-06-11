@@ -134,6 +134,12 @@ export function getSessionToken(): string | null {
   }
 }
 
+export function storeSessionToken(token: string): void {
+  try {
+    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+  } catch {}
+}
+
 export function clearSessionToken(): void {
   try {
     sessionStorage.removeItem(SESSION_TOKEN_KEY);

@@ -24,10 +24,13 @@ export async function recordRecurringPayment(payment: Omit<RecurringPayment, 'id
 }
 
 // Calcular próxima fecha de pago según frecuencia
-function calculateNextDueDate(currentDate: string, frequency: RecurringFrequency): string {
+export function calculateNextDueDate(currentDate: string, frequency: RecurringFrequency): string {
   const date = new Date(currentDate + 'T12:00:00');
 
   switch (frequency) {
+    case 'daily':
+      date.setDate(date.getDate() + 1);
+      break;
     case 'weekly':
       date.setDate(date.getDate() + 7);
       break;
@@ -46,6 +49,46 @@ function calculateNextDueDate(currentDate: string, frequency: RecurringFrequency
   }
 
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Verifica planes recurrentes cuyo nextDueDate ya pasó y los reinicia:
+ * - current = 0
+ * - nextDueDate avanza al próximo ciclo válido
+ * Útil para reiniciar planes a medianoche o al abrir la app.
+ */
+export async function checkAndResetRecurringPlans(ownerId: string): Promise<number> {
+  const plansRef = collection(db, 'plans');
+  const q = query(plansRef, where('ownerId', '==', ownerId), where('type', '==', 'recurring'));
+  const snapshot = await getDocs(q);
+
+  const today = new Date().toISOString().split('T')[0];
+  let resetCount = 0;
+
+  const promises: Promise<void>[] = [];
+
+  snapshot.forEach((docSnap) => {
+    const plan = { id: docSnap.id, ...docSnap.data() } as FinancialPlan;
+    if (!plan.nextDueDate || plan.nextDueDate >= today) return;
+    if (plan.status !== 'progress' && plan.status !== 'pending') return;
+
+    // Avanzar nextDueDate hasta que sea >= hoy (por si la app no se abrió en varios ciclos)
+    let nextDue = plan.nextDueDate;
+    while (nextDue < today) {
+      nextDue = calculateNextDueDate(nextDue, plan.frequency || 'monthly');
+    }
+
+    promises.push(
+      updateDoc(doc(db, 'plans', plan.id), {
+        current: 0,
+        nextDueDate: nextDue,
+        updatedAt: Date.now(),
+      }).then(() => { resetCount++; }).catch(() => {})
+    );
+  });
+
+  await Promise.all(promises);
+  return resetCount;
 }
 
 // Obtener pagos de un plan

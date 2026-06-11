@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CurrencyCode } from '@/types';
-import { removeDevice, isDeviceRegistered, updateDeviceLastActive, isAdminDevice, setAdminDevice, getUserDevices } from '@/lib/firestore/devices';
-import { getDeviceInfo, getDeviceInfoForHeartbeat, clearDeviceId, getSessionToken } from '@/lib/utils/deviceInfo';
+import { removeDevice, updateDeviceLastActive, getUserDevices } from '@/lib/firestore/devices';
+import { getDeviceInfoForHeartbeat, clearDeviceId, getSessionToken, clearSessionToken } from '@/lib/utils/deviceInfo';
 import { db } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -151,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await clearIndexedDbPersistence(db);
     } catch {}
     clearStoredTokens();
+    clearSessionToken();
     clearDeviceId(user?.uid);
     exitGuestMode();
     setUser(null);
@@ -159,14 +160,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
-    // Check admin device
-    try {
-      const { deviceId } = await getDeviceInfo(user.uid);
-      const isAdmin = await isAdminDevice(user.uid, deviceId);
-      if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede cambiar la contraseña' };
-    } catch {
-      return { success: false, error: 'No se pudo verificar el dispositivo administrador' };
-    }
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
     try {
@@ -182,14 +175,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const deleteAccount = useCallback(async () => {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
-    // Check admin device
-    try {
-      const { deviceId } = await getDeviceInfo(user.uid);
-      const isAdmin = await isAdminDevice(user.uid, deviceId);
-      if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede eliminar la cuenta' };
-    } catch {
-      return { success: false, error: 'No se pudo verificar el dispositivo administrador' };
-    }
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
     const result = await core.deleteAccountImpl(user);
@@ -202,14 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const wipeAllData = useCallback(async () => {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
-    // Check admin device
-    try {
-      const { deviceId } = await getDeviceInfo(user.uid);
-      const isAdmin = await isAdminDevice(user.uid, deviceId);
-      if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede borrar los datos' };
-    } catch {
-      return { success: false, error: 'No se pudo verificar el dispositivo administrador' };
-    }
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
     return core.wipeAllDataImpl(user);
@@ -246,18 +223,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const checkDevice = async () => {
       try {
-        const { deviceId } = await getDeviceInfo(user.uid);
+        const { deviceId } = await getDeviceInfoForHeartbeat(user.uid);
         const localSessionToken = getSessionToken();
         const devices = await getUserDevices(user.uid);
         const device = devices.find((d) => d.deviceId === deviceId);
 
-        // If device not registered or sessionToken doesn't match, another session kicked us out
-        if (!device || (device.sessionToken && device.sessionToken !== localSessionToken)) {
+        // If device not registered, another session kicked us out.
+        // Only enforce sessionToken check if the device has one stored AND we have one locally.
+        // This prevents false logouts for legacy sessions without tokens.
+        const tokenMismatch = device?.sessionToken && localSessionToken && device.sessionToken !== localSessionToken;
+        if (!device || tokenMismatch) {
           try {
             const { clearIndexedDbPersistence } = await import('firebase/firestore');
             await clearIndexedDbPersistence(db);
           } catch {}
           clearStoredTokens();
+          clearSessionToken();
           clearDeviceId(user.uid);
           exitGuestMode();
           setUser(null);

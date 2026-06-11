@@ -215,11 +215,6 @@ export interface UserDevice {
   lastActive: number;
   createdAt: number;
   isOnline?: boolean;
-  isAdmin?: boolean;
-  /** Timestamp when this device requested admin transfer */
-  adminTransferRequestedAt?: number;
-  /** Whether the email verification was completed for the transfer request */
-  adminTransferVerified?: boolean;
   /** Unique session token per login. If another session overwrites this, the old session is kicked out */
   sessionToken?: string;
   /** Public IP of the device */

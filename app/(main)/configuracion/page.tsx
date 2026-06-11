@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
-import { subscribeToDevices, removeDevice, setAdminDevice, requestAdminTransfer, verifyAdminTransfer, cancelAdminTransfer } from '@/lib/firestore/devices';
+import { subscribeToDevices, removeDevice } from '@/lib/firestore/devices';
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
@@ -57,11 +57,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
   const [devices, setDevices] = useState<UserDevice[]>([]);
   const [removingDevice, setRemovingDevice] = useState<string | null>(null);
-  const [isCurrentDeviceAdmin, setIsCurrentDeviceAdmin] = useState(false);
-  const [settingAdmin, setSettingAdmin] = useState<string | null>(null);
-  const [requestingAdmin, setRequestingAdmin] = useState(false);
-  const [verifyingAdmin, setVerifyingAdmin] = useState(false);
-  const [adminRequestSent, setAdminRequestSent] = useState(false);
   const [currentDeviceId, setCurrentDeviceId] = useState('');
   const { t } = useTranslation(['configuracion', 'common']);
 
@@ -132,8 +127,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     // Subscribe a dispositivos
     const unsubDevices = subscribeToDevices(uid, (devs) => {
       setDevices(devs);
-      const current = devs.find((d) => d.deviceId === currentDeviceId);
-      setIsCurrentDeviceAdmin(current?.isAdmin === true);
     });
 
     return () => {
@@ -220,26 +213,12 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
   const handleRemoveDevice = async (deviceId: string) => {
     if (!user?.uid) return;
-    // Nobody can remove the admin device (except the admin themselves from their own device)
-    const targetDevice = devices.find(d => d.deviceId === deviceId);
-    if (targetDevice?.isAdmin && deviceId !== currentDeviceId) {
-      setErrorMsg(t('seguridad.cannotRemoveAdmin', { defaultValue: 'No puedes cerrar la sesión del dispositivo administrador' }));
-      setTimeout(() => setErrorMsg(''), 4000);
-      return;
-    }
-    // Any device can remove itself; any device can remove non-admin devices
-    if (deviceId !== currentDeviceId && targetDevice?.isAdmin) {
-      setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede cerrar sesiones de otros dispositivos' }));
-      setTimeout(() => setErrorMsg(''), 4000);
-      return;
-    }
     setRemovingDevice(deviceId);
     setSuccessMsg('');
     setErrorMsg('');
     try {
       await removeDevice(user.uid, deviceId);
       if (deviceId === currentDeviceId) {
-        // Cerrar sesión en este dispositivo
         setSuccessMsg(t('seguridad.deviceRemoved'));
         setTimeout(() => logout(), 1200);
       } else {
@@ -252,91 +231,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       setTimeout(() => setErrorMsg(''), 4000);
     } finally {
       setRemovingDevice(null);
-    }
-  };
-
-  const handleSetAdminDevice = async (deviceId: string) => {
-    if (!user?.uid || !isCurrentDeviceAdmin) return;
-    setSettingAdmin(deviceId);
-    setSuccessMsg('');
-    setErrorMsg('');
-    try {
-      await setAdminDevice(user.uid, deviceId);
-      // Clear any pending transfer requests on the new admin device
-      await cancelAdminTransfer(user.uid, deviceId);
-      setSuccessMsg(t('seguridad.adminSet', { defaultValue: 'Dispositivo administrador actualizado' }));
-      setTimeout(() => setSuccessMsg(''), 4000);
-    } catch (e) {
-      console.error('Error setting admin device:', e);
-      setErrorMsg(t('seguridad.adminSetError', { defaultValue: 'Error al cambiar el dispositivo administrador' }));
-      setTimeout(() => setErrorMsg(''), 4000);
-    } finally {
-      setSettingAdmin(null);
-    }
-  };
-
-  const handleRequestAdmin = async () => {
-    if (!user?.uid || !currentDeviceId || isCurrentDeviceAdmin) return;
-    setRequestingAdmin(true);
-    setSuccessMsg('');
-    setErrorMsg('');
-    try {
-      // Step 1: Register the transfer request in Firestore
-      await requestAdminTransfer(user.uid, currentDeviceId);
-      // Step 2: Send email verification
-      const result = await sendVerificationEmail();
-      if (result.success) {
-        setAdminRequestSent(true);
-        setSuccessMsg(t('seguridad.adminRequestSent', { defaultValue: 'Solicitud enviada. Revisa tu correo para verificar.' }));
-      } else {
-        setErrorMsg(result.error || t('seguridad.adminRequestError', { defaultValue: 'Error al enviar la solicitud' }));
-        await cancelAdminTransfer(user.uid, currentDeviceId);
-      }
-    } catch (e) {
-      console.error('Error requesting admin:', e);
-      setErrorMsg(t('seguridad.adminRequestError', { defaultValue: 'Error al enviar la solicitud' }));
-    } finally {
-      setRequestingAdmin(false);
-      setTimeout(() => { setSuccessMsg(''); setErrorMsg(''); }, 5000);
-    }
-  };
-
-  const handleVerifyAndConfirmAdmin = async () => {
-    if (!user?.uid || !currentDeviceId || isCurrentDeviceAdmin) return;
-    setVerifyingAdmin(true);
-    setSuccessMsg('');
-    setErrorMsg('');
-    try {
-      // Reload user to get latest emailVerified status
-      const reloadResult = await reloadUser();
-      if (!reloadResult.success || !reloadResult.emailVerified) {
-        setErrorMsg(t('seguridad.emailNotVerified', { defaultValue: 'Tu correo aún no está verificado. Revisa tu bandeja de entrada.' }));
-        setVerifyingAdmin(false);
-        setTimeout(() => setErrorMsg(''), 5000);
-        return;
-      }
-      // Mark as verified in Firestore
-      await verifyAdminTransfer(user.uid, currentDeviceId);
-      setSuccessMsg(t('seguridad.adminRequestVerified', { defaultValue: 'Correo verificado. El administrador puede aprobar tu solicitud.' }));
-      setAdminRequestSent(false);
-    } catch (e) {
-      console.error('Error verifying admin request:', e);
-      setErrorMsg(t('seguridad.adminVerifyError', { defaultValue: 'Error al verificar la solicitud' }));
-    } finally {
-      setVerifyingAdmin(false);
-      setTimeout(() => { setSuccessMsg(''); setErrorMsg(''); }, 5000);
-    }
-  };
-
-  const handleCancelAdminRequest = async () => {
-    if (!user?.uid || !currentDeviceId) return;
-    try {
-      await cancelAdminTransfer(user.uid, currentDeviceId);
-      setAdminRequestSent(false);
-      setSuccessMsg(t('seguridad.adminRequestCancelled', { defaultValue: 'Solicitud cancelada' }));
-      setTimeout(() => setSuccessMsg(''), 4000);
-    } catch (e) {
-      console.error('Error cancelling admin request:', e);
     }
   };
 
@@ -902,70 +796,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <p className="panel-desc">{t('seguridad.sessionsDesc')}</p>
                     </div>
 
-                    {/* Admin Info Banner */}
-                    {devices.length > 0 && (
-                      <div className="admin-info-banner">
-                        <Shield size={18} />
-                        <div className="admin-info-text">
-                          <strong>{t('seguridad.adminInfo.title', { defaultValue: 'Dispositivo Administrador' })}</strong>
-                          <span>{t('seguridad.adminInfo.desc', { defaultValue: 'Solo el dispositivo admin puede cambiar contraseñas, borrar datos y aprobar transferencias.' })}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Pending Admin Requests - visible only to current admin */}
-                    {isCurrentDeviceAdmin && devices.some(d => d.adminTransferRequestedAt && !d.isAdmin && d.deviceId !== currentDeviceId) && (
-                      <div className="admin-requests-section">
-                        <h4 className="admin-requests-title">
-                          <UserCheck size={16} />
-                          {t('seguridad.pendingRequests', { defaultValue: 'Solicitudes pendientes' })}
-                        </h4>
-                        {devices
-                          .filter(d => d.adminTransferRequestedAt && !d.isAdmin && d.deviceId !== currentDeviceId)
-                          .map(device => {
-                            const online = isDeviceOnline(device);
-                            return (
-                              <div key={device.deviceId} className={`admin-request-card ${device.adminTransferVerified ? 'verified' : ''}`}>
-                                <div className="admin-request-info">
-                                  <InlineIcon icon={getDeviceIcon(device.deviceType)} size={18} />
-                                  <div>
-                                    <span className="admin-request-name">{device.deviceName}</span>
-                                    <span className="admin-request-detail">
-                                      {device.browser} · {device.os}
-                                      {device.adminTransferVerified ? (
-                                        <span className="admin-request-status verified">
-                                          <CheckCircle2 size={12} /> {t('seguridad.verified', { defaultValue: 'Verificado' })}
-                                        </span>
-                                      ) : (
-                                        <span className="admin-request-status pending">
-                                          <Clock size={12} /> {t('seguridad.awaitingVerification', { defaultValue: 'Esperando verificación de correo' })}
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                                {device.adminTransferVerified && (
-                                  <button
-                                    className="session-action-btn session-action-admin"
-                                    onClick={() => handleSetAdminDevice(device.deviceId)}
-                                    disabled={settingAdmin === device.deviceId}
-                                  >
-                                    {settingAdmin === device.deviceId ? (
-                                      <span className="spinner-small" />
-                                    ) : (
-                                      <>
-                                        <UserCheck size={14} />
-                                        <span className="session-action-text">{t('seguridad.approve', { defaultValue: 'Aprobar' })}</span>
-                                      </>
-                                    )}
-                                  </button>
-                                )}
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
-
                     {devices.length === 0 ? (
                       <div className="session-card">
                         <div className="session-icon"><InlineIcon icon="Laptop" size={20} /></div>
@@ -977,21 +807,15 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       </div>
                     ) : (
                       <div className="device-list">
-                        {/* Sort: admin first, then by lastActive */}
                         {[...devices]
-                          .sort((a, b) => {
-                            if (a.isAdmin && !b.isAdmin) return -1;
-                            if (!a.isAdmin && b.isAdmin) return 1;
-                            return b.lastActive - a.lastActive;
-                          })
+                          .sort((a, b) => b.lastActive - a.lastActive)
                           .map((device) => {
                           const isCurrent = device.deviceId === currentDeviceId;
                           const online = isDeviceOnline(device);
-                          const hasPendingRequest = device.adminTransferRequestedAt && !device.isAdmin;
                           return (
                             <div
                               key={device.deviceId}
-                              className={`session-card ${isCurrent ? 'session-current' : ''} ${!online ? 'session-offline' : ''} ${device.isAdmin ? 'session-admin' : ''} ${hasPendingRequest ? 'session-pending' : ''}`}
+                              className={`session-card ${isCurrent ? 'session-current' : ''} ${!online ? 'session-offline' : ''}`}
                             >
                               <div className="session-main">
                                 <div className="session-icon">
@@ -1006,16 +830,6 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                     {!isCurrent && !online && (
                                       <span className="session-badge-offline">{t('seguridad.device.offlineBadge')}</span>
                                     )}
-                                    {device.isAdmin && (
-                                      <span className="session-badge-admin-inline">
-                                        <Lock size={10} /> {t('seguridad.adminBadge', { defaultValue: 'Admin' })}
-                                      </span>
-                                    )}
-                                    {hasPendingRequest && device.adminTransferVerified && (
-                                      <span className="session-badge-verified-inline">
-                                        <CheckCircle2 size={10} /> {t('seguridad.verified', { defaultValue: 'Verificado' })}
-                                      </span>
-                                    )}
                                   </span>
                                   <span className="session-detail">
                                     {device.browser} · {device.os}
@@ -1027,103 +841,11 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                 </div>
                               </div>
                               <div className="session-actions">
-                                {/* Non-admin current device: show request button */}
-                                {isCurrent && !isCurrentDeviceAdmin && !hasPendingRequest && (
-                                  <button
-                                    className="session-action-btn session-action-request"
-                                    onClick={handleRequestAdmin}
-                                    disabled={requestingAdmin}
-                                  >
-                                    {requestingAdmin ? (
-                                      <span className="spinner-small" />
-                                    ) : (
-                                      <>
-                                        <Shield size={14} />
-                                        <span className="session-action-text">{t('seguridad.requestAdmin', { defaultValue: 'Solicitar admin' })}</span>
-                                      </>
-                                    )}
-                                  </button>
-                                )}
-                                {/* Non-admin current device with pending request: show verify/confirm */}
-                                {isCurrent && !isCurrentDeviceAdmin && hasPendingRequest && (
-                                  <>
-                                    {!device.adminTransferVerified ? (
-                                      <button
-                                        className="session-action-btn session-action-verify"
-                                        onClick={handleVerifyAndConfirmAdmin}
-                                        disabled={verifyingAdmin}
-                                      >
-                                        {verifyingAdmin ? (
-                                          <span className="spinner-small" />
-                                        ) : (
-                                          <>
-                                            <Mail size={14} />
-                                            <span className="session-action-text">{t('seguridad.verifyEmail', { defaultValue: 'Verificar correo' })}</span>
-                                          </>
-                                        )}
-                                      </button>
-                                    ) : (
-                                      <span className="session-action-btn session-action-waiting" style={{ cursor: 'default' }}>
-                                        <Clock size={14} />
-                                        <span className="session-action-text">{t('seguridad.awaitingApproval', { defaultValue: 'Esperando aprobación' })}</span>
-                                      </span>
-                                    )}
-                                    <button
-                                      className="session-action-btn session-action-cancel"
-                                      onClick={handleCancelAdminRequest}
-                                      title={t('seguridad.cancelRequest', { defaultValue: 'Cancelar solicitud' })}
-                                    >
-                                      <XCircle size={14} />
-                                    </button>
-                                  </>
-                                )}
-                                {/* Admin viewing other device with verified request: quick approve */}
-                                {isCurrentDeviceAdmin && !isCurrent && !device.isAdmin && device.adminTransferVerified && (
-                                  <button
-                                    className="session-action-btn session-action-admin"
-                                    onClick={() => handleSetAdminDevice(device.deviceId)}
-                                    disabled={settingAdmin === device.deviceId}
-                                    title={t('seguridad.approve', { defaultValue: 'Aprobar transferencia' })}
-                                  >
-                                    {settingAdmin === device.deviceId ? (
-                                      <span className="spinner-small" />
-                                    ) : (
-                                      <>
-                                        <UserCheck size={14} />
-                                        <span className="session-action-text">{t('seguridad.approve', { defaultValue: 'Aprobar' })}</span>
-                                      </>
-                                    )}
-                                  </button>
-                                )}
-                                {/* Admin viewing other device without request: direct transfer (legacy) */}
-                                {isCurrentDeviceAdmin && !isCurrent && !device.isAdmin && !device.adminTransferVerified && (
-                                  <button
-                                    className="session-action-btn session-action-admin"
-                                    onClick={() => handleSetAdminDevice(device.deviceId)}
-                                    disabled={settingAdmin === device.deviceId}
-                                    title={t('seguridad.makeAdmin', { defaultValue: 'Hacer administrador' })}
-                                  >
-                                    {settingAdmin === device.deviceId ? (
-                                      <span className="spinner-small" />
-                                    ) : (
-                                      <>
-                                        <Lock size={14} />
-                                        <span className="session-action-text">{t('seguridad.makeAdmin', { defaultValue: 'Hacer admin' })}</span>
-                                      </>
-                                    )}
-                                  </button>
-                                )}
                                 <button
-                                  className={`session-action-btn ${isCurrent ? 'session-action-current' : ''} ${device.isAdmin && !isCurrent ? 'session-action-disabled' : ''}`}
+                                  className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
                                   onClick={() => handleRemoveDevice(device.deviceId)}
-                                  disabled={removingDevice === device.deviceId || (device.isAdmin && !isCurrent)}
-                                  title={
-                                    device.isAdmin && !isCurrent
-                                      ? t('seguridad.cannotRemoveAdmin', { defaultValue: 'No puedes cerrar la sesión del dispositivo administrador' })
-                                      : isCurrent
-                                        ? t('seguridad.logoutThisDevice')
-                                        : t('seguridad.logoutDevice')
-                                  }
+                                  disabled={removingDevice === device.deviceId || isCurrent}
+                                  title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
                                 >
                                   {removingDevice === device.deviceId ? (
                                     <span className="spinner-small" />
@@ -1144,18 +866,13 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     )}
                   </div>
 
-                  {/* Password Change Section - Admin only */}
+                  {/* Password Change Section */}
                   {isEmailUser && (
-                    <div className={`panel-card ${!isCurrentDeviceAdmin ? 'panel-disabled' : ''}`}>
+                    <div className="panel-card">
                       <div className="panel-header">
                         <h2 className="panel-title">
                           <Lock size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
                           {t('seguridad.changePassword.title', { defaultValue: 'Cambiar Contraseña' })}
-                          {!isCurrentDeviceAdmin && (
-                            <span className="admin-only-badge">
-                              <Shield size={10} /> {t('seguridad.adminOnly', { defaultValue: 'Solo Admin' })}
-                            </span>
-                          )}
                         </h2>
                         <p className="panel-desc">{t('seguridad.changePassword.desc', { defaultValue: 'Actualiza tu contraseña de acceso' })}</p>
                       </div>
@@ -1163,14 +880,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       {!showPasswordForm ? (
                         <button
                           className="btn-outline-security"
-                          onClick={() => {
-                            if (!isCurrentDeviceAdmin) {
-                              setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede cambiar la contraseña' }));
-                              setTimeout(() => setErrorMsg(''), 4000);
-                              return;
-                            }
-                            setShowPasswordForm(true);
-                          }}
+                          onClick={() => setShowPasswordForm(true)}
                         >
                           <Lock size={14} /> {t('seguridad.changePassword.btn', { defaultValue: 'Cambiar contraseña' })}
                         </button>
@@ -1260,14 +970,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     {!showDeleteConfirm ? (
                       <button
                         className="btn-danger"
-                        onClick={() => {
-                          if (!isCurrentDeviceAdmin) {
-                            setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede eliminar la cuenta' }));
-                            setTimeout(() => setErrorMsg(''), 4000);
-                            return;
-                          }
-                          setShowDeleteConfirm(true);
-                        }}
+                        onClick={() => setShowDeleteConfirm(true)}
                       >
                         {t('seguridad.deleteAccount.btn')}
                       </button>
@@ -1316,14 +1019,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     {!showWipeConfirm ? (
                       <button
                         className="btn-warning"
-                        onClick={() => {
-                          if (!isCurrentDeviceAdmin) {
-                            setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede borrar los datos' }));
-                            setTimeout(() => setErrorMsg(''), 4000);
-                            return;
-                          }
-                          setShowWipeConfirm(true);
-                        }}
+                        onClick={() => setShowWipeConfirm(true)}
                       >
                         {t('seguridad.wipeData.btn')}
                       </button>
