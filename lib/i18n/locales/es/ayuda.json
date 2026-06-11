@@ -595,6 +595,18 @@
     "preRelease": "PRE-release",
     "versions": [
       {
+        "version": "1.0.1",
+        "date": "2026-06-11",
+        "preRelease": false,
+        "items": [
+          "Eliminado el sistema de administración de dispositivos: cualquier dispositivo puede cerrar cualquier sesión.",
+          "Corregido el bug de login/logout que expulsaba al usuario justo después de iniciar sesión.",
+          "Corregido el dropdown de usuario duplicado en la esquina superior derecha.",
+          "Planes recurrentes se reinician automáticamente al vencer el ciclo (current = 0, nextDueDate avanza).",
+          "Corregidos los iconos del modal de novedades que mostraban texto en lugar de emojis."
+        ]
+      },
+      {
         "version": "1.0.0",
         "date": "2026-06-10",
         "preRelease": false,

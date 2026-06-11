@@ -595,6 +595,18 @@
     "preRelease": "PRE-release",
     "versions": [
       {
+        "version": "1.0.1",
+        "date": "2026-06-11",
+        "preRelease": false,
+        "items": [
+          "Removed device admin system: any device can close any session.",
+          "Fixed login/logout flicker bug that kicked users out right after signing in.",
+          "Fixed duplicate user dropdown in the top-right corner.",
+          "Recurring plans now auto-reset when the cycle expires (current = 0, nextDueDate advances).",
+          "Fixed update modal icons showing text instead of emojis."
+        ]
+      },
+      {
         "version": "1.0.0",
         "date": "2026-06-10",
         "preRelease": false,

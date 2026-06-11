@@ -88,29 +88,29 @@
     "back": "Volver"
   },
   "updateModal": {
-    "badge": "Sparkles Nueva versión",
-    "title": "¡Hay novedades! Sparkles",
+    "badge": "✨ Nueva versión",
+    "title": "¡Hay novedades! ✨",
     "subtitle": "Actualización {{version}} — ya disponible para ti",
-    "primaryBtn": "¡Vamos! Rocket",
+    "primaryBtn": "¡Vamos! 🚀",
     "secondaryBtn": "No volver a mostrar",
     "closeAria": "Cerrar",
     "dialogAria": "Novedades de la versión",
     "notes": [
       {
-        "emoji": "LayoutGrid",
-        "text": "Dashboard personalizable con widgets, categorías e iconos SVG."
+        "emoji": "Shield",
+        "text": "Eliminado el sistema de admin de dispositivos: cualquier dispositivo puede cerrar cualquier sesión."
+      },
+      {
+        "emoji": "Lock",
+        "text": "Corregido el bug de login/logout que expulsaba al usuario justo después de iniciar sesión."
+      },
+      {
+        "emoji": "RefreshCw",
+        "text": "Planes recurrentes se reinician automáticamente al vencer el ciclo."
       },
       {
         "emoji": "User",
-        "text": "Modo Invitado: explora la app sin iniciar sesión."
-      },
-      {
-        "emoji": "Bell",
-        "text": "Notificaciones de login y cambios de tasa BCV en tiempo real."
-      },
-      {
-        "emoji": "Globe",
-        "text": "Soporte completo en español e inglés."
+        "text": "Corregido el dropdown de usuario duplicado en la esquina superior derecha."
       },
       {
         "emoji": "Rocket",

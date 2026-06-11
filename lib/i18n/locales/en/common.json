@@ -88,29 +88,29 @@
     "back": "Back"
   },
   "updateModal": {
-    "badge": "Sparkles New version",
-    "title": "What's new! Sparkles",
+    "badge": "✨ New version",
+    "title": "What's new! ✨",
     "subtitle": "Update {{version}} — available now",
-    "primaryBtn": "Let's go! Rocket",
+    "primaryBtn": "Let's go! 🚀",
     "secondaryBtn": "Don't show again",
     "closeAria": "Close",
     "dialogAria": "Version release notes",
     "notes": [
       {
-        "emoji": "LayoutGrid",
-        "text": "Customizable dashboard with widgets, categories, and SVG icons."
+        "emoji": "Shield",
+        "text": "Removed device admin system: any device can close any session."
+      },
+      {
+        "emoji": "Lock",
+        "text": "Fixed login/logout flicker bug that kicked users out right after signing in."
+      },
+      {
+        "emoji": "RefreshCw",
+        "text": "Recurring plans now auto-reset when the cycle expires."
       },
       {
         "emoji": "User",
-        "text": "Guest Mode: explore the app without signing in."
-      },
-      {
-        "emoji": "Bell",
-        "text": "Login and BCV rate change notifications in real time."
-      },
-      {
-        "emoji": "Globe",
-        "text": "Full Spanish & English language support."
+        "text": "Fixed duplicate user dropdown in the top-right corner."
       },
       {
         "emoji": "Rocket",
