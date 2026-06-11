@@ -1,15 +1,15 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (7 de Junio, 2026 - v0.9.1)
+## Estado Actual (11 de Junio, 2026 - v1.0.1)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
-- **Tecnología**: Next.js 16.2.1 (App Router/Turbopack), Vanilla CSS, React 19, TypeScript.
+- **Tecnología**: Next.js 16.2.1 (App Router/webpack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
 - **Modo**: App inicia en BLANCO - sin datos de ejemplo. Todo dato viene de Firebase.
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
-- **Versión actual**: 0.9.1 (publicada en test-deploy y master).
+- **Versión actual**: 1.0.1 (publicada en test-deploy y master).
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -63,6 +63,18 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.1 — Auth Stability + Admin Removal + Recurring Reset (11/06/2026)**:
+  - **Eliminado sistema de administración de dispositivos**: Removidos `isAdmin`, `adminTransferRequestedAt`, `adminTransferVerified` de `UserDevice`. Eliminadas funciones `setAdminDevice`, `isAdminDevice`, `requestAdminTransfer`, `verifyAdminTransfer`, `cancelAdminTransfer`. UI de configuración simplificada: cualquier dispositivo puede cerrar cualquier sesión.
+  - **Fix login/logout flicker**: El heartbeat usaba `getDeviceInfo()` en lugar de `getDeviceInfoForHeartbeat()`, generando un nuevo `sessionToken` en cada verificación y causando mismatch con Firestore → logout forzado. Ahora usa la función correcta que reusa el token existente.
+  - **Fix login lento**: `onUserReady` (registro de dispositivo, fetch de IP, notificaciones) era `await` en `initAuth`, bloqueando `setLoading(false)`. Ahora corre en background (`.catch()`), permitiendo que la UI renderice inmediatamente.
+  - **Fix logout inesperado por errores de red**: El heartbeat ya NO fuerza logout si `getUserDevices` falla. Solo fuerza logout tras **2 token mismatches consecutivos**.
+  - **Fix logout si dispositivo no encontrado**: En lugar de forzar logout, el heartbeat **re-registra el dispositivo automáticamente** cuando no lo encuentra en Firestore.
+  - **Fix getPublicIP bloqueando login**: Añadido `AbortController` con timeout de 2s al fetch de IP. Antes podía bloquear indefinidamente.
+  - **Fix dropdown de usuario duplicado**: El portal mobile del menú de usuario se renderizaba siempre que `showUserMenu` era `true`, incluso en desktop. Ahora solo se renderiza cuando `!isDesktop` y tiene `display: none` en desktop como respaldo CSS.
+  - **Planes recurrentes auto-reset**: Nueva función `checkAndResetRecurringPlans()` en `recurring.ts`. Cuando `nextDueDate` vence, resetea `current` a 0 y avanza `nextDueDate` al próximo ciclo. Se ejecuta al cargar planes y cada hora mientras la app está abierta.
+  - **Fix `calculateNextDueDate` faltante `daily`**: Añadido case `daily` que avanza +1 día.
+  - **Modal de novedades v1.0.1**: Reemplazados textos "Sparkles" y "Rocket" por emojis reales (✨🚀). Notas del modal y página de notas de versión actualizadas en español e inglés.
+  - **Build verificado**: `npm run build` exitoso, 18/18 páginas generadas sin errores TypeScript.
 - ✅ **Fix Crítico: "Algo salió mal" en Navegación Privada y Móviles (07/06/2026 - v0.9.1)**: Solucionado el error "Algo salió mal" que aparecía en ciertos dispositivos móviles y PCs (especialmente Safari iOS en modo privado, navegadores sandboxed y cuando el almacenamiento local está lleno). La causa raíz era que `localStorage` y `sessionStorage` no están disponibles en esos entornos, y múltiples componentes accedían a ellos sin `try/catch`, lanzando excepciones no capturadas que el `ErrorBoundary` mostraba como crash. Cambios aplicados:
   - **Nueva utilidad `lib/utils/safeStorage.ts`**: Wrapper con polyfill en memoria que detecta si `localStorage`/`sessionStorage` están disponibles. Si no lo están, usa almacenamiento en memoria para que la app funcione sin persistencia pero sin crashear.
   - **`lib/firebase.ts`**: Reemplazado el polyfill antiguo de `sessionStorage` por uno robusto que también cubre `localStorage`, usando `configurable: true` y `writable: true` para mayor compatibilidad con navegadores restrictivos.
