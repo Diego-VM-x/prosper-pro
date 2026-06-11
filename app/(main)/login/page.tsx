@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { auth } from '@/lib/firebase';
-import { sendBrowserNotification } from '@/lib/firestore/notifications';
+
 import './auth.css';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
@@ -31,27 +31,12 @@ export default function LoginPage() {
     }
   }, [user, isGuest, authLoading, router]);
 
-  const sendWelcomeNotification = (userName: string) => {
-    const title = t('login.welcomeNotification.title');
-    const body = t('login.welcomeNotification.body', { name: userName });
-    console.log('[Login] Sending notification:', title, body);
-    sendBrowserNotification(title, body, 'general');
-  };
-
   const handleGoogleLogin = async () => {
     try {
       setError(null);
       setLoading(true);
       await loginWithGoogle();
-      console.log('[Login] Google login completed');
-      await new Promise(r => setTimeout(r, 800));
-      
-      // Get user name - use email as primary source since it's available
-      const userName = email.split('@')[0] || 'Usuario';
-      console.log('[Login] User name:', userName);
-      sendWelcomeNotification(userName);
-      
-      router.replace('/');
+      // Redirect is handled by useEffect watching user/isGuest state
     } catch (e: any) {
       setError(e?.message || t('login.errors.google'));
       setLoading(false);
@@ -87,15 +72,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await loginWithEmail(email, password);
-      console.log('[Login] Email login completed');
-      await new Promise(r => setTimeout(r, 800));
-      
-      // Send welcome notification
-      const userName = email.split('@')[0] || 'Usuario';
-      console.log('[Login] Sending welcome notification to:', userName);
-      sendWelcomeNotification(userName);
-      
-      router.replace('/');
+      // Redirect is handled by useEffect watching user/isGuest state
     } catch (err: any) {
       setLoading(false);
       switch (err.code) {
@@ -115,7 +92,7 @@ export default function LoginPage() {
 
   const handleGuestMode = () => {
     enterGuestMode();
-    router.replace('/');
+    // Redirect is handled by useEffect watching user/isGuest state
   };
 
   const features = t('login.features', { returnObjects: true }) as AuthFeature[];

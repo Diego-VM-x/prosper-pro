@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
-import { subscribeToDevices, removeDevice } from '@/lib/firestore/devices';
+import { subscribeToDevices, removeDevice, setAdminDevice } from '@/lib/firestore/devices';
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
@@ -21,7 +21,7 @@ import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut } fro
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
 
 const ConfiguracionPage = memo(function ConfiguracionPage() {
-  const { user, logout, deleteAccount, wipeAllData, enableNotifications } = useAuth();
+  const { user, logout, changePassword, deleteAccount, wipeAllData, enableNotifications } = useAuth();
   const [notifEnabled, setNotifEnabled] = useState(false);
   const [notifSaving, setNotifSaving] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -56,8 +56,18 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
   const [devices, setDevices] = useState<UserDevice[]>([]);
   const [removingDevice, setRemovingDevice] = useState<string | null>(null);
+  const [isCurrentDeviceAdmin, setIsCurrentDeviceAdmin] = useState(false);
+  const [settingAdmin, setSettingAdmin] = useState<string | null>(null);
   const { t } = useTranslation(['configuracion', 'common']);
   const currentDeviceId = typeof window !== 'undefined' ? getDeviceInfo().deviceId : '';
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const isEmailUser = user?.providerData?.length === 0 || user?.providerData?.some((p: any) => p.providerId === 'password');
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -110,6 +120,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     // Subscribe a dispositivos
     const unsubDevices = subscribeToDevices(uid, (devs) => {
       setDevices(devs);
+      const current = devs.find((d) => d.deviceId === currentDeviceId);
+      setIsCurrentDeviceAdmin(current?.isAdmin === true);
     });
 
     return () => {
@@ -196,6 +208,12 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
   const handleRemoveDevice = async (deviceId: string) => {
     if (!user?.uid) return;
+    // Only admin can remove other devices; any device can remove itself
+    if (deviceId !== currentDeviceId && !isCurrentDeviceAdmin) {
+      setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede cerrar sesiones de otros dispositivos' }));
+      setTimeout(() => setErrorMsg(''), 4000);
+      return;
+    }
     setRemovingDevice(deviceId);
     setSuccessMsg('');
     setErrorMsg('');
@@ -215,6 +233,79 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       setTimeout(() => setErrorMsg(''), 4000);
     } finally {
       setRemovingDevice(null);
+    }
+  };
+
+  const handleSetAdminDevice = async (deviceId: string) => {
+    if (!user?.uid || !isCurrentDeviceAdmin) return;
+    setSettingAdmin(deviceId);
+    setSuccessMsg('');
+    setErrorMsg('');
+    try {
+      await setAdminDevice(user.uid, deviceId);
+      setSuccessMsg(t('seguridad.adminSet', { defaultValue: 'Dispositivo administrador actualizado' }));
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (e) {
+      console.error('Error setting admin device:', e);
+      setErrorMsg(t('seguridad.adminSetError', { defaultValue: 'Error al cambiar el dispositivo administrador' }));
+      setTimeout(() => setErrorMsg(''), 4000);
+    } finally {
+      setSettingAdmin(null);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!isEmailUser) {
+      setErrorMsg(t('seguridad.passwordChangeNotAvailable', { defaultValue: 'Los usuarios de Google no pueden cambiar su contraseña aquí' }));
+      setTimeout(() => setErrorMsg(''), 4000);
+      return;
+    }
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setErrorMsg(t('seguridad.passwordEmpty', { defaultValue: 'Completa todos los campos' }));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setErrorMsg(t('seguridad.passwordMismatch', { defaultValue: 'Las contraseñas nuevas no coinciden' }));
+      return;
+    }
+    if (newPassword.length < 8) {
+      setErrorMsg(t('seguridad.passwordTooShort', { defaultValue: 'La contraseña debe tener al menos 8 caracteres' }));
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      setErrorMsg(t('seguridad.passwordNoUppercase', { defaultValue: 'La contraseña debe tener al menos una mayúscula' }));
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      setErrorMsg(t('seguridad.passwordNoLowercase', { defaultValue: 'La contraseña debe tener al menos una minúscula' }));
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      setErrorMsg(t('seguridad.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
+      return;
+    }
+
+    setChangingPassword(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const result = await changePassword(currentPassword, newPassword);
+      if (result.success) {
+        setSuccessMsg(t('seguridad.passwordChanged', { defaultValue: 'Contraseña actualizada correctamente' }));
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowPasswordForm(false);
+        setTimeout(() => setSuccessMsg(''), 4000);
+      } else {
+        setErrorMsg(result.error || t('seguridad.passwordChangeError'));
+        setTimeout(() => setErrorMsg(''), 4000);
+      }
+    } catch (e) {
+      setErrorMsg(t('seguridad.passwordChangeError'));
+      setTimeout(() => setErrorMsg(''), 4000);
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -767,29 +858,140 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                   </span>
                                 </div>
                               </div>
-                              <button
-                                className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
-                                onClick={() => handleRemoveDevice(device.deviceId)}
-                                disabled={removingDevice === device.deviceId}
-                                title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
-                              >
-                                {removingDevice === device.deviceId ? (
-                                  <span className="spinner-small" />
-                                ) : (
-                                  <>
-                                    <LogOut size={14} />
-                                    <span className="session-action-text">
-                                      {isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
-                                    </span>
-                                  </>
+                              <div className="session-actions">
+                                {device.isAdmin && (
+                                  <span className="session-admin-badge">
+                                    <Lock size={12} /> {t('seguridad.adminBadge', { defaultValue: 'Admin' })}
+                                  </span>
                                 )}
-                              </button>
+                                {isCurrentDeviceAdmin && !isCurrent && !device.isAdmin && (
+                                  <button
+                                    className="session-action-btn session-action-admin"
+                                    onClick={() => handleSetAdminDevice(device.deviceId)}
+                                    disabled={settingAdmin === device.deviceId}
+                                    title={t('seguridad.makeAdmin', { defaultValue: 'Hacer administrador' })}
+                                  >
+                                    {settingAdmin === device.deviceId ? (
+                                      <span className="spinner-small" />
+                                    ) : (
+                                      <>
+                                        <Lock size={14} />
+                                        <span className="session-action-text">{t('seguridad.makeAdmin', { defaultValue: 'Hacer admin' })}</span>
+                                      </>
+                                    )}
+                                  </button>
+                                )}
+                                <button
+                                  className={`session-action-btn ${isCurrent ? 'session-action-current' : ''}`}
+                                  onClick={() => handleRemoveDevice(device.deviceId)}
+                                  disabled={removingDevice === device.deviceId}
+                                  title={isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                                >
+                                  {removingDevice === device.deviceId ? (
+                                    <span className="spinner-small" />
+                                  ) : (
+                                    <>
+                                      <LogOut size={14} />
+                                      <span className="session-action-text">
+                                        {isCurrent ? t('seguridad.logoutThisDevice') : t('seguridad.logoutDevice')}
+                                      </span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
                       </div>
                     )}
                   </div>
+
+                  {/* Password Change Section */}
+                  {isEmailUser && (
+                    <div className="panel-card">
+                      <div className="panel-header">
+                        <h2 className="panel-title">{t('seguridad.changePassword.title', { defaultValue: 'Cambiar Contraseña' })}</h2>
+                        <p className="panel-desc">{t('seguridad.changePassword.desc', { defaultValue: 'Actualiza tu contraseña de acceso' })}</p>
+                      </div>
+
+                      {!showPasswordForm ? (
+                        <button
+                          className="btn-outline-security"
+                          onClick={() => setShowPasswordForm(true)}
+                        >
+                          <Lock size={14} /> {t('seguridad.changePassword.btn', { defaultValue: 'Cambiar contraseña' })}
+                        </button>
+                      ) : (
+                        <div className="password-change-form">
+                          <div className="password-field">
+                            <label>{t('seguridad.changePassword.current', { defaultValue: 'Contraseña actual' })}</label>
+                            <input
+                              type="password"
+                              value={currentPassword}
+                              onChange={(e) => setCurrentPassword(e.target.value)}
+                              placeholder={t('seguridad.changePassword.currentPlaceholder', { defaultValue: 'Tu contraseña actual' })}
+                            />
+                          </div>
+                          <div className="password-field">
+                            <label>{t('seguridad.changePassword.new', { defaultValue: 'Nueva contraseña' })}</label>
+                            <input
+                              type="password"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder={t('seguridad.changePassword.newPlaceholder', { defaultValue: 'Mínimo 8 caracteres' })}
+                            />
+                            <div className="password-hints-security">
+                              <span className={`password-hint ${newPassword.length >= 8 ? 'valid' : ''}`}>
+                                {newPassword.length >= 8 ? '✓' : '•'} {t('login.passwordHints.minLength', { defaultValue: 'Mínimo 8 caracteres' })}
+                              </span>
+                              <span className={`password-hint ${/[A-Z]/.test(newPassword) ? 'valid' : ''}`}>
+                                {/[A-Z]/.test(newPassword) ? '✓' : '•'} {t('login.passwordHints.uppercase', { defaultValue: 'Una mayúscula' })}
+                              </span>
+                              <span className={`password-hint ${/[a-z]/.test(newPassword) ? 'valid' : ''}`}>
+                                {/[a-z]/.test(newPassword) ? '✓' : '•'} {t('login.passwordHints.lowercase', { defaultValue: 'Una minúscula' })}
+                              </span>
+                              <span className={`password-hint ${/[0-9]/.test(newPassword) ? 'valid' : ''}`}>
+                                {/[0-9]/.test(newPassword) ? '✓' : '•'} {t('login.passwordHints.number', { defaultValue: 'Un número' })}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="password-field">
+                            <label>{t('seguridad.changePassword.confirm', { defaultValue: 'Confirmar nueva contraseña' })}</label>
+                            <input
+                              type="password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              placeholder={t('seguridad.changePassword.confirmPlaceholder', { defaultValue: 'Repite la nueva contraseña' })}
+                            />
+                          </div>
+                          <div className="password-change-actions">
+                            <button
+                              className="btn-cancel"
+                              onClick={() => {
+                                setShowPasswordForm(false);
+                                setCurrentPassword('');
+                                setNewPassword('');
+                                setConfirmPassword('');
+                              }}
+                            >
+                              {t('common:buttons.cancel', { defaultValue: 'Cancelar' })}
+                            </button>
+                            <button
+                              className="btn-save"
+                              onClick={handleChangePassword}
+                              disabled={changingPassword}
+                            >
+                              {changingPassword ? (
+                                <span className="btn-loading"><span className="spinner" /> {t('seguridad.changePassword.saving', { defaultValue: 'Guardando...' })}</span>
+                              ) : (
+                                t('seguridad.changePassword.submit', { defaultValue: 'Actualizar contraseña' })
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="panel-card danger-card">
                     <div className="panel-header">
@@ -805,7 +1007,14 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     {!showDeleteConfirm ? (
                       <button
                         className="btn-danger"
-                        onClick={() => setShowDeleteConfirm(true)}
+                        onClick={() => {
+                          if (!isCurrentDeviceAdmin) {
+                            setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede eliminar la cuenta' }));
+                            setTimeout(() => setErrorMsg(''), 4000);
+                            return;
+                          }
+                          setShowDeleteConfirm(true);
+                        }}
                       >
                         {t('seguridad.deleteAccount.btn')}
                       </button>
@@ -854,7 +1063,14 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     {!showWipeConfirm ? (
                       <button
                         className="btn-warning"
-                        onClick={() => setShowWipeConfirm(true)}
+                        onClick={() => {
+                          if (!isCurrentDeviceAdmin) {
+                            setErrorMsg(t('seguridad.notAdminDevice', { defaultValue: 'Solo el dispositivo administrador puede borrar los datos' }));
+                            setTimeout(() => setErrorMsg(''), 4000);
+                            return;
+                          }
+                          setShowWipeConfirm(true);
+                        }}
                       >
                         {t('seguridad.wipeData.btn')}
                       </button>
@@ -1563,6 +1779,25 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               font-weight: 700;
               text-transform: uppercase;
             }
+            .session-admin-badge {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              padding: 4px 10px;
+              border-radius: 6px;
+              background: rgba(245, 158, 11, 0.12);
+              color: #F59E0B;
+              font-size: 0.625rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              flex-shrink: 0;
+            }
+            .session-actions {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              flex-shrink: 0;
+            }
             .session-action-btn {
               display: flex;
               align-items: center;
@@ -1589,6 +1824,11 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               color: #F59E0B;
               background: rgba(245,158,11,0.06);
             }
+            .session-action-btn.session-action-admin:hover {
+              border-color: var(--color-prosper-green);
+              color: var(--color-prosper-green);
+              background: rgba(61,204,142,0.06);
+            }
             .session-action-btn:disabled {
               opacity: 0.4;
               cursor: not-allowed;
@@ -1603,6 +1843,82 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               border-top-color: currentColor;
               border-radius: 50%;
               animation: spin 0.6s linear infinite;
+            }
+
+            /* Password Change Form */
+            .btn-outline-security {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 10px 18px;
+              border-radius: 10px;
+              border: 1.5px solid var(--border-default);
+              background: transparent;
+              color: var(--text-secondary);
+              font-size: 0.8125rem;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.15s;
+              font-family: inherit;
+            }
+            .btn-outline-security:hover {
+              border-color: var(--color-prosper-green);
+              color: var(--color-prosper-green);
+              background: rgba(61,204,142,0.06);
+            }
+            .password-change-form {
+              display: flex;
+              flex-direction: column;
+              gap: 16px;
+            }
+            .password-field {
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .password-field label {
+              font-size: 0.6875rem;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.08em;
+              color: var(--text-tertiary);
+            }
+            .password-field input {
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid var(--border-default);
+              background: var(--bg-input);
+              color: var(--text-primary);
+              font-size: 0.875rem;
+              outline: none;
+              transition: border-color 0.2s, box-shadow 0.2s;
+              font-family: inherit;
+              box-sizing: border-box;
+            }
+            .password-field input:focus {
+              border-color: var(--color-prosper-green);
+              box-shadow: 0 0 0 3px rgba(61,204,142,0.12);
+            }
+            .password-hints-security {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 6px 12px;
+              margin-top: 4px;
+            }
+            .password-hints-security .password-hint {
+              font-size: 0.6875rem;
+              font-weight: 500;
+              color: var(--text-tertiary);
+              transition: color 0.2s;
+            }
+            .password-hints-security .password-hint.valid {
+              color: var(--color-prosper-green);
+            }
+            .password-change-actions {
+              display: flex;
+              gap: 10px;
+              justify-content: flex-end;
+              margin-top: 4px;
             }
 
             /* Danger */

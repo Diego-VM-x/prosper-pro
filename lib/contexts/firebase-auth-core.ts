@@ -82,7 +82,17 @@ async function onUserReady(u: User) {
       const deviceInfo = getDeviceInfo();
       const existingDevices = await getUserDevices(u.uid);
       const isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
+      const isFirstDevice = existingDevices.length === 0;
       await registerDevice(u.uid, deviceInfo);
+      // Auto-assign admin to first device
+      if (isFirstDevice || isNewDevice) {
+        const devicesAfter = await getUserDevices(u.uid);
+        const hasAdmin = devicesAfter.some((d) => d.isAdmin === true);
+        if (!hasAdmin) {
+          const { setAdminDevice } = await import('@/lib/firestore/devices');
+          await setAdminDevice(u.uid, deviceInfo.deviceId);
+        }
+      }
       // Notificar a otros dispositivos sobre el nuevo inicio de sesión
       try {
         await notifyNewLogin(
@@ -203,6 +213,25 @@ export async function loginWithEmailImpl(email: string, pass: string) {
   });
   await onUserReady(userCred.user);
   return userCred.user;
+}
+
+export async function changePasswordImpl(currentPassword: string, newPassword: string, user: User) {
+  if (!auth || !user?.email) throw new Error('Firebase Auth no está disponible.');
+  const { signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
+  // Re-authenticate with current password
+  const userCred = await signInWithEmailAndPassword(auth, user.email, currentPassword);
+  // Update password
+  await updatePassword(userCred.user, newPassword);
+  // Refresh and store new tokens
+  const idToken = await userCred.user.getIdToken(true);
+  storeTokens({
+    localId: userCred.user.uid,
+    email: userCred.user.email || undefined,
+    displayName: userCred.user.displayName || undefined,
+    photoUrl: userCred.user.photoURL || undefined,
+    idToken,
+    refreshToken: (userCred.user as any).refreshToken || '',
+  });
 }
 
 export async function registerWithEmailImpl(email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) {

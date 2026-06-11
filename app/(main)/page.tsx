@@ -28,8 +28,15 @@ export default function Home() {
   const { user, loading, isGuest } = useAuth();
 
   useEffect(() => {
-    if (!loading && !user && !isGuest) {
-      router.replace('/inicio');
+    if (loading) return;
+    if (!user && !isGuest) {
+      // Small delay to prevent race conditions during auth state transitions
+      const timer = setTimeout(() => {
+        if (!user && !isGuest) {
+          router.replace('/inicio');
+        }
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [user, loading, isGuest, router]);
 

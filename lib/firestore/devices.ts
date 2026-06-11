@@ -129,6 +129,43 @@ export async function isDeviceRegistered(
 }
 
 /**
+ * Establece un dispositivo como admin y remueve admin de los demás.
+ */
+export async function setAdminDevice(ownerId: string, deviceId: string): Promise<void> {
+  const userRef = doc(db, COLLECTION, ownerId);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+
+  const updated = devices.map((d) => ({
+    ...d,
+    isAdmin: d.deviceId === deviceId,
+  }));
+
+  await updateDoc(userRef, { devices: updated });
+}
+
+/**
+ * Verifica si un dispositivo es el admin.
+ */
+export async function isAdminDevice(ownerId: string, deviceId: string): Promise<boolean> {
+  const devices = await getUserDevices(ownerId);
+  const device = devices.find((d) => d.deviceId === deviceId);
+  return device?.isAdmin === true;
+}
+
+/**
+ * Obtiene el deviceId del dispositivo admin actual.
+ */
+export async function getAdminDevice(ownerId: string): Promise<string | null> {
+  const devices = await getUserDevices(ownerId);
+  const admin = devices.find((d) => d.isAdmin === true);
+  return admin?.deviceId || null;
+}
+
+/**
  * Subscribe en tiempo real a los cambios de dispositivos del usuario.
  */
 export function subscribeToDevices(

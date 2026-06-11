@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CurrencyCode } from '@/types';
-import { removeDevice, isDeviceRegistered, updateDeviceLastActive } from '@/lib/firestore/devices';
+import { removeDevice, isDeviceRegistered, updateDeviceLastActive, isAdminDevice, setAdminDevice } from '@/lib/firestore/devices';
 import { getDeviceInfo, clearDeviceId } from '@/lib/utils/deviceInfo';
 import { db } from '@/lib/firebase';
 
@@ -15,6 +15,7 @@ interface AuthContextType {
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) => Promise<void>;
   logout: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
   wipeAllData: () => Promise<{ success: boolean; wiped?: string[]; errors?: string[]; error?: string }>;
   enableNotifications: () => Promise<boolean>;
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   loginWithEmail: async () => {},
   registerWithEmail: async () => {},
   logout: async () => {},
+  changePassword: async () => ({ success: false, error: 'No disponible' }),
   deleteAccount: async () => ({ success: false, error: 'No disponible' }),
   wipeAllData: async () => ({ success: false, error: 'No disponible' }),
   enableNotifications: async () => false,
@@ -207,8 +209,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [router, exitGuestMode, user?.uid]);
 
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    if (!user) return { success: false, error: 'No hay usuario autenticado' };
+    // Check admin device
+    try {
+      const { deviceId } = getDeviceInfo();
+      const isAdmin = await isAdminDevice(user.uid, deviceId);
+      if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede cambiar la contraseña' };
+    } catch {
+      return { success: false, error: 'No se pudo verificar el dispositivo administrador' };
+    }
+    const core = coreRef.current || await import('./firebase-auth-core');
+    coreRef.current = core;
+    try {
+      await core.changePasswordImpl(currentPassword, newPassword, user);
+      return { success: true };
+    } catch (e: any) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        return { success: false, error: 'La contraseña actual es incorrecta' };
+      }
+      return { success: false, error: e.message || 'Error al cambiar la contraseña' };
+    }
+  }, [user]);
+
   const deleteAccount = useCallback(async () => {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
+    // Check admin device
+    try {
+      const { deviceId } = getDeviceInfo();
+      const isAdmin = await isAdminDevice(user.uid, deviceId);
+      if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede eliminar la cuenta' };
+    } catch {
+      return { success: false, error: 'No se pudo verificar el dispositivo administrador' };
+    }
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
     const result = await core.deleteAccountImpl(user);
@@ -221,6 +254,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const wipeAllData = useCallback(async () => {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
+    // Check admin device
+    try {
+      const { deviceId } = getDeviceInfo();
+      const isAdmin = await isAdminDevice(user.uid, deviceId);
+      if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede borrar los datos' };
+    } catch {
+      return { success: false, error: 'No se pudo verificar el dispositivo administrador' };
+    }
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
     return core.wipeAllDataImpl(user);
@@ -278,6 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithEmail,
       registerWithEmail,
       logout,
+      changePassword,
       deleteAccount,
       wipeAllData,
       enableNotifications,

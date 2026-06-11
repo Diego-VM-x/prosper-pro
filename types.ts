@@ -215,6 +215,7 @@ export interface UserDevice {
   lastActive: number;
   createdAt: number;
   isOnline?: boolean;
+  isAdmin?: boolean;
 }
 
 // ─── User Profile ───

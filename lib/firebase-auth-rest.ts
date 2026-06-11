@@ -106,6 +106,23 @@ function mapRestError(msg?: string): string {
   return 'auth/unknown';
 }
 
+export async function updatePasswordRest(idToken: string, newPassword: string): Promise<RestAuthResponse> {
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:update?key=${API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken, password: newPassword, returnSecureToken: true }),
+    }
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const code = mapRestError(data.error?.message);
+    throw { code, message: data.error?.message || 'Error al actualizar la contraseña' };
+  }
+  return res.json();
+}
+
 export function isCapacitor(): boolean {
   return typeof (window as any)?.Capacitor !== 'undefined' && (window as any)?.Capacitor?.isNativePlatform();
 }
