@@ -11,6 +11,7 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { getDeviceInfo, getDeviceIcon } from '@/lib/utils/deviceInfo';
+import { getStoredTokens } from '@/lib/contexts/firebase-auth-core';
 import type { UserProfile, CurrencyCode, UserDevice } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
@@ -61,8 +62,14 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [requestingAdmin, setRequestingAdmin] = useState(false);
   const [verifyingAdmin, setVerifyingAdmin] = useState(false);
   const [adminRequestSent, setAdminRequestSent] = useState(false);
+  const [currentDeviceId, setCurrentDeviceId] = useState('');
   const { t } = useTranslation(['configuracion', 'common']);
-  const currentDeviceId = typeof window !== 'undefined' && user?.uid ? getDeviceInfo(user.uid).deviceId : '';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.uid) {
+      getDeviceInfo(user.uid).then((info) => setCurrentDeviceId(info.deviceId));
+    }
+  }, [user?.uid]);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -70,7 +77,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const isEmailUser = user?.providerData?.length === 0 || user?.providerData?.some((p: any) => p.providerId === 'password');
+  const storedTokens = typeof window !== 'undefined' ? getStoredTokens() : null;
+  const isEmailUser = user?.providerData?.some((p: any) => p.providerId === 'password') ||
+    (!user?.providerData?.length && storedTokens?.providerId === 'password');
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -1264,9 +1273,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       </button>
                     ) : (
                       <div className="delete-confirm">
-                        <p className="delete-confirm-label"
-                          dangerouslySetInnerHTML={{ __html: t('seguridad.deleteAccount.confirmLabel') }}
-                        />
+                        <p className="delete-confirm-label">
+                          {t('seguridad.deleteAccount.confirmLabel', { defaultValue: 'Esta acción es irreversible. Escribe ELIMINAR para confirmar.' })}
+                        </p>
                         <input
                           className="delete-confirm-input"
                           type="text"
@@ -1320,9 +1329,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       </button>
                     ) : (
                       <div className="delete-confirm">
-                        <p className="delete-confirm-label"
-                          dangerouslySetInnerHTML={{ __html: t('seguridad.wipeData.confirmLabel') }}
-                        />
+                        <p className="delete-confirm-label">
+                          {t('seguridad.wipeData.confirmLabel', { defaultValue: 'Escribe BORRAR para confirmar que deseas eliminar todos tus datos.' })}
+                        </p>
                         <input
                           className="delete-confirm-input"
                           type="text"

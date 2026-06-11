@@ -1,4 +1,5 @@
 import { db, doc, getDoc, updateDoc, onSnapshot } from '../firebase';
+import { runTransaction } from 'firebase/firestore';
 import type { UserDevice } from '@/types';
 
 const COLLECTION = 'users';
@@ -6,46 +7,46 @@ const MAX_DEVICES = 10;
 
 /**
  * Registra o actualiza un dispositivo en el perfil del usuario.
- * Si el dispositivo ya existe (mismo deviceId), actualiza lastActive.
- * Si hay más de MAX_DEVICES, elimina el más antiguo.
+ * Usa transacción para evitar condiciones de carrera (TOCTOU).
  */
 export async function registerDevice(
   ownerId: string,
   device: Omit<UserDevice, 'createdAt' | 'lastActive'>
 ): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const now = Date.now();
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  const existingIndex = devices.findIndex((d) => d.deviceId === device.deviceId);
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const now = Date.now();
 
-  if (existingIndex >= 0) {
-    // Actualizar dispositivo existente
-    devices[existingIndex] = {
-      ...devices[existingIndex],
-      ...device,
-      lastActive: now,
-    };
-  } else {
-    // Agregar nuevo dispositivo
-    devices.push({
-      ...device,
-      createdAt: now,
-      lastActive: now,
-    });
-  }
+    const existingIndex = devices.findIndex((d) => d.deviceId === device.deviceId);
 
-  // Limpiar dispositivos antiguos si excede el límite
-  if (devices.length > MAX_DEVICES) {
-    devices.sort((a, b) => a.lastActive - b.lastActive);
-    devices.splice(0, devices.length - MAX_DEVICES);
-  }
+    if (existingIndex >= 0) {
+      devices[existingIndex] = {
+        ...devices[existingIndex],
+        ...device,
+        lastActive: now,
+      };
+    } else {
+      devices.push({
+        ...device,
+        createdAt: now,
+        lastActive: now,
+      });
+    }
 
-  await updateDoc(userRef, { devices });
+    // Limpiar dispositivos antiguos si excede el límite
+    if (devices.length > MAX_DEVICES) {
+      devices.sort((a, b) => a.lastActive - b.lastActive);
+      devices.splice(0, devices.length - MAX_DEVICES);
+    }
+
+    transaction.update(userRef, { devices });
+  });
 }
 
 /**
@@ -60,61 +61,73 @@ export async function getUserDevices(ownerId: string): Promise<UserDevice[]> {
 
 /**
  * Elimina un dispositivo de la lista del usuario.
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function removeDevice(ownerId: string, deviceId: string): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const filtered = devices.filter((d) => d.deviceId !== deviceId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  if (filtered.length !== devices.length) {
-    await updateDoc(userRef, { devices: filtered });
-  }
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const filtered = devices.filter((d) => d.deviceId !== deviceId);
+
+    if (filtered.length !== devices.length) {
+      transaction.update(userRef, { devices: filtered });
+    }
+  });
 }
 
 /**
  * Actualiza el lastActive de un dispositivo específico.
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function updateDeviceLastActive(
   ownerId: string,
   deviceId: string
 ): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const index = devices.findIndex((d) => d.deviceId === deviceId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  if (index >= 0) {
-    devices[index] = { ...devices[index], lastActive: Date.now(), isOnline: true };
-    await updateDoc(userRef, { devices });
-  }
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+    if (index >= 0) {
+      devices[index] = { ...devices[index], lastActive: Date.now(), isOnline: true };
+      transaction.update(userRef, { devices });
+    }
+  });
 }
 
 /**
  * Marca un dispositivo como offline (cuando cierra sesión o pierde conexión).
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function markDeviceOffline(
   ownerId: string,
   deviceId: string
 ): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const index = devices.findIndex((d) => d.deviceId === deviceId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  if (index >= 0) {
-    devices[index] = { ...devices[index], isOnline: false };
-    await updateDoc(userRef, { devices });
-  }
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+    if (index >= 0) {
+      devices[index] = { ...devices[index], isOnline: false };
+      transaction.update(userRef, { devices });
+    }
+  });
 }
 
 /**
@@ -130,21 +143,25 @@ export async function isDeviceRegistered(
 
 /**
  * Establece un dispositivo como admin y remueve admin de los demás.
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function setAdminDevice(ownerId: string, deviceId: string): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  const updated = devices.map((d) => ({
-    ...d,
-    isAdmin: d.deviceId === deviceId,
-  }));
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
 
-  await updateDoc(userRef, { devices: updated });
+    const updated = devices.map((d) => ({
+      ...d,
+      isAdmin: d.deviceId === deviceId,
+    }));
+
+    transaction.update(userRef, { devices: updated });
+  });
 }
 
 /**
@@ -182,8 +199,7 @@ export function subscribeToDevices(
       const data = snap.data();
       callback((data.devices || []) as UserDevice[]);
     },
-    (error) => {
-      console.error('subscribeToDevices error:', error);
+    () => {
       callback([]);
     }
   );
@@ -191,76 +207,86 @@ export function subscribeToDevices(
 
 /**
  * Marca un dispositivo como que solicitó transferencia de admin.
- * Esto se usa cuando un dispositivo no-admin quiere solicitar ser admin.
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function requestAdminTransfer(
   ownerId: string,
   deviceId: string
 ): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const index = devices.findIndex((d) => d.deviceId === deviceId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  if (index >= 0) {
-    devices[index] = {
-      ...devices[index],
-      adminTransferRequestedAt: Date.now(),
-      adminTransferVerified: false,
-    };
-    await updateDoc(userRef, { devices });
-  }
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+    if (index >= 0) {
+      devices[index] = {
+        ...devices[index],
+        adminTransferRequestedAt: Date.now(),
+        adminTransferVerified: false,
+      };
+      transaction.update(userRef, { devices });
+    }
+  });
 }
 
 /**
  * Marca un dispositivo como verificado para transferencia de admin.
- * Se llama después de que el usuario verifica su email.
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function verifyAdminTransfer(
   ownerId: string,
   deviceId: string
 ): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const index = devices.findIndex((d) => d.deviceId === deviceId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  if (index >= 0) {
-    devices[index] = {
-      ...devices[index],
-      adminTransferVerified: true,
-    };
-    await updateDoc(userRef, { devices });
-  }
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+    if (index >= 0) {
+      devices[index] = {
+        ...devices[index],
+        adminTransferVerified: true,
+      };
+      transaction.update(userRef, { devices });
+    }
+  });
 }
 
 /**
  * Cancela una solicitud de transferencia de admin.
+ * Usa transacción para evitar condiciones de carrera.
  */
 export async function cancelAdminTransfer(
   ownerId: string,
   deviceId: string
 ): Promise<void> {
   const userRef = doc(db, COLLECTION, ownerId);
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
 
-  const data = snap.data();
-  const devices: UserDevice[] = (data.devices || []) as UserDevice[];
-  const index = devices.findIndex((d) => d.deviceId === deviceId);
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(userRef);
+    if (!snap.exists()) return;
 
-  if (index >= 0) {
-    devices[index] = {
-      ...devices[index],
-      adminTransferRequestedAt: undefined,
-      adminTransferVerified: undefined,
-    };
-    await updateDoc(userRef, { devices });
-  }
+    const data = snap.data();
+    const devices: UserDevice[] = (data.devices || []) as UserDevice[];
+    const index = devices.findIndex((d) => d.deviceId === deviceId);
+
+    if (index >= 0) {
+      devices[index] = {
+        ...devices[index],
+        adminTransferRequestedAt: undefined,
+        adminTransferVerified: undefined,
+      };
+      transaction.update(userRef, { devices });
+    }
+  });
 }

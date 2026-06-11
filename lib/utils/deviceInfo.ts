@@ -11,10 +11,10 @@ const DEVICE_ID_V2_KEY = 'prosper_device_id_v2';
 
 /**
  * Genera un ID determinístico basado en la huella del navegador + SO + userId.
- * Cada cuenta en el mismo dispositivo tiene un ID único, evitando que
- * las sesiones de diferentes usuarios se mezclen.
+ * Usa SHA-256 para 256 bits de entropía, evitando colisiones.
+ * Cada cuenta en el mismo dispositivo tiene un ID único.
  */
-function generateDeviceFingerprint(userId?: string): string {
+async function generateDeviceFingerprint(userId?: string): Promise<string> {
   const ua = navigator.userAgent;
   const platform = navigator.platform || '';
   const language = navigator.language || '';
@@ -22,29 +22,25 @@ function generateDeviceFingerprint(userId?: string): string {
   const colorDepth = screen.colorDepth;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
 
-  // Incluir userId en la huella para que cada cuenta tenga un ID diferente
   const raw = `${ua}|${platform}|${language}|${screenRes}|${colorDepth}|${tz}|${userId || ''}`;
-  let hash = 0;
-  for (let i = 0; i < raw.length; i++) {
-    const char = raw.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convertir a 32bit
-  }
-  const hashHex = Math.abs(hash).toString(16).padStart(8, '0');
-  return `dev-${hashHex}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(raw);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `dev-${hashHex.slice(0, 24)}`;
 }
 
 /**
  * Obtiene o genera el deviceId para el usuario actual.
  * @param userId - UID de Firebase (opcional). Si se proporciona, el ID es único por cuenta+dispositivo.
  */
-export function getDeviceId(userId?: string): string {
-  // Si hay userId, usamos la clave v2 que incluye el uid en el hash
+export async function getDeviceId(userId?: string): Promise<string> {
   const storageKey = userId ? `${DEVICE_ID_V2_KEY}_${userId}` : DEVICE_ID_KEY;
   try {
     let id = localStorage.getItem(storageKey);
     if (!id) {
-      id = generateDeviceFingerprint(userId);
+      id = await generateDeviceFingerprint(userId);
       localStorage.setItem(storageKey, id);
     }
     return id;
@@ -100,10 +96,10 @@ function parseUA(): {
   return { browser, os, deviceType };
 }
 
-export function getDeviceInfo(userId?: string) {
+export async function getDeviceInfo(userId?: string) {
   const { browser, os, deviceType } = parseUA();
   return {
-    deviceId: getDeviceId(userId),
+    deviceId: await getDeviceId(userId),
     deviceName: `${browser} en ${os}`,
     deviceType,
     browser,

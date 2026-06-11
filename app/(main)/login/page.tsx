@@ -50,24 +50,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Password requirements validation
-    if (password.length < 8) {
-      setError(t('login.errors.passwordTooShort', { defaultValue: 'La contraseña debe tener al menos 8 caracteres' }));
-      return;
-    }
-    if (!/[A-Z]/.test(password)) {
-      setError(t('login.errors.passwordNoUppercase', { defaultValue: 'La contraseña debe tener al menos una mayúscula' }));
-      return;
-    }
-    if (!/[a-z]/.test(password)) {
-      setError(t('login.errors.passwordNoLowercase', { defaultValue: 'La contraseña debe tener al menos una minúscula' }));
-      return;
-    }
-    if (!/[0-9]/.test(password)) {
-      setError(t('login.errors.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
-      return;
-    }
-
     setLoading(true);
     setError(null);
     try {

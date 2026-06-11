@@ -1,6 +1,6 @@
 'use client';
 
-import { auth, onAuthStateChanged, signOut, updateCurrentUser, type User } from '@/lib/firebase';
+import { auth, onAuthStateChanged, signOut, type User } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 import { registerDevice, updateDeviceLastActive, getUserDevices } from '@/lib/firestore/devices';
@@ -8,41 +8,17 @@ import { getDeviceInfo } from '@/lib/utils/deviceInfo';
 import { notifyNewLogin } from '@/lib/firestore/notifications';
 import type { CurrencyCode } from '@/types';
 
-function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }): User {
-  return {
-    uid: response.localId,
-    email: response.email || null,
-    displayName: response.displayName || null,
-    photoURL: response.photoUrl || null,
-    emailVerified: false,
-    isAnonymous: false,
-    phoneNumber: null,
-    tenantId: null,
-    providerData: [],
-    metadata: {
-      createdAt: Date.now().toString(),
-      lastLoginAt: Date.now().toString(),
-      lastSignInTime: new Date().toISOString(),
-      creationTime: new Date().toISOString(),
-    },
-    providerId: 'firebase',
-    toJSON: () => ({ uid: response.localId, email: response.email, stsTokenManager: { accessToken: response.idToken, refreshToken: response.refreshToken } }),
-    delete: async () => {},
-    getIdToken: async () => response.idToken,
-    getIdTokenResult: async () => ({
-      token: response.idToken,
-      claims: {},
-      authTime: new Date().toISOString(),
-      issuedAtTime: new Date().toISOString(),
-      expirationTime: new Date(Date.now() + 3600000).toISOString(),
-      signInProvider: null,
-      signInSecondFactor: null,
-    }),
-    reload: async () => {},
-  } as unknown as User;
+export interface StoredTokens {
+  localId: string;
+  email?: string;
+  displayName?: string;
+  photoUrl?: string;
+  idToken: string;
+  refreshToken: string;
+  providerId?: 'password' | 'google.com';
 }
 
-export function storeTokens(tokens: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
+export function storeTokens(tokens: StoredTokens) {
   try {
     const json = JSON.stringify(tokens);
     localStorage.setItem('prosper_auth', json);
@@ -55,7 +31,7 @@ export function clearStoredTokens() {
   try { sessionStorage.removeItem('prosper_auth'); } catch {}
 }
 
-export function getStoredTokens() {
+export function getStoredTokens(): StoredTokens | null {
   try {
     const raw = localStorage.getItem('prosper_auth') || sessionStorage.getItem('prosper_auth');
     if (raw) return JSON.parse(raw);
@@ -79,7 +55,7 @@ async function onUserReady(u: User) {
     }
     // Registrar/actualizar dispositivo
     try {
-      const deviceInfo = getDeviceInfo(u.uid);
+      const deviceInfo = await getDeviceInfo(u.uid);
       const existingDevices = await getUserDevices(u.uid);
       const isNewDevice = !existingDevices.some((d) => d.deviceId === deviceInfo.deviceId);
       const isFirstDevice = existingDevices.length === 0;
@@ -103,19 +79,19 @@ async function onUserReady(u: User) {
           deviceInfo.os
         );
       } catch (e) {
-        console.error('Error sending new login notification:', e);
+        if (process.env.NODE_ENV === 'development') console.error('Error sending new login notification');
       }
     } catch (e) {
-      console.error('Error registering device:', e);
+      if (process.env.NODE_ENV === 'development') console.error('Error registering device');
     }
     try {
       const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
       await requestNotificationPermission();
     } catch (error) {
-      console.error('Failed to request notification permission:', error);
+      if (process.env.NODE_ENV === 'development') console.error('Failed to request notification permission');
     }
   } catch (error) {
-    console.error('Error in onUserReady:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Error in onUserReady');
   }
 }
 
@@ -134,44 +110,13 @@ export async function initAuth({
 
   const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
+      // Firebase Auth is the single source of truth — user is verified
       setUser(firebaseUser);
       await onUserReady(firebaseUser);
     } else {
-      const tokens = getStoredTokens();
-      if (tokens && tokens.idToken) {
-        const userObj = createUserObject({
-          localId: tokens.localId,
-          email: tokens.email,
-          displayName: tokens.displayName,
-          photoUrl: tokens.photoUrl,
-          idToken: tokens.idToken,
-          refreshToken: tokens.refreshToken,
-        });
-        setUser(userObj);
-        if (auth) {
-          try { await updateCurrentUser(auth, userObj); } catch {}
-        }
-        try {
-          const { getUserDataRest } = await import('@/lib/firebase-auth-rest');
-          const data = await getUserDataRest(tokens.idToken);
-          if (data && data.localId) {
-            await onUserReady(userObj);
-            // Actualizar lastActive del dispositivo en initAuth
-            try {
-              const deviceInfo = getDeviceInfo(userObj.uid);
-              await updateDeviceLastActive(userObj.uid, deviceInfo.deviceId);
-            } catch (e) {
-              console.error('Error updating device lastActive:', e);
-            }
-          } else {
-            clearStoredTokens();
-            setUser(null);
-          }
-        } catch {
-          clearStoredTokens();
-          setUser(null);
-        }
-      }
+      // No authenticated Firebase session — clear any stale tokens
+      clearStoredTokens();
+      setUser(null);
     }
     setLoading(false);
   });
@@ -192,6 +137,7 @@ export async function loginWithGoogleImpl() {
       photoUrl: result.user.photoURL || undefined,
       idToken,
       refreshToken: (result.user as any).refreshToken || '',
+      providerId: 'google.com',
     });
     await onUserReady(result.user);
   }
@@ -210,6 +156,7 @@ export async function loginWithEmailImpl(email: string, pass: string) {
     photoUrl: userCred.user.photoURL || undefined,
     idToken: await userCred.user.getIdToken(),
     refreshToken: (userCred.user as any).refreshToken || '',
+    providerId: 'password',
   });
   await onUserReady(userCred.user);
   return userCred.user;
@@ -231,6 +178,7 @@ export async function changePasswordImpl(currentPassword: string, newPassword: s
     photoUrl: userCred.user.photoURL || undefined,
     idToken,
     refreshToken: (userCred.user as any).refreshToken || '',
+    providerId: 'password',
   });
 }
 
@@ -246,6 +194,7 @@ export async function registerWithEmailImpl(email: string, pass: string, name: s
     photoUrl: userCred.user.photoURL || undefined,
     idToken: await userCred.user.getIdToken(),
     refreshToken: (userCred.user as any).refreshToken || '',
+    providerId: 'password',
   });
   await createUserProfile({
     uid: userCred.user.uid,

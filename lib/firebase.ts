@@ -33,47 +33,34 @@ export {
 
 const isBrowser = typeof window !== 'undefined';
 
-const HARDCODED_CONFIG = {
-  apiKey: 'AIzaSyDUGxu2cfgxVrgSS1xamE0NaVUOv7TnX2E',
-  authDomain: 'prospeweb.firebaseapp.com',
-  projectId: 'prospeweb',
-  storageBucket: 'prospeweb.firebasestorage.app',
-  messagingSenderId: '144762699678',
-  appId: '1:144762699678:web:e7ce0d3bc2533b2175e08f',
-  measurementId: 'G-R7D5M4J5L5',
-};
+function getEnvVar(name: string, validator: (v: string) => boolean): string | undefined {
+  const val = process.env[name]?.trim();
+  if (val && validator(val)) return val;
+  return undefined;
+}
 
-function pickValidEnv(envVal: string | undefined, fallback: string, validator: (v: string) => boolean): string {
-  const trimmed = envVal?.trim();
-  if (trimmed && validator(trimmed)) return trimmed;
-  return fallback;
+const envApiKey = getEnvVar('NEXT_PUBLIC_FIREBASE_API_KEY', (v) => v.startsWith('AIza'));
+const envAuthDomain = getEnvVar('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN', (v) => v.includes('.'));
+const envProjectId = getEnvVar('NEXT_PUBLIC_FIREBASE_PROJECT_ID', (v) => v.length > 2);
+const envStorageBucket = getEnvVar('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET', (v) => v.includes('.'));
+const envMessagingSenderId = getEnvVar('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID', (v) => /^\d+$/.test(v));
+const envAppId = getEnvVar('NEXT_PUBLIC_FIREBASE_APP_ID', (v) => v.includes(':'));
+const envMeasurementId = getEnvVar('NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID', (v) => v.startsWith('G-'));
+
+// En el navegador, advertir si faltan variables de entorno (pero no bloquear para evitar crash)
+if (isBrowser && (!envApiKey || !envProjectId || !envAppId)) {
+  console.warn('[Firebase] Faltan variables de entorno. Configura NEXT_PUBLIC_FIREBASE_* en .env.local');
 }
 
 const firebaseConfig = {
-  apiKey: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_API_KEY, HARDCODED_CONFIG.apiKey, (v) => v.startsWith('AIza')),
-  authDomain: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, HARDCODED_CONFIG.authDomain, (v) => v.includes('.')),
-  projectId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID, HARDCODED_CONFIG.projectId, (v) => v.length > 2),
-  storageBucket: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET, HARDCODED_CONFIG.storageBucket, (v) => v.includes('.')),
-  messagingSenderId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID, HARDCODED_CONFIG.messagingSenderId, (v) => /^\d+$/.test(v)),
-  appId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_APP_ID, HARDCODED_CONFIG.appId, (v) => v.includes(':')),
-  measurementId: pickValidEnv(process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, HARDCODED_CONFIG.measurementId, (v) => v.startsWith('G-')),
+  apiKey: envApiKey || 'MISSING_API_KEY',
+  authDomain: envAuthDomain || 'missing.firebaseapp.com',
+  projectId: envProjectId || 'missing-project',
+  storageBucket: envStorageBucket || 'missing.appspot.com',
+  messagingSenderId: envMessagingSenderId || '000000000000',
+  appId: envAppId || '1:000000000000:web:missing',
+  measurementId: envMeasurementId || 'G-MISSING',
 };
-
-// Validación silenciosa de variables de entorno (solo en cliente, sin console.error)
-if (isBrowser) {
-  const requiredEnvVars = [
-    'NEXT_PUBLIC_FIREBASE_API_KEY',
-    'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_APP_ID',
-  ];
-  const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
-  if (missingVars.length > 0) {
-    // Silencio: los fallbacks hardcoded ya están activos
-  }
-}
 
 // Polyfill de localStorage/sessionStorage para modo privado / sandbox
 const memoryStoreLS: Record<string, string> = {};
@@ -158,17 +145,19 @@ let auth: any = null;
 
 const hasCriticalVars = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
 
+const isDev = process.env.NODE_ENV === 'development';
+
 function safeLog(...args: any[]) {
-  try { console.log(...args); } catch {}
+  if (isDev) try { console.log(...args); } catch {}
 }
 function safeWarn(...args: any[]) {
   try { console.warn(...args); } catch {}
 }
 function safeError(...args: any[]) {
-  try { console.error(...args); } catch {}
+  if (isDev) try { console.error(...args); } catch {}
 }
 
-if (isBrowser) {
+if (isBrowser && isDev) {
   safeLog('[Firebase DEBUG] apiKey starts with:', firebaseConfig.apiKey?.slice(0, 8));
   safeLog('[Firebase DEBUG] projectId:', firebaseConfig.projectId);
   safeLog('[Firebase DEBUG] appId:', firebaseConfig.appId);

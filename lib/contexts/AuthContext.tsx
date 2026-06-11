@@ -45,51 +45,9 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-function getStoredTokens() {
-  try {
-    const raw = localStorage.getItem('prosper_auth') || sessionStorage.getItem('prosper_auth');
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return null;
-}
-
 function clearStoredTokens() {
   try { localStorage.removeItem('prosper_auth'); } catch {}
   try { sessionStorage.removeItem('prosper_auth'); } catch {}
-}
-
-function createUserObject(response: { localId: string; email?: string; displayName?: string; photoUrl?: string; idToken: string; refreshToken: string }) {
-  return {
-    uid: response.localId,
-    email: response.email || null,
-    displayName: response.displayName || null,
-    photoURL: response.photoUrl || null,
-    emailVerified: false,
-    isAnonymous: false,
-    phoneNumber: null,
-    tenantId: null,
-    providerData: [],
-    metadata: {
-      createdAt: Date.now().toString(),
-      lastLoginAt: Date.now().toString(),
-      lastSignInTime: new Date().toISOString(),
-      creationTime: new Date().toISOString(),
-    },
-    providerId: 'firebase',
-    toJSON: () => ({ uid: response.localId, email: response.email, stsTokenManager: { accessToken: response.idToken, refreshToken: response.refreshToken } }),
-    delete: async () => {},
-    getIdToken: async () => response.idToken,
-    getIdTokenResult: async () => ({
-      token: response.idToken,
-      claims: {},
-      authTime: new Date().toISOString(),
-      issuedAtTime: new Date().toISOString(),
-      expirationTime: new Date(Date.now() + 3600000).toISOString(),
-      signInProvider: null,
-      signInSecondFactor: null,
-    }),
-    reload: async () => {},
-  };
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -122,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try { sessionStorage.removeItem('prosper_guest'); } catch {}
   }, []);
 
-  // Fast init: check localStorage synchronously, load Firebase only if needed
+  // Initialize auth state: rely solely on Firebase Auth's onAuthStateChanged
   useEffect(() => {
     // Check for guest mode first
     try {
@@ -133,24 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {}
 
-    const tokens = getStoredTokens();
-    if (!tokens) {
-      setLoading(false);
-      return;
-    }
-
-    // Show user from tokens immediately (avoids blank screen)
-    const userObj = createUserObject({
-      localId: tokens.localId,
-      email: tokens.email,
-      displayName: tokens.displayName,
-      photoUrl: tokens.photoUrl,
-      idToken: tokens.idToken,
-      refreshToken: tokens.refreshToken,
-    });
-    setUser(userObj);
-
-    // Lazy load Firebase auth core
+    // Load Firebase auth core which uses onAuthStateChanged as the single source of truth
     let cancelled = false;
     import('./firebase-auth-core').then((core) => {
       coreRef.current = core;
@@ -191,14 +132,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Eliminar dispositivo de Firestore antes de limpiar tokens
+    // 1. Sign out from Firebase Auth FIRST (prevents ghost sessions)
+    if (coreRef.current) {
+      try { await coreRef.current.logoutImpl(); } catch {}
+    }
+    // 2. Remove device from Firestore
     if (user?.uid) {
       try {
-        const { deviceId } = getDeviceInfo(user.uid);
+        const { deviceId } = await getDeviceInfo(user.uid);
         await removeDevice(user.uid, deviceId);
-      } catch {}
+      } catch {
+        // If removal fails, device becomes a ghost — but user is already signed out
+      }
     }
-    // Limpiar caché offline de Firestore para evitar datos stale
+    // 3. Clear local state and storage
     try {
       const { clearIndexedDbPersistence } = await import('firebase/firestore');
       await clearIndexedDbPersistence(db);
@@ -207,9 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearDeviceId(user?.uid);
     exitGuestMode();
     setUser(null);
-    if (coreRef.current) {
-      try { await coreRef.current.logoutImpl(); } catch {}
-    }
     router.push('/login');
   }, [router, exitGuestMode, user?.uid]);
 
@@ -217,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
     // Check admin device
     try {
-      const { deviceId } = getDeviceInfo(user.uid);
+      const { deviceId } = await getDeviceInfo(user.uid);
       const isAdmin = await isAdminDevice(user.uid, deviceId);
       if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede cambiar la contraseña' };
     } catch {
@@ -240,7 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
     // Check admin device
     try {
-      const { deviceId } = getDeviceInfo(user.uid);
+      const { deviceId } = await getDeviceInfo(user.uid);
       const isAdmin = await isAdminDevice(user.uid, deviceId);
       if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede eliminar la cuenta' };
     } catch {
@@ -260,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return { success: false, error: 'No hay usuario autenticado' };
     // Check admin device
     try {
-      const { deviceId } = getDeviceInfo(user.uid);
+      const { deviceId } = await getDeviceInfo(user.uid);
       const isAdmin = await isAdminDevice(user.uid, deviceId);
       if (!isAdmin) return { success: false, error: 'Solo el dispositivo administrador puede borrar los datos' };
     } catch {
@@ -298,11 +242,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user?.uid || isGuest) return;
 
-    const { deviceId } = getDeviceInfo(user.uid);
     let intervalId: ReturnType<typeof setInterval>;
 
     const checkDevice = async () => {
       try {
+        const { deviceId } = await getDeviceInfo(user.uid);
         const stillRegistered = await isDeviceRegistered(user.uid, deviceId);
         if (!stillRegistered) {
           // Sesión cerrada remotamente
