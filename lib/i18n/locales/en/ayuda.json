@@ -568,10 +568,10 @@
   "chat": {
     "title": "Feedback & Bugs",
     "subtitle": "Report bugs or send suggestions",
-    "bug": "Bug Bug",
-    "suggestion": "Lightbulb Suggestion",
-    "bugReported": "Bug Bug reported",
-    "suggestionSent": "Lightbulb Suggestion sent",
+    "bug": "Bug",
+    "suggestion": "Suggestion",
+    "bugReported": "Bug reported",
+    "suggestionSent": "Suggestion sent",
     "thanks": "Thanks for your feedback. We'll review it soon.",
     "loading": "Loading history...",
     "bugPlaceholder": "Describe the bug you found",
@@ -579,7 +579,7 @@
     "hint": "Be detailed so we can help you better.",
     "inputBugPlaceholder": "Describe the bug...",
     "inputSuggestionPlaceholder": "Write your suggestion...",
-    "error": "XCircle Failed to send. Please try again."
+    "error": "Failed to send. Please try again."
   },
   "footer": {
     "label": "PROSPER PRO SUPPORT",
@@ -590,7 +590,7 @@
     }
   },
   "releaseNotes": {
-    "title": "ScrollText Release Notes",
+    "title": "Release Notes",
     "history": "History",
     "preRelease": "PRE-release",
     "versions": [
