@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Check, X } from 'lucide-react';
 import { InlineIcon } from './IconMap';
 
@@ -35,9 +35,22 @@ export function CustomSelect({
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const customInputRef = useRef<HTMLInputElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const selectedOption = options.find((o) => o.value === value);
+
+  const updateDropdownPos = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -50,6 +63,18 @@ export function CustomSelect({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPos();
+      window.addEventListener('scroll', updateDropdownPos, true);
+      window.addEventListener('resize', updateDropdownPos);
+      return () => {
+        window.removeEventListener('scroll', updateDropdownPos, true);
+        window.removeEventListener('resize', updateDropdownPos);
+      };
+    }
+  }, [isOpen, updateDropdownPos]);
 
   useEffect(() => {
     if (showCustomInput && customInputRef.current) {
@@ -91,6 +116,7 @@ export function CustomSelect({
   return (
     <div className={`custom-select-wrapper ${className}`} ref={dropdownRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={`custom-select-trigger ${isOpen ? 'open' : ''}`}
         onClick={() => { setIsOpen(!isOpen); setShowCustomInput(false); }}
@@ -110,8 +136,15 @@ export function CustomSelect({
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="custom-select-dropdown">
+      {isOpen && dropdownPos && (
+        <div
+          className="custom-select-dropdown"
+          style={{
+            '--dropdown-top': `${dropdownPos.top}px`,
+            '--dropdown-left': `${dropdownPos.left}px`,
+            '--dropdown-width': `${dropdownPos.width}px`,
+          } as React.CSSProperties}
+        >
           {showCustomInput ? (
             <div className="custom-select-custom-input">
               <input
@@ -190,10 +223,10 @@ export function CustomSelect({
         .custom-select-arrow.rotated { transform: rotate(180deg); }
 
         .custom-select-dropdown {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
+          position: fixed;
+          top: var(--dropdown-top);
+          left: var(--dropdown-left);
+          width: var(--dropdown-width);
           z-index: 10000;
           background: #ffffff;
           border: 1px solid var(--border-default);
@@ -214,7 +247,7 @@ export function CustomSelect({
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
         }
         @media (max-width: 768px) {
-          .custom-select-dropdown { position: fixed; top: auto; bottom: 0; left: 0; right: 0; max-height: 60dvh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+          .custom-select-dropdown { top: auto; bottom: 0; left: 0; right: 0; width: auto; max-height: 60dvh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
         }
 
         .custom-select-option {
