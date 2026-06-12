@@ -62,10 +62,21 @@ export function subscribeToSharedPlans(ownerId: string, callback: (plans: Financ
 }
 
 // Crear plan financiero
-export async function createPlan(plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+export async function createPlan(
+  plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>,
+  rates?: ExchangeRates['rates']
+): Promise<string> {
   const now = Date.now();
+  let planData = { ...plan };
+
+  // Si hay sub-planes, recalcular target/current del plan padre
+  if (plan.subPlans && plan.subPlans.length > 0 && rates) {
+    const { target, current } = recalculatePlanFromSubPlans(plan as FinancialPlan, rates);
+    planData = { ...planData, target, current };
+  }
+
   const docRef = await addDoc(collection(db, COLLECTION), {
-    ...plan,
+    ...planData,
     createdAt: now,
     updatedAt: now,
   });

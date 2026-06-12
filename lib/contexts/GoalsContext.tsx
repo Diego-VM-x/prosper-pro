@@ -7,7 +7,7 @@ import { subscribeToReminders, createReminder, updateReminder, deleteReminder } 
 import { subscribeToPlans, createPlan, updatePlan, deletePlan, getPlansByOwnerId, getSharedPlans, subscribeToSharedPlans } from '@/lib/firestore/plans';
 import { checkAndResetRecurringPlans } from '@/lib/firestore/recurring';
 import { getReceivedRequests } from '@/lib/firestore/requests';
-import type { Goal, Reminder, FinancialPlan, ExpenseRequest } from '@/types';
+import type { Goal, Reminder, FinancialPlan, ExpenseRequest, ExchangeRates } from '@/types';
 
 interface GoalsContextType {
   userId: string;
@@ -17,7 +17,7 @@ interface GoalsContextType {
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updateGoalFn: (id: string, updates: Partial<Goal>) => Promise<void>;
   deleteGoalFn: (id: string) => Promise<void>;
-  addPlan: (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
+  addPlan: (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>, rates?: ExchangeRates['rates']) => Promise<string>;
   updatePlanFn: (id: string, updates: Partial<FinancialPlan>) => Promise<void>;
   deletePlanFn: (id: string) => Promise<void>;
   addReminder: (reminder: Omit<Reminder, 'id' | 'createdAt'>) => Promise<string>;
@@ -182,9 +182,9 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
     refresh();
   }, [refresh]);
 
-  const addPlan = useCallback(async (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addPlan = useCallback(async (plan: Omit<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'>, rates?: ExchangeRates['rates']) => {
     if (!plan.ownerId) throw new Error('Usuario no autenticado');
-    const id = await createPlan(plan);
+    const id = await createPlan(plan, rates);
     refresh();
     return id;
   }, [refresh]);

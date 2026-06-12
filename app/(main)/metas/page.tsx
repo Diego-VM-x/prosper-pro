@@ -113,6 +113,8 @@ const MetasPage = memo(function MetasPage() {
   const [subPlanForm, setSubPlanForm] = useState({ title: '', target: '', currency: displayCurrency as CurrencyCode, deadline: '' });
   const [editingSubPlanId, setEditingSubPlanId] = useState<string | null>(null);
   const [subPlanPayId, setSubPlanPayId] = useState<string | null>(null);
+  const [formSubPlans, setFormSubPlans] = useState<{ id?: string; title: string; target: string; currency: CurrencyCode; deadline: string }[]>([]);
+  const [editingFormSubPlanId, setEditingFormSubPlanId] = useState<string | null>(null);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState<FinancialPlan | null>(null);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
@@ -164,6 +166,14 @@ const MetasPage = memo(function MetasPage() {
     if (!uid) return;
     getReceivedRequests(uid).then(setReceivedRequests);
   }, [uid]);
+
+  // Auto-calculate expense target from temporary sub-plans
+  useEffect(() => {
+    if (formType === 'expense' && formSubPlans.length > 0) {
+      const total = formSubPlans.reduce((sum, sub) => sum + convertBetween(Number(sub.target) || 0, sub.currency, formCurrency), 0);
+      setFormTarget(String(Number(total.toFixed(8))));
+    }
+  }, [formSubPlans, formCurrency, formType]);
 
   // Auto-open modal from URL params
   useEffect(() => {
@@ -225,6 +235,8 @@ const MetasPage = memo(function MetasPage() {
     setFormSharedEmail('');
     setFormShareAmount('');
     setFormShareMessage('');
+    setFormSubPlans([]);
+    resetFormSubPlan();
   };
 
   const resetSubPlanForm = () => {
@@ -233,12 +245,58 @@ const MetasPage = memo(function MetasPage() {
     setSubPlanPayId(null);
   };
 
-  const handleCreatePlan = async () => {
-    if (!formTitle || !formTarget || !uid) {
+  const resetFormSubPlan = () => {
+    setSubPlanForm({ title: '', target: '', currency: displayCurrency as CurrencyCode, deadline: '' });
+    setEditingFormSubPlanId(null);
+  };
+
+  const addFormSubPlan = () => {
+    const target = Number(subPlanForm.target);
+    if (!subPlanForm.title || isNaN(target) || target <= 0) {
       warning(t('metas:validation.completeTitleAndAmount'));
       return;
     }
-    const target = Number(formTarget);
+    const sub: { id?: string; title: string; target: string; currency: CurrencyCode; deadline: string } = {
+      id: editingFormSubPlanId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: subPlanForm.title,
+      target: subPlanForm.target,
+      currency: subPlanForm.currency,
+      deadline: subPlanForm.deadline,
+    };
+    if (editingFormSubPlanId) {
+      setFormSubPlans(prev => prev.map(s => (s.id === editingFormSubPlanId ? sub : s)));
+    } else {
+      setFormSubPlans(prev => [...prev, sub]);
+    }
+    resetFormSubPlan();
+  };
+
+  const editFormSubPlan = (id: string) => {
+    const sub = formSubPlans.find(s => s.id === id);
+    if (!sub) return;
+    setSubPlanForm({ title: sub.title, target: sub.target, currency: sub.currency, deadline: sub.deadline });
+    setEditingFormSubPlanId(id);
+  };
+
+  const deleteFormSubPlan = (id: string) => {
+    setFormSubPlans(prev => prev.filter(s => s.id !== id));
+    if (editingFormSubPlanId === id) resetFormSubPlan();
+  };
+
+  const handleCreatePlan = async () => {
+    if (!formTitle || !uid) {
+      warning(t('metas:validation.completeTitleAndAmount'));
+      return;
+    }
+    const isExpenseWithSubs = formType === 'expense' && formSubPlans.length > 0;
+    if (!isExpenseWithSubs && !formTarget) {
+      warning(t('metas:validation.completeTitleAndAmount'));
+      return;
+    }
+    let target = Number(formTarget);
+    if (isExpenseWithSubs) {
+      target = formSubPlans.reduce((sum, sub) => sum + convertBetween(Number(sub.target) || 0, sub.currency, formCurrency), 0);
+    }
     if (isNaN(target) || target <= 0) {
       warning(t('metas:validation.invalidAmount'));
       return;
@@ -272,8 +330,22 @@ const MetasPage = memo(function MetasPage() {
       if (formAccountId) {
         planData.accountId = formAccountId;
       }
+      if (isExpenseWithSubs) {
+        const now = Date.now();
+        planData.subPlans = formSubPlans.map(sub => ({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          title: sub.title,
+          target: Number(sub.target),
+          current: 0,
+          currency: sub.currency,
+          deadline: sub.deadline || undefined,
+          status: 'pending' as const,
+          createdAt: now,
+          updatedAt: now,
+        }));
+      }
 
-      await addPlan(planData);
+      await addPlan(planData, rates?.rates || {});
       success(t('metas:toasts.planCreated', { title: formTitle }));
       setShowNewModal(false);
       resetForm();
@@ -979,10 +1051,23 @@ const MetasPage = memo(function MetasPage() {
 
                   <div className="plan-field">
                     <label className="plan-label">{t('metas:modals.fields.amount')}</label>
-                    <div className="plan-input-wrap">
+                    <div className={`plan-input-wrap ${formType === 'expense' && formSubPlans.length > 0 ? 'plan-input-readonly' : ''}`}>
                       <span className="plan-currency">{currencyMap[formCurrency].symbol}</span>
-                      <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'} placeholder={t('metas:modals.fields.amountPlaceholder')} value={formTarget} onChange={e => setFormTarget(e.target.value)} />
+                      <input
+                        className="plan-input plan-input-amount"
+                        type="number"
+                        min="0"
+                        step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'}
+                        placeholder={t('metas:modals.fields.amountPlaceholder')}
+                        value={formTarget}
+                        onChange={e => setFormTarget(e.target.value)}
+                        readOnly={formType === 'expense' && formSubPlans.length > 0}
+                        disabled={formType === 'expense' && formSubPlans.length > 0}
+                      />
                     </div>
+                    {formType === 'expense' && formSubPlans.length > 0 && (
+                      <span className="plan-input-hint">{t('metas:subPlans.autoCalculated')}</span>
+                    )}
                   </div>
 
                   {formType !== 'recurring' && (
@@ -1005,6 +1090,54 @@ const MetasPage = memo(function MetasPage() {
                     </div>
                   )}
 
+                  {formType === 'expense' && !editingPlan && (
+                    <div className="form-subplans-section">
+                      <h4 className="form-subplans-title">{t('metas:subPlans.title')}</h4>
+                      <div className="plan-field">
+                        <label className="plan-label">{t('metas:modals.fields.title')}</label>
+                        <input className="plan-input" type="text" placeholder={t('metas:modals.fields.titlePlaceholder')} value={subPlanForm.title} onChange={e => setSubPlanForm(prev => ({ ...prev, title: e.target.value }))} />
+                      </div>
+                      <div className="plan-field-row">
+                        <div className="plan-field">
+                          <label className="plan-label">{t('metas:modals.fields.amount')}</label>
+                          <div className="plan-input-wrap">
+                            <span className="plan-currency">{currencyMap[subPlanForm.currency].symbol}</span>
+                            <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(subPlanForm.currency) ? '0.00000001' : '0.01'} placeholder={t('metas:modals.fields.amountPlaceholder')} value={subPlanForm.target} onChange={e => setSubPlanForm(prev => ({ ...prev, target: e.target.value }))} />
+                          </div>
+                        </div>
+                        <div className="plan-field">
+                          <label className="plan-label">{t('metas:modals.fields.currency')}</label>
+                          <CustomSelect value={subPlanForm.currency} onChange={v => setSubPlanForm(prev => ({ ...prev, currency: v as CurrencyCode }))} options={CURRENCY_LIST.map(c => ({ value: c, label: c, icon: currencyMap[c].flag }))} placeholder={t('metas:modals.fields.selectPlaceholder')} />
+                        </div>
+                      </div>
+                      <div className="plan-field">
+                        <label className="plan-label">{t('metas:modals.fields.deadline')}</label>
+                        <input className="plan-input plan-input-date" type="date" value={subPlanForm.deadline} onChange={e => setSubPlanForm(prev => ({ ...prev, deadline: e.target.value }))} />
+                      </div>
+                      <button className="btn btn-outline" onClick={addFormSubPlan} disabled={!subPlanForm.title || !subPlanForm.target}>
+                        {editingFormSubPlanId ? t('metas:modals.buttons.saveChanges') : t('metas:subPlans.add')}
+                      </button>
+
+                      {formSubPlans.length > 0 && (
+                        <div className="form-subplans-list">
+                          {formSubPlans.map(sub => (
+                            <div key={sub.id} className="form-subplan-card">
+                              <div className="form-subplan-header">
+                                <span className="form-subplan-title">{sub.title}</span>
+                                <span className="form-subplan-amount">{formatInCurrency(Number(sub.target), sub.currency)}</span>
+                              </div>
+                              {sub.deadline && <span className="plan-card-meta-item"><InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(sub.deadline)}</span>}
+                              <div className="form-subplan-actions">
+                                <button className="plan-action-btn" onClick={() => editFormSubPlan(sub.id!)}><IconEdit width={14} /></button>
+                                <button className="plan-action-btn plan-action-danger" onClick={() => deleteFormSubPlan(sub.id!)}><IconTrash width={14} /></button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="plan-field">
                     <label className="plan-label">{t('metas:modals.fields.linkedAccount')}</label>
                     <CustomSelect value={formAccountId} onChange={v => setFormAccountId(v)} options={[{ value: '', label: t('metas:modals.fields.noAccount') }, ...accounts.map(a => ({ value: a.id, label: a.name, icon: a.icon }))]} placeholder={t('metas:modals.fields.selectPlaceholder')} />
@@ -1012,7 +1145,7 @@ const MetasPage = memo(function MetasPage() {
                 </div>
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={() => { setShowNewModal(false); setEditingPlan(null); resetForm(); }}>{t('metas:modals.buttons.cancel')}</button>
-                  <button className="btn btn-primary" onClick={editingPlan ? handleEditPlan : handleCreatePlan} disabled={formLoading || !formTitle || !formTarget}>
+                  <button className="btn btn-primary" onClick={editingPlan ? handleEditPlan : handleCreatePlan} disabled={formLoading || !formTitle || (formType === 'expense' ? (formSubPlans.length === 0 && !formTarget) : !formTarget)}>
                     {formLoading ? t('metas:modals.buttons.saving') : editingPlan ? t('metas:modals.buttons.saveChanges') : t('metas:modals.buttons.create')}
                   </button>
                 </div>
@@ -1457,6 +1590,18 @@ const MetasPage = memo(function MetasPage() {
           .plan-card-subplan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
           .plan-card-subplan-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
           .plan-card-subplan-amount { font-size: 0.75rem; font-weight: 700; color: var(--color-error); }
+
+          /* Form sub-planes */
+          .plan-input-readonly input { background: var(--bg-secondary); color: var(--text-tertiary); cursor: not-allowed; }
+          .plan-input-hint { font-size: 0.625rem; color: var(--text-tertiary); margin-top: -2px; }
+          .form-subplans-section { border: 1px dashed var(--border-default); border-radius: var(--radius-md); padding: 14px; background: var(--bg-secondary); }
+          .form-subplans-title { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 12px 0; }
+          .form-subplans-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+          .form-subplan-card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 10px; }
+          .form-subplan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+          .form-subplan-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+          .form-subplan-amount { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); }
+          .form-subplan-actions { display: flex; gap: 4px; margin-top: 8px; }
 
           /* Responsive */
           @media (max-width: 1024px) {
