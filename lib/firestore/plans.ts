@@ -1,5 +1,6 @@
 import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, increment, type QuerySnapshot, type DocumentData } from '../firebase';
-import type { FinancialPlan, PlanType, PlanStatus } from '@/types';
+import type { FinancialPlan, PlanType, PlanStatus, CurrencyCode, ExchangeRates } from '@/types';
+import { convertCurrency } from '@/lib/currency';
 
 const COLLECTION = 'plans';
 
@@ -150,7 +151,12 @@ export async function getPlansByStatus(ownerId: string, status: PlanStatus): Pro
 }
 
 // Resumen financiero del usuario
-export async function getPlanSummary(ownerId: string) {
+// Normaliza todos los montos a la moneda base antes de sumar.
+export async function getPlanSummary(
+  ownerId: string,
+  baseCurrency: CurrencyCode,
+  rates: ExchangeRates['rates']
+) {
   const plans = await getPlansByOwnerId(ownerId);
 
   let totalSavingsTarget = 0;
@@ -164,14 +170,23 @@ export async function getPlanSummary(ownerId: string) {
   plans.forEach((plan) => {
     if (plan.status === 'cancelled') return;
 
+    const planCurrency = plan.currency || baseCurrency;
+
     if (plan.type === 'savings') {
-      totalSavingsTarget += plan.target;
-      totalSavingsCurrent += plan.current;
+      totalSavingsTarget += convertCurrency(plan.target, planCurrency, baseCurrency, rates);
+      totalSavingsCurrent += convertCurrency(plan.current, planCurrency, baseCurrency, rates);
     } else if (plan.type === 'expense') {
-      totalExpenseTarget += plan.target;
-      totalExpenseCurrent += plan.current;
+      totalExpenseTarget += convertCurrency(plan.target, planCurrency, baseCurrency, rates);
+      totalExpenseCurrent += convertCurrency(plan.current, planCurrency, baseCurrency, rates);
     } else if (plan.type === 'recurring') {
-      totalRecurringMonthly += plan.target;
+      let monthlyAmount = convertCurrency(plan.target, planCurrency, baseCurrency, rates);
+      switch (plan.frequency) {
+        case 'weekly': monthlyAmount *= 4.33; break;
+        case 'biweekly': monthlyAmount *= 2.17; break;
+        case 'quarterly': monthlyAmount /= 3; break;
+        case 'yearly': monthlyAmount /= 12; break;
+      }
+      totalRecurringMonthly += monthlyAmount;
     }
 
     if (plan.status === 'progress') activePlans++;
@@ -184,7 +199,7 @@ export async function getPlanSummary(ownerId: string) {
     totalSavingsProgress: totalSavingsTarget > 0 ? Math.round((totalSavingsCurrent / totalSavingsTarget) * 100) : 0,
     totalExpenseTarget,
     totalExpenseCurrent,
-    totalExpenseProgress: totalExpenseTarget > 0 ? Math.round((totalExpenseCurrent / totalSavingsTarget) * 100) : 0,
+    totalExpenseProgress: totalExpenseTarget > 0 ? Math.round((totalExpenseCurrent / totalExpenseTarget) * 100) : 0,
     totalRecurringMonthly,
     activePlans,
     completedPlans,

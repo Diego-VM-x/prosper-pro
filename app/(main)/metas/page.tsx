@@ -46,7 +46,7 @@ const MetasPage = memo(function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency, formatInCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, formatInCurrency, convertBetween, baseCurrency } = useCurrency();
   const uid = user?.uid || '';
   const { t } = useTranslation(['metas', 'common']);
 
@@ -185,11 +185,14 @@ const MetasPage = memo(function MetasPage() {
     completed: plans.filter(p => p.status === 'completed').length,
   };
 
-  const totalSavingsTarget = stats.savings.reduce((s, p) => s + p.target, 0);
-  const totalSavingsCurrent = stats.savings.reduce((s, p) => s + p.current, 0);
-  const totalExpenseTarget = stats.expenses.reduce((s, p) => s + p.target, 0);
-  const totalExpenseCurrent = stats.expenses.reduce((s, p) => s + p.current, 0);
-  const totalRecurringMonthly = stats.recurring.reduce((s, p) => s + p.target, 0);
+  const toBase = (amount: number, currency?: CurrencyCode) =>
+    convertBetween(amount, currency || baseCurrency, baseCurrency);
+
+  const totalSavingsTarget = stats.savings.reduce((s, p) => s + toBase(p.target, p.currency), 0);
+  const totalSavingsCurrent = stats.savings.reduce((s, p) => s + toBase(p.current, p.currency), 0);
+  const totalExpenseTarget = stats.expenses.reduce((s, p) => s + toBase(p.target, p.currency), 0);
+  const totalExpenseCurrent = stats.expenses.reduce((s, p) => s + toBase(p.current, p.currency), 0);
+  const totalRecurringMonthly = stats.recurring.reduce((s, p) => s + toBase(p.target, p.currency), 0);
 
   const resetForm = () => {
     setFormType('savings');

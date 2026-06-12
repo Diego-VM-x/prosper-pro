@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (11 de Junio, 2026 - v1.0.1)
+## Estado Actual (11 de Junio, 2026 - v1.0.2)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Tecnología**: Next.js 16.2.1 (App Router/webpack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -9,7 +9,8 @@
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
-- **Versión actual**: 1.0.1 (publicada en test-deploy y master).
+- **Plataforma**: Web-only. Capa Android/Capacitor eliminada por completo (sin `mobile/`, APKs, plugins nativos ni Cloud Functions).
+- **Versión actual**: 1.0.2 (pendiente de publicar en test-deploy).
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -63,6 +64,11 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.2 — Fix Cálculos Multi-Moneda + Eliminación Android (11/06/2026)**:
+  - **Fix cálculos de planes y recurrentes**: `getMonthlyRecurringSummary` y `getPlanSummary` normalizan `target`/`current` a la moneda base usando `convertCurrency` antes de sumar. Resuelve bug donde un plan de `200 BS` se mostraba como `~Bs.116.537` al tratarse como USD.
+  - **Dashboard y Metas**: totales de recurrentes y próximos vencimientos usan `convertBetween`/`formatInCurrency` según la moneda nativa de cada plan.
+  - **Eliminación completa de Android**: Removidos `mobile/`, dependencias `@capacitor/*`, `capacitor.config.ts`, script `build-mobile-export.js`, workflow `.github/workflows/build-apk.yml`, funciones Firebase (`functions/`), APKs y assets nativos.
+  - **Build web verificado**: `npm run build` exitoso, 18/18 páginas generadas.
 - ✅ **v1.0.1 — Auth Stability + Admin Removal + Recurring Reset (11/06/2026)**:
   - **Eliminado sistema de administración de dispositivos**: Removidos `isAdmin`, `adminTransferRequestedAt`, `adminTransferVerified` de `UserDevice`. Eliminadas funciones `setAdminDevice`, `isAdminDevice`, `requestAdminTransfer`, `verifyAdminTransfer`, `cancelAdminTransfer`. UI de configuración simplificada: cualquier dispositivo puede cerrar cualquier sesión.
   - **Fix login/logout flicker**: El heartbeat usaba `getDeviceInfo()` en lugar de `getDeviceInfoForHeartbeat()`, generando un nuevo `sessionToken` en cada verificación y causando mismatch con Firestore → logout forzado. Ahora usa la función correcta que reusa el token existente.
@@ -589,6 +595,7 @@
 3. **Activar Firebase Storage** (opcional): Para fotos de perfil en Configuración.
 4. **Verificar build en Vercel**: Confirmar que el fix del submodule huérfano resolvió los fallos de build.
 5. **Búsqueda avanzada**: Extender búsqueda a cursos, transacciones y comunidad.
+6. **Opcional — Ocultar botón Android en landing**: El botón "Descargar app Android" sigue visible en la landing aunque no haya APK ni build móvil. Ocultarlo o redirigirlo si no aplica.
 
 ## Instrucciones para errores conocidos
 ### Error: "No se ven las metas en producción (Vercel)"

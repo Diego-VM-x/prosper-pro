@@ -1,5 +1,6 @@
 import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
-import type { RecurringPayment, FinancialPlan, RecurringFrequency } from '@/types';
+import type { RecurringPayment, FinancialPlan, RecurringFrequency, CurrencyCode, ExchangeRates } from '@/types';
+import { convertCurrency } from '@/lib/currency';
 
 const COLLECTION = 'recurring_payments';
 
@@ -155,31 +156,39 @@ export async function getDueRecurringPlans(ownerId: string): Promise<FinancialPl
 }
 
 // Resumen de gastos recurrentes mensuales
-export async function getMonthlyRecurringSummary(ownerId: string) {
+// Normaliza cada plan a la moneda base del usuario antes de sumar.
+export async function getMonthlyRecurringSummary(
+  ownerId: string,
+  baseCurrency: CurrencyCode,
+  rates: ExchangeRates['rates']
+) {
   const plansRef = collection(db, 'plans');
   const q = query(plansRef, where('ownerId', '==', ownerId), where('type', '==', 'recurring'), where('status', '==', 'progress'));
   const snapshot = await getDocs(q);
 
   let totalMonthly = 0;
-  const plans: { title: string; amount: number; frequency: string; nextDue: string }[] = [];
+  const plans: { title: string; amount: number; currency: CurrencyCode; frequency: string; nextDue: string }[] = [];
 
   snapshot.forEach((docSnap) => {
     const plan = docSnap.data();
-    let monthlyAmount = plan.target;
+    const planCurrency = (plan.currency as CurrencyCode) || baseCurrency;
+
+    // Normalizar el target a la moneda base antes de aplicar la frecuencia
+    let monthlyAmount = convertCurrency(Number(plan.target), planCurrency, baseCurrency, rates);
 
     // Convertir a mensual según frecuencia
     switch (plan.frequency) {
       case 'weekly':
-        monthlyAmount = plan.target * 4.33;
+        monthlyAmount = monthlyAmount * 4.33;
         break;
       case 'biweekly':
-        monthlyAmount = plan.target * 2.17;
+        monthlyAmount = monthlyAmount * 2.17;
         break;
       case 'quarterly':
-        monthlyAmount = plan.target / 3;
+        monthlyAmount = monthlyAmount / 3;
         break;
       case 'yearly':
-        monthlyAmount = plan.target / 12;
+        monthlyAmount = monthlyAmount / 12;
         break;
     }
 
@@ -187,6 +196,7 @@ export async function getMonthlyRecurringSummary(ownerId: string) {
     plans.push({
       title: plan.title,
       amount: monthlyAmount,
+      currency: baseCurrency,
       frequency: plan.frequency,
       nextDue: plan.nextDueDate || 'N/A',
     });

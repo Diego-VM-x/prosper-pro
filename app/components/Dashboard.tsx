@@ -216,7 +216,7 @@ export const Dashboard = memo(function Dashboard() {
   const { query } = useSearch();
   const { goals, plans, reminders, goalsToday, plansToday, remindersToday, pendingRequests, userId, addGoal } = useGoals();
   const { user } = useAuth();
-  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, baseCurrency, p2pMode } = useCurrency();
   const { t } = useTranslation(['dashboard', 'common']);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -367,7 +367,7 @@ export const Dashboard = memo(function Dashboard() {
         const uidStr = uid as string;
         const [duePlans, summary] = await Promise.all([
           getDueRecurringPlans(uidStr),
-          getMonthlyRecurringSummary(uidStr),
+          getMonthlyRecurringSummary(uidStr, baseCurrency, rates?.rates || {}),
         ]);
         if (!cancelled) {
           setDueRecurringCount(duePlans.length);
@@ -443,6 +443,7 @@ export const Dashboard = memo(function Dashboard() {
     .map((item) => ({
       ...item,
       iso: parseDeadlineToISO(item.deadline as string),
+      currency: 'currency' in item ? (item as FinancialPlan).currency : undefined,
     }))
     .filter((item) => item.iso !== null)
     .sort((a, b) => (a.iso as string).localeCompare(b.iso as string))
@@ -1010,7 +1011,11 @@ export const Dashboard = memo(function Dashboard() {
                     </div>
                     <div className="deadline-info">
                       <span className="deadline-title">{item.title}</span>
-                      <span className="deadline-amount">{formatAmount(item.current)} / {formatAmount(item.target)}</span>
+                      <span className="deadline-amount">
+                        {formatInCurrency(convertBetween(item.current, item.currency || baseCurrency, displayCurrency), displayCurrency)}
+                        {' / '}
+                        {formatInCurrency(convertBetween(item.target, item.currency || baseCurrency, displayCurrency), displayCurrency)}
+                      </span>
                     </div>
                   </div>
                 );
