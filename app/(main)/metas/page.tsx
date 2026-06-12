@@ -831,6 +831,32 @@ const MetasPage = memo(function MetasPage() {
                           ))}
                         </div>
                       )}
+
+                      {hasSubPlans && (
+                        <div className="plan-card-subplans">
+                          <p className="plan-card-subplans-label">{t('metas:subPlans.title')}</p>
+                          <div className="plan-card-subplans-list">
+                            {plan.subPlans!.map((sub) => {
+                              const subPct = sub.target > 0 ? Math.min(100, Math.round((sub.current / sub.target) * 100)) : 0;
+                              return (
+                                <div key={sub.id} className={`plan-card-subplan ${sub.status === 'completed' ? 'plan-card-subplan-completed' : ''}`}>
+                                  <div className="plan-card-subplan-header">
+                                    <span className="plan-card-subplan-title">{sub.title}</span>
+                                    <span className="plan-card-subplan-amount">-{formatInCurrency(sub.target - sub.current, sub.currency)}</span>
+                                  </div>
+                                  <div className="plan-card-progress" style={{ marginBottom: 0 }}>
+                                    <div className="plan-card-progress-bar">
+                                      <div className="plan-card-progress-fill" style={{ width: `${subPct}%`, background: sub.status === 'completed' ? '#22C55E' : '#EF4444' }} />
+                                    </div>
+                                    <span className="plan-card-pct">{subPct}%</span>
+                                  </div>
+                                  {sub.deadline && <span className="plan-card-meta-item" style={{ marginTop: '4px' }}><InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(sub.deadline)}</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="plan-card-actions">
@@ -1420,6 +1446,16 @@ const MetasPage = memo(function MetasPage() {
           .subplan-status { font-size: 0.625rem; font-weight: 700; }
           .subplan-amounts { display: flex; align-items: baseline; gap: 4px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; }
           .subplan-actions { display: flex; gap: 4px; margin-top: 10px; }
+
+          /* Inline sub-plans in plan card */
+          .plan-card-subplans { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-default); }
+          .plan-card-subplans-label { font-size: 0.625rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 8px 0; }
+          .plan-card-subplans-list { display: flex; flex-direction: column; gap: 8px; }
+          .plan-card-subplan { background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 10px; }
+          .plan-card-subplan-completed { border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.08); }
+          .plan-card-subplan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+          .plan-card-subplan-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+          .plan-card-subplan-amount { font-size: 0.75rem; font-weight: 700; color: var(--color-error); }
 
           /* Responsive */
           @media (max-width: 1024px) {
