@@ -251,6 +251,7 @@ export interface UserProfile {
   showProfile?: boolean;
   isSeeded?: boolean;
   devices?: UserDevice[];
+  newsConsent?: boolean;
 }
 
 // ─── Courses ───

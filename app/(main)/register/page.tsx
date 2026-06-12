@@ -29,7 +29,10 @@ export default function RegisterPage() {
   const [language, setLanguage] = useState('es');
   const [theme, setThemeState] = useState<'light' | 'dark' | 'amoled'>('dark');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
+  const [newsConsent, setNewsConsent] = useState(false);
   const { loginWithGoogle, registerWithEmail, user, loading: authLoading } = useAuth();
+  const canRegister = acceptedTerms && acceptedPrivacy;
   const { setTheme } = useTheme();
   const router = useRouter();
   const { t } = useTranslation('auth');
@@ -41,10 +44,14 @@ export default function RegisterPage() {
   }, [user, authLoading, router]);
 
   const handleGoogleLogin = async () => {
+    if (!canRegister) {
+      setError(t('register.errors.termsRequired'));
+      return;
+    }
     try {
       setError(null);
       setLoading(true);
-      await loginWithGoogle();
+      await loginWithGoogle(newsConsent);
     } catch {
       setError(t('register.errors.google'));
       setLoading(false);
@@ -73,7 +80,7 @@ export default function RegisterPage() {
       setError(t('register.errors.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
       return;
     }
-    if (!acceptedTerms) {
+    if (!canRegister) {
       setError(t('register.errors.termsRequired'));
       return;
     }
@@ -84,7 +91,7 @@ export default function RegisterPage() {
       // Apply selected theme and language immediately
       setTheme(theme);
       i18n.changeLanguage(language);
-      await registerWithEmail(email, password, name, currency, language, theme);
+      await registerWithEmail(email, password, name, currency, language, theme, newsConsent);
     } catch (err: any) {
       switch (err.code) {
         case 'auth/email-already-in-use':
@@ -148,7 +155,7 @@ export default function RegisterPage() {
 
             <div className="auth-content">
               {error && <div className="error-alert">{error}</div>}
-              <button onClick={handleGoogleLogin} className="google-btn" disabled={loading}>
+              <button onClick={handleGoogleLogin} className="google-btn" disabled={loading || !canRegister}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                   <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -275,9 +282,37 @@ export default function RegisterPage() {
                   <label htmlFor="terms">
                     {t('register.termsLabel')}
                     <a href="/terminos" target="_blank" rel="noopener noreferrer">{t('register.termsLink')}</a>
-                    {t('register.termsAnd')}
-                    <a href="/privacidad" target="_blank" rel="noopener noreferrer">{t('register.privacyLink')}</a>
                     {t('register.termsSuffix')}
+                  </label>
+                </div>
+
+                {/* Privacy Policy */}
+                <div className="terms-group">
+                  <input
+                    type="checkbox"
+                    id="privacy"
+                    checked={acceptedPrivacy}
+                    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                    disabled={loading}
+                  />
+                  <label htmlFor="privacy">
+                    {t('register.privacyLabel')}
+                    <a href="/privacidad" target="_blank" rel="noopener noreferrer">{t('register.privacyLink')}</a>
+                    {t('register.privacySuffix')}
+                  </label>
+                </div>
+
+                {/* News notifications (optional) */}
+                <div className="terms-group terms-group-optional">
+                  <input
+                    type="checkbox"
+                    id="newsConsent"
+                    checked={newsConsent}
+                    onChange={(e) => setNewsConsent(e.target.checked)}
+                    disabled={loading}
+                  />
+                  <label htmlFor="newsConsent">
+                    {t('register.newsConsentLabel')}
                   </label>
                 </div>
 

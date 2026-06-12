@@ -11,9 +11,9 @@ interface AuthContextType {
   user: any | null;
   loading: boolean;
   isGuest: boolean;
-  loginWithGoogle: () => Promise<any | null>;
+  loginWithGoogle: (newsConsent?: boolean) => Promise<any | null>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
-  registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string, newsConsent?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   deleteAccount: () => Promise<{ success: boolean; needsReauth?: boolean; error?: string }>;
@@ -107,10 +107,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = useCallback(async (newsConsent?: boolean) => {
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
-    const firebaseUser = await core.loginWithGoogleImpl();
+    const firebaseUser = await core.loginWithGoogleImpl(newsConsent);
     if (firebaseUser) {
       setUser(firebaseUser);
     }
@@ -124,10 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(firebaseUser);
   }, []);
 
-  const registerWithEmail = useCallback(async (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) => {
+  const registerWithEmail = useCallback(async (email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string, newsConsent?: boolean) => {
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
-    const firebaseUser = await core.registerWithEmailImpl(email, pass, name, currency, language, theme);
+    const firebaseUser = await core.registerWithEmailImpl(email, pass, name, currency, language, theme, newsConsent);
     setUser(firebaseUser);
   }, []);
 

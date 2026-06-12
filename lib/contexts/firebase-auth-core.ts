@@ -106,9 +106,9 @@ export async function initAuth({
   return unsub;
 }
 
-export async function loginWithGoogleImpl() {
+export async function loginWithGoogleImpl(newsConsent?: boolean) {
   if (!auth) throw new Error('Firebase Auth no está disponible.');
-  const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
+  const { signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
   const result = await signInWithPopup(auth, new GoogleAuthProvider());
   if (result.user) {
     const idToken = await result.user.getIdToken();
@@ -121,6 +121,21 @@ export async function loginWithGoogleImpl() {
       refreshToken: (result.user as any).refreshToken || '',
       providerId: 'google.com',
     });
+    const additionalInfo = getAdditionalUserInfo(result);
+    if (additionalInfo?.isNewUser) {
+      await createUserProfile({
+        uid: result.user.uid,
+        displayName: result.user.displayName,
+        email: result.user.email,
+        photoURL: result.user.photoURL,
+        createdAt: Date.now(),
+        currency: 'USD' as CurrencyCode,
+        showProfile: true,
+        language: 'es',
+        theme: 'dark',
+        newsConsent: newsConsent || false,
+      });
+    }
     onUserReady(result.user).catch(() => {});
   }
   return result.user;
@@ -164,7 +179,7 @@ export async function changePasswordImpl(currentPassword: string, newPassword: s
   });
 }
 
-export async function registerWithEmailImpl(email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string) {
+export async function registerWithEmailImpl(email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string, newsConsent?: boolean) {
   if (!auth) return;
   const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
   const userCred = await createUserWithEmailAndPassword(auth, email, pass);
@@ -188,6 +203,7 @@ export async function registerWithEmailImpl(email: string, pass: string, name: s
     showProfile: true,
     language: language || 'es',
     theme: theme || 'dark',
+    newsConsent: newsConsent || false,
   });
   await onUserReady(userCred.user);
   return userCred.user;
