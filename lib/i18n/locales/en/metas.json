@@ -165,7 +165,9 @@
     "paymentAmount": "Amount to pay",
     "paymentRecorded": "Payment of {{amount}} recorded",
     "noSubPlans": "No sub-planes yet. Add one to get started.",
-    "completedShort": "completed"
+    "completedShort": "completed",
+    "subPayments": "Sub-payments",
+    "paid": "Paid"
   },
   "toasts": {
     "planCreated": "\"{{title}}\" created",

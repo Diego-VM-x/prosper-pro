@@ -806,11 +806,6 @@ const MetasPage = memo(function MetasPage() {
                             <IconClock width={12} /> {RECURRENCES.find(r => r.value === plan.frequency)?.label} · {plan.nextDueDate ? getDaysRemaining(plan.nextDueDate) : ''}
                           </span>
                         )}
-                        {hasSubPlans && (
-                          <span className="plan-card-meta-item">
-                            <InlineIcon icon="List" size={12} /> {plan.subPlans!.filter(sp => sp.status === 'completed').length}/{plan.subPlans!.length} {t('metas:subPlans.completedShort')}
-                          </span>
-                        )}
                         {plan.sharedWith && plan.sharedWith.length > 0 && (
                           <span className="plan-card-meta-item">
                             <IconUsers width={12} /> {plan.sharedWith.length} {t('metas:planCard.guest', { count: plan.sharedWith.length })}
@@ -822,6 +817,39 @@ const MetasPage = memo(function MetasPage() {
                           </span>
                         )}
                       </div>
+                      {hasSubPlans && (
+                        <div className="plan-card-subplans">
+                          <div className="subplans-divider" />
+                          <p className="subplans-title">{t('metas:subPlans.subPayments')}</p>
+                          <div className="subplans-inline-list">
+                            {plan.subPlans!.map((sub) => {
+                              const subPct = sub.target > 0 ? Math.min(100, Math.round((sub.current / sub.target) * 100)) : 0;
+                              const remaining = Math.max(0, sub.target - sub.current);
+                              return (
+                                <div key={sub.id} className={`subplan-inline-item ${sub.status === 'completed' ? 'subplan-inline-completed' : ''}`}>
+                                  <div className="subplan-inline-header">
+                                    <span className="subplan-inline-title">{sub.title}</span>
+                                    <span className="subplan-inline-remaining">
+                                      {remaining > 0 ? `-${formatInCurrency(remaining, sub.currency)}` : t('metas:subPlans.paid')}
+                                    </span>
+                                  </div>
+                                  <div className="subplan-inline-progress">
+                                    <div className="subplan-inline-progress-bar">
+                                      <div className="subplan-inline-progress-fill" style={{ width: `${subPct}%` }} />
+                                    </div>
+                                    <span className="subplan-inline-pct">{subPct}%</span>
+                                  </div>
+                                  {sub.deadline && (
+                                    <span className="subplan-inline-deadline">
+                                      <InlineIcon icon="CalendarDays" size={10} /> {sub.deadline}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                       {plan.contributions && Object.keys(plan.contributions).length > 0 && (
                         <div className="plan-card-contributions">
                           {Object.entries(plan.contributions).map(([contribUid, contribAmount]) => (
@@ -1408,6 +1436,22 @@ const MetasPage = memo(function MetasPage() {
           .plan-input-date { cursor: pointer; }
           .plan-input-wrap { position: relative; }
           .plan-currency { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.875rem; font-weight: 600; color: var(--text-tertiary); pointer-events: none; }
+
+          .subplans-divider { height: 1px; background: var(--border-default); margin: 10px 0; }
+          .subplans-title { font-size: 0.6875rem; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; margin: 0 0 8px; }
+          .subplans-inline-list { display: flex; flex-direction: column; gap: 8px; }
+          .subplan-inline-item { background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 10px; }
+          .subplan-inline-completed { border-color: rgba(34, 197, 94, 0.3); background: rgba(34, 197, 94, 0.06); }
+          .subplan-inline-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+          .subplan-inline-title { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
+          .subplan-inline-remaining { font-size: 0.6875rem; font-weight: 700; color: var(--color-error); }
+          .subplan-inline-completed .subplan-inline-remaining { color: #22C55E; }
+          .subplan-inline-progress { display: flex; align-items: center; gap: 6px; }
+          .subplan-inline-progress-bar { flex: 1; height: 4px; background: var(--border-default); border-radius: 2px; overflow: hidden; }
+          .subplan-inline-progress-fill { height: 100%; border-radius: 2px; background: #EF4444; transition: width 0.5s ease; }
+          .subplan-inline-completed .subplan-inline-progress-fill { background: #22C55E; }
+          .subplan-inline-pct { font-size: 0.625rem; font-weight: 700; color: var(--text-secondary); min-width: 28px; text-align: right; }
+          .subplan-inline-deadline { display: inline-flex; align-items: center; gap: 3px; font-size: 0.625rem; color: var(--text-tertiary); margin-top: 3px; }
 
           /* Sub-planes */
           .subplans-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-default); }

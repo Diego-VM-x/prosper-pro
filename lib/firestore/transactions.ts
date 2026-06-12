@@ -3,6 +3,21 @@ import type { Transaction, WeeklyData } from '@/types';
 
 const COLLECTION = 'transactions';
 
+export function subscribeToAllTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const transactions: Transaction[] = [];
+    snapshot.forEach((docSnap) => {
+      transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+    });
+    transactions.sort((a, b) => b.date - a.date);
+    callback(transactions);
+  }, (error) => {
+    console.error('subscribeToAllTransactions error:', error);
+    callback([]);
+  });
+}
+
 export function subscribeToTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
   return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
@@ -16,6 +31,40 @@ export function subscribeToTransactions(ownerId: string, callback: (transactions
   }, (error) => {
     console.error('subscribeToTransactions error:', error);
     callback([]);
+  });
+}
+
+export function subscribeToWeeklyDataAll(ownerId: string, callback: (data: WeeklyData[]) => void) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
+    const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+    const data: WeeklyData[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      data.push({ day: days[d.getDay()], income: 0, saving: 0 });
+    }
+    snapshot.forEach((docSnap) => {
+      const t = docSnap.data() as Transaction;
+      const tDate = new Date(t.date);
+      const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (diff >= 0 && diff < 7) {
+        const idx = 6 - diff;
+        if (t.type === 'income') data[idx].income += t.amount;
+        if (t.type === 'saving') data[idx].saving += t.amount;
+      }
+    });
+    const maxVal = Math.max(...data.flatMap((d) => [d.income, d.saving]), 1);
+    const normalized = data.map((d) => ({
+      day: d.day,
+      income: Math.round((d.income / maxVal) * 100),
+      saving: Math.round((d.saving / maxVal) * 100),
+    }));
+    callback(normalized);
+  }, (error) => {
+    console.error('subscribeToWeeklyDataAll error:', error);
+    callback(getDefaultWeeklyData());
   });
 }
 
@@ -84,6 +133,17 @@ export async function updateTransaction(transactionId: string, updates: Partial<
 
 export async function deleteTransaction(transactionId: string) {
   await deleteDoc(doc(db, COLLECTION, transactionId));
+}
+
+export async function getAllTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  const snapshot = await getDocs(q);
+  const transactions: Transaction[] = [];
+  snapshot.forEach((docSnap) => {
+    transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+  });
+  transactions.sort((a, b) => b.date - a.date);
+  return transactions;
 }
 
 export async function getTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
@@ -203,6 +263,28 @@ export async function getStreakDaysForGoal(ownerId: string, goalTitle: string): 
   }
 
   return streak;
+}
+
+export async function getMonthlySummaryAll(ownerId: string) {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  try {
+    const snapshot = await getDocs(q);
+    let income = 0, expenses = 0, saving = 0;
+    snapshot.forEach((docSnap) => {
+      const t = docSnap.data() as Transaction;
+      if (t.date >= startOfMonth) {
+        if (t.type === 'income') income += t.amount;
+        else if (t.type === 'expense') expenses += t.amount;
+        else if (t.type === 'saving') saving += t.amount;
+      }
+    });
+    return { income, expenses, saving, balance: income - expenses - saving };
+  } catch (err) {
+    console.error('getMonthlySummaryAll error:', err);
+    return { income: 0, expenses: 0, saving: 0, balance: 0 };
+  }
 }
 
 export async function getMonthlySummary(ownerId: string) {

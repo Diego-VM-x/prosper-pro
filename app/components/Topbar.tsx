@@ -12,7 +12,7 @@ import { useTheme } from './ThemeProvider';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
-import { subscribeToNotifications, markNotificationRead, requestNotificationPermission, sendBrowserNotification, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { subscribeToNotifications, markNotificationRead, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
 import { useTranslation } from 'react-i18next';
 import { useClickOutside } from '@/lib/hooks/useClickOutside';
 import { useEscape } from '@/lib/hooks/useKeyPress';
@@ -61,7 +61,6 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const [showSearch, setShowSearch] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [notifPermissioned, setNotifPermissioned] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [receivedRequests, setReceivedRequests] = useState<ExpenseRequest[]>([]);
@@ -111,21 +110,6 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     });
     return () => unsub();
   }, [user?.uid]);
-
-  // Solicitar permiso de notificaciones push al cargar
-  useEffect(() => {
-    if (!user?.uid) return;
-    requestNotificationPermission().then(granted => {
-      setNotifPermissioned(granted);
-    });
-  }, [user?.uid]);
-
-  // Enviar notificación push cuando hay nuevas notificaciones no leídas
-  useEffect(() => {
-    if (unreadCount > 0 && notifPermissioned) {
-      sendBrowserNotification(t('topbar.browserNotificationTitle'), t('topbar.browserNotification', { count: unreadCount }));
-    }
-  }, [unreadCount, notifPermissioned]);
 
   // Cargar transacciones, cuentas y solicitudes para búsqueda (deferido para no bloquear render inicial)
   useEffect(() => {
