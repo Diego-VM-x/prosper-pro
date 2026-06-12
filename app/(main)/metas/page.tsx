@@ -14,7 +14,8 @@ import { subscribeToAccounts, updateAccountBalance } from '@/lib/firestore/accou
 import { createTransaction } from '@/lib/firestore/transactions';
 import { db, getDoc, doc, updateDoc } from '@/lib/firebase';
 import { sendExpenseRequest, searchUserByEmail, searchUsersByName, getReceivedRequests, respondToRequest } from '@/lib/firestore/requests';
-import { calculateNextDueDate } from '@/lib/firestore/recurring';
+import { calculateNextDueDate, convertRecurringToMonthly } from '@/lib/firestore/recurring';
+import { addSubPlan, updateSubPlan, deleteSubPlan, recordSubPlanPayment } from '@/lib/firestore/plans';
 import { addNotification } from '@/lib/firestore/notifications';
 import type { FoundUser } from '@/lib/firestore/requests';
 import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '@/app/components/icons';
@@ -46,7 +47,7 @@ const MetasPage = memo(function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
   const { success, error, warning } = useToast();
-  const { formatAmount, currencyMap, displayCurrency, formatInCurrency, convertBetween, baseCurrency } = useCurrency();
+  const { formatAmount, currencyMap, displayCurrency, formatInCurrency, convertBetween, baseCurrency, rates } = useCurrency();
   const uid = user?.uid || '';
   const { t } = useTranslation(['metas', 'common']);
 
@@ -108,6 +109,10 @@ const MetasPage = memo(function MetasPage() {
   const [showAddFundsModal, setShowAddFundsModal] = useState<FinancialPlan | null>(null);
   const [showShareModal, setShowShareModal] = useState<FinancialPlan | null>(null);
   const [showDetailModal, setShowDetailModal] = useState<FinancialPlan | null>(null);
+  const [showSubPlansModal, setShowSubPlansModal] = useState<FinancialPlan | null>(null);
+  const [subPlanForm, setSubPlanForm] = useState({ title: '', target: '', currency: displayCurrency as CurrencyCode, deadline: '' });
+  const [editingSubPlanId, setEditingSubPlanId] = useState<string | null>(null);
+  const [subPlanPayId, setSubPlanPayId] = useState<string | null>(null);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState<FinancialPlan | null>(null);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
@@ -190,9 +195,22 @@ const MetasPage = memo(function MetasPage() {
 
   const totalSavingsTarget = stats.savings.reduce((s, p) => s + toBase(p.target, p.currency), 0);
   const totalSavingsCurrent = stats.savings.reduce((s, p) => s + toBase(p.current, p.currency), 0);
-  const totalExpenseTarget = stats.expenses.reduce((s, p) => s + toBase(p.target, p.currency), 0);
-  const totalExpenseCurrent = stats.expenses.reduce((s, p) => s + toBase(p.current, p.currency), 0);
-  const totalRecurringMonthly = stats.recurring.reduce((s, p) => s + toBase(p.target, p.currency), 0);
+  const totalExpenseTarget = stats.expenses.reduce((s, p) => {
+    if (p.subPlans?.length) {
+      return s + p.subPlans.reduce((ss, sub) => ss + toBase(sub.target, sub.currency), 0);
+    }
+    return s + toBase(p.target, p.currency);
+  }, 0);
+  const totalExpenseCurrent = stats.expenses.reduce((s, p) => {
+    if (p.subPlans?.length) {
+      return s + p.subPlans.reduce((ss, sub) => ss + toBase(sub.current, sub.currency), 0);
+    }
+    return s + toBase(p.current, p.currency);
+  }, 0);
+  const totalRecurringMonthly = stats.recurring.reduce(
+    (s, p) => s + convertRecurringToMonthly(toBase(p.target, p.currency), p.frequency || 'monthly'),
+    0
+  );
 
   const resetForm = () => {
     setFormType('savings');
@@ -207,6 +225,12 @@ const MetasPage = memo(function MetasPage() {
     setFormSharedEmail('');
     setFormShareAmount('');
     setFormShareMessage('');
+  };
+
+  const resetSubPlanForm = () => {
+    setSubPlanForm({ title: '', target: '', currency: displayCurrency as CurrencyCode, deadline: '' });
+    setEditingSubPlanId(null);
+    setSubPlanPayId(null);
   };
 
   const handleCreatePlan = async () => {
@@ -410,6 +434,80 @@ const MetasPage = memo(function MetasPage() {
       setShowRecordPaymentModal(null);
       setPayAmount('');
       setPayAccountId('');
+    } catch (e: any) {
+      error(`Error: ${e?.message}`);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // ─── Sub-planes handlers ───
+  const openSubPlansModal = (plan: FinancialPlan) => {
+    setShowSubPlansModal(plan);
+    resetSubPlanForm();
+  };
+
+  const handleSaveSubPlan = async (plan: FinancialPlan) => {
+    const target = Number(subPlanForm.target);
+    if (!subPlanForm.title || isNaN(target) || target <= 0) {
+      warning(t('metas:validation.completeTitleAndAmount'));
+      return;
+    }
+    setFormLoading(true);
+    try {
+      const data = {
+        title: subPlanForm.title,
+        target,
+        currency: subPlanForm.currency,
+        deadline: subPlanForm.deadline || undefined,
+      };
+      if (editingSubPlanId) {
+        await updateSubPlan(plan.id, editingSubPlanId, data, rates?.rates || {});
+        success(t('metas:subPlans.updated'));
+      } else {
+        await addSubPlan(plan.id, data, rates?.rates || {});
+        success(t('metas:subPlans.added'));
+      }
+      resetSubPlanForm();
+    } catch (e: any) {
+      error(`Error: ${e?.message}`);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleDeleteSubPlan = async (plan: FinancialPlan, subPlanId: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: t('metas:subPlans.deleteTitle'),
+      message: t('metas:subPlans.deleteMessage'),
+      variant: 'danger',
+      confirmText: t('metas:toasts.deleteConfirm'),
+      onConfirm: async () => {
+        try {
+          await deleteSubPlan(plan.id, subPlanId, rates?.rates || {});
+          success(t('metas:subPlans.deleted'));
+        } catch (e: any) {
+          error(`Error: ${e?.message}`);
+        }
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
+  const handlePaySubPlan = async (plan: FinancialPlan) => {
+    if (!subPlanPayId) return;
+    const amount = Number(addAmount);
+    if (isNaN(amount) || amount <= 0) {
+      warning(t('metas:validation.invalidAmount'));
+      return;
+    }
+    setFormLoading(true);
+    try {
+      await recordSubPlanPayment(plan.id, subPlanPayId, amount, rates?.rates || {});
+      success(t('metas:subPlans.paymentRecorded', { amount: formatAmount(amount) }));
+      setSubPlanPayId(null);
+      setAddAmount('');
     } catch (e: any) {
       error(`Error: ${e?.message}`);
     } finally {
@@ -651,9 +749,17 @@ const MetasPage = memo(function MetasPage() {
           {filteredPlans.length > 0 ? (
             <div className="plans-grid">
               {filteredPlans.map((plan, index) => {
-                const pct = plan.target > 0 ? Math.min(100, Math.round((plan.current / plan.target) * 100)) : 0;
                 const typeInfo = PLAN_TYPES.find(t => t.value === plan.type);
                 const catInfo = PLAN_CATEGORIES.find(c => c.value === plan.category);
+                const planCurrency = plan.currency || displayCurrency;
+                const hasSubPlans = plan.type === 'expense' && plan.subPlans && plan.subPlans.length > 0;
+                const planTarget = hasSubPlans
+                  ? plan.subPlans!.reduce((sum, sub) => sum + convertBetween(sub.target, sub.currency, planCurrency), 0)
+                  : plan.target;
+                const planCurrent = hasSubPlans
+                  ? plan.subPlans!.reduce((sum, sub) => sum + convertBetween(sub.current, sub.currency, planCurrency), 0)
+                  : plan.current;
+                const pct = planTarget > 0 ? Math.min(100, Math.round((planCurrent / planTarget) * 100)) : 0;
 
                 return (
                   <div key={plan.id} className="plan-card stagger-item" style={{ borderLeftColor: typeInfo?.color, animationDelay: `${index * 0.05}s` }}>
@@ -682,9 +788,9 @@ const MetasPage = memo(function MetasPage() {
                       {plan.description && <p className="plan-card-desc">{plan.description}</p>}
 
                       <div className="plan-card-amounts">
-                        <span className="plan-card-current">{formatInCurrency(plan.current, plan.currency || displayCurrency)}</span>
+                        <span className="plan-card-current">{formatInCurrency(planCurrent, planCurrency)}</span>
                         <span className="plan-card-separator">/</span>
-                        <span className="plan-card-target">{formatInCurrency(plan.target, plan.currency || displayCurrency)}</span>
+                        <span className="plan-card-target">{formatInCurrency(planTarget, planCurrency)}</span>
                       </div>
 
                       <div className="plan-card-progress">
@@ -698,6 +804,11 @@ const MetasPage = memo(function MetasPage() {
                         {plan.type === 'recurring' && plan.frequency && (
                           <span className="plan-card-meta-item">
                             <IconClock width={12} /> {RECURRENCES.find(r => r.value === plan.frequency)?.label} · {plan.nextDueDate ? getDaysRemaining(plan.nextDueDate) : ''}
+                          </span>
+                        )}
+                        {hasSubPlans && (
+                          <span className="plan-card-meta-item">
+                            <InlineIcon icon="List" size={12} /> {plan.subPlans!.filter(sp => sp.status === 'completed').length}/{plan.subPlans!.length} {t('metas:subPlans.completedShort')}
                           </span>
                         )}
                         {plan.sharedWith && plan.sharedWith.length > 0 && (
@@ -734,8 +845,11 @@ const MetasPage = memo(function MetasPage() {
                         </button>
                       )}
                       {plan.type === 'expense' && plan.status !== 'completed' && (
-                        <button className="plan-action-btn plan-action-primary" onClick={() => { setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}>
-                          + {t('metas:planCard.deposit')}
+                        <button
+                          className="plan-action-btn plan-action-primary"
+                          onClick={() => { hasSubPlans ? openSubPlansModal(plan) : setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}
+                        >
+                          {hasSubPlans ? t('metas:subPlans.manage') : `+ ${t('metas:planCard.deposit')}`}
                         </button>
                       )}
                       {plan.ownerId === uid && (
@@ -1023,6 +1137,92 @@ const MetasPage = memo(function MetasPage() {
             </div>
           )}
 
+          {/* Modal Sub-planes */}
+          {showSubPlansModal && (
+            <div className="modal-overlay" onClick={() => { setShowSubPlansModal(null); resetSubPlanForm(); }}>
+              <div className="modal-content modal-plan" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">{t('metas:subPlans.title', { title: showSubPlansModal.title })}</h2>
+                    <p className="modal-subtitle">{t('metas:subPlans.subtitle')}</p>
+                  </div>
+                  <button className="modal-close" onClick={() => { setShowSubPlansModal(null); resetSubPlanForm(); }}><X size={18} /></button>
+                </div>
+                <div className="modal-body">
+                  <div className="plan-field">
+                    <label className="plan-label">{t('metas:modals.fields.title')}</label>
+                    <input className="plan-input" type="text" placeholder={t('metas:modals.fields.titlePlaceholder')} value={subPlanForm.title} onChange={e => setSubPlanForm(prev => ({ ...prev, title: e.target.value }))} />
+                  </div>
+                  <div className="plan-field-row">
+                    <div className="plan-field">
+                      <label className="plan-label">{t('metas:modals.fields.amount')}</label>
+                      <div className="plan-input-wrap">
+                        <span className="plan-currency">{currencyMap[subPlanForm.currency].symbol}</span>
+                        <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(subPlanForm.currency) ? '0.00000001' : '0.01'} placeholder={t('metas:modals.fields.amountPlaceholder')} value={subPlanForm.target} onChange={e => setSubPlanForm(prev => ({ ...prev, target: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="plan-field">
+                      <label className="plan-label">{t('metas:modals.fields.currency')}</label>
+                      <CustomSelect value={subPlanForm.currency} onChange={v => setSubPlanForm(prev => ({ ...prev, currency: v as CurrencyCode }))} options={CURRENCY_LIST.map(c => ({ value: c, label: c, icon: currencyMap[c].flag }))} placeholder={t('metas:modals.fields.selectPlaceholder')} />
+                    </div>
+                  </div>
+                  <div className="plan-field">
+                    <label className="plan-label">{t('metas:modals.fields.deadline')}</label>
+                    <input className="plan-input plan-input-date" type="date" value={subPlanForm.deadline} onChange={e => setSubPlanForm(prev => ({ ...prev, deadline: e.target.value }))} />
+                  </div>
+                  {subPlanPayId && (
+                    <div className="plan-field">
+                      <label className="plan-label">{t('metas:subPlans.paymentAmount')}</label>
+                      <div className="plan-input-wrap">
+                        <span className="plan-currency">{currencyMap[(showSubPlansModal.subPlans?.find(sp => sp.id === subPlanPayId)?.currency) || displayCurrency].symbol}</span>
+                        <input className="plan-input plan-input-amount" type="number" min="0" step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes((showSubPlansModal.subPlans?.find(sp => sp.id === subPlanPayId)?.currency) || displayCurrency) ? '0.00000001' : '0.01'} placeholder={t('metas:modals.fields.amountPlaceholder')} value={addAmount} onChange={e => setAddAmount(e.target.value)} autoFocus />
+                      </div>
+                    </div>
+                  )}
+                  <button className="btn btn-primary" onClick={() => subPlanPayId ? handlePaySubPlan(showSubPlansModal) : handleSaveSubPlan(showSubPlansModal)} disabled={formLoading || !subPlanForm.title || !subPlanForm.target || (subPlanPayId ? !addAmount : false)}>
+                    {formLoading ? t('metas:modals.buttons.saving') : subPlanPayId ? t('metas:subPlans.pay') : editingSubPlanId ? t('metas:modals.buttons.saveChanges') : t('metas:subPlans.add')}
+                  </button>
+
+                  <div className="subplans-list">
+                    {showSubPlansModal.subPlans && showSubPlansModal.subPlans.length > 0 ? (
+                      showSubPlansModal.subPlans.map((sub) => {
+                        const subPct = sub.target > 0 ? Math.min(100, Math.round((sub.current / sub.target) * 100)) : 0;
+                        const subStatusKey = sub.status === 'completed' ? 'completed' : sub.status === 'progress' ? 'progress' : 'pending';
+                        return (
+                          <div key={sub.id} className={`subplan-card ${sub.status === 'completed' ? 'subplan-completed' : ''}`}>
+                            <div className="subplan-header">
+                              <span className="subplan-title">{sub.title}</span>
+                              <span className="subplan-status" style={{ color: sub.status === 'completed' ? '#22C55E' : sub.status === 'progress' ? '#3DCC8E' : '#A8A29E' }}>{STATUS_LABELS[subStatusKey]}</span>
+                            </div>
+                            <div className="subplan-amounts">
+                              <span>{formatInCurrency(sub.current, sub.currency)}</span>
+                              <span>/</span>
+                              <span>{formatInCurrency(sub.target, sub.currency)}</span>
+                            </div>
+                            <div className="plan-card-progress">
+                              <div className="plan-card-progress-bar">
+                                <div className="plan-card-progress-fill" style={{ width: `${subPct}%`, background: '#EF4444' }} />
+                              </div>
+                              <span className="plan-card-pct">{subPct}%</span>
+                            </div>
+                            {sub.deadline && <span className="plan-card-meta-item"><InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(sub.deadline)}</span>}
+                            <div className="subplan-actions">
+                              <button className="plan-action-btn plan-action-primary" onClick={() => { setSubPlanPayId(sub.id); setAddAmount(''); }}>{t('metas:subPlans.pay')}</button>
+                              <button className="plan-action-btn" onClick={() => { setEditingSubPlanId(sub.id); setSubPlanForm({ title: sub.title, target: String(sub.target), currency: sub.currency, deadline: sub.deadline || '' }); }}><IconEdit width={14} /></button>
+                              <button className="plan-action-btn plan-action-danger" onClick={() => handleDeleteSubPlan(showSubPlansModal, sub.id)}><IconTrash width={14} /></button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="plan-card-meta-item" style={{ marginTop: '8px' }}>{t('metas:subPlans.noSubPlans')}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <ConfirmDialog isOpen={confirmState.isOpen} title={confirmState.title} message={confirmState.message} variant={confirmState.variant} confirmText={confirmState.confirmText || t('common:buttons.confirm')} onConfirm={confirmState.onConfirm} onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))} />
         </div>
 
@@ -1199,6 +1399,16 @@ const MetasPage = memo(function MetasPage() {
           .plan-input-date { cursor: pointer; }
           .plan-input-wrap { position: relative; }
           .plan-currency { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.875rem; font-weight: 600; color: var(--text-tertiary); pointer-events: none; }
+
+          /* Sub-planes */
+          .subplans-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-default); }
+          .subplan-card { background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 12px; }
+          .subplan-completed { border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.08); }
+          .subplan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+          .subplan-title { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+          .subplan-status { font-size: 0.625rem; font-weight: 700; }
+          .subplan-amounts { display: flex; align-items: baseline; gap: 4px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px; }
+          .subplan-actions { display: flex; gap: 4px; margin-top: 10px; }
 
           /* Responsive */
           @media (max-width: 1024px) {

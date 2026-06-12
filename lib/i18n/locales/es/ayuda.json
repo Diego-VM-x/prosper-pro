@@ -599,6 +599,10 @@
         "date": "2026-06-11",
         "preRelease": false,
         "items": [
+          "Nuevos sub-planes en gastos planificados: divide un gasto grande en pagos parciales con diferentes monedas.",
+          "Cálculo de recurrentes ahora usa los días reales del mes actual (promedio por mes).",
+          "Corregido el cálculo multi-moneda en planes y gastos recurrentes.",
+          "Prosper Pro vuelve a ser web-only: eliminada la capa Android/Capacitor.",
           "Eliminado el sistema de administración de dispositivos: cualquier dispositivo puede cerrar cualquier sesión.",
           "Corregido el bug de login/logout que expulsaba al usuario justo después de iniciar sesión.",
           "Corregido el dropdown de usuario duplicado en la esquina superior derecha.",

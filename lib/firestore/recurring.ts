@@ -2,6 +2,26 @@ import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDoc
 import type { RecurringPayment, FinancialPlan, RecurringFrequency, CurrencyCode, ExchangeRates } from '@/types';
 import { convertCurrency } from '@/lib/currency';
 
+// Días del mes actual (varía entre 28 y 31)
+export function getDaysInCurrentMonth(date = new Date()): number {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+}
+
+// Convierte un monto recurrente a su equivalente mensual según la frecuencia.
+// Para frecuencias diarias/semanales/quincenales se usa la cantidad real de días del mes actual.
+export function convertRecurringToMonthly(amount: number, frequency: RecurringFrequency): number {
+  const daysInMonth = getDaysInCurrentMonth();
+  switch (frequency) {
+    case 'daily': return amount * daysInMonth;
+    case 'weekly': return amount * (daysInMonth / 7);
+    case 'biweekly': return amount * (daysInMonth / 14);
+    case 'monthly': return amount;
+    case 'quarterly': return amount / 3;
+    case 'yearly': return amount / 12;
+    default: return amount;
+  }
+}
+
 const COLLECTION = 'recurring_payments';
 
 // Registrar pago de gasto recurrente
@@ -176,21 +196,8 @@ export async function getMonthlyRecurringSummary(
     // Normalizar el target a la moneda base antes de aplicar la frecuencia
     let monthlyAmount = convertCurrency(Number(plan.target), planCurrency, baseCurrency, rates);
 
-    // Convertir a mensual según frecuencia
-    switch (plan.frequency) {
-      case 'weekly':
-        monthlyAmount = monthlyAmount * 4.33;
-        break;
-      case 'biweekly':
-        monthlyAmount = monthlyAmount * 2.17;
-        break;
-      case 'quarterly':
-        monthlyAmount = monthlyAmount / 3;
-        break;
-      case 'yearly':
-        monthlyAmount = monthlyAmount / 12;
-        break;
-    }
+    // Convertir a mensual según frecuencia (basado en días reales del mes actual)
+    monthlyAmount = convertRecurringToMonthly(monthlyAmount, (plan.frequency as RecurringFrequency) || 'monthly');
 
     totalMonthly += monthlyAmount;
     plans.push({

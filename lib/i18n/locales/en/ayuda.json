@@ -599,6 +599,10 @@
         "date": "2026-06-11",
         "preRelease": false,
         "items": [
+          "New sub-plans for planned expenses: split a large expense into partial payments with different currencies.",
+          "Recurring calculation now uses the actual days of the current month (average per month).",
+          "Fixed multi-currency calculation in plans and recurring expenses.",
+          "Prosper Pro is now web-only: removed the Android/Capacitor layer.",
           "Removed device admin system: any device can close any session.",
           "Fixed login/logout flicker bug that kicked users out right after signing in.",
           "Fixed duplicate user dropdown in the top-right corner.",

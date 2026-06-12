@@ -1,6 +1,7 @@
 import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, increment, type QuerySnapshot, type DocumentData } from '../firebase';
-import type { FinancialPlan, PlanType, PlanStatus, CurrencyCode, ExchangeRates } from '@/types';
+import type { FinancialPlan, PlanType, PlanStatus, CurrencyCode, ExchangeRates, RecurringFrequency, SubPlan, SubPlanStatus } from '@/types';
 import { convertCurrency } from '@/lib/currency';
+import { convertRecurringToMonthly } from './recurring';
 
 const COLLECTION = 'plans';
 
@@ -150,6 +151,117 @@ export async function getPlansByStatus(ownerId: string, status: PlanStatus): Pro
   return plans;
 }
 
+// Helper: genera un id corto para sub-planes
+function generateSubPlanId(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// Helper: recalcula current/target de un plan expense a partir de sus sub-planes,
+// normalizando a la moneda del plan padre.
+export function recalculatePlanFromSubPlans(
+  plan: FinancialPlan,
+  rates: ExchangeRates['rates']
+): { target: number; current: number } {
+  const planCurrency = plan.currency || 'USD';
+  if (!plan.subPlans || plan.subPlans.length === 0) {
+    return { target: plan.target, current: plan.current };
+  }
+  return plan.subPlans.reduce(
+    (acc, sub) => ({
+      target: acc.target + convertCurrency(sub.target, sub.currency, planCurrency, rates),
+      current: acc.current + convertCurrency(sub.current, sub.currency, planCurrency, rates),
+    }),
+    { target: 0, current: 0 }
+  );
+}
+
+// CRUD de sub-planes para planes expense
+export async function addSubPlan(
+  planId: string,
+  subPlan: Omit<SubPlan, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'current'>,
+  rates: ExchangeRates['rates']
+) {
+  const plan = await getPlan(planId);
+  if (!plan) throw new Error('Plan no encontrado');
+  if (plan.type !== 'expense') throw new Error('Solo los planes de gasto soportan sub-planes');
+
+  const now = Date.now();
+  const newSub: SubPlan = {
+    ...subPlan,
+    id: generateSubPlanId(),
+    status: 'pending',
+    current: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const subPlans = [...(plan.subPlans || []), newSub];
+  const { target, current } = recalculatePlanFromSubPlans({ ...plan, subPlans }, rates);
+
+  await updatePlan(planId, { subPlans, target, current });
+}
+
+export async function updateSubPlan(
+  planId: string,
+  subPlanId: string,
+  updates: Partial<Omit<SubPlan, 'id' | 'createdAt'>>,
+  rates: ExchangeRates['rates']
+) {
+  const plan = await getPlan(planId);
+  if (!plan || !plan.subPlans) throw new Error('Plan o sub-plan no encontrado');
+
+  const subPlans = plan.subPlans.map((sub) =>
+    sub.id === subPlanId ? { ...sub, ...updates, updatedAt: Date.now() } : sub
+  );
+  const { target, current } = recalculatePlanFromSubPlans({ ...plan, subPlans }, rates);
+
+  await updatePlan(planId, { subPlans, target, current });
+}
+
+export async function deleteSubPlan(planId: string, subPlanId: string, rates: ExchangeRates['rates']) {
+  const plan = await getPlan(planId);
+  if (!plan || !plan.subPlans) throw new Error('Plan o sub-plan no encontrado');
+
+  const subPlans = plan.subPlans.filter((sub) => sub.id !== subPlanId);
+  const { target, current } = recalculatePlanFromSubPlans({ ...plan, subPlans }, rates);
+
+  await updatePlan(planId, { subPlans, target, current });
+}
+
+export async function recordSubPlanPayment(
+  planId: string,
+  subPlanId: string,
+  amount: number,
+  rates: ExchangeRates['rates']
+) {
+  const plan = await getPlan(planId);
+  if (!plan || !plan.subPlans) throw new Error('Plan o sub-plan no encontrado');
+
+  const subPlans = plan.subPlans.map((sub) => {
+    if (sub.id !== subPlanId) return sub;
+    const newCurrent = sub.current + amount;
+    const completed = newCurrent >= sub.target && sub.target > 0;
+    const newStatus: SubPlanStatus = completed ? 'completed' : 'progress';
+    return {
+      ...sub,
+      current: newCurrent,
+      status: newStatus,
+      completedAt: completed ? Date.now() : sub.completedAt,
+      updatedAt: Date.now(),
+    };
+  });
+  const { target, current } = recalculatePlanFromSubPlans({ ...plan, subPlans }, rates);
+  const allCompleted = subPlans.every((sub) => sub.status === 'completed');
+
+  await updatePlan(planId, {
+    subPlans,
+    target,
+    current,
+    status: allCompleted ? 'completed' : 'progress',
+    totalPaid: (plan.totalPaid || 0) + amount,
+    updatedAt: Date.now(),
+  });
+}
+
 // Resumen financiero del usuario
 // Normaliza todos los montos a la moneda base antes de sumar.
 export async function getPlanSummary(
@@ -176,16 +288,20 @@ export async function getPlanSummary(
       totalSavingsTarget += convertCurrency(plan.target, planCurrency, baseCurrency, rates);
       totalSavingsCurrent += convertCurrency(plan.current, planCurrency, baseCurrency, rates);
     } else if (plan.type === 'expense') {
-      totalExpenseTarget += convertCurrency(plan.target, planCurrency, baseCurrency, rates);
-      totalExpenseCurrent += convertCurrency(plan.current, planCurrency, baseCurrency, rates);
-    } else if (plan.type === 'recurring') {
-      let monthlyAmount = convertCurrency(plan.target, planCurrency, baseCurrency, rates);
-      switch (plan.frequency) {
-        case 'weekly': monthlyAmount *= 4.33; break;
-        case 'biweekly': monthlyAmount *= 2.17; break;
-        case 'quarterly': monthlyAmount /= 3; break;
-        case 'yearly': monthlyAmount /= 12; break;
+      if (plan.subPlans && plan.subPlans.length > 0) {
+        plan.subPlans.forEach((sub) => {
+          totalExpenseTarget += convertCurrency(sub.target, sub.currency, baseCurrency, rates);
+          totalExpenseCurrent += convertCurrency(sub.current, sub.currency, baseCurrency, rates);
+        });
+      } else {
+        totalExpenseTarget += convertCurrency(plan.target, planCurrency, baseCurrency, rates);
+        totalExpenseCurrent += convertCurrency(plan.current, planCurrency, baseCurrency, rates);
       }
+    } else if (plan.type === 'recurring') {
+      const monthlyAmount = convertRecurringToMonthly(
+        convertCurrency(plan.target, planCurrency, baseCurrency, rates),
+        (plan.frequency as RecurringFrequency) || 'monthly'
+      );
       totalRecurringMonthly += monthlyAmount;
     }
 

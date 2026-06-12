@@ -151,6 +151,22 @@
     "cannotInviteSelf": "You cannot send a request to yourself.",
     "insufficientBalance": "Insufficient balance in account. Current balance: {{balance}}"
   },
+  "subPlans": {
+    "title": "Sub-plans for \"{{title}}\"",
+    "subtitle": "Split the expense into partial payments with different currencies.",
+    "add": "Add Sub-plan",
+    "pay": "Pay",
+    "manage": "Manage",
+    "updated": "Sub-plan updated",
+    "added": "Sub-plan added",
+    "deleted": "Sub-plan deleted",
+    "deleteTitle": "Delete Sub-plan",
+    "deleteMessage": "Delete this sub-plan? It will be subtracted from the plan total.",
+    "paymentAmount": "Amount to pay",
+    "paymentRecorded": "Payment of {{amount}} recorded",
+    "noSubPlans": "No sub-planes yet. Add one to get started.",
+    "completedShort": "completed"
+  },
   "toasts": {
     "planCreated": "\"{{title}}\" created",
     "unknownError": "Unknown error",

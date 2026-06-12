@@ -151,6 +151,22 @@
     "cannotInviteSelf": "No puedes enviarte una solicitud a ti mismo.",
     "insufficientBalance": "Saldo insuficiente en la cuenta. Balance actual: {{balance}}"
   },
+  "subPlans": {
+    "title": "Sub-planes de \"{{title}}\"",
+    "subtitle": "Divide el gasto en pagos parciales con diferentes monedas.",
+    "add": "Añadir Sub-plan",
+    "pay": "Abonar",
+    "manage": "Gestionar",
+    "updated": "Sub-plan actualizado",
+    "added": "Sub-plan añadido",
+    "deleted": "Sub-plan eliminado",
+    "deleteTitle": "Eliminar Sub-plan",
+    "deleteMessage": "¿Eliminar este sub-plan? Se restará del total del plan.",
+    "paymentAmount": "Monto a abonar",
+    "paymentRecorded": "Abono de {{amount}} registrado",
+    "noSubPlans": "Aún no hay sub-planes. Añade uno para empezar.",
+    "completedShort": "completados"
+  },
   "toasts": {
     "planCreated": "\"{{title}}\" creado",
     "unknownError": "Error desconocido",

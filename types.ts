@@ -93,7 +93,21 @@ export interface Goal {
 // ─── Plans ───
 export type PlanType = 'savings' | 'expense' | 'recurring';
 export type PlanStatus = 'pending' | 'progress' | 'completed' | 'cancelled';
+export type SubPlanStatus = 'pending' | 'progress' | 'completed';
 export type PlanCategory = 'personal' | 'shared' | 'family' | 'business' | 'Ahorro' | 'Inversión' | 'Educación' | 'Comida' | 'Tecnología' | 'Vivienda' | 'Transporte' | 'Salud' | 'Entretenimiento' | 'Suscripción' | 'Alquiler' | 'Servicios' | 'Otro';
+
+export interface SubPlan {
+  id: string;
+  title: string;
+  target: number;
+  current: number;
+  currency: CurrencyCode;
+  deadline?: string;
+  status: SubPlanStatus;
+  completedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
 
 export interface FinancialPlan {
   id: string;
@@ -118,6 +132,8 @@ export interface FinancialPlan {
   contributions?: Record<string, number>;
   /** Currency for this plan's target/current amounts */
   currency?: CurrencyCode;
+  /** Sub-planes for structured expense plans (e.g. partial payments in different currencies) */
+  subPlans?: SubPlan[];
   createdAt: number;
   updatedAt: number;
 }
