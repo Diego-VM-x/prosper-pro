@@ -203,7 +203,6 @@ export interface NotificationPreferences {
   appUpdate: boolean;
   calendarReminder: boolean;
   welcome: boolean;
-  newLogin: boolean;
 }
 
 // ─── Expense Requests ───

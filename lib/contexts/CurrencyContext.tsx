@@ -380,17 +380,19 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   // ── Notification Triggers ────────────────────────────────────
 
-  // Dollar rate update notification - once per day or when rate changes significantly
+  // Dollar rate update notification - once per day, only if different from previous day
   useEffect(() => {
     if (!user?.uid || !rates?.rates?.USD || rates.source !== 'api') return;
-    const lastNotifiedRate = Number(safeLocalStorage.getItem('prosper_last_usd_rate') || 0);
     const lastNotifDate = safeLocalStorage.getItem('prosper_last_notif_date') || '';
+    const lastNotifiedRate = Number(safeLocalStorage.getItem('prosper_last_usd_rate') || 0);
     const today = new Date().toISOString().split('T')[0];
     const currentRate = rates.rates.USD;
 
-    const isNewDay = lastNotifDate !== today;
-    const rateChanged = lastNotifiedRate > 0 && Math.abs(currentRate - lastNotifiedRate) > 0.01;
-    if (lastNotifDate && (isNewDay || rateChanged)) {
+    // Only notify once per day
+    if (lastNotifDate === today) return;
+
+    // Compare with the last notified rate (previous day)
+    if (lastNotifiedRate > 0 && Math.abs(currentRate - lastNotifiedRate) > 0.0001) {
       notifyDollarChange(user.uid, lastNotifiedRate, currentRate).catch(console.error);
     }
     safeLocalStorage.setItem('prosper_last_notif_date', today);

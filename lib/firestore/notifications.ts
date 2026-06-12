@@ -375,29 +375,6 @@ export async function notifyWelcome(
   }
 }
 
-// ── New Login Alert ─────────────────────────────────────────────────────────────
-export async function notifyNewLogin(
-  ownerId: string,
-  deviceName: string,
-  deviceType: string,
-  browser: string,
-  os: string
-) {
-  const title = 'Nuevo inicio de sesión';
-  const body = `${deviceName} — ${browser} · ${os}`;
-  await addNotification({
-    ownerId,
-    title,
-    message: body,
-    type: 'new_login',
-    read: false,
-    meta: { deviceName, deviceType, browser, os },
-  });
-  if (await isPrefEnabled(ownerId, 'newLogin')) {
-    sendBrowserNotification(title, body, 'general');
-  }
-}
-
 // ── App Notification Subscribers ────────────────────────────────────────────────
 const SUBSCRIBERS_COLLECTION = 'notificationSubscribers';
 

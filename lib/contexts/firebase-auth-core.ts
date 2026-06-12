@@ -5,7 +5,7 @@ import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 import { registerDevice } from '@/lib/firestore/devices';
 import { getDeviceInfo, storeSessionToken } from '@/lib/utils/deviceInfo';
-import { notifyNewLogin } from '@/lib/firestore/notifications';
+
 import type { CurrencyCode } from '@/types';
 
 export interface StoredTokens {
@@ -60,18 +60,6 @@ async function onUserReady(u: User) {
         storeSessionToken(deviceInfo.sessionToken);
       }
       await registerDevice(u.uid, deviceInfo);
-      // Notificar a otros dispositivos sobre el nuevo inicio de sesión
-      try {
-        await notifyNewLogin(
-          u.uid,
-          deviceInfo.deviceName,
-          deviceInfo.deviceType,
-          deviceInfo.browser,
-          deviceInfo.os
-        );
-      } catch (e) {
-        if (process.env.NODE_ENV === 'development') console.error('Error sending new login notification');
-      }
     } catch (e) {
       if (process.env.NODE_ENV === 'development') console.error('Error registering device');
     }

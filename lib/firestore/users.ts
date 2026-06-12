@@ -55,7 +55,6 @@ export async function createUserProfile(profile: UserProfile) {
       appUpdate: true,
       calendarReminder: true,
       welcome: true,
-      newLogin: true,
       ...profile.notifications,
     },
   };
