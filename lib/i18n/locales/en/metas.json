@@ -153,6 +153,7 @@
   },
   "subPlans": {
     "title": "Sub-plans for \"{{title}}\"",
+    "inlineTitle": "Sub-plans",
     "subtitle": "Split the expense into partial payments with different currencies.",
     "add": "Add Sub-plan",
     "pay": "Pay",

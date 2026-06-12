@@ -43,6 +43,17 @@ function nextMonthISO(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+function sortPlansByDueDate(plans: FinancialPlan[]): FinancialPlan[] {
+  return [...plans].sort((a, b) => {
+    const dateA = a.deadline || a.nextDueDate;
+    const dateB = b.deadline || b.nextDueDate;
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+    return new Date(dateA).getTime() - new Date(dateB).getTime();
+  });
+}
+
 const MetasPage = memo(function MetasPage() {
   const { plans, addPlan, updatePlanFn, deletePlanFn, refresh } = useGoals();
   const { user } = useAuth();
@@ -190,6 +201,7 @@ const MetasPage = memo(function MetasPage() {
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     return true;
   });
+  const sortedPlans = sortPlansByDueDate(filteredPlans);
 
   const stats = {
     total: plans.filter(p => p.status !== 'cancelled').length,
@@ -713,6 +725,165 @@ const MetasPage = memo(function MetasPage() {
     setShowNewModal(true);
   };
 
+  const renderPlanCard = (plan: FinancialPlan, index: number) => {
+    const typeInfo = PLAN_TYPES.find(t => t.value === plan.type);
+    const catInfo = PLAN_CATEGORIES.find(c => c.value === plan.category);
+    const planCurrency = plan.currency || displayCurrency;
+    const hasSubPlans = plan.type === 'expense' && plan.subPlans && plan.subPlans.length > 0;
+    const planTarget = hasSubPlans
+      ? plan.subPlans!.reduce((sum, sub) => sum + convertBetween(sub.target, sub.currency, planCurrency), 0)
+      : plan.target;
+    const planCurrent = hasSubPlans
+      ? plan.subPlans!.reduce((sum, sub) => sum + convertBetween(sub.current, sub.currency, planCurrency), 0)
+      : plan.current;
+    const pct = planTarget > 0 ? Math.min(100, Math.round((planCurrent / planTarget) * 100)) : 0;
+
+    return (
+      <div key={plan.id} className="plan-card stagger-item" style={{ borderLeftColor: typeInfo?.color, animationDelay: `${index * 0.05}s` }}>
+        <div className="plan-card-header">
+          <div className="plan-card-icon" style={{ background: `${typeInfo?.color}20` }}>
+            <InlineIcon icon={catInfo?.icon || 'Pin'} size={16} />
+          </div>
+          <div className="plan-card-info">
+            <h3 className="plan-card-title">{plan.title}</h3>
+            <span className="plan-card-type" style={{ color: typeInfo?.color }}>{typeInfo?.label}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+            {plan.sharedWith && plan.sharedWith.length > 0 && (
+              <span className="plan-card-badge plan-card-badge-shared">{t('metas:planCard.shared')}</span>
+            )}
+            {plan.ownerId !== uid && (
+              <span className="plan-card-badge plan-card-badge-invited">{t('metas:planCard.invited')}</span>
+            )}
+            <div className="plan-card-status" style={{ background: `${STATUS_COLORS[plan.status]}20`, color: STATUS_COLORS[plan.status] }}>
+              {STATUS_LABELS[plan.status]}
+            </div>
+          </div>
+        </div>
+
+        <div className="plan-card-body">
+          {plan.description && <p className="plan-card-desc">{plan.description}</p>}
+
+          <div className="plan-card-amounts">
+            <span className="plan-card-current">{formatInCurrency(planCurrent, planCurrency)}</span>
+            <span className="plan-card-separator">/</span>
+            <span className="plan-card-target">{formatInCurrency(planTarget, planCurrency)}</span>
+          </div>
+
+          <div className="plan-card-progress">
+            <div className="plan-card-progress-bar">
+              <div className="plan-card-progress-fill" style={{ width: `${pct}%`, background: typeInfo?.color }} />
+            </div>
+            <span className="plan-card-pct">{pct}%</span>
+          </div>
+
+          <div className="plan-card-meta">
+            {plan.type === 'recurring' && plan.frequency && (
+              <span className="plan-card-meta-item">
+                <IconClock width={12} /> {RECURRENCES.find(r => r.value === plan.frequency)?.label} · {plan.nextDueDate ? getDaysRemaining(plan.nextDueDate) : ''}
+              </span>
+            )}
+            {hasSubPlans && (
+              <span className="plan-card-meta-item">
+                <InlineIcon icon="List" size={12} /> {plan.subPlans!.filter(sp => sp.status === 'completed').length}/{plan.subPlans!.length} {t('metas:subPlans.completedShort')}
+              </span>
+            )}
+            {plan.sharedWith && plan.sharedWith.length > 0 && (
+              <span className="plan-card-meta-item">
+                <IconUsers width={12} /> {plan.sharedWith.length} {t('metas:planCard.guest', { count: plan.sharedWith.length })}
+              </span>
+            )}
+            {plan.deadline && plan.type !== 'recurring' && (
+              <span className="plan-card-meta-item">
+                <InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(plan.deadline)}
+              </span>
+            )}
+          </div>
+          {plan.contributions && Object.keys(plan.contributions).length > 0 && (
+            <div className="plan-card-contributions">
+              {Object.entries(plan.contributions).map(([contribUid, contribAmount]) => (
+                <span key={contribUid} className="plan-card-meta-item plan-card-contrib-item">
+                  {contribUid === uid ? t('metas:planCard.yourContribution') : t('metas:planCard.otherUser')}: {formatInCurrency(contribAmount, plan.currency || displayCurrency)}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {hasSubPlans && (
+            <div className="plan-card-subplans">
+              <p className="plan-card-subplans-label">{t('metas:subPlans.inlineTitle', { defaultValue: 'Sub-planes' })}</p>
+              <div className="plan-card-subplans-list">
+                {plan.subPlans!.map((sub) => {
+                  const subPct = sub.target > 0 ? Math.min(100, Math.round((sub.current / sub.target) * 100)) : 0;
+                  return (
+                    <div key={sub.id} className={`plan-card-subplan ${sub.status === 'completed' ? 'plan-card-subplan-completed' : ''}`}>
+                      <div className="plan-card-subplan-header">
+                        <span className="plan-card-subplan-title">{sub.title}</span>
+                        <span className="plan-card-subplan-amount">-{formatInCurrency(sub.target - sub.current, sub.currency)}</span>
+                      </div>
+                      <div className="plan-card-progress" style={{ marginBottom: 0 }}>
+                        <div className="plan-card-progress-bar">
+                          <div className="plan-card-progress-fill" style={{ width: `${subPct}%`, background: sub.status === 'completed' ? '#22C55E' : '#EF4444' }} />
+                        </div>
+                        <span className="plan-card-pct">{subPct}%</span>
+                      </div>
+                      {sub.deadline && <span className="plan-card-meta-item" style={{ marginTop: '4px' }}><InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(sub.deadline)}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="plan-card-actions">
+          {plan.type === 'savings' && plan.status !== 'completed' && (
+            <button className="plan-action-btn plan-action-primary" onClick={() => { setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}>
+              + {t('metas:planCard.add')}
+            </button>
+          )}
+          {plan.type === 'recurring' && plan.status !== 'completed' && (
+            <button className="plan-action-btn plan-action-primary" onClick={() => { setShowRecordPaymentModal(plan); setPayAmount(''); setPayAccountId(''); }}>
+              <InlineIcon icon="CreditCard" size={14} /> {t('metas:planCard.pay')}
+            </button>
+          )}
+          {plan.type === 'expense' && plan.status !== 'completed' && (
+            <>
+              <button
+                className="plan-action-btn plan-action-primary"
+                onClick={() => { hasSubPlans ? openSubPlansModal(plan) : setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}
+              >
+                {hasSubPlans ? t('metas:subPlans.manage') : `+ ${t('metas:planCard.deposit')}`}
+              </button>
+              <button
+                className="plan-action-btn"
+                onClick={() => openSubPlansModal(plan)}
+                title={t('metas:subPlans.title')}
+              >
+                <InlineIcon icon="ClipboardList" size={14} />
+              </button>
+            </>
+          )}
+          {plan.ownerId === uid && (
+            <button className="plan-action-btn" onClick={() => setShowShareModal(plan)}>
+              <IconUsers width={14} />
+            </button>
+          )}
+          {plan.ownerId === uid && (
+            <button className="plan-action-btn" onClick={() => openEditModal(plan)}>
+              <IconEdit width={14} />
+            </button>
+          )}
+          {plan.ownerId === uid && (
+            <button className="plan-action-btn plan-action-danger" onClick={() => handleDeletePlan(plan)}>
+              <IconTrash width={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <ProtectedRoute>
       <DashboardLayout>
@@ -818,167 +989,29 @@ const MetasPage = memo(function MetasPage() {
           )}
 
           {/* Plans Grid */}
-          {filteredPlans.length > 0 ? (
-            <div className="plans-grid">
-              {filteredPlans.map((plan, index) => {
-                const typeInfo = PLAN_TYPES.find(t => t.value === plan.type);
-                const catInfo = PLAN_CATEGORIES.find(c => c.value === plan.category);
-                const planCurrency = plan.currency || displayCurrency;
-                const hasSubPlans = plan.type === 'expense' && plan.subPlans && plan.subPlans.length > 0;
-                const planTarget = hasSubPlans
-                  ? plan.subPlans!.reduce((sum, sub) => sum + convertBetween(sub.target, sub.currency, planCurrency), 0)
-                  : plan.target;
-                const planCurrent = hasSubPlans
-                  ? plan.subPlans!.reduce((sum, sub) => sum + convertBetween(sub.current, sub.currency, planCurrency), 0)
-                  : plan.current;
-                const pct = planTarget > 0 ? Math.min(100, Math.round((planCurrent / planTarget) * 100)) : 0;
-
-                return (
-                  <div key={plan.id} className={`plan-card stagger-item ${plan.type === 'recurring' ? 'plan-card-recurring' : ''}`} style={{ borderLeftColor: typeInfo?.color, animationDelay: `${index * 0.05}s` }}>
-                    <div className="plan-card-header">
-                      <div className="plan-card-icon" style={{ background: `${typeInfo?.color}20` }}>
-                        <InlineIcon icon={catInfo?.icon || 'Pin'} size={16} />
+          {sortedPlans.length > 0 ? (
+            <>
+              {/* Desktop: 3 columns by type */}
+              <div className="plans-columns">
+                {PLAN_TYPES.filter(typeInfo => filter === 'all' || typeInfo.value === filter).map(typeInfo => {
+                  const columnPlans = sortedPlans.filter(p => p.type === typeInfo.value);
+                  return (
+                    <div key={typeInfo.value} className="plans-column">
+                      <div className="plans-column-header" style={{ color: typeInfo.color }}>
+                        <InlineIcon icon={typeInfo.icon} size={18} />
+                        <span>{typeInfo.label}</span>
                       </div>
-                      <div className="plan-card-info">
-                        <h3 className="plan-card-title">{plan.title}</h3>
-                        <span className="plan-card-type" style={{ color: typeInfo?.color }}>{typeInfo?.label}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
-                        {plan.sharedWith && plan.sharedWith.length > 0 && (
-                          <span className="plan-card-badge plan-card-badge-shared">{t('metas:planCard.shared')}</span>
-                        )}
-                        {plan.ownerId !== uid && (
-                          <span className="plan-card-badge plan-card-badge-invited">{t('metas:planCard.invited')}</span>
-                        )}
-                        <div className="plan-card-status" style={{ background: `${STATUS_COLORS[plan.status]}20`, color: STATUS_COLORS[plan.status] }}>
-                          {STATUS_LABELS[plan.status]}
-                        </div>
-                      </div>
+                      {columnPlans.map((plan, idx) => renderPlanCard(plan, idx))}
                     </div>
+                  );
+                })}
+              </div>
 
-                    <div className="plan-card-body">
-                      {plan.description && <p className="plan-card-desc">{plan.description}</p>}
-
-                      <div className="plan-card-amounts">
-                        <span className="plan-card-current">{formatInCurrency(planCurrent, planCurrency)}</span>
-                        <span className="plan-card-separator">/</span>
-                        <span className="plan-card-target">{formatInCurrency(planTarget, planCurrency)}</span>
-                      </div>
-
-                      <div className="plan-card-progress">
-                        <div className="plan-card-progress-bar">
-                          <div className="plan-card-progress-fill" style={{ width: `${pct}%`, background: typeInfo?.color }} />
-                        </div>
-                        <span className="plan-card-pct">{pct}%</span>
-                      </div>
-
-                      <div className="plan-card-meta">
-                        {plan.type === 'recurring' && plan.frequency && (
-                          <span className="plan-card-meta-item">
-                            <IconClock width={12} /> {RECURRENCES.find(r => r.value === plan.frequency)?.label} · {plan.nextDueDate ? getDaysRemaining(plan.nextDueDate) : ''}
-                          </span>
-                        )}
-                        {hasSubPlans && (
-                          <span className="plan-card-meta-item">
-                            <InlineIcon icon="List" size={12} /> {plan.subPlans!.filter(sp => sp.status === 'completed').length}/{plan.subPlans!.length} {t('metas:subPlans.completedShort')}
-                          </span>
-                        )}
-                        {plan.sharedWith && plan.sharedWith.length > 0 && (
-                          <span className="plan-card-meta-item">
-                            <IconUsers width={12} /> {plan.sharedWith.length} {t('metas:planCard.guest', { count: plan.sharedWith.length })}
-                          </span>
-                        )}
-                        {plan.deadline && plan.type !== 'recurring' && (
-                          <span className="plan-card-meta-item">
-                            <InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(plan.deadline)}
-                          </span>
-                        )}
-                      </div>
-                      {plan.contributions && Object.keys(plan.contributions).length > 0 && (
-                        <div className="plan-card-contributions">
-                          {Object.entries(plan.contributions).map(([contribUid, contribAmount]) => (
-                            <span key={contribUid} className="plan-card-meta-item plan-card-contrib-item">
-                              {contribUid === uid ? t('metas:planCard.yourContribution') : t('metas:planCard.otherUser')}: {formatInCurrency(contribAmount, plan.currency || displayCurrency)}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {hasSubPlans && (
-                        <div className="plan-card-subplans">
-                          <p className="plan-card-subplans-label">{t('metas:subPlans.title')}</p>
-                          <div className="plan-card-subplans-list">
-                            {plan.subPlans!.map((sub) => {
-                              const subPct = sub.target > 0 ? Math.min(100, Math.round((sub.current / sub.target) * 100)) : 0;
-                              return (
-                                <div key={sub.id} className={`plan-card-subplan ${sub.status === 'completed' ? 'plan-card-subplan-completed' : ''}`}>
-                                  <div className="plan-card-subplan-header">
-                                    <span className="plan-card-subplan-title">{sub.title}</span>
-                                    <span className="plan-card-subplan-amount">-{formatInCurrency(sub.target - sub.current, sub.currency)}</span>
-                                  </div>
-                                  <div className="plan-card-progress" style={{ marginBottom: 0 }}>
-                                    <div className="plan-card-progress-bar">
-                                      <div className="plan-card-progress-fill" style={{ width: `${subPct}%`, background: sub.status === 'completed' ? '#22C55E' : '#EF4444' }} />
-                                    </div>
-                                    <span className="plan-card-pct">{subPct}%</span>
-                                  </div>
-                                  {sub.deadline && <span className="plan-card-meta-item" style={{ marginTop: '4px' }}><InlineIcon icon="CalendarDays" size={12} /> {getDaysRemaining(sub.deadline)}</span>}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="plan-card-actions">
-                      {plan.type === 'savings' && plan.status !== 'completed' && (
-                        <button className="plan-action-btn plan-action-primary" onClick={() => { setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}>
-                          + {t('metas:planCard.add')}
-                        </button>
-                      )}
-                      {plan.type === 'recurring' && plan.status !== 'completed' && (
-                        <button className="plan-action-btn plan-action-primary" onClick={() => { setShowRecordPaymentModal(plan); setPayAmount(''); setPayAccountId(''); }}>
-                          <InlineIcon icon="CreditCard" size={14} /> {t('metas:planCard.pay')}
-                        </button>
-                      )}
-                      {plan.type === 'expense' && plan.status !== 'completed' && (
-                        <>
-                          <button
-                            className="plan-action-btn plan-action-primary"
-                            onClick={() => { hasSubPlans ? openSubPlansModal(plan) : setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}
-                          >
-                            {hasSubPlans ? t('metas:subPlans.manage') : `+ ${t('metas:planCard.deposit')}`}
-                          </button>
-                          <button
-                            className="plan-action-btn"
-                            onClick={() => openSubPlansModal(plan)}
-                            title={t('metas:subPlans.title')}
-                          >
-                            <InlineIcon icon="ClipboardList" size={14} />
-                          </button>
-                        </>
-                      )}
-                      {plan.ownerId === uid && (
-                        <button className="plan-action-btn" onClick={() => setShowShareModal(plan)}>
-                          <IconUsers width={14} />
-                        </button>
-                      )}
-                      {plan.ownerId === uid && (
-                        <button className="plan-action-btn" onClick={() => openEditModal(plan)}>
-                          <IconEdit width={14} />
-                        </button>
-                      )}
-                      {plan.ownerId === uid && (
-                        <button className="plan-action-btn plan-action-danger" onClick={() => handleDeletePlan(plan)}>
-                          <IconTrash width={14} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+              {/* Mobile: single sorted list */}
+              <div className="plans-grid-mobile">
+                {sortedPlans.map((plan, index) => renderPlanCard(plan, index))}
+              </div>
+            </>
           ) : (
             <div className="plans-empty">
               <span className="plans-empty-icon"><InlineIcon icon="ClipboardList" size={28} /></span>
@@ -1457,7 +1490,11 @@ const MetasPage = memo(function MetasPage() {
           .plans-req-reject:hover { background: var(--color-error); color: white; }
 
            /* Plans Grid */
-           .plans-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+           .plans-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+           .plans-column { display: flex; flex-direction: column; gap: 12px; }
+           .plans-column-header { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 700; padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-md); }
+           .plans-column-header svg { flex-shrink: 0; }
+           .plans-grid-mobile { display: none; }
            
            /* Category Buttons */
            .plan-category-group {
@@ -1494,7 +1531,6 @@ const MetasPage = memo(function MetasPage() {
              border-color: var(--color-prosper-green);
            }
           .plan-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; }
-          .plan-card-recurring { align-self: stretch; display: flex; flex-direction: column; }
           .plan-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
           .plan-card-header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
           .plan-card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; flex-shrink: 0; }
@@ -1521,13 +1557,11 @@ const MetasPage = memo(function MetasPage() {
           .plan-card-meta-item { display: inline-flex; align-items: center; gap: 4px; font-size: 0.625rem; color: var(--text-tertiary); }
           .plan-card-meta-item svg { flex-shrink: 0; }
           .plan-card-actions { display: flex; gap: 4px; padding: 10px 14px; border-top: 1px solid var(--border-default); }
-          .plan-card-recurring .plan-card-actions { margin-top: auto; }
           .plan-action-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
           .plan-action-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
           .plan-action-primary { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
           .plan-action-primary:hover { filter: brightness(1.1); }
           .plan-action-danger:hover { border-color: var(--color-error); color: var(--color-error); background: rgba(239,68,68,0.1); }
-          .plan-card-recurring .plan-action-primary { flex: 1.5; }
 
           /* Share User Card */
           .share-user-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: var(--bg-input); border: 1px solid var(--color-prosper-green); margin-bottom: 12px; }
@@ -1615,7 +1649,8 @@ const MetasPage = memo(function MetasPage() {
             .plans-stat-value { font-size: 1rem; }
             .plans-filters { flex-direction: column; align-items: stretch; gap: 10px; }
             .plans-filter-group { flex-wrap: wrap; }
-            .plans-grid { grid-template-columns: 1fr; }
+            .plans-columns { display: none; }
+            .plans-grid-mobile { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
             .plan-type-selector { grid-template-columns: 1fr; }
             .plan-field-row { grid-template-columns: 1fr; }
             .modal-plan, .modal-plan-small { max-width: none; width: 96%; }
