@@ -845,12 +845,21 @@ const MetasPage = memo(function MetasPage() {
                         </button>
                       )}
                       {plan.type === 'expense' && plan.status !== 'completed' && (
-                        <button
-                          className="plan-action-btn plan-action-primary"
-                          onClick={() => { hasSubPlans ? openSubPlansModal(plan) : setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}
-                        >
-                          {hasSubPlans ? t('metas:subPlans.manage') : `+ ${t('metas:planCard.deposit')}`}
-                        </button>
+                        <>
+                          <button
+                            className="plan-action-btn plan-action-primary"
+                            onClick={() => { hasSubPlans ? openSubPlansModal(plan) : setShowAddFundsModal(plan); setAddAmount(''); setAddAccountId(''); }}
+                          >
+                            {hasSubPlans ? t('metas:subPlans.manage') : `+ ${t('metas:planCard.deposit')}`}
+                          </button>
+                          <button
+                            className="plan-action-btn"
+                            onClick={() => openSubPlansModal(plan)}
+                            title={t('metas:subPlans.title')}
+                          >
+                            <InlineIcon icon="ClipboardList" size={14} />
+                          </button>
+                        </>
                       )}
                       {plan.ownerId === uid && (
                         <button className="plan-action-btn" onClick={() => setShowShareModal(plan)}>

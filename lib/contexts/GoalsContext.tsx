@@ -195,6 +195,7 @@ export const GoalsProvider = ({ children }: { children: React.ReactNode }) => {
   }, [refresh]);
 
   const deletePlanFn = useCallback(async (id: string) => {
+    setPlans((prev) => prev.filter((p) => p.id !== id));
     await deletePlan(id);
     refresh();
   }, [refresh]);
