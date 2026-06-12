@@ -30,6 +30,9 @@
   },
   "accounts": {
     "title": "My Accounts",
+    "add": "New Account",
+    "addFirst": "Create first account",
+    "archive": "Archive history",
     "newGroup": "New Group",
     "noGroup": "No group",
     "empty": "You have no accounts. Create your first account!",
@@ -52,7 +55,27 @@
     "hideConversion": "Hide conversion",
     "showConversion": "Show conversion"
   },
+  "transactions": {
+    "title": "Transactions",
+    "add": "New Transaction",
+    "active": "Active",
+    "archived": "Archived",
+    "selected": "selected",
+    "archiveSelected": "Archive selected",
+    "unarchiveSelected": "Restore selected",
+    "deleteSelected": "Delete permanently",
+    "date": "Date",
+    "type": "Type",
+    "category": "Category",
+    "amount": "Amount",
+    "account": "Account",
+    "loadMore": "Load more",
+    "empty": "No transactions. Add your first one!"
+  },
   "filters": {
+    "allAccounts": "All accounts",
+    "allTypes": "All types",
+    "allCategories": "All categories",
     "account": "Account",
     "type": "Type",
     "category": "Category",

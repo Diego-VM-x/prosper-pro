@@ -30,6 +30,9 @@
   },
   "accounts": {
     "title": "Mis Cuentas",
+    "add": "Nueva Cuenta",
+    "addFirst": "Crear primera cuenta",
+    "archive": "Archivar historial",
     "newGroup": "Nuevo Grupo",
     "noGroup": "Sin grupo",
     "empty": "No tienes cuentas. ¡Crea tu primera cuenta!",
@@ -52,7 +55,27 @@
     "hideConversion": "Ocultar conversión",
     "showConversion": "Ver conversión"
   },
+  "transactions": {
+    "title": "Transacciones",
+    "add": "Nueva Transacción",
+    "active": "Activas",
+    "archived": "Archivadas",
+    "selected": "seleccionadas",
+    "archiveSelected": "Archivar seleccionadas",
+    "unarchiveSelected": "Restaurar seleccionadas",
+    "deleteSelected": "Eliminar permanentemente",
+    "date": "Fecha",
+    "type": "Tipo",
+    "category": "Categoría",
+    "amount": "Monto",
+    "account": "Cuenta",
+    "loadMore": "Cargar más",
+    "empty": "No hay transacciones. ¡Agrega tu primera!"
+  },
   "filters": {
+    "allAccounts": "Todas las cuentas",
+    "allTypes": "Todos los tipos",
+    "allCategories": "Todas las categorías",
     "account": "Cuenta",
     "type": "Tipo",
     "category": "Categoría",

@@ -86,22 +86,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
       )}
 
       <aside className={`sidebar${isOpen ? ' open' : ''}${isCollapsed ? ' collapsed' : ''}`} id="main-sidebar">
-        {/* Logo del sidebar */}
-        <div className="sidebar-logo">
-          <Link href="/" className="sidebar-logo-link" onClick={onClose}>
-            <img
-              src="/logo-icon.png"
-              alt="Prosper"
-              width={32}
-              height={32}
-              className="sidebar-logo-img"
-            />
-            {!isCollapsed && (
-              <span className="sidebar-logo-text">Prosper</span>
-            )}
-          </Link>
-        </div>
-
         {/* Header: solo botón cerrar en móvil */}
         <div className="sidebar-header">
           {/* Botón cerrar para móvil */}
