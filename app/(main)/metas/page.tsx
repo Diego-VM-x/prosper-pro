@@ -1360,8 +1360,8 @@ const MetasPage = memo(function MetasPage() {
              color: white;
              border-color: var(--color-prosper-green);
            }
-          .plan-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; display: flex; flex-direction: column; }
-          .plan-card-recurring { align-self: stretch; }
+          .plan-card { background: var(--bg-card); border: 1px solid var(--border-default); border-left: 4px solid; border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; }
+          .plan-card-recurring { align-self: stretch; display: flex; flex-direction: column; }
           .plan-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-2px); }
           .plan-card-header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
           .plan-card-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.125rem; flex-shrink: 0; }
@@ -1387,7 +1387,8 @@ const MetasPage = memo(function MetasPage() {
           .plan-card-meta { display: flex; flex-wrap: wrap; gap: 8px; }
           .plan-card-meta-item { display: inline-flex; align-items: center; gap: 4px; font-size: 0.625rem; color: var(--text-tertiary); }
           .plan-card-meta-item svg { flex-shrink: 0; }
-          .plan-card-actions { display: flex; gap: 4px; padding: 10px 14px; border-top: 1px solid var(--border-default); margin-top: auto; }
+          .plan-card-actions { display: flex; gap: 4px; padding: 10px 14px; border-top: 1px solid var(--border-default); }
+          .plan-card-recurring .plan-card-actions { margin-top: auto; }
           .plan-action-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-default); background: var(--bg-input); color: var(--text-secondary); font-size: 0.6875rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
           .plan-action-btn:hover { border-color: var(--color-prosper-green); color: var(--color-prosper-green); }
           .plan-action-primary { background: var(--color-prosper-green); color: white; border-color: var(--color-prosper-green); }
