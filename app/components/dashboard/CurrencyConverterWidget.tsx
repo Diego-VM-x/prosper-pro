@@ -4,10 +4,10 @@ import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CustomSelect } from '@/app/components/CustomSelect';
-import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { convertCurrency, CURRENCY_MAP } from '@/lib/currency';
 import type { CurrencyCode } from '@/types';
-import { Repeat } from 'lucide-react';
+import { Repeat, DollarSign, Euro, Banknote, Coins } from 'lucide-react';
+import { BtcIcon, EthIcon, UsdtIcon, SolIcon, UsdcIcon } from '@/app/components/CryptoIcons';
 
 const CONVERTER_CURRENCIES: CurrencyCode[] = ['USD', 'BS', 'EUR', 'USDT', 'SOL', 'BTC', 'ETH', 'USDC', 'COP'];
 
@@ -51,9 +51,22 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
     return convertCurrency(1, from, to, effectiveRates);
   }, [from, to, effectiveRates]);
 
+  const currencyIcons: Record<CurrencyCode, React.ReactNode> = {
+    USD: <DollarSign size={16} />,
+    BS: <Banknote size={16} />,
+    EUR: <Euro size={16} />,
+    USDT: <UsdtIcon size={16} />,
+    SOL: <SolIcon size={16} />,
+    BTC: <BtcIcon size={16} />,
+    ETH: <EthIcon size={16} />,
+    USDC: <UsdcIcon size={16} />,
+    COP: <Coins size={16} />,
+  };
+
   const currencyOptions = CONVERTER_CURRENCIES.map((code) => ({
     value: code,
-    label: `${CURRENCY_MAP[code].flag} ${code} — ${CURRENCY_MAP[code].name}`,
+    label: `${code} — ${CURRENCY_MAP[code].name}`,
+    icon: currencyIcons[code],
   }));
 
   const handleSwap = () => {
@@ -118,7 +131,7 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
 
         <div className="converter-result">
           <div className="converter-result-main">
-            <CurrencyFlag code={to} size={24} className="converter-result-flag" />
+            <span className="converter-result-flag">{currencyIcons[to]}</span>
             <span className="converter-result-value">
               {CURRENCY_MAP[to].symbol}{converted.toLocaleString(CURRENCY_MAP[to].locale, { minimumFractionDigits: 2, maximumFractionDigits: CURRENCY_MAP[to].decimals })}
             </span>

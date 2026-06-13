@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
-import { InlineIcon } from './IconMap';
 
 interface CustomSelectOption {
   value: string;
   label: string;
-  icon?: string;
+  icon?: ReactNode;
 }
 
 interface CustomSelectProps {
@@ -162,7 +161,7 @@ export function CustomSelect({
               className={`custom-select-option ${value === option.value ? 'selected' : ''}`}
               onClick={() => handleSelect(option.value)}
             >
-              {option.icon && <span className="custom-select-icon"><InlineIcon icon={option.icon} size={16} /></span>}
+              {option.icon && <span className="custom-select-icon">{option.icon}</span>}
               {option.label}
               {value === option.value && <span className="custom-select-check"><Check size={14} /></span>}
             </button>
@@ -192,7 +191,7 @@ export function CustomSelect({
         <span className={`custom-select-value ${!selectedOption ? 'placeholder' : ''}`}>
           {selectedOption ? (
             <>
-              {selectedOption.icon && <span className="custom-select-icon"><InlineIcon icon={selectedOption.icon} size={16} /></span>}
+              {selectedOption.icon && <span className="custom-select-icon">{selectedOption.icon}</span>}
               {selectedOption.label}
             </>
           ) : (
