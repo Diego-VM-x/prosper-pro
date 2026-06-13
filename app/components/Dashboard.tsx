@@ -30,7 +30,7 @@ import { useDashboardLayout } from '@/lib/contexts/DashboardLayoutContext';
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
 import { subscribeToAccounts, getTotalBalance, updateAccountBalance, subscribeToAccountGroups, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { getDueRecurringPlans, getMonthlyRecurringSummary } from '@/lib/firestore/recurring';
-import { createTransaction } from '@/lib/firestore/transactions';
+import { createTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { getAccountRates, convertCurrency, CURRENCY_MAP } from '@/lib/currency';
 
@@ -242,6 +242,7 @@ export const Dashboard = memo(function Dashboard() {
   const [transferring, setTransferring] = useState(false);
   const [transferMsg, setTransferMsg] = useState('');
   const transferMsgTimeout = useRef<number | null>(null);
+  const [lifetimeSummary, setLifetimeSummary] = useState<{ income: number; expenses: number; saving: number; balance: number } | null>(null);
 
   const handleToggleFavorite = async (accountId: string) => {
     const uid = user?.uid;
@@ -343,10 +344,14 @@ export const Dashboard = memo(function Dashboard() {
 
         if (cancelled) return;
 
-        const transactionsData = await getTransactionsByOwnerId(uid);
+        const [transactionsData, lifetimeData] = await Promise.all([
+          getTransactionsByOwnerId(uid),
+          getLifetimeSummaryAll(uid),
+        ]);
 
         if (!cancelled) {
           setTransactions(transactionsData);
+          setLifetimeSummary(lifetimeData);
         }
       } catch (e) {
         console.error('Firestore load error:', e);
@@ -774,6 +779,26 @@ export const Dashboard = memo(function Dashboard() {
                   {formatInCurrency(monthlyIncome - monthlyExpenses, displayCurrency)}
                 </span>
               </div>
+              {/* Lifetime summary mini */}
+              {lifetimeSummary && (
+                <div className="lifetime-dash-mini">
+                  <div className="lifetime-dash-divider" />
+                  <div className="summary-row">
+                    <span className="summary-label">{t('finances.lifetimeIncome')}</span>
+                    <span className="summary-value income">{formatInCurrency(lifetimeSummary.income, displayCurrency)}</span>
+                  </div>
+                  <div className="summary-row">
+                    <span className="summary-label">{t('finances.lifetimeExpenses')}</span>
+                    <span className="summary-value expense">{formatInCurrency(lifetimeSummary.expenses, displayCurrency)}</span>
+                  </div>
+                  <div className="summary-row summary-total">
+                    <span className="summary-label">{t('finances.lifetimeBalance')}</span>
+                    <span className={`summary-value ${lifetimeSummary.balance >= 0 ? 'income' : 'expense'}`}>
+                      {formatInCurrency(lifetimeSummary.balance, displayCurrency)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );

@@ -53,7 +53,13 @@
     "totalBalance": "Total Balance",
     "convert": "Convert",
     "hideConversion": "Hide conversion",
-    "showConversion": "Show conversion"
+    "showConversion": "Show conversion",
+    "lifetimeTitle": "Lifetime Total (since start)",
+    "lifetimeIncome": "Total Income",
+    "lifetimeExpenses": "Total Expenses",
+    "lifetimeBalance": "Lifetime Balance",
+    "showLifetime": "Show lifetime",
+    "hideLifetime": "Hide lifetime"
   },
   "transactions": {
     "title": "Transactions",

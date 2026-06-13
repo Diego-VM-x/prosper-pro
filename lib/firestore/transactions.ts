@@ -287,6 +287,43 @@ export async function getMonthlySummaryAll(ownerId: string) {
   }
 }
 
+export async function getLifetimeSummaryAll(ownerId: string) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  try {
+    const snapshot = await getDocs(q);
+    let income = 0, expenses = 0, saving = 0;
+    snapshot.forEach((docSnap) => {
+      const t = docSnap.data() as Transaction;
+      if (t.type === 'income') income += t.amount;
+      else if (t.type === 'expense') expenses += t.amount;
+      else if (t.type === 'saving') saving += t.amount;
+    });
+    return { income, expenses, saving, balance: income - expenses - saving };
+  } catch (err) {
+    console.error('getLifetimeSummaryAll error:', err);
+    return { income: 0, expenses: 0, saving: 0, balance: 0 };
+  }
+}
+
+export async function getLifetimeSummary(ownerId: string) {
+  const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
+  try {
+    const snapshot = await getDocs(q);
+    let income = 0, expenses = 0, saving = 0;
+    snapshot.forEach((docSnap) => {
+      const t = docSnap.data() as Transaction;
+      if (t.archived) return;
+      if (t.type === 'income') income += t.amount;
+      else if (t.type === 'expense') expenses += t.amount;
+      else if (t.type === 'saving') saving += t.amount;
+    });
+    return { income, expenses, saving, balance: income - expenses - saving };
+  } catch (err) {
+    console.error('getLifetimeSummary error:', err);
+    return { income: 0, expenses: 0, saving: 0, balance: 0 };
+  }
+}
+
 export async function getMonthlySummary(ownerId: string) {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();

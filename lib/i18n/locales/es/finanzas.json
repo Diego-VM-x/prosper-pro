@@ -53,7 +53,13 @@
     "totalBalance": "Balance Total",
     "convert": "Convertir",
     "hideConversion": "Ocultar conversión",
-    "showConversion": "Ver conversión"
+    "showConversion": "Ver conversión",
+    "lifetimeTitle": "Histórico Total (desde inicio)",
+    "lifetimeIncome": "Ingresos Totales",
+    "lifetimeExpenses": "Gastos Totales",
+    "lifetimeBalance": "Balance Histórico",
+    "showLifetime": "Ver histórico",
+    "hideLifetime": "Ocultar histórico"
   },
   "transactions": {
     "title": "Transacciones",
