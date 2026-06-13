@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { DollarSign, Euro, Banknote, Coins } from 'lucide-react';
 
 interface CryptoIconProps {
   size?: number;
@@ -110,16 +111,8 @@ const CRYPTO_ICON_MAP: Record<string, React.FC<CryptoIconProps>> = {
   USDC: UsdcIcon,
 };
 
-// Fiat flag emojis that should remain as text
-const FIAT_FLAGS: Record<string, string> = {
-  BS: '🇻🇪',
-  USD: '🇺🇸',
-  EUR: '🇪🇺',
-  COP: '🇨🇴',
-};
-
 /**
- * CurrencyFlag — renders an official crypto SVG logo or a fiat flag emoji.
+ * CurrencyFlag — renders an official crypto SVG logo or a fiat Lucide icon.
  * @param code - ISO currency code (e.g. 'BTC', 'USD')
  * @param size - pixel size (default 20)
  * @param className - extra classes for the SVG/span
@@ -136,11 +129,19 @@ export const CurrencyFlag: React.FC<{ code: string; size?: number; className?: s
     return <CryptoComponent size={size} className={className} />;
   }
 
-  return (
-    <span className={className} style={{ fontSize: size, lineHeight: 1 }}>
-      {FIAT_FLAGS[upperCode] || '🏳'}
-    </span>
-  );
+  // Fiat icons using Lucide (matches CurrencyConverterWidget)
+  switch (upperCode) {
+    case 'USD':
+      return <DollarSign size={size} className={className} />;
+    case 'EUR':
+      return <Euro size={size} className={className} />;
+    case 'BS':
+      return <Banknote size={size} className={className} />;
+    case 'COP':
+      return <Coins size={size} className={className} />;
+    default:
+      return <Banknote size={size} className={className} />;
+  }
 };
 
 /**
