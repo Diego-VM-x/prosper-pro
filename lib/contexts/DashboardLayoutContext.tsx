@@ -1,12 +1,13 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import type { DashboardLayout, WidgetCategory, DashboardWidgetConfig, WidgetSize, WidgetType } from '@/types';
-import { getDashboardLayout, updateDashboardLayout } from '@/lib/firestore/users';
+import type { DashboardLayout, DashboardLayouts, DashboardBreakpoint, WidgetCategory, DashboardWidgetConfig } from '@/types';
+import { getDashboardLayouts, updateDashboardLayouts } from '@/lib/firestore/users';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { useAuth } from './AuthContext';
 
-const LS_KEY = 'prosper_dashboard_layout';
+const LS_KEY = 'prosper_dashboard_layouts';
+const LEGACY_LS_KEY = 'prosper_dashboard_layout';
 
 export const DEFAULT_LAYOUT: DashboardLayout = {
   categories: [
@@ -35,12 +36,63 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
   ],
 };
 
+export const DEFAULT_LAYOUTS: DashboardLayouts = {
+  desktop: DEFAULT_LAYOUT,
+  mobile: DEFAULT_LAYOUT,
+};
+
 function generateId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function isDashboardLayout(obj: unknown): obj is DashboardLayout {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    Array.isArray((obj as DashboardLayout).categories) &&
+    Array.isArray((obj as DashboardLayout).widgets)
+  );
+}
+
+function isDashboardLayouts(obj: unknown): obj is DashboardLayouts {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    isDashboardLayout((obj as DashboardLayouts).desktop) &&
+    isDashboardLayout((obj as DashboardLayouts).mobile)
+  );
+}
+
+function migrateFromLegacy(layout: unknown): DashboardLayouts | null {
+  if (isDashboardLayout(layout)) {
+    return { desktop: layout, mobile: layout };
+  }
+  return null;
+}
+
+function ensureWelcomeWidget(layout: DashboardLayout): DashboardLayout {
+  const hasWelcome = layout.widgets.some(w => w.type === 'welcome_banner');
+  if (hasWelcome) return layout;
+  const welcomeWidget: DashboardWidgetConfig = {
+    id: generateId('w'),
+    categoryId: layout.categories[0]?.id || '',
+    type: 'welcome_banner',
+    title: 'Bienvenido',
+    size: 'large',
+    order: -1,
+  };
+  return {
+    ...layout,
+    widgets: [welcomeWidget, ...layout.widgets],
+  };
+}
+
 interface DashboardLayoutContextValue {
   layout: DashboardLayout;
+  layouts: DashboardLayouts;
+  breakpoint: DashboardBreakpoint;
+  editingBreakpoint: DashboardBreakpoint | null;
+  setEditingBreakpoint: (bp: DashboardBreakpoint | null) => void;
   isLoading: boolean;
   // Categories
   addCategory: (name: string, icon: string) => void;
@@ -67,95 +119,127 @@ export function useDashboardLayout() {
 
 export function DashboardLayoutProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [layout, setLayout] = useState<DashboardLayout>(DEFAULT_LAYOUT);
+  const [layouts, setLayouts] = useState<DashboardLayouts>(DEFAULT_LAYOUTS);
+  const [breakpoint, setBreakpoint] = useState<DashboardBreakpoint>('desktop');
+  const [editingBreakpoint, setEditingBreakpoint] = useState<DashboardBreakpoint | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Ensure welcome banner always exists
-  const ensureWelcomeWidget = useCallback((layout: DashboardLayout): DashboardLayout => {
-    const hasWelcome = layout.widgets.some(w => w.type === 'welcome_banner');
-    if (hasWelcome) return layout;
-    const welcomeWidget: DashboardWidgetConfig = {
-      id: generateId('w'),
-      categoryId: layout.categories[0]?.id || '',
-      type: 'welcome_banner',
-      title: 'Bienvenido',
-      size: 'large',
-      order: -1,
-    };
-    return {
-      ...layout,
-      widgets: [welcomeWidget, ...layout.widgets],
-    };
+  const activeBreakpoint = editingBreakpoint ?? breakpoint;
+
+  // Detect real breakpoint
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 769px)');
+    const update = () => setBreakpoint(mq.matches ? 'desktop' : 'mobile');
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
-  // Load layout on mount
+  // Load layouts on mount
   useEffect(() => {
-    let unsub: (() => void) | undefined;
+    let cancelled = false;
     async function load() {
       setIsLoading(true);
       try {
         // Try Firestore first
         if (user?.uid) {
-          const firestoreLayout = await getDashboardLayout(user.uid);
-          if (firestoreLayout) {
-            const ensured = ensureWelcomeWidget(firestoreLayout);
-            setLayout(ensured);
-            safeLocalStorage.setItem(LS_KEY, JSON.stringify(ensured));
+          const firestoreLayouts = await getDashboardLayouts(user.uid);
+          if (firestoreLayouts && isDashboardLayouts(firestoreLayouts)) {
+            const ensured = {
+              desktop: ensureWelcomeWidget(firestoreLayouts.desktop),
+              mobile: ensureWelcomeWidget(firestoreLayouts.mobile),
+            };
+            if (!cancelled) {
+              setLayouts(ensured);
+              safeLocalStorage.setItem(LS_KEY, JSON.stringify(ensured));
+            }
             setIsLoading(false);
             return;
           }
         }
-        // Fallback to localStorage
+        // Try new localStorage key
         const saved = safeLocalStorage.getItem(LS_KEY);
         if (saved) {
-          const parsed = JSON.parse(saved) as DashboardLayout;
-          if (parsed.categories?.length && parsed.widgets?.length) {
-            const ensured = ensureWelcomeWidget(parsed);
-            setLayout(ensured);
+          const parsed = JSON.parse(saved);
+          if (isDashboardLayouts(parsed)) {
+            const ensured = {
+              desktop: ensureWelcomeWidget(parsed.desktop),
+              mobile: ensureWelcomeWidget(parsed.mobile),
+            };
+            if (!cancelled) {
+              setLayouts(ensured);
+            }
+            setIsLoading(false);
+            return;
+          }
+        }
+        // Migrate from legacy single layout
+        const legacy = safeLocalStorage.getItem(LEGACY_LS_KEY);
+        if (legacy) {
+          const parsed = JSON.parse(legacy);
+          const migrated = migrateFromLegacy(parsed);
+          if (migrated) {
+            const ensured = {
+              desktop: ensureWelcomeWidget(migrated.desktop),
+              mobile: ensureWelcomeWidget(migrated.mobile),
+            };
+            if (!cancelled) {
+              setLayouts(ensured);
+              safeLocalStorage.setItem(LS_KEY, JSON.stringify(ensured));
+              safeLocalStorage.removeItem(LEGACY_LS_KEY);
+            }
             setIsLoading(false);
             return;
           }
         }
         // Fallback to default
-        setLayout(DEFAULT_LAYOUT);
+        if (!cancelled) setLayouts(DEFAULT_LAYOUTS);
       } catch (e) {
-        console.error('Error loading dashboard layout:', e);
-        setLayout(DEFAULT_LAYOUT);
+        console.error('Error loading dashboard layouts:', e);
+        if (!cancelled) setLayouts(DEFAULT_LAYOUTS);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
     load();
-    return () => unsub?.();
-  }, [user?.uid, ensureWelcomeWidget]);
+    return () => { cancelled = true; };
+  }, [user?.uid]);
 
   // Persist layout changes
-  const persist = useCallback((nextLayout: DashboardLayout) => {
-    safeLocalStorage.setItem(LS_KEY, JSON.stringify(nextLayout));
+  const persist = useCallback((nextLayouts: DashboardLayouts) => {
+    safeLocalStorage.setItem(LS_KEY, JSON.stringify(nextLayouts));
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (user?.uid) {
         try {
-          await updateDashboardLayout(user.uid, nextLayout);
+          await updateDashboardLayouts(user.uid, nextLayouts);
         } catch (e) {
-          console.error('Error saving dashboard layout:', e);
+          console.error('Error saving dashboard layouts:', e);
         }
       }
     }, 1500);
   }, [user?.uid]);
 
-  const setLayoutAndPersist = useCallback((updater: (prev: DashboardLayout) => DashboardLayout) => {
-    setLayout(prev => {
+  const setLayoutsAndPersist = useCallback((updater: (prev: DashboardLayouts) => DashboardLayouts) => {
+    setLayouts(prev => {
       const next = updater(prev);
       persist(next);
       return next;
     });
   }, [persist]);
 
+  const updateActiveLayout = useCallback((updater: (prev: DashboardLayout) => DashboardLayout) => {
+    setLayoutsAndPersist(prev => ({
+      ...prev,
+      [activeBreakpoint]: ensureWelcomeWidget(updater(prev[activeBreakpoint])),
+    }));
+  }, [activeBreakpoint, setLayoutsAndPersist]);
+
   // ── Categories ──
   const addCategory = useCallback((name: string, icon: string) => {
-    setLayoutAndPersist(prev => {
+    updateActiveLayout(prev => {
       const newCat: WidgetCategory = {
         id: generateId('cat'),
         name,
@@ -164,25 +248,25 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
       };
       return { ...prev, categories: [...prev.categories, newCat] };
     });
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const updateCategory = useCallback((id: string, updates: Partial<WidgetCategory>) => {
-    setLayoutAndPersist(prev => ({
+    updateActiveLayout(prev => ({
       ...prev,
       categories: prev.categories.map(c => c.id === id ? { ...c, ...updates } : c),
     }));
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const removeCategory = useCallback((id: string) => {
-    setLayoutAndPersist(prev => ({
+    updateActiveLayout(prev => ({
       ...prev,
       categories: prev.categories.filter(c => c.id !== id),
       widgets: prev.widgets.filter(w => w.categoryId !== id),
     }));
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const moveCategory = useCallback((id: string, direction: 'up' | 'down') => {
-    setLayoutAndPersist(prev => {
+    updateActiveLayout(prev => {
       const cats = [...prev.categories].sort((a, b) => a.order - b.order);
       const idx = cats.findIndex(c => c.id === id);
       if (idx < 0) return prev;
@@ -194,11 +278,11 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
         categories: cats.map((c, i) => ({ ...c, order: i })),
       };
     });
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   // ── Widgets ──
   const addWidget = useCallback((widget: Omit<DashboardWidgetConfig, 'id' | 'order'>) => {
-    setLayoutAndPersist(prev => {
+    updateActiveLayout(prev => {
       const catWidgets = prev.widgets.filter(w => w.categoryId === widget.categoryId);
       const newWidget: DashboardWidgetConfig = {
         ...widget,
@@ -207,17 +291,17 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
       };
       return { ...prev, widgets: [...prev.widgets, newWidget] };
     });
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const updateWidget = useCallback((id: string, updates: Partial<DashboardWidgetConfig>) => {
-    setLayoutAndPersist(prev => ({
+    updateActiveLayout(prev => ({
       ...prev,
       widgets: prev.widgets.map(w => w.id === id ? { ...w, ...updates } : w),
     }));
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const removeWidget = useCallback((id: string) => {
-    setLayoutAndPersist(prev => {
+    updateActiveLayout(prev => {
       const widget = prev.widgets.find(w => w.id === id);
       // Prevent removing the welcome banner widget
       if (widget?.type === 'welcome_banner') return prev;
@@ -226,10 +310,10 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
         widgets: prev.widgets.filter(w => w.id !== id),
       };
     });
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const moveWidget = useCallback((id: string, direction: 'up' | 'down') => {
-    setLayoutAndPersist(prev => {
+    updateActiveLayout(prev => {
       const widget = prev.widgets.find(w => w.id === id);
       if (!widget) return prev;
       const catWidgets = prev.widgets
@@ -244,10 +328,10 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
       const otherWidgets = prev.widgets.filter(w => w.categoryId !== widget.categoryId);
       return { ...prev, widgets: [...otherWidgets, ...reordered] };
     });
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const changeWidgetCategory = useCallback((widgetId: string, newCategoryId: string) => {
-    setLayoutAndPersist(prev => {
+    updateActiveLayout(prev => {
       const widget = prev.widgets.find(w => w.id === widgetId);
       if (!widget) return prev;
       // Prevent moving welcome banner out of its category
@@ -262,18 +346,28 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
         ),
       };
     });
-  }, [setLayoutAndPersist]);
+  }, [updateActiveLayout]);
 
   const resetToDefault = useCallback(() => {
-    setLayoutAndPersist(() => DEFAULT_LAYOUT);
-  }, [setLayoutAndPersist]);
+    setLayoutsAndPersist(prev => ({
+      ...prev,
+      [activeBreakpoint]: DEFAULT_LAYOUT,
+    }));
+  }, [activeBreakpoint, setLayoutsAndPersist]);
+
+  const currentLayout = layouts[activeBreakpoint];
 
   const value = React.useMemo(() => ({
-    layout, isLoading,
+    layout: currentLayout,
+    layouts,
+    breakpoint,
+    editingBreakpoint,
+    setEditingBreakpoint,
+    isLoading,
     addCategory, updateCategory, removeCategory, moveCategory,
     addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory,
     resetToDefault,
-  }), [layout, isLoading, addCategory, updateCategory, removeCategory, moveCategory, addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory, resetToDefault]);
+  }), [currentLayout, layouts, breakpoint, editingBreakpoint, isLoading, addCategory, updateCategory, removeCategory, moveCategory, addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory, resetToDefault]);
 
   return (
     <DashboardLayoutContext.Provider value={value}>

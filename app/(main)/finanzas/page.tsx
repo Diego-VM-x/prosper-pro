@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
+import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getAllTransactionsByOwnerId, createTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
@@ -13,6 +14,8 @@ import { addNotification } from '@/lib/firestore/notifications';
 import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
+import { addFundsToPlan, recordPayment, recordSubPlanPayment, updatePlan } from '@/lib/firestore/plans';
+import { calculateNextDueDate } from '@/lib/firestore/recurring';
 import { IconPlus, IconX, IconWallet, IconArchive, IconReset } from '@/app/components/icons';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
@@ -22,7 +25,7 @@ const FinancialStatusChart = dynamic(() => import('@/app/components/FinancialSta
 const VepayModal = dynamic(() => import('@/app/components/VepayModal').then(m => ({ default: m.VepayModal })), { ssr: false });
 import { getAccountRates, convertCurrency } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
-import type { Transaction, FinancialAccount, AccountType, CurrencyCode, AccountGroup } from '@/types';
+import type { Transaction, FinancialAccount, AccountType, CurrencyCode, AccountGroup, FinancialPlan, SubPlan } from '@/types';
 
 const DEFAULT_CATEGORIES: Record<string, string[]> = {
   income: ['Salario', 'Freelance', 'Inversiones', 'Negocio', 'Otro'],
@@ -106,6 +109,7 @@ function SummaryWidget({ label, value, altValue, color, showAmounts, showConvers
 
 const FinanzasPage = memo(function FinanzasPage() {
   const { user } = useAuth();
+  const { plans } = useGoals();
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
   const { t } = useTranslation(['finanzas', 'common']);
@@ -129,7 +133,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
-  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO() });
+  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO(), planId: '', subPlanId: '' });
   const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '', rateMode: undefined as 'official' | 'p2p' | undefined });
   const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
@@ -372,6 +376,9 @@ const FinanzasPage = memo(function FinanzasPage() {
       return;
     }
 
+    const selectedPlan = newTx.planId ? plans.find(p => p.id === newTx.planId) : null;
+    const selectedSubPlan = selectedPlan?.subPlans?.find(sp => sp.id === newTx.subPlanId);
+
     // Validar fondos si es gasto o ahorro y hay cuenta seleccionada
     if ((newTx.type === 'expense' || newTx.type === 'saving') && newTx.accountId) {
       const acc = accounts.find(a => a.id === newTx.accountId);
@@ -386,8 +393,12 @@ const FinanzasPage = memo(function FinanzasPage() {
       ownerId: uid,
       amount,
       type: newTx.type,
-      category: newTx.category,
-      description: newTx.description,
+      category: selectedPlan ? selectedPlan.category : newTx.category,
+      description: selectedSubPlan
+        ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan?.title, subPlan: selectedSubPlan.title, defaultValue: `Abono a: ${selectedPlan?.title} - ${selectedSubPlan.title}` })
+        : selectedPlan
+        ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: selectedPlan.title, defaultValue: `Abono a: ${selectedPlan.title}` })
+        : newTx.description,
       date: isoToTimestamp(newTx.date),
     };
     if (newTx.accountId) {
@@ -403,6 +414,32 @@ const FinanzasPage = memo(function FinanzasPage() {
         await updateAccountBalance(newTx.accountId, delta);
       }
 
+      // Actualizar plan o sub-plan
+      if (selectedPlan) {
+        if (selectedSubPlan) {
+          await recordSubPlanPayment(selectedPlan.id, selectedSubPlan.id, amount, rates?.rates || {});
+        } else if (selectedPlan.type === 'savings') {
+          const newCurrent = Math.min(selectedPlan.current + amount, selectedPlan.target);
+          const newStatus = newCurrent >= selectedPlan.target ? 'completed' : 'progress';
+          const contributions = { ...(selectedPlan.contributions || {}), [uid]: (selectedPlan.contributions?.[uid] || 0) + amount };
+          await updatePlan(selectedPlan.id, { current: newCurrent, status: newStatus, contributions });
+        } else {
+          const newCurrent = selectedPlan.current + amount;
+          const totalPaid = (selectedPlan.totalPaid || 0) + amount;
+          const nextDueStr = selectedPlan.type === 'recurring'
+            ? calculateNextDueDate(selectedPlan.nextDueDate || todayISO(), selectedPlan.frequency || 'monthly')
+            : selectedPlan.nextDueDate;
+          const completed = newCurrent >= selectedPlan.target && selectedPlan.target > 0;
+          await updatePlan(selectedPlan.id, {
+            current: newCurrent,
+            totalPaid,
+            lastPaidDate: todayISO(),
+            ...(selectedPlan.type === 'recurring' ? { nextDueDate: nextDueStr } : {}),
+            ...(completed ? { status: 'completed' } : {}),
+          });
+        }
+      }
+
       // Recargar datos
       await loadTransactions();
 
@@ -411,7 +448,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       const txCurrency = account?.currency || 'USD';
       success(t('finanzas:toast.transactionRegistered', { type: typeLabel, amount: formatInCurrency(amount, txCurrency) }));
       setShowModal(false);
-      setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO() });
+      setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO(), planId: '', subPlanId: '' });
     } catch (e: any) {
       console.error(e);
       error(t('finanzas:toast.registerError', { message: e?.message || 'Error desconocido' }));
@@ -857,6 +894,15 @@ const FinanzasPage = memo(function FinanzasPage() {
   };
 
   const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
+
+  // Planes compatibles con el tipo de transacción actual
+  const compatiblePlans = useMemo(() => {
+    if (newTx.type === 'income') return [];
+    const targetTypes = newTx.type === 'saving' ? ['savings'] : ['expense', 'recurring'];
+    return plans.filter(p => targetTypes.includes(p.type) && p.status !== 'completed' && p.status !== 'cancelled');
+  }, [plans, newTx.type]);
+
+  const selectedPlan = compatiblePlans.find(p => p.id === newTx.planId);
 
   return (
     <ProtectedRoute>
@@ -1469,7 +1515,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                         style={newTx.type === type ? { borderColor: TYPE_COLORS[type], background: TYPE_COLORS[type] + '12' } : {}}
                         onClick={() => {
                           const cats = allCategories[type] || CATEGORIES[type];
-                          setNewTx({ ...newTx, type, category: cats[0] });
+                          setNewTx({ ...newTx, type, category: cats[0], planId: '', subPlanId: '' });
                         }}
                       >
                         <span className="tx-type-icon"><InlineIcon icon={TYPE_ICONS[type]} size={18} /></span>
@@ -1539,6 +1585,56 @@ const FinanzasPage = memo(function FinanzasPage() {
                       customPlaceholder={t('finanzas:modals.newTransaction.categoryPlaceholder')}
                     />
                   </div>
+
+                  {compatiblePlans.length > 0 && (
+                    <div className="tx-field">
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.plan', { defaultValue: 'Plan (opcional)' })}</label>
+                      <CustomSelect
+                        value={newTx.planId}
+                        onChange={(val) => {
+                          const plan = compatiblePlans.find(p => p.id === val);
+                          setNewTx(prev => ({
+                            ...prev,
+                            planId: val,
+                            subPlanId: '',
+                            category: plan ? plan.category : prev.category,
+                            description: plan
+                              ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: plan.title, defaultValue: `Abono a: ${plan.title}` })
+                              : prev.description,
+                          }));
+                        }}
+                        options={[
+                          { value: '', label: t('finanzas:modals.newTransaction.noPlan', { defaultValue: 'Sin plan' }) },
+                          ...compatiblePlans.map(p => ({ value: p.id, label: p.title })),
+                        ]}
+                        placeholder={t('finanzas:modals.newTransaction.selectPlan', { defaultValue: 'Seleccionar plan' })}
+                      />
+                    </div>
+                  )}
+
+                  {selectedPlan?.subPlans && selectedPlan.subPlans.length > 0 && (
+                    <div className="tx-field">
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.subPlan', { defaultValue: 'Sub-plan (opcional)' })}</label>
+                      <CustomSelect
+                        value={newTx.subPlanId}
+                        onChange={(val) => {
+                          const sub = selectedPlan.subPlans?.find(sp => sp.id === val);
+                          setNewTx(prev => ({
+                            ...prev,
+                            subPlanId: val,
+                            description: sub
+                              ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan.title, subPlan: sub.title, defaultValue: `Abono a: ${selectedPlan.title} - ${sub.title}` })
+                              : prev.description,
+                          }));
+                        }}
+                        options={[
+                          { value: '', label: t('finanzas:modals.newTransaction.noSubPlan', { defaultValue: 'Todo el plan' }) },
+                          ...selectedPlan.subPlans.map(sp => ({ value: sp.id, label: `${sp.title} (${formatInCurrency(sp.current, sp.currency)} / ${formatInCurrency(sp.target, sp.currency)})` })),
+                        ]}
+                        placeholder={t('finanzas:modals.newTransaction.selectSubPlan', { defaultValue: 'Seleccionar sub-plan' })}
+                      />
+                    </div>
+                  )}
 
                   <div className="tx-field">
                     <label className="tx-label">{t('finanzas:modals.newTransaction.description')}</label>

@@ -484,3 +484,10 @@ export interface DashboardLayout {
   categories: WidgetCategory[];
   widgets: DashboardWidgetConfig[];
 }
+
+export type DashboardBreakpoint = 'desktop' | 'mobile';
+
+export interface DashboardLayouts {
+  desktop: DashboardLayout;
+  mobile: DashboardLayout;
+}

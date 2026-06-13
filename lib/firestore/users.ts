@@ -71,10 +71,23 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
   await updateDoc(doc(db, COLLECTION, userId), updates);
 }
 
+export async function updateDashboardLayouts(userId: string, layouts: import('@/types').DashboardLayouts) {
+  await updateDoc(doc(db, COLLECTION, userId), { dashboardLayouts: layouts, updatedAt: Date.now() });
+}
+
+export async function getDashboardLayouts(userId: string): Promise<import('@/types').DashboardLayouts | null> {
+  const docSnap = await getDoc(doc(db, COLLECTION, userId));
+  if (!docSnap.exists()) return null;
+  const data = docSnap.data();
+  return data.dashboardLayouts || null;
+}
+
+/** @deprecated Use updateDashboardLayouts instead */
 export async function updateDashboardLayout(userId: string, layout: import('@/types').DashboardLayout) {
   await updateDoc(doc(db, COLLECTION, userId), { dashboardLayout: layout, updatedAt: Date.now() });
 }
 
+/** @deprecated Use getDashboardLayouts instead */
 export async function getDashboardLayout(userId: string): Promise<import('@/types').DashboardLayout | null> {
   const docSnap = await getDoc(doc(db, COLLECTION, userId));
   if (!docSnap.exists()) return null;

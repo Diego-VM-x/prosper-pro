@@ -1,7 +1,8 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (11 de Junio, 2026 - v1.0.2)
+## Estado Actual (13 de Junio, 2026 - v1.0.2)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
+- **Dashboard**: Personalización independiente para escritorio y móvil. El contexto detecta el breakpoint y el customizer permite editar cada layout por separado.
 - **Tecnología**: Next.js 16.2.1 (App Router/webpack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
 - **URL Local**: http://localhost:3000
@@ -64,6 +65,19 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.2 — Abono a Planes desde Nueva Transacción (13/06/2026)**:
+  - **Modal de nueva transacción en `/finanzas`**: Ahora permite seleccionar un plan existente para abonar (planes de ahorro, gasto o recurrentes).
+  - **Sub-planes**: Si el plan seleccionado tiene sub-planes, aparece un segundo selector para abonar a un sub-plan específico usando `recordSubPlanPayment`.
+  - **Sincronización automática**: Al guardar la transacción se crea el movimiento, se actualiza el balance de la cuenta y se actualiza el progreso del plan/sub-plan (incluyendo estado `completed`, `contributions`, `totalPaid` y próxima fecha para recurrentes).
+  - **Compatibilidad**: El botón "Nueva transacción" del dashboard (`/finanzas?action=add-transaction`) hereda la funcionalidad automáticamente.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
+- ✅ **v1.0.2 — Dashboard Personalizable por Dispositivo (13/06/2026)**:
+  - **Layouts independientes desktop/mobile**: `DashboardLayoutContext` ahora maneja dos layouts (`desktop` y `mobile`) y expone el layout activo según el breakpoint real.
+  - **Nuevos tipos**: `DashboardBreakpoint` y `DashboardLayouts` en `types.ts`.
+  - **Firestore dual**: Nuevas funciones `getDashboardLayouts` / `updateDashboardLayouts` guardan el objeto completo en el campo `dashboardLayouts`.
+  - **Migración automática**: Se conserva el layout anterior guardado en `dashboardLayout` (Firestore) y `prosper_dashboard_layout` (localStorage), copiándolo a ambos breakpoints.
+  - **Customizer con selector de dispositivo**: En `configuracion/dashboard` se puede alternar entre "Escritorio" y "Móvil" para editar cada layout por separado.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
 - ✅ **v1.0.2 — Fix Cálculos Multi-Moneda + Eliminación Android (11/06/2026)**:
   - **Fix cálculos de planes y recurrentes**: `getMonthlyRecurringSummary` y `getPlanSummary` normalizan `target`/`current` a la moneda base usando `convertCurrency` antes de sumar. Resuelve bug donde un plan de `200 BS` se mostraba como `~Bs.116.537` al tratarse como USD.
   - **Dashboard y Metas**: totales de recurrentes y próximos vencimientos usan `convertBetween`/`formatInCurrency` según la moneda nativa de cada plan.
