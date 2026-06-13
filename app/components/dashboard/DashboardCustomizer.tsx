@@ -431,6 +431,11 @@ export function DashboardCustomizer() {
                 </div>
                 <label className="form-label">{t('customize.size', { defaultValue: 'Tamaño' })}</label>
                 <SizeSelector value={addWidgetSize} onChange={setAddWidgetSize} />
+                {addWidgetSize === 'large' && (
+                  <p className="size-warning-text">
+                    {t('customize.largeSizeWarning', { defaultValue: 'El tamaño Grande ocupa 3 columnas y no se verá correctamente en pantallas de celular.' })}
+                  </p>
+                )}
               </div>
               <div className="modal-footer">
                 <button className="btn btn-outline btn-sm" onClick={() => setAddingWidget(null)}>

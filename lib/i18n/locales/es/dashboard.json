@@ -214,6 +214,7 @@
     "catalogDesc": "Haz clic en un widget para agregarlo a tu dashboard.",
     "added": "Agregado",
     "reset": "Restaurar",
-    "category": "Categoría"
+    "category": "Categoría",
+    "largeSizeWarning": "El tamaño Grande ocupa 3 columnas y no se verá correctamente en pantallas de celular."
   }
 }

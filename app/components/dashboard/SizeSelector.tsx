@@ -8,22 +8,22 @@ interface SizeSelectorProps {
   onChange: (size: WidgetSize) => void;
 }
 
-const SIZES: { value: WidgetSize; label: string; cols: number }[] = [
+const SIZES: { value: WidgetSize; label: string; cols: number; mobileWarning?: boolean }[] = [
   { value: 'small', label: 'Pequeño', cols: 1 },
   { value: 'medium', label: 'Mediano', cols: 2 },
-  { value: 'large', label: 'Grande', cols: 3 },
+  { value: 'large', label: 'Grande', cols: 3, mobileWarning: true },
 ];
 
 export function SizeSelector({ value, onChange }: SizeSelectorProps) {
   return (
     <div className="size-selector">
-      {SIZES.map(({ value: size, label, cols }) => (
+      {SIZES.map(({ value: size, label, cols, mobileWarning }) => (
         <button
           key={size}
           type="button"
-          className={`size-selector-btn ${value === size ? 'active' : ''}`}
+          className={`size-selector-btn ${value === size ? 'active' : ''} ${mobileWarning ? 'mobile-warning' : ''}`}
           onClick={() => onChange(size)}
-          title={`${label} (${cols} columna${cols > 1 ? 's' : ''})`}
+          title={`${label} (${cols} columna${cols > 1 ? 's' : ''})${mobileWarning ? ' — No compatible con celulares' : ''}`}
         >
           <span className="size-selector-grid">
             {Array.from({ length: cols }).map((_, i) => (
@@ -31,6 +31,7 @@ export function SizeSelector({ value, onChange }: SizeSelectorProps) {
             ))}
           </span>
           <span className="size-selector-label">{label}</span>
+          {mobileWarning && <span className="size-selector-warning">📱</span>}
         </button>
       ))}
     </div>

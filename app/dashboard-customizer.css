@@ -430,6 +430,7 @@
   cursor: pointer;
   transition: all 0.15s ease;
   min-width: 64px;
+  position: relative;
 }
 .size-selector-btn:hover {
   border-color: var(--color-prosper-green);
@@ -439,6 +440,25 @@
   border-color: var(--color-prosper-green);
   background: rgba(61, 204, 142, 0.1);
   color: var(--color-prosper-green);
+}
+.size-selector-btn.mobile-warning {
+  border-color: var(--color-gold-500);
+}
+.size-selector-btn.mobile-warning:hover {
+  border-color: var(--color-gold-500);
+  background: rgba(245, 158, 11, 0.08);
+}
+.size-selector-btn.active.mobile-warning {
+  border-color: var(--color-gold-500);
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-gold-500);
+}
+.size-selector-warning {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.625rem;
+  line-height: 1;
 }
 .size-selector-grid {
   display: grid;
@@ -454,6 +474,14 @@
 .size-selector-label {
   font-size: 0.6875rem;
   font-weight: 600;
+}
+
+/* Warning text under size selector */
+.size-warning-text {
+  font-size: 0.75rem;
+  color: var(--color-gold-500);
+  margin: 6px 0 0;
+  line-height: 1.4;
 }
 
 /* ── Widget Catalog ── */

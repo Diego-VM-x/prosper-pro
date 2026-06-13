@@ -214,6 +214,7 @@
     "catalogDesc": "Click a widget to add it to your dashboard.",
     "added": "Added",
     "reset": "Reset",
-    "category": "Category"
+    "category": "Category",
+    "largeSizeWarning": "Large size takes 3 columns and will not display correctly on mobile screens."
   }
 }
