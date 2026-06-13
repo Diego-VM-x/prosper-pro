@@ -730,7 +730,7 @@ select.form-input { cursor: pointer; }
   .account-item-icon { width: 36px; height: 36px; font-size: 1rem; }
   .dash-section-header { padding: 10px 14px; }
   .dash-section-title { font-size: 0.9375rem; }
-  .modal-overlay { align-items: flex-start; padding-top: 10vh; }
+  .modal-overlay { align-items: center; }
   .modal-content { width: 95%; max-width: 440px; padding: 16px; max-height: 85vh; }
   .modal-footer { flex-direction: column-reverse; }
   .modal-footer .btn { width: 100%; text-align: center; padding: 14px; }
