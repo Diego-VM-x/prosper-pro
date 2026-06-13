@@ -67,7 +67,7 @@ function SkeletonChart() {
   return (
     <div style={{
       width: '100%',
-      height: '280px',
+      height: '120px',
       background: 'var(--bg-input)',
       borderRadius: 'var(--radius-md)',
       animation: 'pulse 1.5s ease-in-out infinite',
@@ -136,13 +136,21 @@ export function FinancialStatusChart() {
   const [chartHeight, setChartHeight] = useState(280);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const unsubscribe = subscribeToTransactions(user.uid, (txs) => {
       setTransactions(txs);
       setLoading(false);
     });
-    return () => unsubscribe();
+    // Safety timeout: stop showing skeleton if Firestore never responds
+    const timeout = setTimeout(() => setLoading(false), 3000);
+    return () => {
+      unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [user?.uid]);
 
   useEffect(() => {
