@@ -98,31 +98,15 @@
     "notes": [
       {
         "emoji": "ClipboardList",
-        "text": "New sub-plans for planned expenses: split a large expense into partial payments with different currencies."
+        "text": "Planned expenses: total amount is now auto-calculated from sub-plans."
       },
       {
-        "emoji": "RefreshCw",
-        "text": "Recurring calculation now uses the actual days of the current month (average per month)."
+        "emoji": "Maximize",
+        "text": "Modals are now vertically centered in the visible screen area."
       },
       {
-        "emoji": "Scale",
-        "text": "Fixed multi-currency calculation in plans: BS and USD amounts are no longer mixed up."
-      },
-      {
-        "emoji": "Smartphone",
-        "text": "Prosper Pro is now web-only: removed the Android/Capacitor layer to focus on the web experience."
-      },
-      {
-        "emoji": "Shield",
-        "text": "Removed device admin system: any device can close any session."
-      },
-      {
-        "emoji": "Lock",
-        "text": "Fixed login/logout flicker bug that kicked users out right after signing in."
-      },
-      {
-        "emoji": "User",
-        "text": "Fixed duplicate user dropdown in the top-right corner."
+        "emoji": "Wrench",
+        "text": "Minor bug fixes and stability improvements."
       }
     ]
   }

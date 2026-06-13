@@ -98,31 +98,15 @@
     "notes": [
       {
         "emoji": "ClipboardList",
-        "text": "Nuevos sub-planes en gastos planificados: divide un gasto grande en pagos parciales con diferentes monedas."
+        "text": "Gastos planificados: el monto total se calcula automáticamente desde los sub-planes."
       },
       {
-        "emoji": "RefreshCw",
-        "text": "Cálculo de recurrentes ahora usa los días reales del mes actual (promedio por mes)."
+        "emoji": "Maximize",
+        "text": "Modales centrados verticalmente en el área visible de la pantalla."
       },
       {
-        "emoji": "Scale",
-        "text": "Corregido el cálculo multi-moneda en planes: ya no se confunden montos de BS con USD."
-      },
-      {
-        "emoji": "Smartphone",
-        "text": "Prosper Pro vuelve a ser web-only: eliminada la capa Android/Capacitor para enfocarnos en la experiencia web."
-      },
-      {
-        "emoji": "Shield",
-        "text": "Eliminado el sistema de admin de dispositivos: cualquier dispositivo puede cerrar cualquier sesión."
-      },
-      {
-        "emoji": "Lock",
-        "text": "Corregido el bug de login/logout que expulsaba al usuario justo después de iniciar sesión."
-      },
-      {
-        "emoji": "User",
-        "text": "Corregido el dropdown de usuario duplicado en la esquina superior derecha."
+        "emoji": "Wrench",
+        "text": "Corrección de errores menores y mejoras de estabilidad."
       }
     ]
   }

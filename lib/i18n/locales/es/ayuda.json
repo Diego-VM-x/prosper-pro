@@ -595,6 +595,16 @@
     "preRelease": "PRE-release",
     "versions": [
       {
+        "version": "1.0.2",
+        "date": "2026-06-12",
+        "preRelease": false,
+        "items": [
+          "Gastos planificados: el monto total se calcula automáticamente desde los sub-planes.",
+          "Modales centrados verticalmente en el área visible de la pantalla.",
+          "Corrección de errores menores y mejoras de estabilidad."
+        ]
+      },
+      {
         "version": "1.0.1",
         "date": "2026-06-11",
         "preRelease": false,

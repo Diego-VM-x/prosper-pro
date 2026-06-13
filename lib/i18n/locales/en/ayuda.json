@@ -595,6 +595,16 @@
     "preRelease": "PRE-release",
     "versions": [
       {
+        "version": "1.0.2",
+        "date": "2026-06-12",
+        "preRelease": false,
+        "items": [
+          "Planned expenses: total amount is now auto-calculated from sub-plans.",
+          "Modals are now vertically centered in the visible screen area.",
+          "Minor bug fixes and stability improvements."
+        ]
+      },
+      {
         "version": "1.0.1",
         "date": "2026-06-11",
         "preRelease": false,
