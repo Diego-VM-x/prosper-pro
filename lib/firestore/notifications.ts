@@ -1,5 +1,6 @@
 import { db, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot, type QuerySnapshot, type DocumentData, getDoc } from '../firebase';
-import type { Notification, NotificationType, NotificationPreferences } from '@/types';
+import type { CurrencyCode, Notification, NotificationType, NotificationPreferences } from '@/types';
+import { CURRENCY_MAP } from '@/lib/currency';
 
 const COLLECTION = 'notifications';
 
@@ -238,18 +239,19 @@ export async function notifyDollarChange(
 // ── Daily Balance (12pm UTC) ─────────────────────────────────────────────────
 export async function notifyDailyBalance(
   ownerId: string,
-  totalUSD: number,
-  totalBS: number
+  totalAmount: number,
+  currency: CurrencyCode
 ) {
+  const cfg = CURRENCY_MAP[currency] || CURRENCY_MAP.USD;
   const title = 'Resumen diario de tus cuentas';
-  const body = `Balance: $${totalUSD.toFixed(2)} USD / ${totalBS.toFixed(2)} Bs`;
+  const body = `Balance global: ${cfg.symbol}${totalAmount.toLocaleString(cfg.locale, { minimumFractionDigits: cfg.decimals > 2 ? cfg.decimals : 2, maximumFractionDigits: cfg.decimals })} ${currency}`;
   await addNotification({
     ownerId,
     title,
     message: body,
     type: 'daily_balance',
     read: false,
-    meta: { totalUSD, totalBS },
+    meta: { totalAmount, currency },
   });
 }
 

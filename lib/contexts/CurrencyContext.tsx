@@ -417,9 +417,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       if (now.getHours() >= 12) {
         getAccountsByOwnerId(user.uid)
           .then((accounts) => {
-            const totalUSD = accounts.filter((a) => a.currency === 'USD').reduce((s, a) => s + a.balance, 0);
-            const totalBS = accounts.filter((a) => a.currency === 'BS').reduce((s, a) => s + a.balance, 0);
-            notifyDailyBalance(user.uid, totalUSD, totalBS).catch(console.error);
+            const totalGlobal = accounts.reduce((sum, account) => {
+              if (!account.currency || account.currency === baseCurrency) return sum + account.balance;
+              return sum + convertCurrency(account.balance, account.currency, baseCurrency, effectiveRates);
+            }, 0);
+            notifyDailyBalance(user.uid, totalGlobal, baseCurrency).catch(console.error);
             safeLocalStorage.setItem('prosper_daily_balance_sent', todayKey);
           })
           .catch(console.error);
@@ -428,7 +430,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     checkDailyBalance();
     const interval = setInterval(checkDailyBalance, 60000);
     return () => clearInterval(interval);
-  }, [user?.uid]);
+  }, [user?.uid, baseCurrency, effectiveRates]);
 
   // App update notification
   useEffect(() => {

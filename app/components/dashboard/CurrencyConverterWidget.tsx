@@ -26,6 +26,7 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
 
   const effectiveRates = useMemo(() => {
     const base = rates?.rates || CURRENCY_MAP;
+    if (!p2pMode) return base;
     const p2p = rates?.p2pRates || {};
     const merged: Record<CurrencyCode, number> = { ...base };
     (Object.keys(p2p) as CurrencyCode[]).forEach((code) => {
@@ -34,7 +35,7 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
       }
     });
     return merged;
-  }, [rates]);
+  }, [rates, p2pMode]);
 
   const numericAmount = useMemo(() => {
     const n = Number(amount);
