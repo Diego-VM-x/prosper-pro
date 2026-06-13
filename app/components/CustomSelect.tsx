@@ -52,8 +52,8 @@ export function CustomSelect({
     if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setDropdownPos({
-        top: rect.bottom + window.scrollY + 4,
-        left: rect.left + window.scrollX,
+        top: rect.bottom + 4,
+        left: rect.left,
         width: rect.width,
       });
     }
@@ -246,7 +246,7 @@ export function CustomSelect({
           border: 1px solid var(--border-default);
           border-radius: var(--radius-md);
           box-shadow: var(--shadow-lg);
-          max-height: 240px;
+          max-height: 320px;
           overflow-y: auto;
           animation: dropdownFadeIn 0.15s ease;
         }
