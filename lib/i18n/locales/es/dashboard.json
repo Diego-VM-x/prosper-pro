@@ -36,8 +36,6 @@
   "tools": {
     "title": "Herramientas",
     "inDevelopment": "En Desarrollo",
-    "usdBs": "USD/BS",
-    "usdBsDesc": "Conversión rápida entre dólares y bolívares al tipo de cambio actual",
     "importInvoice": "Importar factura",
     "importInvoiceDesc": "Escanea y registra facturas automáticamente con OCR",
     "shoppingLists": "Listas de compras",

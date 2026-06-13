@@ -21,7 +21,6 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'w_stats', categoryId: 'cat_acciones', type: 'stats_pills', title: 'Estadísticas', size: 'large', order: 1 },
     { id: 'w_today', categoryId: 'cat_acciones', type: 'today_section', title: 'Hoy', size: 'large', order: 2 },
     { id: 'w_quick', categoryId: 'cat_acciones', type: 'quick_actions', title: 'Acciones Rápidas', size: 'small', order: 3 },
-    { id: 'w_tool_conv', categoryId: 'cat_acciones', type: 'tool_converter', title: 'USD/BS', size: 'small', order: 4 },
     { id: 'w_tool_inv', categoryId: 'cat_acciones', type: 'tool_invoice', title: 'Importar Factura', size: 'small', order: 5 },
     { id: 'w_tool_shop', categoryId: 'cat_acciones', type: 'tool_shopping', title: 'Listas de Compra', size: 'small', order: 6 },
     { id: 'w_tool_ai', categoryId: 'cat_acciones', type: 'tool_ai', title: 'Asistente IA', size: 'small', order: 7 },
@@ -70,20 +69,27 @@ function migrateFromLegacy(layout: unknown): DashboardLayouts | null {
   return null;
 }
 
+function removeDeprecatedWidgets(layout: DashboardLayout): DashboardLayout {
+  const filtered = layout.widgets.filter(w => (w.type as string) !== 'tool_converter');
+  if (filtered.length === layout.widgets.length) return layout;
+  return { ...layout, widgets: filtered };
+}
+
 function ensureWelcomeWidget(layout: DashboardLayout): DashboardLayout {
-  const hasWelcome = layout.widgets.some(w => w.type === 'welcome_banner');
-  if (hasWelcome) return layout;
+  const cleaned = removeDeprecatedWidgets(layout);
+  const hasWelcome = cleaned.widgets.some(w => w.type === 'welcome_banner');
+  if (hasWelcome) return cleaned;
   const welcomeWidget: DashboardWidgetConfig = {
     id: generateId('w'),
-    categoryId: layout.categories[0]?.id || '',
+    categoryId: cleaned.categories[0]?.id || '',
     type: 'welcome_banner',
     title: 'Bienvenido',
     size: 'large',
     order: -1,
   };
   return {
-    ...layout,
-    widgets: [welcomeWidget, ...layout.widgets],
+    ...cleaned,
+    widgets: [welcomeWidget, ...cleaned.widgets],
   };
 }
 

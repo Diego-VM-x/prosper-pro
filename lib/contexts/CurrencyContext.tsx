@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { subscribeToUserProfile } from '@/lib/firestore/users';
+import i18n from '@/lib/i18n/client';
 import {
   convertCurrency,
   formatCurrencyValue,
@@ -111,6 +112,12 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       if (profile) {
         const userCurrency = (profile.currency as CurrencyCode) || 'USD';
         setBaseCurrency(userCurrency);
+
+        // Sync language from Firestore to i18next so the whole app reflects it
+        const userLanguage = (profile as any).language as string | undefined;
+        if (userLanguage && userLanguage !== i18n.language) {
+          i18n.changeLanguage(userLanguage);
+        }
 
         // If user has custom rates, use them instead of defaults
         const customRates = (profile as any).customRates as Record<string, number> | undefined;

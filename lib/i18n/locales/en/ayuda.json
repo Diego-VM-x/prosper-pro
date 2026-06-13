@@ -422,7 +422,7 @@
       {
         "categoryId": "settings",
         "q": "What widgets can I add to my dashboard?",
-        "a": "We offer 16 widgets: Welcome Banner, Stats, For Today, Quick Actions, USD/BS, Import Invoice, Shopping Lists, AI Assistant, Monthly Summary, My Accounts, Recent Transactions, Quick Transfer, Active Plans, Upcoming Deadlines, Exchange Rates, and Financial Performance."
+        "a": "We offer 16 widgets: Welcome Banner, Stats, For Today, Quick Actions, Import Invoice, Shopping Lists, AI Assistant, Monthly Summary, My Accounts, Recent Transactions, Quick Transfer, Active Plans, Upcoming Deadlines, Exchange Rates, Financial Performance, and Currency Converter."
       },
       {
         "categoryId": "settings",

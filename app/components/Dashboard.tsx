@@ -692,20 +692,6 @@ export const Dashboard = memo(function Dashboard() {
           </div>
         );
 
-      case 'tool_converter':
-        return (
-          <div key={widget.id} className={`content-card tool-card dash-item ${sizeClass}`} style={{ animationDelay: '0.65s' }}>
-            <div className="content-card-header">
-              <div className="content-card-header-left">
-                <IconBadge icon="ArrowLeftRight" size={18} />
-                <h2 className="content-card-title">{widget.title}</h2>
-              </div>
-              <span className="tool-badge">{t('tools.inDevelopment')}</span>
-            </div>
-            <p className="tool-desc">{t('tools.usdBsDesc')}</p>
-          </div>
-        );
-
       case 'tool_invoice':
         return (
           <div key={widget.id} className={`content-card tool-card dash-item ${sizeClass}`} style={{ animationDelay: '0.7s' }}>

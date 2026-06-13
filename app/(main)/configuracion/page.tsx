@@ -106,8 +106,12 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
         setProfile(p);
         setDisplayName(p.displayName || '');
         setBio((p as any).bio || '');
-        setLanguage((p as any).language || 'es');
-        setCurrency(((p as any).currency || 'USD') as CurrencyCode);
+        // Use profile values when present, otherwise fall back to current i18n/localStorage values
+        // so users without these fields don't see their selections reset.
+        const profileLang = (p as any).language;
+        setLanguage(profileLang || i18n.language || 'es');
+        const profileCurrency = (p as any).currency as CurrencyCode | undefined;
+        setCurrency(profileCurrency || safeLocalStorage.getItem('prosper-display-currency') as CurrencyCode || 'USD');
         setPriceAlerts((p as any).notifications?.priceAlerts ?? true);
         setBudgetAlerts((p as any).notifications?.budgetAlerts ?? true);
         setShowProfile((p as any).showProfile !== false);
@@ -158,6 +162,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
           appUpdate: appUpdateNotif,
           calendarReminder: calendarReminderNotif,
         },
+        updatedAt: Date.now(),
       } as any);
       // Also update display currency in context
       setDisplayCurrency(currency);

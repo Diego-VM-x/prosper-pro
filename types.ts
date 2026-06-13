@@ -450,7 +450,6 @@ export type WidgetType =
   | 'stats_pills'
   | 'today_section'
   | 'quick_actions'
-  | 'tool_converter'
   | 'tool_invoice'
   | 'tool_shopping'
   | 'tool_ai'

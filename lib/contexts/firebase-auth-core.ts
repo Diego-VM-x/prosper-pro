@@ -50,6 +50,7 @@ async function onUserReady(u: User) {
         photoURL: u.photoURL,
         createdAt: Date.now(),
         currency: 'USD' as CurrencyCode,
+        language: 'es',
         showProfile: true,
       });
     }

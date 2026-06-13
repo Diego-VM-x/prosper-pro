@@ -422,7 +422,7 @@
       {
         "categoryId": "settings",
         "q": "¿Qué widgets puedo agregar al dashboard?",
-        "a": "Disponemos de 16 widgets: Banner de Bienvenida, Estadísticas, Para Hoy, Acciones Rápidas, USD/BS, Importar Factura, Listas de Compra, Asistente IA, Resumen del Mes, Mis Cuentas, Últimos Movimientos, Transferencia Rápida, Planes Activos, Próximos Vencimientos, Tasas de Cambio y Rendimiento Financiero."
+        "a": "Disponemos de 16 widgets: Banner de Bienvenida, Estadísticas, Para Hoy, Acciones Rápidas, Importar Factura, Listas de Compra, Asistente IA, Resumen del Mes, Mis Cuentas, Últimos Movimientos, Transferencia Rápida, Planes Activos, Próximos Vencimientos, Tasas de Cambio, Rendimiento Financiero y Conversor de Monedas."
       },
       {
         "categoryId": "settings",

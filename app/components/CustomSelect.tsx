@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 import { InlineIcon } from './IconMap';
 
@@ -34,12 +35,18 @@ export function CustomSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const customInputRef = useRef<HTMLInputElement>(null);
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const selectedOption = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const updateDropdownPos = useCallback(() => {
     if (triggerRef.current) {
@@ -54,7 +61,11 @@ export function CustomSelect({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        wrapperRef.current && !wrapperRef.current.contains(target) &&
+        dropdownRef.current && !dropdownRef.current.contains(target)
+      ) {
         setIsOpen(false);
         setShowCustomInput(false);
         setCustomValue('');
@@ -113,8 +124,65 @@ export function CustomSelect({
     }
   };
 
+  const dropdown = isOpen && dropdownPos ? (
+    <div
+      ref={dropdownRef}
+      className={`custom-select-dropdown ${className}`}
+      style={{
+        '--dropdown-top': `${dropdownPos.top}px`,
+        '--dropdown-left': `${dropdownPos.left}px`,
+        '--dropdown-width': `${dropdownPos.width}px`,
+      } as React.CSSProperties}
+    >
+      {showCustomInput ? (
+        <div className="custom-select-custom-input">
+          <input
+            ref={customInputRef}
+            type="text"
+            className="custom-input-field"
+            placeholder={customPlaceholder}
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <div className="custom-input-actions">
+            <button className="custom-btn-cancel" onClick={() => { setShowCustomInput(false); setCustomValue(''); }}>
+              <X size={14} />
+            </button>
+            <button className={`custom-btn-add ${!customValue.trim() ? 'disabled' : ''}`} onClick={handleAddCustom} disabled={!customValue.trim()}>
+              <Check size={14} /> Añadir
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {options.map((option) => (
+            <button
+              key={option.value}
+              className={`custom-select-option ${value === option.value ? 'selected' : ''}`}
+              onClick={() => handleSelect(option.value)}
+            >
+              {option.icon && <span className="custom-select-icon"><InlineIcon icon={option.icon} size={16} /></span>}
+              {option.label}
+              {value === option.value && <span className="custom-select-check"><Check size={14} /></span>}
+            </button>
+          ))}
+          {allowCustom && (
+            <button
+              className="custom-select-option custom-select-add-new"
+              onClick={() => handleSelect('__custom__')}
+            >
+              <span className="custom-select-icon">+</span>
+              Añadir personalizado...
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  ) : null;
+
   return (
-    <div className={`custom-select-wrapper ${className}`} ref={dropdownRef}>
+    <div className={`custom-select-wrapper ${className}`} ref={wrapperRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -136,61 +204,7 @@ export function CustomSelect({
         </svg>
       </button>
 
-      {isOpen && dropdownPos && (
-        <div
-          className="custom-select-dropdown"
-          style={{
-            '--dropdown-top': `${dropdownPos.top}px`,
-            '--dropdown-left': `${dropdownPos.left}px`,
-            '--dropdown-width': `${dropdownPos.width}px`,
-          } as React.CSSProperties}
-        >
-          {showCustomInput ? (
-            <div className="custom-select-custom-input">
-              <input
-                ref={customInputRef}
-                type="text"
-                className="custom-input-field"
-                placeholder={customPlaceholder}
-                value={customValue}
-                onChange={(e) => setCustomValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <div className="custom-input-actions">
-                <button className="custom-btn-cancel" onClick={() => { setShowCustomInput(false); setCustomValue(''); }}>
-                  <X size={14} />
-                </button>
-                <button className={`custom-btn-add ${!customValue.trim() ? 'disabled' : ''}`} onClick={handleAddCustom} disabled={!customValue.trim()}>
-                  <Check size={14} /> Añadir
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {options.map((option) => (
-                <button
-                  key={option.value}
-                  className={`custom-select-option ${value === option.value ? 'selected' : ''}`}
-                  onClick={() => handleSelect(option.value)}
-                >
-                  {option.icon && <span className="custom-select-icon"><InlineIcon icon={option.icon} size={16} /></span>}
-                  {option.label}
-                  {value === option.value && <span className="custom-select-check"><Check size={14} /></span>}
-                </button>
-              ))}
-              {allowCustom && (
-                <button
-                  className="custom-select-option custom-select-add-new"
-                  onClick={() => handleSelect('__custom__')}
-                >
-                  <span className="custom-select-icon">+</span>
-                  Añadir personalizado...
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      )}
+      {mounted && dropdown ? createPortal(dropdown, document.body) : dropdown}
 
       <style>{`
         .custom-select-wrapper { position: relative; }
@@ -227,7 +241,7 @@ export function CustomSelect({
           top: var(--dropdown-top);
           left: var(--dropdown-left);
           width: var(--dropdown-width);
-          z-index: 10000;
+          z-index: 10001;
           background: #ffffff;
           border: 1px solid var(--border-default);
           border-radius: var(--radius-md);
