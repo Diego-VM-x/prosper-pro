@@ -2402,8 +2402,8 @@ const FinanzasPage = memo(function FinanzasPage() {
             .page-header-actions .btn { flex: 1; min-width: 140px; }
           }
           @media (max-width: 768px) {
-            .page-header { flex-direction: column; align-items: stretch; gap: 12px; }
-            .page-header-left { text-align: center; }
+            .page-header { flex-direction: column; align-items: center; gap: 12px; }
+            .page-header-left { text-align: center; width: 100%; }
             .page-title { font-size: 1.375rem; }
             .page-subtitle { font-size: 0.8125rem; }
             /* Hide desktop buttons on mobile - use FAB instead */
