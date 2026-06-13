@@ -20,6 +20,7 @@ import {
   Hexagon, Trash2, EyeOff, Rocket, Car, Ban, ShoppingCart, Shield,
   Circle, Bot, Handshake, Receipt, Plane, Pencil, CheckCircle2, XCircle,
   HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid, Clock, X,
+  Coins,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -133,6 +134,7 @@ export const NAMED_ICONS: Record<string, LucideIcon> = {
   Hexagon, Trash2, EyeOff, Rocket, Car, Ban, ShoppingCart, Shield,
   Circle, Bot, Handshake, Receipt, Plane, Pencil, CheckCircle2, XCircle,
   HelpCircle, Scale, Settings, AlertTriangle, Zap, LayoutGrid, Clock, X,
+  Coins,
 };
 
 /** Crypto emoji → custom SVG icon component */

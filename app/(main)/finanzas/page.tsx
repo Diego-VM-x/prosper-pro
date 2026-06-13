@@ -1874,10 +1874,10 @@ const FinanzasPage = memo(function FinanzasPage() {
                               { value: 'USDC', label: 'USD Coin (USDC)', icon: 'Gem' },
                             ]
                           : [
-                              { value: 'BS', label: 'Bolívares (BS)', icon: '🇻🇪' },
-                              { value: 'USD', label: 'Dólares (USD)', icon: '🇺🇸' },
-                              { value: 'EUR', label: 'Euros (EUR)', icon: '🇪🇺' },
-                              { value: 'COP', label: 'Pesos Colombianos (COP)', icon: '🇨🇴' },
+                              { value: 'BS', label: 'Bolívares (BS)', icon: 'Banknote' },
+                              { value: 'USD', label: 'Dólares (USD)', icon: 'DollarSign' },
+                              { value: 'EUR', label: 'Euros (EUR)', icon: 'Euro' },
+                              { value: 'COP', label: 'Pesos Colombianos (COP)', icon: 'Coins' },
                             ]
                       }
                       placeholder={t('finanzas:modals.newAccount.currencyPlaceholder')}
