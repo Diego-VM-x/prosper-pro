@@ -1435,7 +1435,7 @@ const MetasPage = memo(function MetasPage() {
           /* Modal */
           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; overflow-y: auto; }
           @media (max-width: 640px) { .modal-overlay { align-items: flex-start; padding: 24px 0; } }
-          .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 520px; padding: 24px; animation: modalIn 0.25s ease; position: relative; margin: auto; }
+          .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 520px; max-height: 85vh; padding: 24px; display: flex; flex-direction: column; animation: modalIn 0.25s ease; position: relative; }
           [data-theme="dark"] .modal-content { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
           [data-theme="amoled"] .modal-content { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
           .modal-plan { max-width: 520px; }
@@ -1446,7 +1446,7 @@ const MetasPage = memo(function MetasPage() {
           .modal-subtitle { font-size: 0.75rem; color: var(--text-tertiary); margin: 2px 0 0 0; }
           .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.25rem; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 8px; transition: background 0.15s; position: absolute; top: 16px; right: 16px; }
           .modal-close:hover { background: var(--bg-input); }
-          .modal-body { display: flex; flex-direction: column; gap: 16px; }
+          .modal-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding-right: 4px; }
           .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
           /* Stats */
