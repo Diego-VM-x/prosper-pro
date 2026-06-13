@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
-import { getTransactionsByOwnerId, createTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
+import { getTransactionsByOwnerId, getAllTransactionsByOwnerId, createTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
 import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
@@ -121,6 +121,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   }, [rates.cryptoPrices]);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLimit, setTxLimit] = useState(5);
   const [filterType, setFilterType] = useState<string>('Todos');
@@ -175,17 +176,14 @@ const FinanzasPage = memo(function FinanzasPage() {
     }, 0);
   }, [accounts, displayCurrency, rates, p2pMode]);
 
-  // Calcular resumen mensual reactivamente
+  // Calcular resumen histórico reactivamente (igual que el gráfico: todas las transacciones, sin filtro de fecha)
   // ESTRATEGIA: Sumar en moneda nativa de cada cuenta primero, luego convertir totales
   const summary = useMemo(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    
     // Acumuladores por moneda nativa
     const totalsByCurrency: Record<string, { income: number; expenses: number }> = {};
     
-    transactions.forEach((t) => {
-      if (t.date >= startOfMonth && t.category !== 'Transferencia') {
+    allTransactions.forEach((t) => {
+      if (t.category !== 'Transferencia') {
         const account = accounts.find((a) => a.id === t.accountId);
         const txCurrency = account?.currency || 'USD';
         
@@ -215,7 +213,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       expenses,
       balance: income - expenses
     };
-  }, [transactions, accounts, displayCurrency, convertBetween]);
+  }, [allTransactions, accounts, displayCurrency, convertBetween]);
   const [showAmounts, setShowAmounts] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
@@ -319,11 +317,12 @@ const FinanzasPage = memo(function FinanzasPage() {
   const loadTransactions = useCallback(async () => {
     if (!uid) return;
     try {
-      const [txs, lifetime] = await Promise.all([
-        getTransactionsByOwnerId(uid),
+      const [allTxs, lifetime] = await Promise.all([
+        getAllTransactionsByOwnerId(uid),
         getLifetimeSummaryAll(uid),
       ]);
-      setTransactions(txs);
+      setAllTransactions(allTxs);
+      setTransactions(allTxs.filter(t => !t.archived));
       setLifetimeSummary(lifetime);
     } catch (e) { console.error(e); }
   }, [uid]);
