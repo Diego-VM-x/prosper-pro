@@ -595,6 +595,19 @@
     "preRelease": "PRE-release",
     "versions": [
       {
+        "version": "1.0.3",
+        "date": "2026-06-13",
+        "preRelease": false,
+        "items": [
+          "Nuevo widget Conversor de Monedas con tasas Oficial y P2P.",
+          "Menús desplegables corregidos: ahora se abren por encima de modales y widgets.",
+          "Iconos SVG y Lucide para todas las monedas, reemplazando emojis de banderas.",
+          "Corregida la persistencia de idioma y moneda de visualización en configuración.",
+          "Notificación diaria de balance ahora muestra el balance global convertido.",
+          "Eliminado el widget USD/BS antiguo; reemplazado por el Conversor de Monedas."
+        ]
+      },
+      {
         "version": "1.0.2",
         "date": "2026-06-12",
         "preRelease": false,

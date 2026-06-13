@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (13 de Junio, 2026 - v1.0.2)
+## Estado Actual (13 de Junio, 2026 - v1.0.3)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Dashboard**: Personalización independiente para escritorio y móvil. El contexto detecta el breakpoint y el customizer permite editar cada layout por separado.
 - **Tecnología**: Next.js 16.2.1 (App Router/webpack), Vanilla CSS, React 19, TypeScript.
@@ -11,7 +11,7 @@
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
 - **Plataforma**: Web-only. Capa Android/Capacitor eliminada por completo (sin `mobile/`, APKs, plugins nativos ni Cloud Functions).
-- **Versión actual**: 1.0.2 (pendiente de publicar en test-deploy).
+- **Versión actual**: 1.0.3 (pendiente de publicar en test-deploy).
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -65,6 +65,14 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.3 — Conversor de Monedas, Dropdowns e Iconos (13/06/2026)**:
+  - **Nuevo widget Conversor de Monedas**: modo Oficial/P2P funcional, sin emojis, con iconos SVG/Lucide.
+  - **Fix dropdowns**: `CustomSelect` renderizado vía portal al body, corrige corte en modales y widgets.
+  - **Iconos de moneda**: `CurrencyFlag` usa SVGs para criptos y Lucide para fiat en toda la app (dashboard, finanzas, configuración, registro).
+  - **Persistencia de preferencias**: idioma y moneda de visualización se sincronizan y guardan correctamente en Firestore.
+  - **Notificación diaria**: muestra el balance global convertido a la moneda base.
+  - **Eliminado widget USD/BS antiguo**: reemplazado por el Conversor de Monedas; migración automática de layouts guardados.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
 - ✅ **v1.0.2 — Widget Conversor de Monedas (13/06/2026)**:
   - **Nuevo tipo de widget**: `currency_converter` añadido a `types.ts` y al catálogo de widgets (`widgetMeta.ts`).
   - **Componente `CurrencyConverterWidget`**: Permite convertir entre USD, BS, EUR, USDT, SOL, BTC, ETH, USDC y COP.

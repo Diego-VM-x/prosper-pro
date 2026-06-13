@@ -16,7 +16,7 @@ interface UpdateModalProps {
 }
 
 export function UpdateModal({
-  version = "1.0.2",
+  version = "1.0.3",
   notes: notesProp,
 }: UpdateModalProps) {
   const { t, ready } = useTranslation('common');

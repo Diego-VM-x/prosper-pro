@@ -595,6 +595,19 @@
     "preRelease": "PRE-release",
     "versions": [
       {
+        "version": "1.0.3",
+        "date": "2026-06-13",
+        "preRelease": false,
+        "items": [
+          "New Currency Converter widget with Official and P2P rates.",
+          "Fixed dropdowns: they now open above modals and widgets.",
+          "SVG and Lucide icons for all currencies, replacing flag emojis.",
+          "Fixed persistence of language and display currency in settings.",
+          "Daily balance notification now shows the converted global balance.",
+          "Removed the old USD/BS widget; replaced by Currency Converter."
+        ]
+      },
+      {
         "version": "1.0.2",
         "date": "2026-06-12",
         "preRelease": false,

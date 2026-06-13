@@ -435,7 +435,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   // App update notification
   useEffect(() => {
     if (!user?.uid) return;
-    const APP_VERSION = '0.9.0';
+    const APP_VERSION = '1.0.3';
     const lastVersion = safeLocalStorage.getItem('prosper_app_version');
     if (lastVersion && lastVersion !== APP_VERSION) {
       notifyAppUpdate(user.uid, APP_VERSION, 'Nueva versión disponible con mejoras y correcciones.').catch(console.error);
