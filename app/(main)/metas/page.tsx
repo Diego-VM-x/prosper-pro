@@ -22,7 +22,7 @@ import { IconPlus, IconX, IconTrash, IconEdit, IconUsers, IconClock } from '@/ap
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { Check, X } from 'lucide-react';
 import { CURRENCY_LIST } from '@/lib/currency';
-import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest, CurrencyCode } from '@/types';
+import type { FinancialPlan, PlanType, PlanCategory, PlanStatus, RecurringFrequency, Transaction, FinancialAccount, ExpenseRequest, CurrencyCode, SubPlan } from '@/types';
 
 
 const STATUS_COLORS: Record<PlanStatus, string> = {
@@ -124,7 +124,7 @@ const MetasPage = memo(function MetasPage() {
   const [subPlanForm, setSubPlanForm] = useState({ title: '', target: '', currency: displayCurrency as CurrencyCode, deadline: '' });
   const [editingSubPlanId, setEditingSubPlanId] = useState<string | null>(null);
   const [subPlanPayId, setSubPlanPayId] = useState<string | null>(null);
-  const [formSubPlans, setFormSubPlans] = useState<{ id?: string; title: string; target: string; currency: CurrencyCode; deadline: string }[]>([]);
+  const [formSubPlans, setFormSubPlans] = useState<SubPlan[]>([]);
   const [editingFormSubPlanId, setEditingFormSubPlanId] = useState<string | null>(null);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState<FinancialPlan | null>(null);
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
@@ -181,10 +181,17 @@ const MetasPage = memo(function MetasPage() {
   // Auto-calculate expense target from temporary sub-plans
   useEffect(() => {
     if (formType === 'expense' && formSubPlans.length > 0) {
-      const total = formSubPlans.reduce((sum, sub) => sum + convertBetween(Number(sub.target) || 0, sub.currency, formCurrency), 0);
+      const total = formSubPlans.reduce((sum, sub) => sum + convertBetween(sub.target || 0, sub.currency, formCurrency), 0);
       setFormTarget(String(Number(total.toFixed(8))));
     }
   }, [formSubPlans, formCurrency, formType]);
+
+  // Sub-planes only apply to expense plans
+  useEffect(() => {
+    if (formType !== 'expense') {
+      setFormSubPlans([]);
+    }
+  }, [formType]);
 
   // Auto-open modal from URL params
   useEffect(() => {
@@ -268,16 +275,21 @@ const MetasPage = memo(function MetasPage() {
       warning(t('metas:validation.completeTitleAndAmount'));
       return;
     }
-    const sub: { id?: string; title: string; target: string; currency: CurrencyCode; deadline: string } = {
-      id: editingFormSubPlanId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      title: subPlanForm.title,
-      target: subPlanForm.target,
-      currency: subPlanForm.currency,
-      deadline: subPlanForm.deadline,
-    };
+    const now = Date.now();
     if (editingFormSubPlanId) {
-      setFormSubPlans(prev => prev.map(s => (s.id === editingFormSubPlanId ? sub : s)));
+      setFormSubPlans(prev => prev.map(s => (s.id === editingFormSubPlanId ? { ...s, title: subPlanForm.title, target, currency: subPlanForm.currency, deadline: subPlanForm.deadline || undefined, updatedAt: now } : s)));
     } else {
+      const sub: SubPlan = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        title: subPlanForm.title,
+        target,
+        current: 0,
+        currency: subPlanForm.currency,
+        deadline: subPlanForm.deadline || undefined,
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now,
+      };
       setFormSubPlans(prev => [...prev, sub]);
     }
     resetFormSubPlan();
@@ -286,7 +298,7 @@ const MetasPage = memo(function MetasPage() {
   const editFormSubPlan = (id: string) => {
     const sub = formSubPlans.find(s => s.id === id);
     if (!sub) return;
-    setSubPlanForm({ title: sub.title, target: sub.target, currency: sub.currency, deadline: sub.deadline });
+    setSubPlanForm({ title: sub.title, target: String(sub.target), currency: sub.currency, deadline: sub.deadline || '' });
     setEditingFormSubPlanId(id);
   };
 
@@ -343,18 +355,7 @@ const MetasPage = memo(function MetasPage() {
         planData.accountId = formAccountId;
       }
       if (isExpenseWithSubs) {
-        const now = Date.now();
-        planData.subPlans = formSubPlans.map(sub => ({
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          title: sub.title,
-          target: Number(sub.target),
-          current: 0,
-          currency: sub.currency,
-          deadline: sub.deadline || undefined,
-          status: 'pending' as const,
-          createdAt: now,
-          updatedAt: now,
-        }));
+        planData.subPlans = formSubPlans;
       }
 
       await addPlan(planData, rates?.rates || {});
@@ -369,8 +370,13 @@ const MetasPage = memo(function MetasPage() {
   };
 
   const handleEditPlan = async () => {
-    if (!editingPlan || !formTitle || !formTarget) return;
-    const target = Number(formTarget);
+    if (!editingPlan || !formTitle) return;
+    const isExpenseWithSubs = formType === 'expense' && formSubPlans.length > 0;
+    if (!isExpenseWithSubs && !formTarget) return;
+    let target = Number(formTarget);
+    if (isExpenseWithSubs) {
+      target = formSubPlans.reduce((sum, sub) => sum + convertBetween(sub.target || 0, sub.currency, formCurrency), 0);
+    }
     if (isNaN(target) || target <= 0) {
       warning(t('metas:validation.invalidAmount'));
       return;
@@ -378,7 +384,7 @@ const MetasPage = memo(function MetasPage() {
 
     setFormLoading(true);
     try {
-      await updatePlanFn(editingPlan.id, {
+      const updates: Partial<FinancialPlan> = {
         title: formTitle,
         description: formDesc,
         category: formCategory,
@@ -388,7 +394,13 @@ const MetasPage = memo(function MetasPage() {
         nextDueDate: formType === 'recurring' ? formDeadline : editingPlan.nextDueDate,
         accountId: formAccountId || undefined,
         currency: formCurrency,
-      });
+      };
+      if (formType === 'expense') {
+        updates.subPlans = formSubPlans;
+      } else {
+        updates.subPlans = [];
+      }
+      await updatePlanFn(editingPlan.id, updates);
       success(t('metas:toasts.planUpdated', { title: formTitle }));
       setEditingPlan(null);
       resetForm();
@@ -717,6 +729,11 @@ const MetasPage = memo(function MetasPage() {
     setFormFrequency(plan.frequency || 'monthly');
     setFormAccountId(plan.accountId || '');
     setFormCurrency(plan.currency || displayCurrency);
+    if (plan.type === 'expense' && plan.subPlans && plan.subPlans.length > 0) {
+      setFormSubPlans(plan.subPlans);
+    } else {
+      setFormSubPlans([]);
+    }
     setShowNewModal(true);
   };
 
@@ -1093,7 +1110,7 @@ const MetasPage = memo(function MetasPage() {
                         step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'}
                         placeholder={t('metas:modals.fields.amountPlaceholder')}
                         value={formType === 'expense' && formSubPlans.length > 0
-                          ? String(Number(formSubPlans.reduce((sum, sub) => sum + convertBetween(Number(sub.target) || 0, sub.currency, formCurrency), 0).toFixed(8)))
+                          ? String(Number(formSubPlans.reduce((sum, sub) => sum + convertBetween(sub.target || 0, sub.currency, formCurrency), 0).toFixed(8)))
                           : formTarget}
                         onChange={e => setFormTarget(e.target.value)}
                         readOnly={formType === 'expense' && formSubPlans.length > 0}
@@ -1125,7 +1142,7 @@ const MetasPage = memo(function MetasPage() {
                     </div>
                   )}
 
-                  {formType === 'expense' && !editingPlan && (
+                  {formType === 'expense' && (
                     <div className="form-subplans-section">
                       <h4 className="form-subplans-title">{t('metas:subPlans.inlineTitle')}</h4>
                       <div className="plan-field">
