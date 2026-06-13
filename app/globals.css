@@ -630,7 +630,15 @@ ul, ol {
   width: var(--sidebar-collapsed-width);
 }
 
-.sidebar.collapsed .sidebar-logo-text,
+.sidebar.collapsed .sidebar-logo {
+  padding: 12px 8px;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-logo-text {
+  display: none;
+}
+
 .sidebar.collapsed .sidebar-label,
 .sidebar.collapsed .nav-item:not(:has(svg)) {
   display: none;
@@ -716,6 +724,34 @@ ul, ol {
   .sidebar-close-btn {
     display: flex !important;
   }
+}
+
+/* Logo del sidebar */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  padding: 16px 16px 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.sidebar-logo-link:hover {
+  opacity: 0.85;
+}
+
+.sidebar-logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .sidebar-logo-icon {

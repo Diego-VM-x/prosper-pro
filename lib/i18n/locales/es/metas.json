@@ -167,7 +167,9 @@
     "paymentAmount": "Monto a abonar",
     "paymentRecorded": "Abono de {{amount}} registrado",
     "noSubPlans": "Aún no hay sub-planes. Añade uno para empezar.",
-    "completedShort": "completados"
+    "completedShort": "completados",
+    "subPayments": "Sub-pagos",
+    "paid": "Pagado"
   },
   "toasts": {
     "planCreated": "\"{{title}}\" creado",

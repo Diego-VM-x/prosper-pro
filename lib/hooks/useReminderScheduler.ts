@@ -3,15 +3,10 @@
 import { useEffect, useRef } from 'react';
 import { db, doc, updateDoc } from '@/lib/firebase';
 import type { Reminder } from '@/types';
-import { sendBrowserNotification } from '@/lib/firestore/notifications';
 
 /**
- * Hook que programa notificaciones de recordatorios para la hora exacta.
- * Usa setTimeout para notificaciones client-side.
- * 
- * Cuando llega la hora del recordatorio (date + reminderTime), se envía:
- * 1. Una notificación push al navegador (si tiene permiso)
- * 2. Se marca el recordatorio como inactivo para no repetir
+ * Hook que programa recordatorios para la hora exacta.
+ * Cuando llega la hora del recordatorio (date + reminderTime), se marca como inactivo.
  */
 export function useReminderScheduler(reminders: Reminder[], userId: string | null) {
   const timersRef = useRef<Map<string, number>>(new Map());
@@ -44,14 +39,12 @@ export function useReminderScheduler(reminders: Reminder[], userId: string | nul
       const delay = reminderDateTime - now;
 
       if (delay <= 0) {
-        // La hora ya pasó, notificar inmediatamente
-        notify(reminder);
+        // La hora ya pasó, desactivar inmediatamente
         notifiedRef.current.add(reminder.id);
         deactivateReminder(reminder.id);
       } else {
-        // Programar notificación futura
+        // Programar desactivación futura
         const timerId = window.setTimeout(() => {
-          notify(reminder);
           notifiedRef.current.add(reminder.id);
           timersRef.current.delete(reminder.id);
           deactivateReminder(reminder.id);
@@ -83,15 +76,6 @@ function getReminderTimestamp(dateStr: string, timeStr: string): number | null {
   } catch {
     return null;
   }
-}
-
-function notify(reminder: Reminder) {
-  const title = `${reminder.title}`;
-  const body = reminder.description 
-    ? `${reminder.description} — ${reminder.date}` 
-    : `Recordatorio programado para ${reminder.date}`;
-  
-  sendBrowserNotification(title, body, 'calendar');
 }
 
 async function deactivateReminder(reminderId: string) {

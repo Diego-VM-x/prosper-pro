@@ -62,8 +62,8 @@ export function Footer({ user }: FooterProps) {
           </div>
           <div className="footer-col">
             <h4>{t('footer.columns.legal.title')}</h4>
-            <button onClick={() => router.push('/ayuda')}>{t('footer.columns.legal.terms')}</button>
-            <button onClick={() => router.push('/ayuda')}>{t('footer.columns.legal.privacy')}</button>
+            <button onClick={() => router.push('/terminos')}>{t('footer.columns.legal.terms')}</button>
+            <button onClick={() => router.push('/privacidad')}>{t('footer.columns.legal.privacy')}</button>
           </div>
         </div>
 

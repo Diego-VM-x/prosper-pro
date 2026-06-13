@@ -87,49 +87,6 @@ export async function markAllNotificationsRead(ownerId: string) {
   await Promise.all(snapshot.docs.map((d) => updateDoc(d.ref, { read: true })));
 }
 
-export function requestNotificationPermission(): Promise<boolean> {
-  if (!('Notification' in window)) {
-    console.warn('Este navegador no soporta notificaciones push');
-    return Promise.resolve(false);
-  }
-  return Notification.requestPermission().then((p) => p === 'granted');
-}
-
-/**
- * Envía notificación al navegador (web).
- * @param title - Título de la notificación
- * @param body  - Cuerpo del mensaje
- * @param channel - Canal Android (general | plans | finance | calendar | updates)
- */
-/** Detecta Safari en iOS que no soporta new Notification() */
-function isSafariIOS(): boolean {
-  if (typeof window === 'undefined') return false;
-  const ua = window.navigator.userAgent;
-  return /iPad|iPhone|iPod/.test(ua) && /WebKit/.test(ua) && !/(CriOS|FxiOS|OPiOS|mercury)/.test(ua);
-}
-
-export function sendBrowserNotification(
-  title: string,
-  body: string,
-  channel: string = 'general'
-) {
-  try {
-    if (!('Notification' in window)) return;
-    if (Notification.permission !== 'granted') return;
-    // Safari iOS no soporta new Notification() en absoluto
-    if (isSafariIOS()) return;
-    new Notification(title, {
-      body,
-      icon: '/logo-icon.png',
-      badge: '/logo-icon.png',
-      tag: `prosper-${channel}-${Date.now()}`,
-      silent: false,
-    });
-  } catch {
-    // Ignorar silenciosamente cualquier error de notificaciones
-  }
-}
-
 // ─── Helpers por tipo de notificación ───────────────────────────────────────
 
 /** Obtiene preferencias de notificaciones desde Firestore */
@@ -190,9 +147,6 @@ export async function notifyPlanInvite(
     read: false,
     meta: { planId, fromName },
   });
-  if (await isPrefEnabled(ownerId, 'planInvite')) {
-    sendBrowserNotification(title, body, 'plans');
-  }
 }
 
 // ── Plan Contribution ────────────────────────────────────────────────────────
@@ -213,9 +167,6 @@ export async function notifyPlanContribution(
     read: false,
     meta: { planId, fromName, amount },
   });
-  if (await isPrefEnabled(ownerId, 'planContribution')) {
-    sendBrowserNotification(title, body, 'plans');
-  }
 }
 
 // ── Plan Reminder ────────────────────────────────────────────────────────────
@@ -238,9 +189,6 @@ export async function notifyPlanReminder(
     read: false,
     meta: { planId, daysLeft },
   });
-  if (await isPrefEnabled(ownerId, 'planReminder')) {
-    sendBrowserNotification(title, body, 'plans');
-  }
 }
 
 // ── Plan Rejected / Eliminado ────────────────────────────────────────────────
@@ -263,9 +211,6 @@ export async function notifyPlanRejected(
     read: false,
     meta: { fromName, planTitle, reason },
   });
-  if (await isPrefEnabled(ownerId, 'planRejected')) {
-    sendBrowserNotification(title, body, 'plans');
-  }
 }
 
 // ── Dollar Change ────────────────────────────────────────────────────────────
@@ -288,9 +233,6 @@ export async function notifyDollarChange(
     read: false,
     meta: { oldRate, newRate },
   });
-  if (await isPrefEnabled(ownerId, 'dollarChange')) {
-    sendBrowserNotification(title, body, 'finance');
-  }
 }
 
 // ── Daily Balance (12pm UTC) ─────────────────────────────────────────────────
@@ -309,9 +251,6 @@ export async function notifyDailyBalance(
     read: false,
     meta: { totalUSD, totalBS },
   });
-  if (await isPrefEnabled(ownerId, 'dailyBalance')) {
-    sendBrowserNotification(title, body, 'finance');
-  }
 }
 
 // ── App Update ───────────────────────────────────────────────────────────────
@@ -329,9 +268,6 @@ export async function notifyAppUpdate(
     read: false,
     meta: { version },
   });
-  if (await isPrefEnabled(ownerId, 'appUpdate')) {
-    sendBrowserNotification(title, summary, 'updates');
-  }
 }
 
 // ── Calendar Reminder ────────────────────────────────────────────────────────
@@ -351,9 +287,6 @@ export async function notifyCalendarReminder(
     read: false,
     meta: { reminderId, date },
   });
-  if (await isPrefEnabled(ownerId, 'calendarReminder')) {
-    sendBrowserNotification(title, body, 'calendar');
-  }
 }
 
 // ── Welcome Notification ────────────────────────────────────────────────────────
@@ -370,9 +303,6 @@ export async function notifyWelcome(
     type: 'welcome',
     read: false,
   });
-  if (await isPrefEnabled(ownerId, 'welcome')) {
-    sendBrowserNotification(title, body, 'general');
-  }
 }
 
 // ── App Notification Subscribers ────────────────────────────────────────────────

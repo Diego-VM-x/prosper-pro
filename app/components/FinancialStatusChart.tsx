@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
-import { subscribeToTransactions } from '@/lib/firestore/transactions';
+import { subscribeToAllTransactions } from '@/lib/firestore/transactions';
 import { subscribeToAccounts } from '@/lib/firestore/accounts';
 import type { Transaction, FinancialAccount, CurrencyCode } from '@/types';
 import {
@@ -141,7 +141,7 @@ export function FinancialStatusChart() {
       return;
     }
     setLoading(true);
-    const unsubscribe = subscribeToTransactions(user.uid, (txs) => {
+    const unsubscribe = subscribeToAllTransactions(user.uid, (txs) => {
       setTransactions(txs);
       setLoading(false);
     });

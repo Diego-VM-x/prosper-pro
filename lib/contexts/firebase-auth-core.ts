@@ -63,12 +63,6 @@ async function onUserReady(u: User) {
     } catch (e) {
       if (process.env.NODE_ENV === 'development') console.error('Error registering device');
     }
-    try {
-      const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
-      await requestNotificationPermission();
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') console.error('Failed to request notification permission');
-    }
   } catch (error) {
     if (process.env.NODE_ENV === 'development') console.error('Error in onUserReady');
   }
@@ -245,8 +239,7 @@ export async function wipeAllDataImpl(user: User) {
 }
 
 export async function enableNotificationsImpl() {
-  const { requestNotificationPermission } = await import('@/lib/firestore/notifications');
-  return requestNotificationPermission();
+  return false;
 }
 
 export async function sendEmailVerificationImpl() {
