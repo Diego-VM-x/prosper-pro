@@ -2333,9 +2333,9 @@ const FinanzasPage = memo(function FinanzasPage() {
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
 
            /* Modal */
-           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding-top: 64px; }
-           .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: 90vh; display: flex; flex-direction: column; animation: modalIn 0.25s ease; }
-           .modal-body { flex: 1; overflow-y: auto; padding: 0; margin: 16px 0; }
+           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding: 16px; box-sizing: border-box; overflow-y: auto; }
+           .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; animation: modalIn 0.25s ease; margin: auto; }
+           .modal-body { flex: 1; overflow-y: auto; padding: 0; margin: 16px 0; display: flex; flex-direction: column; gap: 16px; }
           [data-theme="dark"] .modal-content { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
           [data-theme="amoled"] .modal-content { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
           .modal-tx { max-width: 480px; }
@@ -2521,7 +2521,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .transactions-table { min-width: 600px; font-size: 0.8125rem; }
             .transactions-table th { padding: 10px 8px; font-size: 0.6875rem; }
             .transactions-table td { padding: 10px 8px; }
-            .modal-content { width: 96%; max-width: none; padding: 20px 16px; max-height: 92vh; }
+            .modal-content { width: 96%; max-width: none; padding: 20px 16px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
             .modal-tx { max-width: none; }
             .modal-footer { flex-direction: column-reverse; gap: 8px; }
             .modal-footer .btn { width: 100%; justify-content: center; padding: 14px; }
@@ -2562,7 +2562,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .account-name { font-size: 0.8125rem; }
             .account-balance { font-size: 1rem; }
             .page-header-actions .btn { font-size: 0.75rem; padding: 10px 12px; }
-            .modal-content { max-height: 96vh; padding: 16px 12px; border-radius: 12px; }
+            .modal-content { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); padding: 16px 12px; border-radius: 12px; }
             .modal-title { font-size: 1rem; }
             .modal-subtitle { font-size: 0.6875rem; }
             .tx-type-icon { font-size: 1rem; }

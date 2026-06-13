@@ -65,6 +65,10 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.2 — Fix Centrado de Modal Nueva Transacción (13/06/2026)**:
+  - **Problema**: El modal de nueva transacción se veía recortado por la parte superior en determinados viewports.
+  - **Solución**: Se ajustó `.modal-overlay` para usar `padding: 16px` uniforme, `overflow-y: auto` y `box-sizing: border-box`. `.modal-content` ahora usa `margin: auto`, `max-height: calc(100dvh - 32px)` y `overflow-y: auto`, centrándose dentro del área visible útil sin cortarse.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
 - ✅ **v1.0.2 — Modal Transacción: Abono a Planes reemplaza Ahorro (13/06/2026)**:
   - **Selector de tipo visual**: Se eliminó el tipo "Ahorro" y se reemplazó por "Abono a planes".
   - **Flujo obligatorio de plan**: Al seleccionar "Abono a planes" aparece un selector de plan (ahorro, gasto o recurrente) y, si aplica, un selector de sub-plan.
