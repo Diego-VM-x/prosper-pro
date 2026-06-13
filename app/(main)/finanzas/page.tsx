@@ -2218,7 +2218,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
 
            /* Modal */
-           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; }
+           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding-top: 64px; }
            .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: 90vh; display: flex; flex-direction: column; animation: modalIn 0.25s ease; }
            .modal-body { flex: 1; overflow-y: auto; padding: 0; margin: 16px 0; }
           [data-theme="dark"] .modal-content { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
