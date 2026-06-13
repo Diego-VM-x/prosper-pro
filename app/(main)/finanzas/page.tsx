@@ -2442,7 +2442,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .summary-alt { font-size: 0.625rem; }
             .conversion-toggle { font-size: 9px; padding: 4px 6px; }
             .accounts-grid { grid-template-columns: 1fr; gap: 8px; }
-            .account-card { padding: 10px; }
+            .account-card { padding: 10px 12px; }
             .account-icon { width: 32px; height: 32px; font-size: 1rem; }
             .account-name { font-size: 0.8125rem; }
             .account-balance { font-size: 1rem; }
@@ -2468,16 +2468,6 @@ const FinanzasPage = memo(function FinanzasPage() {
             .accounting-info-box { padding: 8px; gap: 8px; }
             .accounting-info-icon { font-size: 1rem; }
             .accounting-info-text { font-size: 0.625rem; }
-            /* Compact horizontal account cards on small mobile */
-            .account-card { padding: 6px 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-            .account-card-header { flex: 1; min-width: 0; margin-bottom: 0; gap: 4px; }
-            .account-icon { width: 24px; height: 24px; font-size: 0.75rem; }
-            .account-name { font-size: 0.75rem; }
-            .account-type { font-size: 0.5625rem; }
-            .account-balance-group { display: flex; align-items: center; gap: 4px; }
-            .account-balance { font-size: 0.875rem; }
-            .account-actions-group { gap: 0; }
-            .account-action { padding: 2px; }
           }
           @media (max-width: 360px) {
             .page-title { font-size: 1.125rem; }
