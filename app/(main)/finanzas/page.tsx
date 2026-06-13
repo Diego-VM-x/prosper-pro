@@ -2034,7 +2034,8 @@ const FinanzasPage = memo(function FinanzasPage() {
         <style>{`
           .finanzas-page { padding: 0; }
           .btn-toggle-label { display: none; }
-          .page-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+          .page-header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+          .page-header-actions .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 8px 14px; }
           .btn-danger-outline { color: var(--color-error) !important; border-color: var(--color-error) !important; }
           .btn-danger-outline:hover { background: var(--color-error) !important; color: white !important; }
           .btn-toggle-visibility { gap: 4px; }
