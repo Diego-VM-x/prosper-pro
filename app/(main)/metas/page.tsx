@@ -1099,28 +1099,23 @@ const MetasPage = memo(function MetasPage() {
                     </div>
                   </div>
 
-                  <div className="plan-field">
-                    <label className="plan-label">{t('metas:modals.fields.amount')}</label>
-                    <div className={`plan-input-wrap ${formType === 'expense' && formSubPlans.length > 0 ? 'plan-input-readonly' : ''}`}>
-                      <span className="plan-currency">{currencyMap[formCurrency].symbol}</span>
-                      <input
-                        className="plan-input plan-input-amount"
-                        type="number"
-                        min="0"
-                        step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'}
-                        placeholder={t('metas:modals.fields.amountPlaceholder')}
-                        value={formType === 'expense' && formSubPlans.length > 0
-                          ? String(Number(formSubPlans.reduce((sum, sub) => sum + convertBetween(sub.target || 0, sub.currency, formCurrency), 0).toFixed(8)))
-                          : formTarget}
-                        onChange={e => setFormTarget(e.target.value)}
-                        readOnly={formType === 'expense' && formSubPlans.length > 0}
-                        disabled={formType === 'expense' && formSubPlans.length > 0}
-                      />
+                  {formType !== 'expense' && (
+                    <div className="plan-field">
+                      <label className="plan-label">{t('metas:modals.fields.amount')}</label>
+                      <div className="plan-input-wrap">
+                        <span className="plan-currency">{currencyMap[formCurrency].symbol}</span>
+                        <input
+                          className="plan-input plan-input-amount"
+                          type="number"
+                          min="0"
+                          step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'}
+                          placeholder={t('metas:modals.fields.amountPlaceholder')}
+                          value={formTarget}
+                          onChange={e => setFormTarget(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    {formType === 'expense' && formSubPlans.length > 0 && (
-                      <span className="plan-input-hint">{t('metas:subPlans.autoCalculated')}</span>
-                    )}
-                  </div>
+                  )}
 
                   {formType !== 'recurring' && (
                     <div className="plan-field">
