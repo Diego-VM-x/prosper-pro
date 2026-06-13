@@ -8,7 +8,7 @@ import { SizeSelector } from './SizeSelector';
 import { WIDGET_CATALOG, getWidgetMeta } from './widgetMeta';
 import { InlineIcon, getLucideIcon } from '@/app/components/IconMap';
 import type { WidgetSize, WidgetType, DashboardWidgetConfig, WidgetCategory } from '@/types';
-import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X, ArrowRight, Lock, Monitor, Smartphone } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Plus, Settings, LayoutGrid, Puzzle, ArrowLeft, X, ArrowRight, Lock } from 'lucide-react';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { useRouter } from 'next/navigation';
 
@@ -22,15 +22,10 @@ export function DashboardCustomizer() {
   const { t } = useTranslation('dashboard');
   const {
     layout,
-    breakpoint,
-    editingBreakpoint,
-    setEditingBreakpoint,
     addCategory, updateCategory, removeCategory, moveCategory,
     addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory,
     resetToDefault,
   } = useDashboardLayout();
-
-  const activeEditBp = editingBreakpoint ?? breakpoint;
 
   const [activeTab, setActiveTab] = useState<TabKey>('widgets');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -103,38 +98,6 @@ export function DashboardCustomizer() {
           <ArrowRight size={14} /> {t('common:buttons.back', { defaultValue: 'Volver' })}
         </button>
       </div>
-
-        {/* Device selector */}
-        <div className="customizer-device-bar">
-          <span className="customizer-device-label">
-            {t('customize.editingFor', { defaultValue: 'Editando para:' })}
-          </span>
-          <div className="customizer-device-buttons">
-            <button
-              className={`customizer-device-btn ${activeEditBp === 'desktop' ? 'active' : ''}`}
-              onClick={() => setEditingBreakpoint('desktop')}
-              title={t('customize.desktop', { defaultValue: 'Escritorio' })}
-            >
-              <Monitor size={16} />
-              <span>{t('customize.desktop', { defaultValue: 'Escritorio' })}</span>
-            </button>
-            <button
-              className={`customizer-device-btn ${activeEditBp === 'mobile' ? 'active' : ''}`}
-              onClick={() => setEditingBreakpoint('mobile')}
-              title={t('customize.mobile', { defaultValue: 'Móvil' })}
-            >
-              <Smartphone size={16} />
-              <span>{t('customize.mobile', { defaultValue: 'Móvil' })}</span>
-            </button>
-          </div>
-          {editingBreakpoint && editingBreakpoint !== breakpoint && (
-            <span className="customizer-device-hint">
-              {editingBreakpoint === 'mobile'
-                ? t('customize.previewMobileHint', { defaultValue: 'Editando layout de móvil' })
-                : t('customize.previewDesktopHint', { defaultValue: 'Editando layout de escritorio' })}
-            </span>
-          )}
-        </div>
 
         {/* Tabs */}
         <div className="customizer-tabs">

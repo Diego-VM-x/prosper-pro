@@ -91,8 +91,6 @@ interface DashboardLayoutContextValue {
   layout: DashboardLayout;
   layouts: DashboardLayouts;
   breakpoint: DashboardBreakpoint;
-  editingBreakpoint: DashboardBreakpoint | null;
-  setEditingBreakpoint: (bp: DashboardBreakpoint | null) => void;
   isLoading: boolean;
   // Categories
   addCategory: (name: string, icon: string) => void;
@@ -121,11 +119,8 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
   const { user } = useAuth();
   const [layouts, setLayouts] = useState<DashboardLayouts>(DEFAULT_LAYOUTS);
   const [breakpoint, setBreakpoint] = useState<DashboardBreakpoint>('desktop');
-  const [editingBreakpoint, setEditingBreakpoint] = useState<DashboardBreakpoint | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const activeBreakpoint = editingBreakpoint ?? breakpoint;
 
   // Detect real breakpoint
   useEffect(() => {
@@ -233,9 +228,9 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
   const updateActiveLayout = useCallback((updater: (prev: DashboardLayout) => DashboardLayout) => {
     setLayoutsAndPersist(prev => ({
       ...prev,
-      [activeBreakpoint]: ensureWelcomeWidget(updater(prev[activeBreakpoint])),
+      [breakpoint]: ensureWelcomeWidget(updater(prev[breakpoint])),
     }));
-  }, [activeBreakpoint, setLayoutsAndPersist]);
+  }, [breakpoint, setLayoutsAndPersist]);
 
   // ── Categories ──
   const addCategory = useCallback((name: string, icon: string) => {
@@ -351,23 +346,21 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
   const resetToDefault = useCallback(() => {
     setLayoutsAndPersist(prev => ({
       ...prev,
-      [activeBreakpoint]: DEFAULT_LAYOUT,
+      [breakpoint]: DEFAULT_LAYOUT,
     }));
-  }, [activeBreakpoint, setLayoutsAndPersist]);
+  }, [breakpoint, setLayoutsAndPersist]);
 
-  const currentLayout = layouts[activeBreakpoint];
+  const currentLayout = layouts[breakpoint];
 
   const value = React.useMemo(() => ({
     layout: currentLayout,
     layouts,
     breakpoint,
-    editingBreakpoint,
-    setEditingBreakpoint,
     isLoading,
     addCategory, updateCategory, removeCategory, moveCategory,
     addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory,
     resetToDefault,
-  }), [currentLayout, layouts, breakpoint, editingBreakpoint, isLoading, addCategory, updateCategory, removeCategory, moveCategory, addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory, resetToDefault]);
+  }), [currentLayout, layouts, breakpoint, isLoading, addCategory, updateCategory, removeCategory, moveCategory, addWidget, updateWidget, removeWidget, moveWidget, changeWidgetCategory, resetToDefault]);
 
   return (
     <DashboardLayoutContext.Provider value={value}>

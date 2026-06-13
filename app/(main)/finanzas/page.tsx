@@ -33,7 +33,7 @@ const DEFAULT_CATEGORIES: Record<string, string[]> = {
   saving: ['Ahorro', 'Inversión', 'Fondo Emergencia', 'Otro'],
 };
 
-const ACCOUNT_TYPE_COLORS: Record<string, string> = {
+const ACCOUNT_TX_TYPE_COLORS: Record<string, string> = {
   checking: '#3B82F6',
   savings: '#3DCC8E',
   cash: '#F59E0B',
@@ -46,16 +46,21 @@ const ACCOUNT_COLORS = [
   '#64748B', '#C026D3', '#0891B2', '#B45309', '#1D4ED8', '#15803D',
 ];
 
-const TYPE_ICONS: Record<string, string> = { income: 'Download', expense: 'Send', saving: 'Wallet' };
+type TxFormType = 'income' | 'expense' | 'plan_payment';
+type TransactionType = Transaction['type'];
 
-const CATEGORIES: Record<string, string[]> = {
+const TX_FORM_ICONS: Record<TxFormType, string> = { income: 'Download', expense: 'Send', plan_payment: 'Target' };
+const TX_FORM_LABELS: Record<TxFormType, string> = { income: 'Ingreso', expense: 'Gasto', plan_payment: 'Abono a planes' };
+const TX_FORM_COLORS: Record<TxFormType, string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', plan_payment: 'var(--color-pine-500)' };
+
+const TX_TYPE_ICONS: Record<TransactionType, string> = { income: 'Download', expense: 'Send', saving: 'Wallet' };
+const TX_TYPE_LABELS: Record<TransactionType, string> = { income: 'Ingreso', expense: 'Gasto', saving: 'Ahorro' };
+const TX_TYPE_COLORS: Record<TransactionType, string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', saving: 'var(--color-pine-500)' };
+
+const CATEGORIES: Record<'income' | 'expense', string[]> = {
   income: ['Salario', 'Freelance', 'Inversiones', 'Negocio', 'Otro'],
   expense: ['Comida', 'Transporte', 'Vivienda', 'Entretenimiento', 'Salud', 'Educación', 'Otro'],
-  saving: ['Ahorro', 'Inversión', 'Fondo Emergencia', 'Otro'],
 };
-
-const TYPE_LABELS: Record<string, string> = { income: 'Ingreso', expense: 'Gasto', saving: 'Ahorro' };
-const TYPE_COLORS: Record<string, string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', saving: 'var(--color-pine-500)' };
 
 function todayISO() {
   const d = new Date();
@@ -133,7 +138,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
-  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as Transaction['type'], category: 'Salario', description: '', accountId: '', date: todayISO(), planId: '', subPlanId: '' });
+  const [newTx, setNewTx] = useState({ amount: '', type: 'income' as TxFormType, category: 'Salario', description: '', accountId: '', date: todayISO(), planId: '', subPlanId: '' });
   const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '', rateMode: undefined as 'official' | 'p2p' | undefined });
   const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
@@ -379,8 +384,20 @@ const FinanzasPage = memo(function FinanzasPage() {
     const selectedPlan = newTx.planId ? plans.find(p => p.id === newTx.planId) : null;
     const selectedSubPlan = selectedPlan?.subPlans?.find(sp => sp.id === newTx.subPlanId);
 
+    // Resolver tipo real de transacción
+    let txType: Transaction['type'];
+    if (newTx.type === 'plan_payment') {
+      if (!selectedPlan) {
+        warning(t('finanzas:toast.selectPlan'));
+        return;
+      }
+      txType = selectedPlan.type === 'savings' ? 'saving' : 'expense';
+    } else {
+      txType = newTx.type;
+    }
+
     // Validar fondos si es gasto o ahorro y hay cuenta seleccionada
-    if ((newTx.type === 'expense' || newTx.type === 'saving') && newTx.accountId) {
+    if ((txType === 'expense' || txType === 'saving') && newTx.accountId) {
       const acc = accounts.find(a => a.id === newTx.accountId);
       if (acc && acc.balance < amount) {
         error(t('finanzas:toast.insufficientFunds', { name: acc.name, balance: formatInCurrency(acc.balance, acc.currency || 'USD') }));
@@ -392,7 +409,7 @@ const FinanzasPage = memo(function FinanzasPage() {
     const txData: any = {
       ownerId: uid,
       amount,
-      type: newTx.type,
+      type: txType,
       category: selectedPlan ? selectedPlan.category : newTx.category,
       description: selectedSubPlan
         ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan?.title, subPlan: selectedSubPlan.title, defaultValue: `Abono a: ${selectedPlan?.title} - ${selectedSubPlan.title}` })
@@ -410,7 +427,7 @@ const FinanzasPage = memo(function FinanzasPage() {
 
       // Actualizar balance de la cuenta
       if (newTx.accountId) {
-        const delta = newTx.type === 'income' ? amount : -amount;
+        const delta = txType === 'income' ? amount : -amount;
         await updateAccountBalance(newTx.accountId, delta);
       }
 
@@ -443,7 +460,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       // Recargar datos
       await loadTransactions();
 
-      const typeLabel = TYPE_LABELS[newTx.type];
+      const typeLabel = TX_FORM_LABELS[newTx.type];
       const account = accounts.find(a => a.id === newTx.accountId);
       const txCurrency = account?.currency || 'USD';
       success(t('finanzas:toast.transactionRegistered', { type: typeLabel, amount: formatInCurrency(amount, txCurrency) }));
@@ -548,7 +565,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       balance: newAccount.balance,
       currency: newAccount.currency || 'BS',
       icon: newAccount.type === 'digital' ? 'CreditCard' : newAccount.type === 'bank' ? 'Landmark' : 'ArrowLeftRight',
-      color: newAccount.color || ACCOUNT_TYPE_COLORS[newAccount.type],
+      color: newAccount.color || ACCOUNT_TX_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
       ...(newAccount.rateMode ? { rateMode: newAccount.rateMode } : {}),
@@ -699,10 +716,10 @@ const FinanzasPage = memo(function FinanzasPage() {
 
   const handleDeleteByType = async (id: string, type: 'income' | 'expense' | 'saving') => {
     const acc = accounts.find((a) => a.id === id);
-    const typeLabel = TYPE_LABELS[type];
+    const typeLabel = TX_TYPE_LABELS[type];
     setConfirmState({
       isOpen: true,
-      title: t('finanzas:modals.confirm.wipeType', { icon: TYPE_ICONS[type], type: typeLabel }),
+      title: t('finanzas:modals.confirm.wipeType', { icon: TX_TYPE_ICONS[type], type: typeLabel }),
       message: t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc?.name, action: type === 'income' ? 'restará' : 'sumará' }),
       variant: 'danger',
       confirmText: t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel }),
@@ -777,8 +794,8 @@ const FinanzasPage = memo(function FinanzasPage() {
   };
 
   const handleWipeUserTransactionsByType = async (type: 'income' | 'expense' | 'saving') => {
-    const typeLabel = TYPE_LABELS[type];
-    const typeIcon = TYPE_ICONS[type];
+    const typeLabel = TX_TYPE_LABELS[type];
+    const typeIcon = TX_TYPE_ICONS[type];
     const actionText = type === 'income' ? 'restará' : 'sumará';
 
     setConfirmState({
@@ -850,8 +867,8 @@ const FinanzasPage = memo(function FinanzasPage() {
       message = t('finanzas:modals.confirm.wipeAccountMessage', { name: acc.name, amount: formatInCurrency(0, acc.currency) });
       confirmText = t('finanzas:modals.confirm.wipeAccountConfirm');
     } else {
-      const typeLabel = TYPE_LABELS[action];
-      const typeIcon = TYPE_ICONS[action];
+      const typeLabel = TX_TYPE_LABELS[action];
+      const typeIcon = TX_TYPE_ICONS[action];
       const actionText = action === 'income' ? 'restará' : 'sumará';
       title = t('finanzas:modals.confirm.wipeAccountType', { icon: typeIcon, type: typeLabel, name: acc.name });
       message = t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc.name, action: actionText });
@@ -873,7 +890,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           } else {
             const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
             const sign = result.balanceAdjustment > 0 ? '+' : '';
-            success(t('finanzas:toast.typesWipedFromAccount', { count: result.wipedCount, type: TYPE_LABELS[action].toLowerCase(), adjustment: sign + formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency) }));
+            success(t('finanzas:toast.typesWipedFromAccount', { count: result.wipedCount, type: TX_TYPE_LABELS[action].toLowerCase(), adjustment: sign + formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency) }));
           }
           await loadTransactions();
         } catch (e: any) {
@@ -893,12 +910,12 @@ const FinanzasPage = memo(function FinanzasPage() {
     return acc ? <><InlineIcon icon={acc.icon || 'Wallet'} size={12} /> {acc.name}</> : t('finanzas:modals.newTransaction.noAccount');
   };
 
-  const currentTypeCats = allCategories[newTx.type] || CATEGORIES[newTx.type];
+  const currentTypeCats = newTx.type === 'plan_payment' ? [] : (allCategories[newTx.type] || CATEGORIES[newTx.type]);
 
   // Planes compatibles con el tipo de transacción actual
   const compatiblePlans = useMemo(() => {
     if (newTx.type === 'income') return [];
-    const targetTypes = newTx.type === 'saving' ? ['savings'] : ['expense', 'recurring'];
+    const targetTypes = newTx.type === 'plan_payment' ? ['savings', 'expense', 'recurring'] : ['expense', 'recurring'];
     return plans.filter(p => targetTypes.includes(p.type) && p.status !== 'completed' && p.status !== 'cancelled');
   }, [plans, newTx.type]);
 
@@ -1367,7 +1384,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       className={`tx-filter-pill ${filterType === type ? 'active' : ''}`} 
                       onClick={() => { setFilterType(type); setFilterCategory('Todas'); }}
                     >
-                      {type === 'Todos' ? t('finanzas:filters.allM') : <InlineIcon icon={TYPE_ICONS[type]} size={14} />}
+                      {type === 'Todos' ? t('finanzas:filters.allM') : <InlineIcon icon={TX_TYPE_ICONS[type as TransactionType]} size={14} />}
                     </button>
                   ))}
                 </div>
@@ -1417,8 +1434,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div className="tx-icon-box" style={{ background: TYPE_COLORS[tx.type] + '18', color: TYPE_COLORS[tx.type] }}>
-                            <InlineIcon icon={TYPE_ICONS[tx.type]} size={16} />
+                          <div className="tx-icon-box" style={{ background: TX_TYPE_COLORS[tx.type] + '18', color: TX_TYPE_COLORS[tx.type] }}>
+                            <InlineIcon icon={TX_TYPE_ICONS[tx.type]} size={16} />
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                             <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{tx.description || '—'}</span>
@@ -1508,18 +1525,18 @@ const FinanzasPage = memo(function FinanzasPage() {
                 <div className="modal-body">
                   {/* Tipo selector visual */}
                   <div className="tx-type-selector">
-                    {(['income', 'expense', 'saving'] as const).map(type => (
+                    {(['income', 'expense', 'plan_payment'] as const).map(type => (
                       <button
                         key={type}
                         className={`tx-type-btn ${newTx.type === type ? 'active' : ''}`}
-                        style={newTx.type === type ? { borderColor: TYPE_COLORS[type], background: TYPE_COLORS[type] + '12' } : {}}
+                        style={newTx.type === type ? { borderColor: TX_FORM_COLORS[type], background: TX_FORM_COLORS[type] + '12' } : {}}
                         onClick={() => {
-                          const cats = allCategories[type] || CATEGORIES[type];
-                          setNewTx({ ...newTx, type, category: cats[0], planId: '', subPlanId: '' });
+                          const cats = type === 'plan_payment' ? [] : (allCategories[type] || CATEGORIES[type]);
+                          setNewTx({ ...newTx, type, category: cats[0] || '', planId: '', subPlanId: '' });
                         }}
                       >
-                        <span className="tx-type-icon"><InlineIcon icon={TYPE_ICONS[type]} size={18} /></span>
-                        <span className="tx-type-label">{t(`finanzas:typeLabels.${type}`)}</span>
+                        <span className="tx-type-icon"><InlineIcon icon={TX_FORM_ICONS[type]} size={18} /></span>
+                        <span className="tx-type-label">{TX_FORM_LABELS[type]}</span>
                       </button>
                     ))}
                   </div>
@@ -1567,28 +1584,30 @@ const FinanzasPage = memo(function FinanzasPage() {
                     </div>
                   </div>
 
-                  <div className="tx-field">
-                    <label className="tx-label">{t('finanzas:modals.newTransaction.category')}</label>
-                    <CustomSelect
-                      value={newTx.category}
-                      onChange={(val) => setNewTx({ ...newTx, category: val })}
-                      options={currentTypeCats.map((c) => ({ value: c, label: c }))}
-                      placeholder={t('finanzas:modals.newTransaction.selectPlaceholder')}
-                      allowCustom
-                      onAddCustom={async (value) => {
-                        if (uid) {
-                          await addCustomTransactionCategory(uid, value);
-                          setCustomTxCategories(prev => [...prev, value]);
-                          setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
-                        }
-                      }}
-                      customPlaceholder={t('finanzas:modals.newTransaction.categoryPlaceholder')}
-                    />
-                  </div>
-
-                  {compatiblePlans.length > 0 && (
+                  {newTx.type !== 'plan_payment' && (
                     <div className="tx-field">
-                      <label className="tx-label">{t('finanzas:modals.newTransaction.plan', { defaultValue: 'Plan (opcional)' })}</label>
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.category')}</label>
+                      <CustomSelect
+                        value={newTx.category}
+                        onChange={(val) => setNewTx({ ...newTx, category: val })}
+                        options={currentTypeCats.map((c) => ({ value: c, label: c }))}
+                        placeholder={t('finanzas:modals.newTransaction.selectPlaceholder')}
+                        allowCustom
+                        onAddCustom={async (value) => {
+                          if (uid) {
+                            await addCustomTransactionCategory(uid, value);
+                            setCustomTxCategories(prev => [...prev, value]);
+                            setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
+                          }
+                        }}
+                        customPlaceholder={t('finanzas:modals.newTransaction.categoryPlaceholder')}
+                      />
+                    </div>
+                  )}
+
+                  {newTx.type === 'plan_payment' && (
+                    <div className="tx-field">
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.plan', { defaultValue: 'Plan *' })}</label>
                       <CustomSelect
                         value={newTx.planId}
                         onChange={(val) => {
@@ -1597,14 +1616,14 @@ const FinanzasPage = memo(function FinanzasPage() {
                             ...prev,
                             planId: val,
                             subPlanId: '',
-                            category: plan ? plan.category : prev.category,
+                            category: plan ? plan.category : '',
                             description: plan
                               ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: plan.title, defaultValue: `Abono a: ${plan.title}` })
-                              : prev.description,
+                              : '',
                           }));
                         }}
                         options={[
-                          { value: '', label: t('finanzas:modals.newTransaction.noPlan', { defaultValue: 'Sin plan' }) },
+                          { value: '', label: t('finanzas:modals.newTransaction.noPlan', { defaultValue: 'Seleccionar plan' }) },
                           ...compatiblePlans.map(p => ({ value: p.id, label: p.title })),
                         ]}
                         placeholder={t('finanzas:modals.newTransaction.selectPlan', { defaultValue: 'Seleccionar plan' })}
@@ -1649,12 +1668,12 @@ const FinanzasPage = memo(function FinanzasPage() {
                 </div>
                 <div className="modal-footer">
                   <button className="btn btn-outline" onClick={() => setShowModal(false)}>{t('common:buttons.cancel')}</button>
-                  <button className="btn btn-primary btn-tx-submit" onClick={handleAddTransaction} disabled={txLoading || !newTx.amount}>
+                  <button className="btn btn-primary btn-tx-submit" onClick={handleAddTransaction} disabled={txLoading || !newTx.amount || (newTx.type === 'plan_payment' && !newTx.planId)}>
                     {txLoading ? (
                       <span className="btn-loading">
                         <span className="spinner" /> {t('finanzas:modals.newTransaction.saving')}
                       </span>
-                    ) : t('finanzas:modals.newTransaction.register', { type: t(`finanzas:typeLabels.${newTx.type}`) })}
+                    ) : t('finanzas:modals.newTransaction.register', { type: TX_FORM_LABELS[newTx.type] })}
                   </button>
                 </div>
               </div>

@@ -166,69 +166,6 @@
 .widget-medium.chart-card { padding: 20px; }
 .widget-medium.chart-card .chart-skeleton { height: 220px !important; }
 
-/* ── Device selector ── */
-.customizer-device-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-default);
-  flex-wrap: wrap;
-}
-.customizer-device-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-.customizer-device-buttons {
-  display: inline-flex;
-  gap: 6px;
-  background: var(--bg-input);
-  padding: 4px;
-  border-radius: var(--radius-md);
-}
-.customizer-device-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.customizer-device-btn:hover {
-  color: var(--text-primary);
-}
-.customizer-device-btn.active {
-  background: var(--color-prosper-green);
-  color: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.customizer-device-hint {
-  font-size: 0.75rem;
-  color: var(--text-tertiary);
-  font-style: italic;
-}
-
-@media (max-width: 768px) {
-  .customizer-device-bar {
-    padding: 10px 16px;
-    gap: 8px;
-  }
-  .customizer-device-btn span {
-    display: none;
-  }
-  .customizer-device-btn {
-    padding: 8px;
-  }
-}
-
 /* ── Dashboard Customizer Page ── */
 .dashboard-customizer-page {
   max-width: 1000px;

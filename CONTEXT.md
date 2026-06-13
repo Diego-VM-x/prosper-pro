@@ -65,6 +65,17 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.2 — Modal Transacción: Abono a Planes reemplaza Ahorro (13/06/2026)**:
+  - **Selector de tipo visual**: Se eliminó el tipo "Ahorro" y se reemplazó por "Abono a planes".
+  - **Flujo obligatorio de plan**: Al seleccionar "Abono a planes" aparece un selector de plan (ahorro, gasto o recurrente) y, si aplica, un selector de sub-plan.
+  - **Tipo real resuelto automáticamente**: Internamente se registra como `saving` para planes de ahorro o `expense` para planes de gasto/recurrentes.
+  - **Sincronización completa**: Crea la transacción, ajusta el balance de la cuenta y actualiza el progreso del plan/sub-plan.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
+- ✅ **v1.0.2 — Dashboard Personalizable Automático por Dispositivo (13/06/2026)**:
+  - **Layout según dispositivo**: El customizer aplica automáticamente el layout de escritorio en PC y el layout de móvil en celular, sin selector manual.
+  - **Contexto simplificado**: Se eliminó `editingBreakpoint` y `setEditingBreakpoint` de `DashboardLayoutContext`; siempre se usa el breakpoint real detectado por `matchMedia`.
+  - **UI limpia**: Se removió la barra de selección Escritorio/Móvil del customizer y sus estilos.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
 - ✅ **v1.0.2 — Abono a Planes desde Nueva Transacción (13/06/2026)**:
   - **Modal de nueva transacción en `/finanzas`**: Ahora permite seleccionar un plan existente para abonar (planes de ahorro, gasto o recurrentes).
   - **Sub-planes**: Si el plan seleccionado tiene sub-planes, aparece un segundo selector para abonar a un sub-plan específico usando `recordSubPlanPayment`.
