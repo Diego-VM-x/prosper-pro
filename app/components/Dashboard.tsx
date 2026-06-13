@@ -759,46 +759,26 @@ export const Dashboard = memo(function Dashboard() {
             <div className="summary-body">
               <div className="summary-row">
                 <span className="summary-label">{t('finances.income')}</span>
-                <span className="summary-value income">{formatInCurrency(monthlyIncome, displayCurrency)}</span>
+                <span className="summary-value income">{formatInCurrency(lifetimeSummary?.income ?? 0, displayCurrency)}</span>
               </div>
               <div className="summary-row">
                 <span className="summary-label">{t('finances.expenses')}</span>
-                <span className="summary-value expense">{formatInCurrency(monthlyExpenses, displayCurrency)}</span>
+                <span className="summary-value expense">{formatInCurrency(lifetimeSummary?.expenses ?? 0, displayCurrency)}</span>
               </div>
-              {(monthlyIncome + monthlyExpenses) > 0 && (
+              {(lifetimeSummary && (lifetimeSummary.income + lifetimeSummary.expenses) > 0) && (
                 <div className="summary-bar">
                   <div className="summary-bar-track">
-                    <div className="summary-bar-fill income-fill" style={{ width: `${(monthlyIncome / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
-                    <div className="summary-bar-fill expense-fill" style={{ width: `${(monthlyExpenses / (monthlyIncome + monthlyExpenses)) * 100}%` }} />
+                    <div className="summary-bar-fill income-fill" style={{ width: `${(lifetimeSummary.income / (lifetimeSummary.income + lifetimeSummary.expenses)) * 100}%` }} />
+                    <div className="summary-bar-fill expense-fill" style={{ width: `${(lifetimeSummary.expenses / (lifetimeSummary.income + lifetimeSummary.expenses)) * 100}%` }} />
                   </div>
                 </div>
               )}
               <div className="summary-row summary-total">
                 <span className="summary-label">{t('finances.balance')}</span>
-                <span className={`summary-value ${monthlyIncome - monthlyExpenses >= 0 ? 'income' : 'expense'}`}>
-                  {formatInCurrency(monthlyIncome - monthlyExpenses, displayCurrency)}
+                <span className={`summary-value ${(lifetimeSummary?.balance ?? 0) >= 0 ? 'income' : 'expense'}`}>
+                  {formatInCurrency(lifetimeSummary?.balance ?? 0, displayCurrency)}
                 </span>
               </div>
-              {/* Lifetime summary mini */}
-              {lifetimeSummary && (
-                <div className="lifetime-dash-mini">
-                  <div className="lifetime-dash-divider" />
-                  <div className="summary-row">
-                    <span className="summary-label">{t('finances.lifetimeIncome')}</span>
-                    <span className="summary-value income">{formatInCurrency(lifetimeSummary.income, displayCurrency)}</span>
-                  </div>
-                  <div className="summary-row">
-                    <span className="summary-label">{t('finances.lifetimeExpenses')}</span>
-                    <span className="summary-value expense">{formatInCurrency(lifetimeSummary.expenses, displayCurrency)}</span>
-                  </div>
-                  <div className="summary-row summary-total">
-                    <span className="summary-label">{t('finances.lifetimeBalance')}</span>
-                    <span className={`summary-value ${lifetimeSummary.balance >= 0 ? 'income' : 'expense'}`}>
-                      {formatInCurrency(lifetimeSummary.balance, displayCurrency)}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         );

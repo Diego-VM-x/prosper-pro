@@ -1314,20 +1314,12 @@ const FinanzasPage = memo(function FinanzasPage() {
             <div className="summary-section lifetime-section">
               <div className="lifetime-header">
                 <h3 className="lifetime-title">{t('finanzas:summary.lifetimeTitle')}</h3>
-                <button
-                  className="lifetime-toggle"
-                  onClick={() => { const next = !showLifetime; setShowLifetime(next); try { safeLocalStorage.setItem('finanzas-show-lifetime', String(next)); } catch {} }}
-                >
-                  {showLifetime ? t('finanzas:summary.hideLifetime') : t('finanzas:summary.showLifetime')}
-                </button>
               </div>
-              {showLifetime && (
-                <div className="summary-grid">
-                  <SummaryWidget label={t('finanzas:summary.lifetimeIncome')} value={lifetimeSummary.income} altValue={altLifetimeSummary?.income ?? 0} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-                  <SummaryWidget label={t('finanzas:summary.lifetimeExpenses')} value={lifetimeSummary.expenses} altValue={altLifetimeSummary?.expenses ?? 0} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-                  <SummaryWidget label={t('finanzas:summary.lifetimeBalance')} value={lifetimeSummary.balance} altValue={altLifetimeSummary?.balance ?? 0} color={lifetimeSummary.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-                </div>
-              )}
+              <div className="summary-grid">
+                <SummaryWidget label={t('finanzas:summary.lifetimeIncome')} value={lifetimeSummary.income} altValue={altLifetimeSummary?.income ?? 0} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+                <SummaryWidget label={t('finanzas:summary.lifetimeExpenses')} value={lifetimeSummary.expenses} altValue={altLifetimeSummary?.expenses ?? 0} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+                <SummaryWidget label={t('finanzas:summary.lifetimeBalance')} value={lifetimeSummary.balance} altValue={altLifetimeSummary?.balance ?? 0} color={lifetimeSummary.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
+              </div>
             </div>
           )}
 
@@ -2445,7 +2437,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .summary-alt { font-size: 0.6875rem; }
             .conversion-toggle { font-size: 10px; padding: 4px 8px; }
             .accounts-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .account-card { padding: 12px; }
+            .account-card { padding: 10px; }
             .account-balance { font-size: 1.125rem; }
             .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
             .filter-bar > .custom-select-wrapper { width: 100%; }
@@ -2460,6 +2452,16 @@ const FinanzasPage = memo(function FinanzasPage() {
             .tx-type-selector { gap: 6px; }
             .tx-type-btn { padding: 10px 6px; }
             .tx-field-row { grid-template-columns: 1fr; }
+            /* Compact account cards on mobile */
+            .account-card { padding: 8px 10px; min-height: 0; }
+            .account-card-header { margin-bottom: 6px; gap: 6px; }
+            .account-icon { width: 28px; height: 28px; font-size: 0.875rem; }
+            .account-name { font-size: 0.75rem; }
+            .account-type { font-size: 0.625rem; }
+            .account-balance { font-size: 0.9375rem; }
+            .account-actions-group { gap: 1px; }
+            .account-action { padding: 3px; }
+          }
           }
           @media (max-width: 480px) {
             .desktop-only-actions { display: none !important; }

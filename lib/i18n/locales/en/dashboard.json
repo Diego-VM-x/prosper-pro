@@ -46,7 +46,7 @@
     "aiAssistantDesc": "Virtual assistant for your finance queries"
   },
   "finances": {
-    "monthlySummary": "Monthly Summary",
+    "monthlySummary": "Total Summary",
     "income": "Income",
     "expenses": "Expenses",
     "balance": "Balance",

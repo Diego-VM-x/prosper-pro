@@ -46,7 +46,7 @@
     "aiAssistantDesc": "Asistente virtual para consultas sobre tus finanzas"
   },
   "finances": {
-    "monthlySummary": "Resumen del Mes",
+    "monthlySummary": "Resumen Total",
     "income": "Ingresos",
     "expenses": "Gastos",
     "balance": "Balance",
