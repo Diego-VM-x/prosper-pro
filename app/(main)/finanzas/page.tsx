@@ -236,10 +236,6 @@ const FinanzasPage = memo(function FinanzasPage() {
     try { return safeLocalStorage.getItem('finanzas-rates-collapsed') === 'true'; } catch { return false; }
   });
 
-  const [lifetimeSummary, setLifetimeSummary] = useState<{ income: number; expenses: number; saving: number; balance: number } | null>(null);
-  const [showLifetime, setShowLifetime] = useState(() => {
-    try { return safeLocalStorage.getItem('finanzas-show-lifetime') === 'true'; } catch { return false; }
-  });
   const [showAccountingModal, setShowAccountingModal] = useState(false);
   const [accountingAction, setAccountingAction] = useState<string>('');
   const [accountingLoading, setAccountingLoading] = useState(false);
@@ -250,15 +246,6 @@ const FinanzasPage = memo(function FinanzasPage() {
     expenses: convertBetween(summary.expenses, displayCurrency, altCurrency),
     balance: convertBetween(summary.balance, displayCurrency, altCurrency),
   }), [summary, displayCurrency, altCurrency, convertBetween]);
-  const altLifetimeSummary = useMemo(() => {
-    if (!lifetimeSummary) return null;
-    return {
-      income: convertBetween(lifetimeSummary.income, displayCurrency, altCurrency),
-      expenses: convertBetween(lifetimeSummary.expenses, displayCurrency, altCurrency),
-      saving: convertBetween(lifetimeSummary.saving, displayCurrency, altCurrency),
-      balance: convertBetween(lifetimeSummary.balance, displayCurrency, altCurrency),
-    };
-  }, [lifetimeSummary, displayCurrency, altCurrency, convertBetween]);
   const altTotalBalance = useMemo(() => {
     return convertBetween(totalBalance, displayCurrency, altCurrency);
   }, [totalBalance, displayCurrency, altCurrency, convertBetween]);
@@ -317,13 +304,9 @@ const FinanzasPage = memo(function FinanzasPage() {
   const loadTransactions = useCallback(async () => {
     if (!uid) return;
     try {
-      const [allTxs, lifetime] = await Promise.all([
-        getAllTransactionsByOwnerId(uid),
-        getLifetimeSummaryAll(uid),
-      ]);
+      const allTxs = await getAllTransactionsByOwnerId(uid);
       setAllTransactions(allTxs);
       setTransactions(allTxs.filter(t => !t.archived));
-      setLifetimeSummary(lifetime);
     } catch (e) { console.error(e); }
   }, [uid]);
 
@@ -1308,20 +1291,6 @@ const FinanzasPage = memo(function FinanzasPage() {
               ⇄ {showConversion ? `${displayCurrency}/${altCurrency}` : t('finanzas:summary.convert')}
             </button>
           </div>
-
-          {/* Resumen histórico total (desde creación de cuenta) */}
-          {lifetimeSummary && (
-            <div className="summary-section lifetime-section">
-              <div className="lifetime-header">
-                <h3 className="lifetime-title">{t('finanzas:summary.lifetimeTitle')}</h3>
-              </div>
-              <div className="summary-grid">
-                <SummaryWidget label={t('finanzas:summary.lifetimeIncome')} value={lifetimeSummary.income} altValue={altLifetimeSummary?.income ?? 0} color="var(--color-prosper-green)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-                <SummaryWidget label={t('finanzas:summary.lifetimeExpenses')} value={lifetimeSummary.expenses} altValue={altLifetimeSummary?.expenses ?? 0} color="var(--color-error)" showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-                <SummaryWidget label={t('finanzas:summary.lifetimeBalance')} value={lifetimeSummary.balance} altValue={altLifetimeSummary?.balance ?? 0} color={lifetimeSummary.balance >= 0 ? 'var(--color-prosper-green)' : 'var(--color-error)'} showAmounts={showAmounts} showConversion={showConversion} altCurrency={altCurrency} formatInCurrency={formatInCurrency} displayCurrency={displayCurrency} />
-              </div>
-            </div>
-          )}
 
           {/* Gráfico */}
           <div className="chart-wrapper">
@@ -2372,15 +2341,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
           .accounting-info-text strong { color: var(--text-primary); }
 
-          /* Lifetime Summary Section */
-          .lifetime-section { margin-top: 16px; margin-bottom: 24px; }
-          .lifetime-section .summary-grid { margin-top: 12px; }
-          .lifetime-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-          .lifetime-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0; }
-          .lifetime-toggle { padding: 6px 12px; font-size: 0.75rem; font-weight: 600; color: var(--color-prosper-green); background: rgba(61,204,142,0.1); border: 1px solid var(--color-prosper-green); border-radius: var(--radius-md); cursor: pointer; transition: all var(--transition-fast); }
-          .lifetime-toggle:hover { background: var(--color-prosper-green); color: white; }
 
-          /* Responsive */
           @media (max-width: 1024px) {
             .accounts-grid { grid-template-columns: repeat(2, 1fr); }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
