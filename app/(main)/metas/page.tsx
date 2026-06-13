@@ -1092,7 +1092,9 @@ const MetasPage = memo(function MetasPage() {
                         min="0"
                         step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(formCurrency) ? '0.00000001' : '0.01'}
                         placeholder={t('metas:modals.fields.amountPlaceholder')}
-                        value={formTarget}
+                        value={formType === 'expense' && formSubPlans.length > 0
+                          ? String(Number(formSubPlans.reduce((sum, sub) => sum + convertBetween(Number(sub.target) || 0, sub.currency, formCurrency), 0).toFixed(8)))
+                          : formTarget}
                         onChange={e => setFormTarget(e.target.value)}
                         readOnly={formType === 'expense' && formSubPlans.length > 0}
                         disabled={formType === 'expense' && formSubPlans.length > 0}
@@ -1125,7 +1127,7 @@ const MetasPage = memo(function MetasPage() {
 
                   {formType === 'expense' && !editingPlan && (
                     <div className="form-subplans-section">
-                      <h4 className="form-subplans-title">{t('metas:subPlans.title')}</h4>
+                      <h4 className="form-subplans-title">{t('metas:subPlans.inlineTitle')}</h4>
                       <div className="plan-field">
                         <label className="plan-label">{t('metas:modals.fields.title')}</label>
                         <input className="plan-input" type="text" placeholder={t('metas:modals.fields.titlePlaceholder')} value={subPlanForm.title} onChange={e => setSubPlanForm(prev => ({ ...prev, title: e.target.value }))} />

@@ -154,6 +154,7 @@
   "subPlans": {
     "title": "Sub-planes de \"{{title}}\"",
     "inlineTitle": "Sub-planes",
+    "autoCalculated": "Total calculado automáticamente de los sub-planes",
     "subtitle": "Divide el gasto en pagos parciales con diferentes monedas.",
     "add": "Añadir Sub-plan",
     "pay": "Abonar",
