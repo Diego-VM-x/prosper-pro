@@ -461,7 +461,8 @@ export type WidgetType =
   | 'active_plans'
   | 'upcoming_deadlines'
   | 'exchange_rates'
-  | 'financial_chart';
+  | 'financial_chart'
+  | 'currency_converter';
 
 export interface WidgetCategory {
   id: string;

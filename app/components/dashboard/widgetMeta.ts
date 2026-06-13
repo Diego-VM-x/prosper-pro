@@ -24,6 +24,7 @@ export const WIDGET_CATALOG: WidgetMeta[] = [
   { type: 'upcoming_deadlines', label: 'Próximos Vencimientos', description: 'Alertas de fechas límite próximas', icon: 'Clock' },
   { type: 'exchange_rates', label: 'Tasas de Cambio', description: 'Tasas de divisas y criptomonedas', icon: 'TrendingUp' },
   { type: 'financial_chart', label: 'Rendimiento Financiero', description: 'Gráfico de tu rendimiento financiero', icon: 'BarChart3' },
+  { type: 'currency_converter', label: 'Conversor de Monedas', description: 'Convierte entre divisas con tasas oficial y P2P', icon: 'ArrowLeftRight' },
 ];
 
 export function getWidgetMeta(type: WidgetType): WidgetMeta {

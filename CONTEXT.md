@@ -65,6 +65,14 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.2 — Widget Conversor de Monedas (13/06/2026)**:
+  - **Nuevo tipo de widget**: `currency_converter` añadido a `types.ts` y al catálogo de widgets (`widgetMeta.ts`).
+  - **Componente `CurrencyConverterWidget`**: Permite convertir entre USD, BS, EUR, USDT, SOL, BTC, ETH, USDC y COP.
+  - **Modos oficial/P2P**: Toggle integrado que usa `rates.rates` en modo oficial y combina `rates.p2pRates` para criptos en modo P2P.
+  - **UX**: Inputs de monto, selects de moneda "De"/"A", botón de intercambio rápido y resultado con tasa aplicada.
+  - **Estilos**: Añadidos a `dashboard.css` con adaptaciones para tamaño `small` y móvil.
+  - **Integración**: Renderizado en `Dashboard.tsx` como case `currency_converter`.
+  - **Build verificado**: `tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
 - ✅ **v1.0.2 — Fix Centrado de Modal Nueva Transacción (13/06/2026)**:
   - **Problema**: El modal de nueva transacción se veía recortado por la parte superior en determinados viewports.
   - **Solución**: Se ajustó `.modal-overlay` para usar `padding: 16px` uniforme, `overflow-y: auto` y `box-sizing: border-box`. `.modal-content` ahora usa `margin: auto`, `max-height: calc(100dvh - 32px)` y `overflow-y: auto`, centrándose dentro del área visible útil sin cortarse.

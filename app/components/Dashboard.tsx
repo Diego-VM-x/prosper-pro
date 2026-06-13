@@ -25,6 +25,7 @@ import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { Star, Settings } from 'lucide-react';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { CustomSelect } from './CustomSelect';
+import { CurrencyConverterWidget } from './dashboard/CurrencyConverterWidget';
 import { useDashboardLayout } from '@/lib/contexts/DashboardLayoutContext';
 
 import { addCustomCategory, getUserPreferences } from '@/lib/firestore/users';
@@ -1033,6 +1034,9 @@ export const Dashboard = memo(function Dashboard() {
 
       case 'exchange_rates':
         return <WidgetTasasCambio key={widget.id} rates={rates} p2pMode={p2pMode} className={sizeClass} />;
+
+      case 'currency_converter':
+        return <CurrencyConverterWidget key={widget.id} title={widget.title} className={sizeClass} />;
 
       case 'financial_chart':
         return (
