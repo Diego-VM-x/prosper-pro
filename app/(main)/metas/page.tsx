@@ -307,6 +307,12 @@ const MetasPage = memo(function MetasPage() {
     if (editingFormSubPlanId === id) resetFormSubPlan();
   };
 
+  // Firestore no acepta undefined; limpiar sub-planes antes de guardar
+  const serializeSubPlans = (subs: SubPlan[]) => subs.map(sub => {
+    const { deadline, ...rest } = sub;
+    return deadline ? { ...rest, deadline } : rest;
+  });
+
   const handleCreatePlan = async () => {
     if (!formTitle || !uid) {
       warning(t('metas:validation.completeTitleAndAmount'));
@@ -355,7 +361,7 @@ const MetasPage = memo(function MetasPage() {
         planData.accountId = formAccountId;
       }
       if (isExpenseWithSubs) {
-        planData.subPlans = formSubPlans;
+        planData.subPlans = serializeSubPlans(formSubPlans);
       }
 
       await addPlan(planData, rates?.rates || {});
@@ -396,7 +402,7 @@ const MetasPage = memo(function MetasPage() {
         currency: formCurrency,
       };
       if (formType === 'expense') {
-        updates.subPlans = formSubPlans;
+        updates.subPlans = serializeSubPlans(formSubPlans);
       } else {
         updates.subPlans = [];
       }
