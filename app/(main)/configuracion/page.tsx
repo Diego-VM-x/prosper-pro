@@ -805,9 +805,10 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                               await triggerTestNotification(type, user.uid);
                               setSuccessMsg(t('notificaciones.test.sent'));
                               setTimeout(() => setSuccessMsg(''), 3000);
-                            } catch {
-                              setErrorMsg(t('notificaciones.test.error'));
-                              setTimeout(() => setErrorMsg(''), 3000);
+                            } catch (err: any) {
+                              console.error('[Config] Test notification failed:', err);
+                              setErrorMsg(err?.message || t('notificaciones.test.error'));
+                              setTimeout(() => setErrorMsg(''), 5000);
                             }
                           }}
                         >

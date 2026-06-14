@@ -746,3 +746,16 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
 ### 13/06/2026 - Menú móvil: botón "Ir al Inicio" apunta a web desplegada
 - **Archivo**: `app/components/Topbar.tsx`
 - **Cambio**: El botón "Ir al Inicio" en el menú desplegable móvil ahora abre `https://prosper-pro.vercel.app/inicio` en una nueva pestaña, en lugar de navegar a `/` internamente.
+
+### 13/06/2026 - Fix notificaciones Android nativo (v2)
+- **Problema persistente**: Las notificaciones locales de prueba seguían sin aparecer en Android nativo aunque el usuario concedía todos los permisos.
+- **Causas adicionales identificadas y corregidas**:
+  - Los IDs de notificación usaban `Date.now()`, que excede el rango de 32 bits requerido por Android (`-2147483648` a `2147483647`). Esto provocaba que `LocalNotifications.schedule()` fallara silenciosamente.
+  - `isNative` se evaluaba una sola vez al cargar el módulo, lo que podía causar detección incorrecta. Ahora se evalúa como función en cada llamada.
+  - Se cambiaron los IDs de los canales de notificación a `prosper_general_v2` y `prosper_reminders_v2` para forzar la creación de canales con `IMPORTANCE_MAX` en dispositivos donde los canales anteriores ya existían con importancia baja.
+  - Se eliminó `sound: 'default'` de la configuración del plugin y de la notificación individual para evitar problemas de resolución de recursos.
+  - Se agregó logging exhaustivo en `requestNotificationPermissions`, `checkNotificationPermissions`, `createNotificationChannels` y `showLocalNotification`.
+  - Se agregó manejo del permiso de alarmas exactas en Android 12+ con `checkExactNotificationSetting` / `changeExactNotificationSetting`.
+  - En `app/(main)/configuracion/page.tsx`, el catch de los botones de prueba ahora muestra el mensaje de error real en la UI.
+- **Archivos modificados**: `lib/notifications.ts`, `capacitor.config.ts`, `app/(main)/configuracion/page.tsx`.
+- **Fix del tamaño del APK**: `scripts/build-mobile-export.js` ahora mueve `public/prosper-pro.apk` fuera de `public/` durante el build móvil para evitar que el APK anterior se empaquete dentro del nuevo APK.

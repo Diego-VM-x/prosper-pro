@@ -4,16 +4,26 @@ import { PushNotifications, Token } from '@capacitor/push-notifications';
 import { doc, setDoc } from '@/lib/firebase';
 import type { NotificationType } from '@/types';
 
-const isNative = Capacitor.isNativePlatform();
+function isNative(): boolean {
+  return Capacitor.isNativePlatform();
+}
 
 let channelsCreated = false;
+let notificationIdCounter = 1;
+
+function getNextNotificationId(): number {
+  // Android notification IDs must be 32-bit signed integers.
+  notificationIdCounter = (notificationIdCounter % 2147483647) + 1;
+  return notificationIdCounter;
+}
 
 /**
  * Request notification permissions for both web and native.
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
-  if (isNative) {
+  if (isNative()) {
     const result = await LocalNotifications.requestPermissions();
+    console.log('[Notifications] requestPermissions result:', result);
     return result.display === 'granted';
   }
 
@@ -30,8 +40,9 @@ export async function requestNotificationPermissions(): Promise<boolean> {
  * Check current notification permission status.
  */
 export async function checkNotificationPermissions(): Promise<boolean> {
-  if (isNative) {
+  if (isNative()) {
     const result = await LocalNotifications.checkPermissions();
+    console.log('[Notifications] checkPermissions result:', result);
     return result.display === 'granted';
   }
 
@@ -46,15 +57,16 @@ export async function checkNotificationPermissions(): Promise<boolean> {
  * Create notification channels on Android. Safe to call multiple times.
  */
 export async function createNotificationChannels(): Promise<void> {
-  if (!isNative || Capacitor.getPlatform() !== 'android') return;
+  if (!isNative() || Capacitor.getPlatform() !== 'android') return;
   if (channelsCreated) return;
 
   try {
+    console.log('[Notifications] Creating notification channels...');
     await LocalNotifications.createChannel({
-      id: 'prosper_general',
+      id: 'prosper_general_v2',
       name: 'Notificaciones generales',
       description: 'Alertas, recordatorios y noticias de Prosper Pro',
-      importance: 4, // IMPORTANCE_HIGH
+      importance: 5, // IMPORTANCE_MAX
       visibility: 1, // VISIBILITY_PUBLIC
       vibration: true,
       lights: true,
@@ -62,10 +74,10 @@ export async function createNotificationChannels(): Promise<void> {
     });
 
     await LocalNotifications.createChannel({
-      id: 'prosper_reminders',
+      id: 'prosper_reminders_v2',
       name: 'Recordatorios',
       description: 'Recordatorios de planes, pagos y calendario',
-      importance: 4,
+      importance: 5,
       visibility: 1,
       vibration: true,
       lights: true,
@@ -73,6 +85,7 @@ export async function createNotificationChannels(): Promise<void> {
     });
 
     channelsCreated = true;
+    console.log('[Notifications] Channels created successfully');
   } catch (e) {
     console.error('[Notifications] Failed to create channels:', e);
   }
@@ -82,12 +95,23 @@ export async function createNotificationChannels(): Promise<void> {
  * Check whether exact alarms are allowed (Android 12+).
  */
 export async function checkExactAlarmPermission(): Promise<boolean> {
-  if (!isNative || Capacitor.getPlatform() !== 'android') return true;
+  if (!isNative() || Capacitor.getPlatform() !== 'android') return true;
   try {
     const result = await (LocalNotifications as any).checkExactNotificationSetting?.();
+    console.log('[Notifications] exact alarm setting:', result);
     return result?.exact_alarm === 'granted';
-  } catch {
+  } catch (e) {
+    console.warn('[Notifications] checkExactNotificationSetting not available:', e);
     return true;
+  }
+}
+
+export async function openExactAlarmSettings(): Promise<void> {
+  if (!isNative() || Capacitor.getPlatform() !== 'android') return;
+  try {
+    await (LocalNotifications as any).changeExactNotificationSetting?.();
+  } catch (e) {
+    console.warn('[Notifications] changeExactNotificationSetting not available:', e);
   }
 }
 
@@ -96,7 +120,7 @@ export async function checkExactAlarmPermission(): Promise<boolean> {
  * to Firestore under the user's devices collection.
  */
 export async function registerPushNotifications(userId: string): Promise<void> {
-  if (!isNative) return;
+  if (!isNative()) return;
 
   try {
     await PushNotifications.requestPermissions();
@@ -136,15 +160,23 @@ export async function showLocalNotification(options: {
   id?: number;
   channelId?: string;
 }): Promise<void> {
-  const { title, body, id = Date.now(), channelId = 'prosper_general' } = options;
+  const { title, body, id = getNextNotificationId(), channelId = 'prosper_general_v2' } = options;
 
-  if (isNative) {
+  if (isNative()) {
+    console.log('[Notifications] Showing local notification:', { title, body, id, channelId });
     const permission = await checkNotificationPermissions();
     if (!permission) {
       throw new Error('Notifications permission not granted');
     }
 
     await createNotificationChannels();
+
+    // On Android 12+, exact alarms may be blocked by the system.
+    const exactAllowed = await checkExactAlarmPermission();
+    if (!exactAllowed) {
+      console.warn('[Notifications] Exact alarm permission not granted; opening settings...');
+      await openExactAlarmSettings();
+    }
 
     try {
       await LocalNotifications.schedule({
@@ -154,13 +186,13 @@ export async function showLocalNotification(options: {
             title,
             body,
             channelId,
-            schedule: { at: new Date(Date.now() + 2000) },
-            sound: 'default',
+            schedule: { at: new Date(Date.now() + 500) },
             smallIcon: 'ic_stat_notification',
             iconColor: '#24D398',
           },
         ],
       });
+      console.log('[Notifications] Notification scheduled successfully');
     } catch (e) {
       console.error('[Notifications] schedule failed:', e);
       throw e;
@@ -246,6 +278,8 @@ export async function triggerTestNotification(
   if (!granted) {
     throw new Error('Notification permission denied');
   }
+
+  console.log('[Notifications] Triggering test notification:', type);
 
   // Show native/local notification
   await showLocalNotification({ title: message.title, body: message.body });
