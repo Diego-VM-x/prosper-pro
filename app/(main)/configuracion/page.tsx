@@ -484,7 +484,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">{t('preferencias.languageLabel')} <span style={{fontSize:'0.65rem',marginLeft:'6px',padding:'2px 8px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em'}}>{t('preferencias.inDevelopment')}</span></label>
+                      <label className="pref-label">{t('preferencias.languageLabel')}</label>
                       <div className="option-grid">
                         {[
                           { value: 'es', label: 'Español', flag: '🇪🇸' },
@@ -689,7 +689,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">{t('notificaciones.panelTitle')} <span style={{fontSize:'0.65rem',marginLeft:'8px',padding:'2px 10px',borderRadius:'999px',background:'rgba(61,204,142,0.15)',color:'#3DCC8E',fontWeight:'700',textTransform:'uppercase',letterSpacing:'0.04em',verticalAlign:'middle'}}>{t('preferencias.inDevelopment')}</span></h2>
+                      <h2 className="panel-title">{t('notificaciones.panelTitle')}</h2>
                       <p className="panel-desc">{t('notificaciones.panelDesc')}</p>
                     </div>
 

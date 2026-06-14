@@ -187,7 +187,7 @@ export default function LoginPage() {
               </button>
             </div>
             <div className="auth-footer">
-              <Link href="/" className="home-btn">{t('login.footer.home')}</Link>
+              <a href="https://prosper-pro.vercel.app/inicio" className="home-btn">{t('login.footer.home')}</a>
             </div>
           </div>
         </div>

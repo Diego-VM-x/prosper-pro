@@ -139,7 +139,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
               <p className="promo-sub">
                 {t('sidebar.promoSubtitle')}
               </p>
-              <button className="promo-btn" id="promo-cta" onClick={() => router.push('/inicio')}>
+              <button className="promo-btn" id="promo-cta" onClick={() => window.open('https://prosper-pro.vercel.app/inicio', '_blank')}>
                 {t('sidebar.promoBtn')}
               </button>
             </div>
