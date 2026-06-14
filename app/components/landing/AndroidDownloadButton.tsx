@@ -6,12 +6,11 @@ import { useTranslation } from 'react-i18next';
 function AndroidIcon({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M17.6 9.2c-.7 0-1.4.2-2 .6l-1.1-2c1.3-.8 2.9-1.2 4.5-1.1 2.8.2 5.2 2 6.3 4.5l-2.1 1.2c-.7-1.5-2.2-2.5-3.9-2.6-.6 0-1.1.1-1.7.4zM6.4 9.2c-.6-.3-1.1-.4-1.7-.4-1.7.1-3.2 1.1-3.9 2.6L-1.3 9.8C-.2 7.3 2.2 5.5 5 5.3c1.6-.1 3.2.3 4.5 1.1l-1.1 2c-.6-.4-1.3-.6-2-.6z"/>
-      <path d="M6 11h12v8c0 1.1-.9 2-2 2h-1v3h-2v-3h-2v3H9v-3H8c-1.1 0-2-.9-2-2v-8z"/>
-      <path d="M17 11c0-2.8-2.2-5-5-5s-5 2.2-5 5h10z"/>
-      <circle cx="9" cy="14" r="1"/>
-      <circle cx="15" cy="14" r="1"/>
-      <path d="M5 13c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2s2-.9 2-2v-3c0-1.1-.9-2-2-2zM19 13c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2s2-.9 2-2v-3c0-1.1-.9-2-2-2z"/>
+      <path d="M17.5 9c0-3-2.5-5.5-5.5-5.5S6.5 6 6.5 9H5c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h1.5v3h2v-3h7v3h2v-3H19c1.1 0 2-.9 2-2v-6c0-1.1-.9-2-2-2h-1.5z"/>
+      <path d="M6 18.5c0 .8.7 1.5 1.5 1.5s1.5-.7 1.5-1.5V13H6v5.5zM16.5 20c.8 0 1.5-.7 1.5-1.5V13h-3v5.5c0 .8.7 1.5 1.5 1.5z"/>
+      <circle cx="9.5" cy="11" r="1"/>
+      <circle cx="14.5" cy="11" r="1"/>
+      <path d="M8.5 5.5 7.5 3M15.5 5.5 16.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   );
 }
