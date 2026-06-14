@@ -182,6 +182,9 @@ export async function triggerTestNotification(
 ): Promise<void> {
   const message = TEST_MESSAGES[type] || TEST_MESSAGES.info;
 
+  // Ensure permissions before showing the notification (critical on Android native)
+  await requestNotificationPermissions();
+
   // Show native/local notification
   await showLocalNotification({ title: message.title, body: message.body });
 

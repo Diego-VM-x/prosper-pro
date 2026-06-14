@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AndroidDownloadButton } from './AndroidDownloadButton';
+import { DownloadButton } from './AndroidDownloadButton';
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -53,7 +53,7 @@ export function MobileNav({ isOpen, onClose, user, onLogin, onRegister, onDashbo
           <button onClick={() => handleNav('faq')}>{t('mobileNav.nav.faq')}</button>
         </nav>
         <div className="mobile-nav-actions">
-          <AndroidDownloadButton variant="primary" size="md" />
+          <DownloadButton variant="primary" size="md" />
           {user ? (
             <button className="btn btn-primary" onClick={onDashboard}>
               {t('mobileNav.goToDashboard')}

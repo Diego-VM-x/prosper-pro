@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { AndroidDownloadButton } from './AndroidDownloadButton';
+import { DownloadButton } from './AndroidDownloadButton';
 
 interface LandingHeaderProps {
   user: { uid: string } | null;
@@ -43,7 +43,7 @@ export function LandingHeader({ user }: LandingHeaderProps) {
           </nav>
 
           <div className="landing-header-actions">
-            <AndroidDownloadButton variant="outline" size="sm" className="desktop-only" />
+            <DownloadButton variant="outline" size="sm" className="desktop-only" />
             {user ? (
               <button className="btn btn-primary" onClick={() => router.push('/')}>
                 Ir al Dashboard
