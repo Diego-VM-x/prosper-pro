@@ -742,3 +742,7 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
   - `npx cap sync android` exitoso.
   - APK debug compilado con JDK 21 local y copiado a `public/prosper-pro.apk` (25 MB).
 - **Deploy**: Push a `test-deploy` y `master`.
+
+### 13/06/2026 - Menú móvil: botón "Ir al Inicio" apunta a web desplegada
+- **Archivo**: `app/components/Topbar.tsx`
+- **Cambio**: El botón "Ir al Inicio" en el menú desplegable móvil ahora abre `https://prosper-pro.vercel.app/inicio` en una nueva pestaña, en lugar de navegar a `/` internamente.
