@@ -888,11 +888,12 @@ select.form-input { cursor: pointer; }
   width: 32px;
   height: 32px;
   margin: 0;
-  transform: rotate(90deg);
 }
 
 .widget-small .converter-swap-btn:hover {
-  transform: rotate(270deg);
+  border-color: var(--color-prosper-green);
+  color: var(--color-prosper-green);
+  background: rgba(61, 204, 142, 0.12);
 }
 
 .widget-small .converter-result-value {
@@ -913,9 +914,10 @@ select.form-input { cursor: pointer; }
     width: 32px;
     height: 32px;
     margin: 0;
-    transform: rotate(90deg);
   }
   .converter-swap-btn:hover {
-    transform: rotate(270deg);
+    border-color: var(--color-prosper-green);
+    color: var(--color-prosper-green);
+    background: rgba(61, 204, 142, 0.12);
   }
 }

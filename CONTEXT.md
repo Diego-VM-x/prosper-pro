@@ -708,3 +708,8 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
 - **Lazy loading en imágenes**: Agregado `loading="lazy"` a imágenes no críticas: thumbnails de cursos (`cursos/page.tsx`), preview VEPay (`finanzas/page.tsx`), y avatares de usuarios (`metas/page.tsx`). Reduce LCP (Largest Contentful Paint).
 - **Safe storage helper**: Creado `lib/safeStorage.ts` con wrappers para `localStorage` y `sessionStorage` que capturan silenciosamente errores de modo privado / storage deshabilitado / quota exceeded.
 - **Build verificado**: `npm run build` exitoso en 33.6s (mejora desde ~40-46s), 16/16 páginas generadas, sin errores de Firebase en SSR.
+
+### 13/06/2026 - Fix visual del botón swap del conversor de monedas
+- **Archivo**: `app/dashboard.css`
+- **Problema**: En widget pequeño y en móvil (`@media (max-width: 480px)`), el botón `.converter-swap-btn` tenía `transform: rotate(90deg)` como estado base y `rotate(270deg)` en hover, por lo que siempre aparecía girado y solo al presionar volvía a la orientación original.
+- **Solución**: Se eliminó la rotación forzada en los estados base para widget-small y móvil. Ahora el icono se muestra en su orientación original; en hover solo cambia borde, color y fondo verde (sin rotación en móvil; en desktop mantiene la rotación de 180° definida en el estado base).
