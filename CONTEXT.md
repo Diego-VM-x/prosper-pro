@@ -767,3 +767,35 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
 - **Icono**: Se reemplazó el vector de campana por el logo de Prosper (gráfico de líneas con puntos) en `android/app/src/main/res/drawable/ic_stat_notification.xml`.
 - **Archivos modificados**: `lib/firestore/notifications.ts`, `android/app/src/main/res/drawable/ic_stat_notification.xml`.
 - **APK**: Regenerado y mantenido en 8.7 MB.
+
+### 13/06/2026 - Fix redirección aleatoria al login / cierre de sesión inesperado
+- **Problema**: El usuario era redirigido aleatoriamente al login, a veces sin haber cerrado sesión, y luego se reconectaba solo.
+- **Causas identificadas y corregidas**:
+  - `lib/firebase.ts` limpiaba `sessionStorage` de Firebase en cada carga, invalidando posibles tokens de respaldo y forzando estados intermedios `null` en `onAuthStateChanged`.
+  - `AuthContext.tsx` tenía un heartbeat que forzaba logout si el `sessionToken` remoto no coincidía con el local. Esto causaba cierres de sesión cuando `sessionStorage` se limpiaba o los registros de dispositivo estaban desincronizados.
+  - `ProtectedRoute.tsx` y `app/(main)/page.tsx` redirigían al login/inicio tan pronto como `loading` era `false`, sin esperar a que Firebase terminara de restaurar la sesión persistida.
+  - El `sessionToken` se guardaba en `sessionStorage` (no persistente al cerrar la app/página) y `getDeviceInfo()` generaba uno nuevo cada vez.
+- **Soluciones aplicadas**:
+  - Eliminada la limpieza forzada de `firebase:*` en `sessionStorage`.
+  - Agregado estado `authInitialized` en `AuthContext`; `initAuth` solo lo marca como `true` después del primer callback de `onAuthStateChanged`.
+  - `ProtectedRoute` y `Home` ahora esperan `authInitialized` antes de redirigir.
+  - Configurada persistencia explícita `browserLocalPersistence` en `initAuth`.
+  - El heartbeat ya no fuerza logout por mismatch de `sessionToken`; solo actualiza `lastActive` y repara el token si falta.
+  - `sessionToken` movido a `localStorage` y `getDeviceInfo()` reusa el token existente.
+  - `configuracion/page.tsx` usa `getDeviceId()` en lugar de `getDeviceInfo()` para evitar regenerar tokens.
+- **Archivos modificados**: `lib/firebase.ts`, `lib/contexts/firebase-auth-core.ts`, `lib/contexts/AuthContext.tsx`, `app/components/ProtectedRoute.tsx`, `app/(main)/page.tsx`, `lib/utils/deviceInfo.ts`, `app/(main)/configuracion/page.tsx`.
+
+### 14/06/2026 - Icono Android más grande + Fix SHA-1 para Google Sign-In
+- **Icono del launcher**: El gráfico del logo se veía muy pequeño en el icono de la app Android.
+  - **Solución**: Se regeneraron todos los iconos del launcher (`ic_launcher.png`, `ic_launcher_round.png`, `ic_launcher_foreground.png`) en todas las densidades usando `public/logo-icon.png` como fuente, aprovechando todo el espacio disponible.
+  - **Script creado**: `scripts/generate-android-icons.js` para regenerar iconos fácilmente desde el logo fuente.
+  - **Archivos modificados**: `android/app/src/main/res/mipmap-*dpi/*`.
+- **Google Sign-In error 16**: En Android nativo aparecía `Cannot find a matching credential` al intentar iniciar sesión con Google.
+  - **Causa**: `android/app/google-services.json` solo tenía un OAuth client web; faltaba registrar el SHA-1 del certificado debug de Android en Firebase.
+  - **SHA-1 debug registrado**: `81:76:F9:85:10:EE:E8:DA:90:48:55:9F:3C:E7:9B:74:6F:6E:AD:F7`.
+  - **Solución**: Se actualizó `android/app/google-services.json` con el nuevo cliente OAuth Android.
+- **Build verificado**:
+  - `npx cap sync android` exitoso.
+  - `./gradlew assembleDebug` exitoso con JDK 21 local.
+  - APK debug: `Prosper Pro-1.0.3-debug.apk` (9.0 MB), copiado a `public/prosper-pro.apk`.
+- **Deploy**: Push a `test-deploy` y `master`.

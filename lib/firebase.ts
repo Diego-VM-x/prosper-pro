@@ -28,6 +28,8 @@ export {
   signOut,
   updateCurrentUser,
   sendEmailVerification,
+  setPersistence,
+  browserLocalPersistence,
   type User,
 } from 'firebase/auth';
 
@@ -173,13 +175,6 @@ try {
       auth = getAuth(app);
       safeLog('[Firebase DEBUG] auth object:', auth ? 'present' : 'NULL');
 
-      // Limpiar sessionStorage de firebase en cada inicio (evita conflictos con tabs)
-      try {
-        for (let i = sessionStorage.length - 1; i >= 0; i--) {
-          const key = sessionStorage.key(i);
-          if (key?.startsWith('firebase:')) sessionStorage.removeItem(key);
-        }
-      } catch {}
     } else {
       safeLog('[Firebase DEBUG] SSR mode, using mocks');
       db = createFirestoreMock();

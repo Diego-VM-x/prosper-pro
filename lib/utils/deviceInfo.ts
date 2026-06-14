@@ -119,13 +119,13 @@ export async function getPublicIP(): Promise<string | undefined> {
 const SESSION_TOKEN_KEY = 'prosper_session_token';
 
 /**
- * Genera un nuevo sessionToken y lo guarda en sessionStorage.
+ * Genera un nuevo sessionToken y lo guarda en localStorage.
  * Cada login genera un token único para esta sesión.
  */
 export function generateSessionToken(): string {
   const token = crypto.randomUUID();
   try {
-    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    localStorage.setItem(SESSION_TOKEN_KEY, token);
   } catch {}
   return token;
 }
@@ -135,7 +135,7 @@ export function generateSessionToken(): string {
  */
 export function getSessionToken(): string | null {
   try {
-    return sessionStorage.getItem(SESSION_TOKEN_KEY);
+    return localStorage.getItem(SESSION_TOKEN_KEY);
   } catch {
     return null;
   }
@@ -143,19 +143,19 @@ export function getSessionToken(): string | null {
 
 export function storeSessionToken(token: string): void {
   try {
-    sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+    localStorage.setItem(SESSION_TOKEN_KEY, token);
   } catch {}
 }
 
 export function clearSessionToken(): void {
   try {
-    sessionStorage.removeItem(SESSION_TOKEN_KEY);
+    localStorage.removeItem(SESSION_TOKEN_KEY);
   } catch {}
 }
 
 /**
  * Obtiene la info del dispositivo para login/registro.
- * Genera un nuevo sessionToken único para esta sesión.
+ * Reusa el sessionToken existente o genera uno nuevo si no existe.
  */
 export async function getDeviceInfo(userId?: string) {
   const { browser, os, deviceType } = parseUA();
@@ -163,6 +163,10 @@ export async function getDeviceInfo(userId?: string) {
     getDeviceId(userId),
     getPublicIP(),
   ]);
+  let sessionToken = getSessionToken();
+  if (!sessionToken) {
+    sessionToken = generateSessionToken();
+  }
   return {
     deviceId,
     deviceName: `${browser} en ${os}`,
@@ -170,7 +174,7 @@ export async function getDeviceInfo(userId?: string) {
     browser,
     os,
     ipAddress,
-    sessionToken: generateSessionToken(),
+    sessionToken,
   };
 }
 

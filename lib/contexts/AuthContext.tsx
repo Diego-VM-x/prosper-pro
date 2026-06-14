@@ -24,6 +24,7 @@ interface AuthContextType {
   enableNotifications: () => Promise<boolean>;
   enterGuestMode: () => void;
   exitGuestMode: () => void;
+  authInitialized: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -42,6 +43,7 @@ const AuthContext = createContext<AuthContextType>({
   enableNotifications: async () => false,
   enterGuestMode: () => {},
   exitGuestMode: () => {},
+  authInitialized: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -54,6 +56,7 @@ function clearStoredTokens() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const router = useRouter();
   const coreRef = useRef<any>(null);
@@ -97,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     import('./firebase-auth-core').then((core) => {
       coreRef.current = core;
       if (cancelled) return;
-      core.initAuth({ setUser, setLoading }).then((unsub) => {
+      core.initAuth({ setUser, setLoading, setAuthInitialized }).then((unsub) => {
         if (!cancelled) unsubRef.current = unsub;
       });
     });
@@ -255,28 +258,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Only enforce sessionToken check if the device has one stored AND we have one locally.
-        // This prevents false logouts for legacy sessions without tokens.
-        const tokenMismatch = device.sessionToken && localSessionToken && device.sessionToken !== localSessionToken;
-        if (tokenMismatch) {
-          missedChecks++;
-          // Require 2 consecutive mismatches before forcing logout (prevents single-beat false positives)
-          if (missedChecks >= 2) {
-            try {
-              const { clearIndexedDbPersistence } = await import('firebase/firestore');
-              await clearIndexedDbPersistence(db);
-            } catch {}
-            clearStoredTokens();
-            clearSessionToken();
-            clearDeviceId(user.uid);
-            exitGuestMode();
-            setUser(null);
-            router.push('/login');
-          }
-          return;
-        }
-
+        // NOTE: We no longer force logout on sessionToken mismatch. The token is meant
+        // for informational/device tracking, not for security enforcement. Forcing logout
+        // caused random session drops when sessionStorage/localStorage was cleared or
+        // when the device record was temporarily out of sync.
         missedChecks = 0;
+        // If the device doesn't have a sessionToken but we do, update it in Firestore
+        if (localSessionToken && !device.sessionToken) {
+          try {
+            const { storeSessionToken } = await import('@/lib/utils/deviceInfo');
+            storeSessionToken(localSessionToken);
+            await registerDevice(user.uid, { ...device, sessionToken: localSessionToken });
+          } catch {
+            // ignore
+          }
+        }
         // Update activity (marks as online)
         await updateDeviceLastActive(user.uid, deviceId);
       } catch {
@@ -314,6 +310,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       enableNotifications,
       enterGuestMode,
       exitGuestMode,
+      authInitialized,
     }}>
       {children}
     </AuthContext.Provider>

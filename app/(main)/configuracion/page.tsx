@@ -10,7 +10,7 @@ import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
-import { getDeviceInfo, getDeviceIcon } from '@/lib/utils/deviceInfo';
+import { getDeviceId, getDeviceIcon } from '@/lib/utils/deviceInfo';
 import { getStoredTokens } from '@/lib/contexts/firebase-auth-core';
 import { triggerTestNotification, checkNotificationPermissions } from '@/lib/notifications';
 import type { UserProfile, CurrencyCode, UserDevice, NotificationType } from '@/types';
@@ -62,7 +62,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && user?.uid) {
-      getDeviceInfo(user.uid).then((info) => setCurrentDeviceId(info.deviceId));
+      getDeviceId(user.uid).then((deviceId) => setCurrentDeviceId(deviceId));
     }
   }, [user?.uid]);
 

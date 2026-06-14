@@ -1,6 +1,6 @@
 'use client';
 
-import { auth, onAuthStateChanged, signOut, type User } from '@/lib/firebase';
+import { auth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, type User } from '@/lib/firebase';
 import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 import { registerDevice } from '@/lib/firestore/devices';
@@ -83,16 +83,28 @@ async function onUserReady(u: User) {
 export async function initAuth({
   setUser,
   setLoading,
+  setAuthInitialized,
 }: {
   setUser: (u: User | null) => void;
   setLoading: (v: boolean) => void;
+  setAuthInitialized: (v: boolean) => void;
 }) {
   if (!auth) {
     setLoading(false);
+    setAuthInitialized(true);
     return () => {};
   }
+
+  // Ensure auth state persists across reloads/app restarts
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch {
+    // Persistence may already be set; ignore
+  }
+
   await enableOfflinePersistence();
 
+  let initialized = false;
   const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
       // Firebase Auth is the single source of truth — user is verified
@@ -107,6 +119,10 @@ export async function initAuth({
       setUser(null);
     }
     setLoading(false);
+    if (!initialized) {
+      initialized = true;
+      setAuthInitialized(true);
+    }
   });
 
   return unsub;

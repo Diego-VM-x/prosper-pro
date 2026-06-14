@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "144762699678-05ohbgmh7to27cep22srpn7t7tethh82.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.prosperpro.app",
+            "certificate_hash": "8176f98510eee8da9048559f3ce79b746f6eadf7"
+          }
+        },
+        {
           "client_id": "144762699678-c8i4n2iaeinr7nnuv97l6l1j4phi10to.apps.googleusercontent.com",
           "client_type": 3
         }

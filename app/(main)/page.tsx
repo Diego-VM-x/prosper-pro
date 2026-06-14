@@ -25,22 +25,16 @@ function LoadingHome() {
 
 export default function Home() {
   const router = useRouter();
-  const { user, loading, isGuest } = useAuth();
+  const { user, loading, isGuest, authInitialized } = useAuth();
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !authInitialized) return;
     if (!user && !isGuest) {
-      // Small delay to prevent race conditions during auth state transitions
-      const timer = setTimeout(() => {
-        if (!user && !isGuest) {
-          router.replace('/inicio');
-        }
-      }, 300);
-      return () => clearTimeout(timer);
+      router.replace('/inicio');
     }
-  }, [user, loading, isGuest, router]);
+  }, [user, loading, isGuest, authInitialized, router]);
 
-  if (loading || (!user && !isGuest)) {
+  if (loading || !authInitialized || (!user && !isGuest)) {
     return <LoadingHome />;
   }
 
