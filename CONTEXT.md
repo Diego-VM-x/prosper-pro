@@ -759,3 +759,11 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
   - En `app/(main)/configuracion/page.tsx`, el catch de los botones de prueba ahora muestra el mensaje de error real en la UI.
 - **Archivos modificados**: `lib/notifications.ts`, `capacitor.config.ts`, `app/(main)/configuracion/page.tsx`.
 - **Fix del tamaño del APK**: `scripts/build-mobile-export.js` ahora mueve `public/prosper-pro.apk` fuera de `public/` durante el build móvil para evitar que el APK anterior se empaquete dentro del nuevo APK.
+
+### 13/06/2026 - Fix notificaciones duplicadas y logo de Prosper en icono
+- **Problema**: Al forzar una notificación de prueba salían 2 notificaciones en lugar de 1.
+- **Causa**: `addNotification` en `lib/firestore/notifications.ts` llamaba a `showLocalNotification`, y `triggerTestNotification` también lo llamaba, generando doble envío.
+- **Solución**: Se removió `showLocalNotification` de `addNotification`; ahora solo guarda en Firestore. La notificación local es responsabilidad exclusiva del llamador.
+- **Icono**: Se reemplazó el vector de campana por el logo de Prosper (gráfico de líneas con puntos) en `android/app/src/main/res/drawable/ic_stat_notification.xml`.
+- **Archivos modificados**: `lib/firestore/notifications.ts`, `android/app/src/main/res/drawable/ic_stat_notification.xml`.
+- **APK**: Regenerado y mantenido en 8.7 MB.
