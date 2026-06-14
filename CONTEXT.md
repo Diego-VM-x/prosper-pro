@@ -10,8 +10,8 @@
 - **Firebase**: Proyecto reseteado. Campo `ownerId` reemplaza a `userId` en todas las colecciones para aislamiento total de datos por usuario.
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
-- **Plataforma**: Web-only. Capa Android/Capacitor eliminada por completo (sin `mobile/`, APKs, plugins nativos ni Cloud Functions).
-- **Versión actual**: 1.0.3 (pendiente de publicar en test-deploy).
+- **Plataforma**: Web + Android nativo vía Capacitor 8.
+- **Versión actual**: 1.0.3 (publicada en test-deploy y master).
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -709,7 +709,14 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
 - **Safe storage helper**: Creado `lib/safeStorage.ts` con wrappers para `localStorage` y `sessionStorage` que capturan silenciosamente errores de modo privado / storage deshabilitado / quota exceeded.
 - **Build verificado**: `npm run build` exitoso en 33.6s (mejora desde ~40-46s), 16/16 páginas generadas, sin errores de Firebase en SSR.
 
-### 13/06/2026 - Fix visual del botón swap del conversor de monedas
+### 13/06/2026 - Fix visual del botón swap del conversor de monedas + deploy
 - **Archivo**: `app/dashboard.css`
 - **Problema**: En widget pequeño y en móvil (`@media (max-width: 480px)`), el botón `.converter-swap-btn` tenía `transform: rotate(90deg)` como estado base y `rotate(270deg)` en hover, por lo que siempre aparecía girado y solo al presionar volvía a la orientación original.
 - **Solución**: Se eliminó la rotación forzada en los estados base para widget-small y móvil. Ahora el icono se muestra en su orientación original; en hover solo cambia borde, color y fondo verde (sin rotación en móvil; en desktop mantiene la rotación de 180° definida en el estado base).
+- **Builds verificados**:
+  - `npm run build` web exitoso (20 páginas generadas).
+  - Mobile static export exitoso vía `scripts/build-mobile-export.js`.
+  - `npx cap sync android` exitoso.
+  - APK debug compilado con JDK 21 local (`jdk-21/`) tras corregir error `invalid source release: 21` causado por JDK 17 del sistema.
+  - APK copiado a `public/prosper-pro.apk` (17 MB).
+- **Deploy**: Push a `test-deploy` (`c1f4821`) y posterior push/merge a `master`.
