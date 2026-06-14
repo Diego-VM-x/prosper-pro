@@ -6,6 +6,7 @@ import type { CurrencyCode } from '@/types';
 import { removeDevice, updateDeviceLastActive, getUserDevices, registerDevice } from '@/lib/firestore/devices';
 import { getDeviceInfo, getDeviceInfoForHeartbeat, clearDeviceId, getSessionToken, clearSessionToken } from '@/lib/utils/deviceInfo';
 import { db } from '@/lib/firebase';
+import { clearLocalCache } from '@/lib/utils/localDataCache';
 
 interface AuthContextType {
   user: any | null;
@@ -150,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { clearIndexedDbPersistence } = await import('firebase/firestore');
       await clearIndexedDbPersistence(db);
     } catch {}
+    clearLocalCache();
     clearStoredTokens();
     clearSessionToken();
     clearDeviceId(user?.uid);
@@ -195,8 +197,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const enableNotifications = useCallback(async () => {
     const core = coreRef.current || await import('./firebase-auth-core');
     coreRef.current = core;
-    return core.enableNotificationsImpl();
-  }, []);
+    return core.enableNotificationsImpl(user?.uid);
+  }, [user?.uid]);
 
   const sendVerificationEmail = useCallback(async () => {
     const core = coreRef.current || await import('./firebase-auth-core');

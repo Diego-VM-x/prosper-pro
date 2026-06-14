@@ -186,13 +186,45 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    async function fetchBinanceP2PDirect(asset: string): Promise<number | null> {
+      try {
+        const res = await fetch('https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ asset, fiat: 'VES', tradeType: 'SELL', page: 1, rows: 10 }),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!Array.isArray(data?.data) || data.data.length === 0) return null;
+        const prices = data.data
+          .slice(0, 5)
+          .map((adv: any) => parseFloat(adv.adv.price))
+          .filter((p: number) => p > 0);
+        if (prices.length === 0) return null;
+        return Number((prices.reduce((a: number, b: number) => a + b, 0) / prices.length).toFixed(2));
+      } catch {
+        return null;
+      }
+    }
+
     async function fetchBinanceP2PProxy(): Promise<{ USDT: number | null; SOL: number | null; BTC: number | null; USDC: number | null }> {
       try {
         const res = await fetch('/api/rates', { cache: 'no-store' });
-        if (!res.ok) return { USDT: null, SOL: null, BTC: null, USDC: null };
+        if (!res.ok) throw new Error('Proxy failed');
         return await res.json();
       } catch {
-        return { USDT: null, SOL: null, BTC: null, USDC: null };
+        // Fallback direct call (needed for Capacitor/mobile where /api routes are not available)
+        try {
+          const [usdt, sol, btc, usdc] = await Promise.all([
+            fetchBinanceP2PDirect('USDT'),
+            fetchBinanceP2PDirect('SOL'),
+            fetchBinanceP2PDirect('BTC'),
+            fetchBinanceP2PDirect('USDC'),
+          ]);
+          return { USDT: usdt, SOL: sol, BTC: btc, USDC: usdc };
+        } catch {
+          return { USDT: null, SOL: null, BTC: null, USDC: null };
+        }
       }
     }
 
@@ -312,21 +344,17 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         console.error('Failed to fetch exchange rates:', err);
       }
     }
-    // Deferir fetch de tasas para no bloquear el render inicial
-    const idleCallback = typeof window !== 'undefined' && 'requestIdleCallback' in window
-      ? window.requestIdleCallback(fetchRates, { timeout: 2000 })
-      : setTimeout(fetchRates, 500);
-    const interval = setInterval(fetchRates, 120000);
-    return () => {
-      if (typeof idleCallback === 'number') {
-        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-          window.cancelIdleCallback(idleCallback);
-        } else {
-          clearTimeout(idleCallback);
-        }
-      }
-      clearInterval(interval);
-    };
+    // Fetch fresh rates soon after mount, but skip if offline.
+    if (typeof window !== 'undefined' && navigator.onLine) {
+      const timeout = setTimeout(fetchRates, 300);
+      const interval = setInterval(() => {
+        if (navigator.onLine) fetchRates();
+      }, 120000);
+      return () => {
+        clearTimeout(timeout);
+        clearInterval(interval);
+      };
+    }
   }, []);
 
   // Set display currency (persist to localStorage)

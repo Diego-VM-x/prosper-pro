@@ -1,20 +1,23 @@
-import { db, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
+import { db, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, type QuerySnapshot, type DocumentData } from '../firebase';
+import { cachedQuerySnapshot } from './cachedOnSnapshot';
 import type { Reminder } from '@/types';
 
 const COLLECTION = 'reminders';
 
 export function subscribeToReminders(ownerId: string, callback: (reminders: Reminder[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('isActive', '==', true));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const reminders: Reminder[] = [];
-    snapshot.forEach((docSnap) => {
-      reminders.push({ id: docSnap.id, ...docSnap.data() } as Reminder);
-    });
-    callback(reminders);
-  }, (error) => {
-    console.error('subscribeToReminders error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `reminders_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const reminders: Reminder[] = [];
+      snapshot.forEach((docSnap) => {
+        reminders.push({ id: docSnap.id, ...docSnap.data() } as Reminder);
+      });
+      return reminders;
+    },
+    callback
+  );
 }
 
 export async function createReminder(reminder: Omit<Reminder, 'id' | 'createdAt'>) {

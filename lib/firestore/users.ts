@@ -1,4 +1,5 @@
-import { db, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from '../firebase';
+import { db, collection, doc, setDoc, getDoc, updateDoc, arrayUnion } from '../firebase';
+import { cachedDocSnapshot } from './cachedOnSnapshot';
 import type { UserProfile } from '@/types';
 
 const COLLECTION = 'users';
@@ -96,14 +97,13 @@ export async function getDashboardLayout(userId: string): Promise<import('@/type
 }
 
 export function subscribeToUserProfile(userId: string, callback: (profile: UserProfile | null) => void) {
-  return onSnapshot(doc(db, COLLECTION, userId), (docSnap) => {
-    if (!docSnap.exists()) {
-      callback(null);
-      return;
-    }
-    callback(docSnap.data() as UserProfile);
-  }, (error) => {
-    console.error('subscribeToUserProfile error:', error);
-    callback(null);
-  });
+  return cachedDocSnapshot(
+    doc(db, COLLECTION, userId),
+    `user_profile_${userId}`,
+    (docSnap) => {
+      if (!docSnap.exists()) return null;
+      return docSnap.data() as UserProfile;
+    },
+    callback
+  );
 }

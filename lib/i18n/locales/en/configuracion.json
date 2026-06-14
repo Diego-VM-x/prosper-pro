@@ -99,6 +99,13 @@
         "label": "Calendar Reminders",
         "desc": "In development"
       }
+    },
+    "test": {
+      "title": "Test notifications",
+      "desc": "Tap a button to send a test notification to this device",
+      "button": "Test",
+      "sent": "Test notification sent",
+      "error": "Error sending test notification"
     }
   },
   "seguridad": {

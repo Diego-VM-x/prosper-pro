@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "144762699678",
+    "project_id": "prospeweb",
+    "storage_bucket": "prospeweb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144762699678:android:59d74256903ac05b75e08f",
+        "android_client_info": {
+          "package_name": "com.prosperpro.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "144762699678-c8i4n2iaeinr7nnuv97l6l1j4phi10to.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBig2TqVaDtVaLHklh6GCDH18DjSzpxyqE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "144762699678-c8i4n2iaeinr7nnuv97l6l1j4phi10to.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

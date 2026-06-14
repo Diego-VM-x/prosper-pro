@@ -1,4 +1,5 @@
-import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, orderBy, limit, getDocs, type QuerySnapshot, type DocumentData } from '../firebase';
+import { cachedQuerySnapshot, cachedGetDocs } from './cachedOnSnapshot';
 import type { ExpenseRequest, RequestStatus } from '@/types';
 
 export interface FoundUser {
@@ -43,33 +44,37 @@ export async function deleteRequest(requestId: string) {
 // Suscribirse a solicitudes ENVIADAS por el usuario
 export function subscribeToSentRequests(ownerId: string, callback: (requests: ExpenseRequest[]) => void) {
   const q = query(collection(db, COLLECTION), where('fromOwnerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const requests: ExpenseRequest[] = [];
-    snapshot.forEach((docSnap) => {
-      requests.push({ id: docSnap.id, ...docSnap.data() } as ExpenseRequest);
-    });
-    requests.sort((a, b) => b.createdAt - a.createdAt);
-    callback(requests);
-  }, (error) => {
-    console.error('subscribeToSentRequests error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `requests_sent_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const requests: ExpenseRequest[] = [];
+      snapshot.forEach((docSnap) => {
+        requests.push({ id: docSnap.id, ...docSnap.data() } as ExpenseRequest);
+      });
+      requests.sort((a, b) => b.createdAt - a.createdAt);
+      return requests;
+    },
+    callback
+  );
 }
 
 // Suscribirse a solicitudes RECIBIDAS por el usuario
 export function subscribeToReceivedRequests(ownerId: string, callback: (requests: ExpenseRequest[]) => void) {
   const q = query(collection(db, COLLECTION), where('toOwnerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const requests: ExpenseRequest[] = [];
-    snapshot.forEach((docSnap) => {
-      requests.push({ id: docSnap.id, ...docSnap.data() } as ExpenseRequest);
-    });
-    requests.sort((a, b) => b.createdAt - a.createdAt);
-    callback(requests);
-  }, (error) => {
-    console.error('subscribeToReceivedRequests error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `requests_received_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const requests: ExpenseRequest[] = [];
+      snapshot.forEach((docSnap) => {
+        requests.push({ id: docSnap.id, ...docSnap.data() } as ExpenseRequest);
+      });
+      requests.sort((a, b) => b.createdAt - a.createdAt);
+      return requests;
+    },
+    callback
+  );
 }
 
 // Obtener solicitudes enviadas
@@ -86,12 +91,17 @@ export async function getSentRequests(ownerId: string): Promise<ExpenseRequest[]
 // Obtener solicitudes recibidas
 export async function getReceivedRequests(ownerId: string): Promise<ExpenseRequest[]> {
   const q = query(collection(db, COLLECTION), where('toOwnerId', '==', ownerId));
-  const snapshot = await getDocs(q);
-  const requests: ExpenseRequest[] = [];
-  snapshot.forEach((docSnap) => {
-    requests.push({ id: docSnap.id, ...docSnap.data() } as ExpenseRequest);
-  });
-  return requests;
+  return cachedGetDocs(
+    q,
+    `requests_received_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const requests: ExpenseRequest[] = [];
+      snapshot.forEach((docSnap) => {
+        requests.push({ id: docSnap.id, ...docSnap.data() } as ExpenseRequest);
+      });
+      return requests;
+    }
+  );
 }
 
 // Obtener solicitudes de un plan específico

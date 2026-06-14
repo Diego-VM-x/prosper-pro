@@ -2474,3 +2474,54 @@ ul, ol {
     font-size: 0.8125rem;
   }
 }
+
+/* ============================================================
+   SAFE AREA INSETS - Android/iOS notches, status and nav bars
+   ============================================================ */
+
+/* Ensure the viewport respects safe areas on mobile devices */
+html {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Main app wrapper should never overflow behind system UI */
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+}
+
+/* Fixed headers must account for the status bar / notch */
+.fixed-header,
+header[role="banner"],
+.topbar {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+/* Fixed bottom nav must account for gesture navigation bar */
+.fixed-bottom,
+.bottom-nav,
+.mobile-nav {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+/* Prevent dialogs/modals from being hidden by notches */
+.modal,
+.dialog,
+[role="dialog"] {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Capacitor-specific: never let content sit under Android status bar or nav bar */
+@supports (-webkit-touch-callout: none) or (user-select: none) {
+  #__next,
+  #root {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}

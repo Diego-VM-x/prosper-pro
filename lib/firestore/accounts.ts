@@ -1,4 +1,5 @@
-import { db, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, increment, type QuerySnapshot, type DocumentData } from '../firebase';
+import { db, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, query, where, getDocs, increment, type QuerySnapshot, type DocumentData } from '../firebase';
+import { cachedQuerySnapshot, cachedGetDocs } from './cachedOnSnapshot';
 import type { FinancialAccount, AccountGroup } from '@/types';
 
 const COLLECTION = 'accounts';
@@ -7,39 +8,46 @@ const GROUPS_COLLECTION = 'account_groups';
 // Suscribirse a cuentas del usuario
 export function subscribeToAccounts(ownerId: string, callback: (accounts: FinancialAccount[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const accounts: FinancialAccount[] = [];
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      accounts.push({
-        id: docSnap.id,
-        ...data,
-        currency: data.currency || 'USD',
-      } as FinancialAccount);
-    });
-    accounts.sort((a, b) => b.createdAt - a.createdAt);
-    callback(accounts);
-  }, (error) => {
-    console.error('subscribeToAccounts error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `accounts_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const accounts: FinancialAccount[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        accounts.push({
+          id: docSnap.id,
+          ...data,
+          currency: data.currency || 'USD',
+        } as FinancialAccount);
+      });
+      accounts.sort((a, b) => b.createdAt - a.createdAt);
+      return accounts;
+    },
+    callback
+  );
 }
 
 // Obtener cuentas del usuario (una sola lectura)
 export async function getAccountsByOwnerId(ownerId: string): Promise<FinancialAccount[]> {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  const snapshot = await getDocs(q);
-  const accounts: FinancialAccount[] = [];
-  snapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    accounts.push({
-      id: docSnap.id,
-      ...data,
-      currency: data.currency || 'USD',
-    } as FinancialAccount);
-  });
-  accounts.sort((a, b) => b.createdAt - a.createdAt);
-  return accounts;
+  return cachedGetDocs(
+    q,
+    `accounts_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const accounts: FinancialAccount[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        accounts.push({
+          id: docSnap.id,
+          ...data,
+          currency: data.currency || 'USD',
+        } as FinancialAccount);
+      });
+      accounts.sort((a, b) => b.createdAt - a.createdAt);
+      return accounts;
+    }
+  );
 }
 
 // Crear cuenta
@@ -377,28 +385,35 @@ export async function wipeAllUserData(ownerId: string): Promise<{ wiped: string[
 
 export function subscribeToAccountGroups(ownerId: string, callback: (groups: AccountGroup[]) => void) {
   const q = query(collection(db, GROUPS_COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const groups: AccountGroup[] = [];
-    snapshot.forEach((docSnap) => {
-      groups.push({ id: docSnap.id, ...docSnap.data() } as AccountGroup);
-    });
-    groups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    callback(groups);
-  }, (error) => {
-    console.error('subscribeToAccountGroups error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `account_groups_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const groups: AccountGroup[] = [];
+      snapshot.forEach((docSnap) => {
+        groups.push({ id: docSnap.id, ...docSnap.data() } as AccountGroup);
+      });
+      groups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      return groups;
+    },
+    callback
+  );
 }
 
 export async function getAccountGroupsByOwnerId(ownerId: string): Promise<AccountGroup[]> {
   const q = query(collection(db, GROUPS_COLLECTION), where('ownerId', '==', ownerId));
-  const snapshot = await getDocs(q);
-  const groups: AccountGroup[] = [];
-  snapshot.forEach((docSnap) => {
-    groups.push({ id: docSnap.id, ...docSnap.data() } as AccountGroup);
-  });
-  groups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  return groups;
+  return cachedGetDocs(
+    q,
+    `account_groups_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const groups: AccountGroup[] = [];
+      snapshot.forEach((docSnap) => {
+        groups.push({ id: docSnap.id, ...docSnap.data() } as AccountGroup);
+      });
+      groups.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      return groups;
+    }
+  );
 }
 
 export async function createAccountGroup(group: Omit<AccountGroup, 'id'>): Promise<string> {

@@ -1,0 +1,99 @@
+/* ============================================
+   LANDING PAGE - ANDROID DOWNLOAD BUTTON
+   ============================================ */
+
+.android-download-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--lp-radius-full);
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--lp-transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.android-download-btn-sm {
+  padding: 8px 14px;
+  font-size: 0.75rem;
+}
+
+.android-download-btn-md {
+  padding: 12px 18px;
+  font-size: 0.875rem;
+}
+
+.android-download-btn-lg {
+  padding: 14px 22px;
+  font-size: 0.9375rem;
+}
+
+/* Primary variant */
+.android-download-btn-primary {
+  background: var(--lp-accent);
+  color: #0a2a1f;
+  border: 1px solid var(--lp-accent);
+}
+
+.android-download-btn-primary:hover {
+  background: #4ee0a0;
+  border-color: #4ee0a0;
+  transform: translateY(-1px);
+}
+
+/* Outline variant */
+.android-download-btn-outline {
+  background: transparent;
+  color: var(--lp-text-primary);
+  border: 1px solid var(--lp-border-subtle);
+}
+
+.android-download-btn-outline:hover {
+  border-color: var(--lp-accent);
+  color: var(--lp-accent);
+  background: rgba(61, 204, 142, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Ghost variant */
+.android-download-btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--lp-text-secondary);
+  border: 1px solid transparent;
+}
+
+.android-download-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--lp-text-primary);
+}
+
+/* Hint message for iOS users */
+.android-download-hint {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--lp-bg-elevated);
+  color: var(--lp-text-primary);
+  border: 1px solid var(--lp-border-subtle);
+  border-radius: var(--lp-radius-md);
+  padding: 12px 18px;
+  font-size: 0.8125rem;
+  box-shadow: var(--lp-shadow-lg);
+  z-index: 9999;
+  animation: hintSlideUp 0.3s ease;
+  max-width: min(90vw, 360px);
+  text-align: center;
+}
+
+@keyframes hintSlideUp {
+  from { opacity: 0; transform: translate(-50%, 12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* Make sure header button aligns with other buttons */
+.landing-header-actions .android-download-btn {
+  height: 38px;
+}

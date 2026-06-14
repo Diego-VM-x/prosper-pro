@@ -1,4 +1,5 @@
-import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, increment, type QuerySnapshot, type DocumentData } from '../firebase';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, increment, type QuerySnapshot, type DocumentData } from '../firebase';
+import { cachedQuerySnapshot } from './cachedOnSnapshot';
 import type { FinancialPlan, PlanType, PlanStatus, CurrencyCode, ExchangeRates, RecurringFrequency, SubPlan, SubPlanStatus } from '@/types';
 import { convertCurrency } from '@/lib/currency';
 import { convertRecurringToMonthly } from './recurring';
@@ -8,17 +9,19 @@ const COLLECTION = 'plans';
 // Suscribirse a planes del usuario
 export function subscribeToPlans(ownerId: string, callback: (plans: FinancialPlan[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const plans: FinancialPlan[] = [];
-    snapshot.forEach((docSnap) => {
-      plans.push({ id: docSnap.id, ...docSnap.data() } as FinancialPlan);
-    });
-    plans.sort((a, b) => b.createdAt - a.createdAt);
-    callback(plans);
-  }, (error) => {
-    console.error('subscribeToPlans error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `plans_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const plans: FinancialPlan[] = [];
+      snapshot.forEach((docSnap) => {
+        plans.push({ id: docSnap.id, ...docSnap.data() } as FinancialPlan);
+      });
+      plans.sort((a, b) => b.createdAt - a.createdAt);
+      return plans;
+    },
+    callback
+  );
 }
 
 // Obtener planes del usuario (una sola lectura)
@@ -48,17 +51,19 @@ export async function getSharedPlans(ownerId: string): Promise<FinancialPlan[]> 
 // Suscribirse a planes compartidos en tiempo real
 export function subscribeToSharedPlans(ownerId: string, callback: (plans: FinancialPlan[]) => void) {
   const q = query(collection(db, COLLECTION), where('sharedWith', 'array-contains', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const plans: FinancialPlan[] = [];
-    snapshot.forEach((docSnap) => {
-      plans.push({ id: docSnap.id, ...docSnap.data() } as FinancialPlan);
-    });
-    plans.sort((a, b) => b.createdAt - a.createdAt);
-    callback(plans);
-  }, (error) => {
-    console.error('subscribeToSharedPlans error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `shared_plans_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const plans: FinancialPlan[] = [];
+      snapshot.forEach((docSnap) => {
+        plans.push({ id: docSnap.id, ...docSnap.data() } as FinancialPlan);
+      });
+      plans.sort((a, b) => b.createdAt - a.createdAt);
+      return plans;
+    },
+    callback
+  );
 }
 
 // Crear plan financiero

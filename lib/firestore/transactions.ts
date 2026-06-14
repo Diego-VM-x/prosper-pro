@@ -1,106 +1,114 @@
-import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, query, where, getDocs, type QuerySnapshot, type DocumentData } from '../firebase';
+import { cachedQuerySnapshot, cachedGetDocs } from './cachedOnSnapshot';
+import { getLocalCache } from '@/lib/utils/localDataCache';
 import type { Transaction, WeeklyData } from '@/types';
 
 const COLLECTION = 'transactions';
 
 export function subscribeToAllTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const transactions: Transaction[] = [];
-    snapshot.forEach((docSnap) => {
-      transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
-    });
-    transactions.sort((a, b) => b.date - a.date);
-    callback(transactions);
-  }, (error) => {
-    console.error('subscribeToAllTransactions error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `transactions_all_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const transactions: Transaction[] = [];
+      snapshot.forEach((docSnap) => {
+        transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+      });
+      transactions.sort((a, b) => b.date - a.date);
+      return transactions;
+    },
+    callback
+  );
 }
 
 export function subscribeToTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const transactions: Transaction[] = [];
-    snapshot.forEach((docSnap) => {
-      const tx = { id: docSnap.id, ...docSnap.data() } as Transaction;
-      if (!tx.archived) transactions.push(tx);
-    });
-    transactions.sort((a, b) => b.date - a.date);
-    callback(transactions);
-  }, (error) => {
-    console.error('subscribeToTransactions error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `transactions_active_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const transactions: Transaction[] = [];
+      snapshot.forEach((docSnap) => {
+        const tx = { id: docSnap.id, ...docSnap.data() } as Transaction;
+        if (!tx.archived) transactions.push(tx);
+      });
+      transactions.sort((a, b) => b.date - a.date);
+      return transactions;
+    },
+    callback
+  );
 }
 
 export function subscribeToWeeklyDataAll(ownerId: string, callback: (data: WeeklyData[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
-    const data: WeeklyData[] = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      data.push({ day: days[d.getDay()], income: 0, saving: 0 });
-    }
-    snapshot.forEach((docSnap) => {
-      const t = docSnap.data() as Transaction;
-      const tDate = new Date(t.date);
-      const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff >= 0 && diff < 7) {
-        const idx = 6 - diff;
-        if (t.type === 'income') data[idx].income += t.amount;
-        if (t.type === 'saving') data[idx].saving += t.amount;
+  return cachedQuerySnapshot(
+    q,
+    `weekly_data_all_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+      const data: WeeklyData[] = [];
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        data.push({ day: days[d.getDay()], income: 0, saving: 0 });
       }
-    });
-    const maxVal = Math.max(...data.flatMap((d) => [d.income, d.saving]), 1);
-    const normalized = data.map((d) => ({
-      day: d.day,
-      income: Math.round((d.income / maxVal) * 100),
-      saving: Math.round((d.saving / maxVal) * 100),
-    }));
-    callback(normalized);
-  }, (error) => {
-    console.error('subscribeToWeeklyDataAll error:', error);
-    callback(getDefaultWeeklyData());
-  });
+      snapshot.forEach((docSnap) => {
+        const t = docSnap.data() as Transaction;
+        const tDate = new Date(t.date);
+        const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diff >= 0 && diff < 7) {
+          const idx = 6 - diff;
+          if (t.type === 'income') data[idx].income += t.amount;
+          if (t.type === 'saving') data[idx].saving += t.amount;
+        }
+      });
+      const maxVal = Math.max(...data.flatMap((d) => [d.income, d.saving]), 1);
+      return data.map((d) => ({
+        day: d.day,
+        income: Math.round((d.income / maxVal) * 100),
+        saving: Math.round((d.saving / maxVal) * 100),
+      }));
+    },
+    callback
+  );
 }
 
 export function subscribeToWeeklyData(ownerId: string, callback: (data: WeeklyData[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
-    const data: WeeklyData[] = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      data.push({ day: days[d.getDay()], income: 0, saving: 0 });
-    }
-    snapshot.forEach((docSnap) => {
-      const t = docSnap.data() as Transaction;
-      if (t.archived) return;
-      const tDate = new Date(t.date);
-      const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (diff >= 0 && diff < 7) {
-        const idx = 6 - diff;
-        if (t.type === 'income') data[idx].income += t.amount;
-        if (t.type === 'saving') data[idx].saving += t.amount;
+  return cachedQuerySnapshot(
+    q,
+    `weekly_data_active_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const days = ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'];
+      const data: WeeklyData[] = [];
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        data.push({ day: days[d.getDay()], income: 0, saving: 0 });
       }
-    });
-    const maxVal = Math.max(...data.flatMap((d) => [d.income, d.saving]), 1);
-    const normalized = data.map((d) => ({
-      day: d.day,
-      income: Math.round((d.income / maxVal) * 100),
-      saving: Math.round((d.saving / maxVal) * 100),
-    }));
-    callback(normalized);
-  }, (error) => {
-    console.error('subscribeToWeeklyData error:', error);
-    callback(getDefaultWeeklyData());
-  });
+      snapshot.forEach((docSnap) => {
+        const t = docSnap.data() as Transaction;
+        if (t.archived) return;
+        const tDate = new Date(t.date);
+        const diff = Math.floor((now.getTime() - tDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diff >= 0 && diff < 7) {
+          const idx = 6 - diff;
+          if (t.type === 'income') data[idx].income += t.amount;
+          if (t.type === 'saving') data[idx].saving += t.amount;
+        }
+      });
+      const maxVal = Math.max(...data.flatMap((d) => [d.income, d.saving]), 1);
+      return data.map((d) => ({
+        day: d.day,
+        income: Math.round((d.income / maxVal) * 100),
+        saving: Math.round((d.saving / maxVal) * 100),
+      }));
+    },
+    callback
+  );
 }
 
 export async function getMonthlySavings(ownerId: string): Promise<number> {
@@ -118,6 +126,13 @@ export async function getMonthlySavings(ownerId: string): Promise<number> {
     return total;
   } catch (err) {
     console.error('getMonthlySavings error:', err);
+    // Fall back to cached active transactions if available.
+    const cached = getLocalCache<Transaction[]>(`transactions_active_${ownerId}`);
+    if (cached) {
+      return cached
+        .filter((t) => t.type === 'saving' && !t.archived && t.date >= startOfMonth)
+        .reduce((sum, t) => sum + t.amount, 0);
+    }
     return 0;
   }
 }
@@ -137,51 +152,68 @@ export async function deleteTransaction(transactionId: string) {
 
 export async function getAllTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  const snapshot = await getDocs(q);
-  const transactions: Transaction[] = [];
-  snapshot.forEach((docSnap) => {
-    transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
-  });
-  transactions.sort((a, b) => b.date - a.date);
-  return transactions;
+  return cachedGetDocs(
+    q,
+    `transactions_all_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const transactions: Transaction[] = [];
+      snapshot.forEach((docSnap) => {
+        transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+      });
+      transactions.sort((a, b) => b.date - a.date);
+      return transactions;
+    }
+  );
 }
 
 export async function getTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  const snapshot = await getDocs(q);
-  const transactions: Transaction[] = [];
-  snapshot.forEach((docSnap) => {
-    const tx = { id: docSnap.id, ...docSnap.data() } as Transaction;
-    if (!tx.archived) transactions.push(tx);
-  });
-  transactions.sort((a, b) => b.date - a.date);
-  return transactions;
+  return cachedGetDocs(
+    q,
+    `transactions_active_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const transactions: Transaction[] = [];
+      snapshot.forEach((docSnap) => {
+        const tx = { id: docSnap.id, ...docSnap.data() } as Transaction;
+        if (!tx.archived) transactions.push(tx);
+      });
+      transactions.sort((a, b) => b.date - a.date);
+      return transactions;
+    }
+  );
 }
 
 export async function getArchivedTransactionsByOwnerId(ownerId: string): Promise<Transaction[]> {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('archived', '==', true));
-  const snapshot = await getDocs(q);
-  const transactions: Transaction[] = [];
-  snapshot.forEach((docSnap) => {
-    transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
-  });
-  transactions.sort((a, b) => b.date - a.date);
-  return transactions;
+  return cachedGetDocs(
+    q,
+    `transactions_archived_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const transactions: Transaction[] = [];
+      snapshot.forEach((docSnap) => {
+        transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+      });
+      transactions.sort((a, b) => b.date - a.date);
+      return transactions;
+    }
+  );
 }
 
 export function subscribeToArchivedTransactions(ownerId: string, callback: (transactions: Transaction[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId), where('archived', '==', true));
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    const transactions: Transaction[] = [];
-    snapshot.forEach((docSnap) => {
-      transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
-    });
-    transactions.sort((a, b) => b.date - a.date);
-    callback(transactions);
-  }, (error) => {
-    console.error('subscribeToArchivedTransactions error:', error);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `transactions_archived_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const transactions: Transaction[] = [];
+      snapshot.forEach((docSnap) => {
+        transactions.push({ id: docSnap.id, ...docSnap.data() } as Transaction);
+      });
+      transactions.sort((a, b) => b.date - a.date);
+      return transactions;
+    },
+    callback
+  );
 }
 
 export async function archiveTransactions(txIds: string[]) {
@@ -283,6 +315,18 @@ export async function getMonthlySummaryAll(ownerId: string) {
     return { income, expenses, saving, balance: income - expenses - saving };
   } catch (err) {
     console.error('getMonthlySummaryAll error:', err);
+    const cached = getLocalCache<Transaction[]>(`transactions_all_${ownerId}`);
+    if (cached) {
+      let income = 0, expenses = 0, saving = 0;
+      cached.forEach((t) => {
+        if (t.date >= startOfMonth) {
+          if (t.type === 'income') income += t.amount;
+          else if (t.type === 'expense') expenses += t.amount;
+          else if (t.type === 'saving') saving += t.amount;
+        }
+      });
+      return { income, expenses, saving, balance: income - expenses - saving };
+    }
     return { income: 0, expenses: 0, saving: 0, balance: 0 };
   }
 }
@@ -301,6 +345,16 @@ export async function getLifetimeSummaryAll(ownerId: string) {
     return { income, expenses, saving, balance: income - expenses - saving };
   } catch (err) {
     console.error('getLifetimeSummaryAll error:', err);
+    const cached = getLocalCache<Transaction[]>(`transactions_all_${ownerId}`);
+    if (cached) {
+      let income = 0, expenses = 0, saving = 0;
+      cached.forEach((t) => {
+        if (t.type === 'income') income += t.amount;
+        else if (t.type === 'expense') expenses += t.amount;
+        else if (t.type === 'saving') saving += t.amount;
+      });
+      return { income, expenses, saving, balance: income - expenses - saving };
+    }
     return { income: 0, expenses: 0, saving: 0, balance: 0 };
   }
 }

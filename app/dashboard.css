@@ -812,29 +812,29 @@ select.form-input { cursor: pointer; }
 
 .converter-row {
   display: grid;
-  grid-template-columns: 1fr 36px 1fr;
-  align-items: end;
-  gap: 8px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
 }
 
 .converter-swap-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   border: 1px solid var(--border-default);
-  background: var(--bg-input);
+  background: var(--bg-secondary);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-bottom: 2px;
 }
 
 .converter-swap-btn:hover {
   border-color: var(--color-prosper-green);
   color: var(--color-prosper-green);
+  background: rgba(61, 204, 142, 0.12);
   transform: rotate(180deg);
 }
 
@@ -880,10 +880,13 @@ select.form-input { cursor: pointer; }
 
 .widget-small .converter-row {
   grid-template-columns: 1fr;
+  justify-items: center;
+  gap: 8px;
 }
 
 .widget-small .converter-swap-btn {
-  width: 100%;
+  width: 32px;
+  height: 32px;
   margin: 0;
   transform: rotate(90deg);
 }
@@ -903,9 +906,12 @@ select.form-input { cursor: pointer; }
   }
   .converter-row {
     grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 8px;
   }
   .converter-swap-btn {
-    width: 100%;
+    width: 32px;
+    height: 32px;
     margin: 0;
     transform: rotate(90deg);
   }

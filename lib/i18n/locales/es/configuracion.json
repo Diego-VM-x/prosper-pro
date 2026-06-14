@@ -99,6 +99,13 @@
         "label": "Recordatorios de Calendario",
         "desc": "En desarrollo"
       }
+    },
+    "test": {
+      "title": "Probar notificaciones",
+      "desc": "Toca un botón para enviar una notificación de prueba a este dispositivo",
+      "button": "Probar",
+      "sent": "Notificación de prueba enviada",
+      "error": "Error al enviar la notificación de prueba"
     }
   },
   "seguridad": {

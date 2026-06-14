@@ -1,4 +1,6 @@
-import { db, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, onSnapshot, type QuerySnapshot, type DocumentData, getDoc } from '../firebase';
+import { db, collection, doc, addDoc, getDocs, updateDoc, deleteDoc, query, where, type QuerySnapshot, type DocumentData, getDoc } from '../firebase';
+import { cachedQuerySnapshot } from './cachedOnSnapshot';
+import { showLocalNotification } from '@/lib/notifications';
 import type { CurrencyCode, Notification, NotificationType, NotificationPreferences } from '@/types';
 import { CURRENCY_MAP } from '@/lib/currency';
 
@@ -11,20 +13,18 @@ export function subscribeToNotifications(
   callback: (notifications: Notification[]) => void
 ) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  return onSnapshot(
+  return cachedQuerySnapshot(
     q,
+    `notifications_${ownerId}`,
     (snapshot: QuerySnapshot<DocumentData>) => {
       const notifications: Notification[] = [];
       snapshot.forEach((docSnap) => {
         notifications.push({ id: docSnap.id, ...docSnap.data() } as Notification);
       });
       notifications.sort((a, b) => b.createdAt - a.createdAt);
-      callback(notifications);
+      return notifications;
     },
-    (error) => {
-      console.error('subscribeToNotifications error:', error);
-      callback([]);
-    }
+    callback
   );
 }
 
@@ -41,6 +41,11 @@ export async function addNotification(
     ...notification,
     createdAt: Date.now(),
   });
+  // Also show a native/local notification when possible
+  showLocalNotification({
+    title: notification.title,
+    body: notification.message,
+  }).catch((err) => console.error('[addNotification] showLocalNotification error:', err));
 }
 
 export async function getUnreadCount(ownerId: string): Promise<number> {

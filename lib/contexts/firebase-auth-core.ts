@@ -40,6 +40,17 @@ export function getStoredTokens(): StoredTokens | null {
 }
 
 async function onUserReady(u: User) {
+  // Register for push/local notifications in the background
+  try {
+    const { requestNotificationPermissions, registerPushNotifications } = await import('@/lib/notifications');
+    const granted = await requestNotificationPermissions();
+    if (granted) {
+      await registerPushNotifications(u.uid);
+    }
+  } catch {
+    // Notifications are not critical for auth
+  }
+
   try {
     const profile = await getUserProfile(u.uid);
     if (!profile) {
@@ -103,8 +114,29 @@ export async function initAuth({
 
 export async function loginWithGoogleImpl(newsConsent?: boolean) {
   if (!auth) throw new Error('Firebase Auth no está disponible.');
-  const { signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
-  const result = await signInWithPopup(auth, new GoogleAuthProvider());
+
+  const isNative = typeof window !== 'undefined' && (await import('@capacitor/core')).Capacitor.isNativePlatform();
+
+  let result: { user: User | null; isNewUser?: boolean } = { user: null };
+
+  if (isNative) {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+    const { signInWithCredential, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
+    const nativeResult = await FirebaseAuthentication.signInWithGoogle();
+    const credential = GoogleAuthProvider.credential(
+      nativeResult.credential?.idToken,
+      nativeResult.credential?.accessToken,
+    );
+    const userCred = await signInWithCredential(auth, credential);
+    const additionalInfo = getAdditionalUserInfo(userCred);
+    result = { user: userCred.user, isNewUser: additionalInfo?.isNewUser };
+  } else {
+    const { signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
+    const popupResult = await signInWithPopup(auth, new GoogleAuthProvider());
+    const additionalInfo = getAdditionalUserInfo(popupResult);
+    result = { user: popupResult.user, isNewUser: additionalInfo?.isNewUser };
+  }
+
   if (result.user) {
     const idToken = await result.user.getIdToken();
     storeTokens({
@@ -116,8 +148,7 @@ export async function loginWithGoogleImpl(newsConsent?: boolean) {
       refreshToken: (result.user as any).refreshToken || '',
       providerId: 'google.com',
     });
-    const additionalInfo = getAdditionalUserInfo(result);
-    if (additionalInfo?.isNewUser) {
+    if (result.isNewUser) {
       await createUserProfile({
         uid: result.user.uid,
         displayName: result.user.displayName,
@@ -239,8 +270,17 @@ export async function wipeAllDataImpl(user: User) {
   }
 }
 
-export async function enableNotificationsImpl() {
-  return false;
+export async function enableNotificationsImpl(userId?: string) {
+  try {
+    const { requestNotificationPermissions, registerPushNotifications } = await import('@/lib/notifications');
+    const granted = await requestNotificationPermissions();
+    if (granted && userId) {
+      await registerPushNotifications(userId);
+    }
+    return granted;
+  } catch {
+    return false;
+  }
 }
 
 export async function sendEmailVerificationImpl() {

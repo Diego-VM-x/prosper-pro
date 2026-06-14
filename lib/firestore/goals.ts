@@ -1,27 +1,24 @@
-import { db, collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, setDoc, query, where, onSnapshot, type QuerySnapshot, type DocumentData } from '../firebase';
+import { db, collection, doc, addDoc, getDocs, getDoc, updateDoc, deleteDoc, setDoc, query, where, type QuerySnapshot, type DocumentData } from '../firebase';
+import { cachedQuerySnapshot } from './cachedOnSnapshot';
 import type { Goal, GoalCategory, GoalStatus } from '@/types';
 
 const COLLECTION = 'goals';
 
 export function subscribeToGoals(ownerId: string, callback: (goals: Goal[]) => void) {
   const q = query(collection(db, COLLECTION), where('ownerId', '==', ownerId));
-  console.log('[DEBUG subscribeToGoals] Query creado');
-  return onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
-    console.log('[DEBUG subscribeToGoals] Snapshot recibido, docs:', snapshot.size);
-    const goals: Goal[] = [];
-    snapshot.forEach((docSnap) => {
-      console.log('[DEBUG subscribeToGoals] Doc ID:', docSnap.id, 'Data:', JSON.stringify(docSnap.data(), null, 2));
-      goals.push({ id: docSnap.id, ...docSnap.data() } as Goal);
-    });
-    goals.sort((a, b) => b.createdAt - a.createdAt);
-    console.log('[DEBUG subscribeToGoals] Total goals procesados:', goals.length);
-    callback(goals);
-  }, (error) => {
-    console.error('[DEBUG subscribeToGoals] ERROR:', error);
-    console.error('[DEBUG subscribeToGoals] Error code:', error?.code);
-    console.error('[DEBUG subscribeToGoals] Error message:', error?.message);
-    callback([]);
-  });
+  return cachedQuerySnapshot(
+    q,
+    `goals_${ownerId}`,
+    (snapshot: QuerySnapshot<DocumentData>) => {
+      const goals: Goal[] = [];
+      snapshot.forEach((docSnap) => {
+        goals.push({ id: docSnap.id, ...docSnap.data() } as Goal);
+      });
+      goals.sort((a, b) => b.createdAt - a.createdAt);
+      return goals;
+    },
+    callback
+  );
 }
 
 export async function createGoal(goal: Omit<Goal, 'id' | 'createdAt' | 'updatedAt'>) {

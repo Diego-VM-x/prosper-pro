@@ -17,6 +17,7 @@ import { SecuritySection } from './SecuritySection';
 import { FaqAccordion } from './FaqAccordion';
 import { Footer } from './Footer';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
+import { AndroidDownloadButton } from './AndroidDownloadButton';
 
 const FEATURE_VISUALS = [
   (
@@ -170,6 +171,7 @@ export function LandingPage() {
                     </button>
                   </>
                 )}
+                <AndroidDownloadButton variant="outline" size="lg" />
               </div>
             </AnimatedSection>
 

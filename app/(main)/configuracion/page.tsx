@@ -12,7 +12,8 @@ import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { getDeviceInfo, getDeviceIcon } from '@/lib/utils/deviceInfo';
 import { getStoredTokens } from '@/lib/contexts/firebase-auth-core';
-import type { UserProfile, CurrencyCode, UserDevice } from '@/types';
+import { triggerTestNotification } from '@/lib/notifications';
+import type { UserProfile, CurrencyCode, UserDevice, NotificationType } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
@@ -777,6 +778,45 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         checked={calendarReminderNotif}
                         onChange={() => setCalendarReminderNotif(!calendarReminderNotif)}
                       />
+                    </div>
+                  </div>
+
+                  <div className="panel-card" style={{ marginTop: 16 }}>
+                    <div className="panel-header">
+                      <h2 className="panel-title">{t('notificaciones.test.title')}</h2>
+                      <p className="panel-desc">{t('notificaciones.test.desc')}</p>
+                    </div>
+                    <div className="notification-test-grid">
+                      {([
+                        ['plan_invite', 'ClipboardList', 'planInvite'],
+                        ['plan_contribution', 'Heart', 'planContribution'],
+                        ['plan_reminder', 'Clock', 'planReminder'],
+                        ['plan_rejected', 'XCircle', 'planRejected'],
+                        ['dollar_change', 'DollarSign', 'dollarChange'],
+                        ['daily_balance', 'BarChart3', 'dailyBalance'],
+                        ['app_update', 'Rocket', 'appUpdate'],
+                        ['calendar_reminder', 'CalendarDays', 'calendarReminder'],
+                      ] as [NotificationType, string, string][]).map(([type, icon, i18nKey]) => (
+                        <button
+                          key={type}
+                          className="notification-test-btn"
+                          onClick={async () => {
+                            if (!user?.uid) return;
+                            try {
+                              await triggerTestNotification(type, user.uid);
+                              setSuccessMsg(t('notificaciones.test.sent'));
+                              setTimeout(() => setSuccessMsg(''), 3000);
+                            } catch {
+                              setErrorMsg(t('notificaciones.test.error'));
+                              setTimeout(() => setErrorMsg(''), 3000);
+                            }
+                          }}
+                        >
+                          <InlineIcon icon={icon} size={16} />
+                          <span>{t(`notificaciones.toggles.${i18nKey}.label`)}</span>
+                          <span className="test-badge">{t('notificaciones.test.button')}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -1627,6 +1667,44 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
               flex-shrink: 0;
             }
             .toggle-switch.active { background: var(--color-prosper-green); }
+            .notification-test-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 10px;
+            }
+            .notification-test-btn {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 10px 12px;
+              border-radius: 10px;
+              background: var(--bg-input);
+              border: 1px solid transparent;
+              color: var(--text-primary);
+              font-size: 0.8125rem;
+              font-weight: 500;
+              cursor: pointer;
+              transition: all 0.15s;
+              text-align: left;
+            }
+            .notification-test-btn:hover {
+              background: var(--bg-card-hover);
+              border-color: var(--color-prosper-green);
+            }
+            .notification-test-btn span { flex: 1; }
+            .test-badge {
+              font-size: 0.65rem;
+              font-weight: 600;
+              text-transform: uppercase;
+              padding: 3px 8px;
+              border-radius: 999px;
+              background: rgba(61,204,142,0.12);
+              color: var(--color-prosper-green);
+              flex: 0 0 auto !important;
+            }
+            @media (max-width: 480px) {
+              .notification-test-grid { grid-template-columns: 1fr; }
+            }
             .toggle-switch::after {
               content: '';
               position: absolute;
