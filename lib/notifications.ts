@@ -6,6 +6,8 @@ import type { NotificationType } from '@/types';
 
 const isNative = Capacitor.isNativePlatform();
 
+let channelsCreated = false;
+
 /**
  * Request notification permissions for both web and native.
  */
@@ -38,6 +40,55 @@ export async function checkNotificationPermissions(): Promise<boolean> {
   }
 
   return Notification.permission === 'granted';
+}
+
+/**
+ * Create notification channels on Android. Safe to call multiple times.
+ */
+export async function createNotificationChannels(): Promise<void> {
+  if (!isNative || Capacitor.getPlatform() !== 'android') return;
+  if (channelsCreated) return;
+
+  try {
+    await LocalNotifications.createChannel({
+      id: 'prosper_general',
+      name: 'Notificaciones generales',
+      description: 'Alertas, recordatorios y noticias de Prosper Pro',
+      importance: 4, // IMPORTANCE_HIGH
+      visibility: 1, // VISIBILITY_PUBLIC
+      vibration: true,
+      lights: true,
+      lightColor: '#24D398',
+    });
+
+    await LocalNotifications.createChannel({
+      id: 'prosper_reminders',
+      name: 'Recordatorios',
+      description: 'Recordatorios de planes, pagos y calendario',
+      importance: 4,
+      visibility: 1,
+      vibration: true,
+      lights: true,
+      lightColor: '#24D398',
+    });
+
+    channelsCreated = true;
+  } catch (e) {
+    console.error('[Notifications] Failed to create channels:', e);
+  }
+}
+
+/**
+ * Check whether exact alarms are allowed (Android 12+).
+ */
+export async function checkExactAlarmPermission(): Promise<boolean> {
+  if (!isNative || Capacitor.getPlatform() !== 'android') return true;
+  try {
+    const result = await (LocalNotifications as any).checkExactNotificationSetting?.();
+    return result?.exact_alarm === 'granted';
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -83,29 +134,37 @@ export async function showLocalNotification(options: {
   title: string;
   body: string;
   id?: number;
+  channelId?: string;
 }): Promise<void> {
-  const { title, body, id = Date.now() } = options;
+  const { title, body, id = Date.now(), channelId = 'prosper_general' } = options;
 
   if (isNative) {
     const permission = await checkNotificationPermissions();
     if (!permission) {
-      console.warn('[Notifications] Permission not granted for local notification');
-      return;
+      throw new Error('Notifications permission not granted');
     }
 
-    await LocalNotifications.schedule({
-      notifications: [
-        {
-          id,
-          title,
-          body,
-          schedule: { at: new Date(Date.now() + 500) },
-          sound: 'default',
-          smallIcon: 'ic_launcher',
-          iconColor: '#24D398',
-        },
-      ],
-    });
+    await createNotificationChannels();
+
+    try {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id,
+            title,
+            body,
+            channelId,
+            schedule: { at: new Date(Date.now() + 2000) },
+            sound: 'default',
+            smallIcon: 'ic_stat_notification',
+            iconColor: '#24D398',
+          },
+        ],
+      });
+    } catch (e) {
+      console.error('[Notifications] schedule failed:', e);
+      throw e;
+    }
     return;
   }
 
@@ -183,7 +242,10 @@ export async function triggerTestNotification(
   const message = TEST_MESSAGES[type] || TEST_MESSAGES.info;
 
   // Ensure permissions before showing the notification (critical on Android native)
-  await requestNotificationPermissions();
+  const granted = await requestNotificationPermissions();
+  if (!granted) {
+    throw new Error('Notification permission denied');
+  }
 
   // Show native/local notification
   await showLocalNotification({ title: message.title, body: message.body });

@@ -720,3 +720,25 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
   - APK debug compilado con JDK 21 local (`jdk-21/`) tras corregir error `invalid source release: 21` causado por JDK 17 del sistema.
   - APK copiado a `public/prosper-pro.apk` (17 MB).
 - **Deploy**: Push a `test-deploy` (`c1f4821`) y posterior push/merge a `master`.
+
+### 13/06/2026 - Configuración completa de notificaciones locales en Android nativo
+- **Problema**: Las notificaciones de prueba no aparecían en Android nativo al forzarlas desde Configuración.
+- **Causas identificadas**:
+  - Faltaba permiso `SCHEDULE_EXACT_ALARM` en `AndroidManifest.xml` para alarmas exactas en Android 12+.
+  - `capacitor.config.ts` no configuraba el plugin `LocalNotifications` (icono, color, sonido).
+  - `smallIcon: 'ic_launcher'` era inválido (es un `mipmap`, no un `drawable`).
+  - No se creaban canales de notificación propios ni se manejaban errores de `LocalNotifications.schedule()`.
+  - El delay de 500 ms podía causar rechazo por hora en el pasado en dispositivos lentos.
+  - En `app/(main)/configuracion/page.tsx` el estado del toggle se inicializaba solo con `window.Notification.permission`, que no existe en nativo.
+- **Archivos modificados**:
+  - `android/app/src/main/AndroidManifest.xml`: agregados `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED` y `WAKE_LOCK`.
+  - `capacitor.config.ts`: configuración de `LocalNotifications` con `smallIcon: 'ic_stat_notification'`, `iconColor: '#24D398'` y `sound: 'default'`.
+  - `android/app/src/main/res/drawable/ic_stat_notification.xml`: nuevo icono vector monocromático de campana para notificaciones.
+  - `lib/notifications.ts`: funciones `createNotificationChannels`, `checkExactAlarmPermission`, manejo de errores en `showLocalNotification`, delay aumentado a 2000 ms, `smallIcon` corregido y `triggerTestNotification` valida permiso antes de continuar.
+  - `app/(main)/configuracion/page.tsx`: importa `checkNotificationPermissions` e inicializa `notifEnabled` correctamente en web y nativo.
+- **Builds verificados**:
+  - `tsc --noEmit` exitoso.
+  - Mobile static export exitoso.
+  - `npx cap sync android` exitoso.
+  - APK debug compilado con JDK 21 local y copiado a `public/prosper-pro.apk` (25 MB).
+- **Deploy**: Push a `test-deploy` y `master`.

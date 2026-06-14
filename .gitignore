@@ -46,3 +46,11 @@ next-env.d.ts
 
 # backups
 /_backup_comunidad_logros/
+
+# mobile build artifacts
+/dist/
+/jdk-21/
+/%USERPROFILE%/
+/android/app/build/
+/android/captures/
+/android/.gradle/

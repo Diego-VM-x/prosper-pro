@@ -12,7 +12,7 @@ import { CURRENCY_LIST, CURRENCY_MAP } from '@/lib/currency';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
 import { getDeviceInfo, getDeviceIcon } from '@/lib/utils/deviceInfo';
 import { getStoredTokens } from '@/lib/contexts/firebase-auth-core';
-import { triggerTestNotification } from '@/lib/notifications';
+import { triggerTestNotification, checkNotificationPermissions } from '@/lib/notifications';
 import type { UserProfile, CurrencyCode, UserDevice, NotificationType } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
@@ -77,9 +77,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     (!user?.providerData?.length && storedTokens?.providerId === 'password');
 
   useEffect(() => {
-    if ('Notification' in window) {
-      setNotifEnabled(Notification.permission === 'granted');
-    }
+    // Check permission status on both web and native platforms
+    checkNotificationPermissions().then((granted) => setNotifEnabled(granted));
     const uid = user?.uid as string;
     if (!uid) return;
     // Load update modal preference

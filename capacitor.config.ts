@@ -1,4 +1,5 @@
 /// <reference types="@capacitor-firebase/authentication" />
+/// <reference types="@capacitor/local-notifications" />
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
@@ -24,6 +25,11 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    LocalNotifications: {
+      smallIcon: 'ic_stat_notification',
+      iconColor: '#24D398',
+      sound: 'default',
     },
     FirebaseAuthentication: {
       skipNativeAuth: true,
