@@ -743,6 +743,24 @@ Objetivo: Resolver reportes de usuarios de "algo salió mal" / "no se pudo abrir
   - APK debug compilado con JDK 21 local y copiado a `public/prosper-pro.apk` (25 MB).
 - **Deploy**: Push a `test-deploy` y `master`.
 
+### 14/06/2026 - Migración a autenticación nativa en Android
+- **Problema**: A pesar de tener el SHA-1 registrado, seguía apareciendo el error `16: [28433] Cannot find a matching credential` con Google Sign-In y `credenciales incorrectas` con email/password en Android nativo.
+- **Causa**: En `capacitor.config.ts` estaba configurado `skipNativeAuth: true`, lo que fuerza al plugin `@capacitor-firebase/authentication` a delegar la auth en el Firebase JS SDK. La documentación del plugin advierte explícitamente que `skipNativeAuth` no debe usarse junto con `signInWithEmailAndPassword` ni `createUserWithEmailAndPassword` del JS SDK.
+- **Solución**:
+  - Cambiado `skipNativeAuth` a `false` en `capacitor.config.ts`.
+  - En Android nativo, el login con Google ahora usa `FirebaseAuthentication.signInWithGoogle()` directamente.
+  - En Android nativo, el login con email/password ahora usa `FirebaseAuthentication.signInWithEmailAndPassword()`.
+  - En Android nativo, el registro ahora usa `FirebaseAuthentication.createUserWithEmailAndPassword()` + `updateProfile()`.
+  - Cerrar sesión, eliminar cuenta, cambio de contraseña y envío de verificación de email también se migran al plugin nativo cuando corresponde.
+  - Después del login nativo, se espera a que `onAuthStateChanged` del Firebase JS SDK sincronice el usuario (`waitForAuthUser`).
+- **Archivos modificados**: `capacitor.config.ts`, `lib/contexts/firebase-auth-core.ts`.
+- **Build verificado**:
+  - `npx tsc --noEmit` exitoso.
+  - `npx cap sync android` exitoso.
+  - `./gradlew assembleDebug` exitoso con JDK 21 local.
+  - APK debug: `Prosper Pro-1.0.3-debug.apk` (9.0 MB), copiado a `public/prosper-pro.apk`.
+- **Deploy**: Push a `test-deploy` y `master`.
+
 ### 13/06/2026 - Menú móvil: botón "Ir al Inicio" apunta a web desplegada
 - **Archivo**: `app/components/Topbar.tsx`
 - **Cambio**: El botón "Ir al Inicio" en el menú desplegable móvil ahora abre `https://prosper-pro.vercel.app/inicio` en una nueva pestaña, en lugar de navegar a `/` internamente.

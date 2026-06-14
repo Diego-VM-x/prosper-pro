@@ -39,6 +39,29 @@ export function getStoredTokens(): StoredTokens | null {
   return null;
 }
 
+async function isNativePlatform(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  const { Capacitor } = await import('@capacitor/core');
+  return Capacitor.isNativePlatform();
+}
+
+async function waitForAuthUser(timeoutMs = 10000): Promise<User> {
+  if (!auth) throw new Error('Firebase Auth no está disponible.');
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      unsubscribe();
+      reject(new Error('Timeout esperando sincronización de autenticación.'));
+    }, timeoutMs);
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      if (u) {
+        clearTimeout(timeout);
+        unsubscribe();
+        resolve(u);
+      }
+    });
+  });
+}
+
 async function onUserReady(u: User) {
   // Register for push/local notifications in the background
   try {
@@ -131,21 +154,15 @@ export async function initAuth({
 export async function loginWithGoogleImpl(newsConsent?: boolean) {
   if (!auth) throw new Error('Firebase Auth no está disponible.');
 
-  const isNative = typeof window !== 'undefined' && (await import('@capacitor/core')).Capacitor.isNativePlatform();
+  const isNative = await isNativePlatform();
 
   let result: { user: User | null; isNewUser?: boolean } = { user: null };
 
   if (isNative) {
     const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-    const { signInWithCredential, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
     const nativeResult = await FirebaseAuthentication.signInWithGoogle();
-    const credential = GoogleAuthProvider.credential(
-      nativeResult.credential?.idToken,
-      nativeResult.credential?.accessToken,
-    );
-    const userCred = await signInWithCredential(auth, credential);
-    const additionalInfo = getAdditionalUserInfo(userCred);
-    result = { user: userCred.user, isNewUser: additionalInfo?.isNewUser };
+    const firebaseUser = await waitForAuthUser();
+    result = { user: firebaseUser, isNewUser: nativeResult.additionalUserInfo?.isNewUser };
   } else {
     const { signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
     const popupResult = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -186,8 +203,20 @@ export async function loginWithGoogleImpl(newsConsent?: boolean) {
 export async function loginWithEmailImpl(email: string, pass: string) {
   if (!auth) throw new Error('Firebase Auth no está disponible.');
   if (!navigator.onLine) throw { code: 'auth/network-request-failed', message: 'Sin conexión a internet.' };
-  const { signInWithEmailAndPassword } = await import('firebase/auth');
-  const userCred = await signInWithEmailAndPassword(auth, email, pass);
+
+  const isNative = await isNativePlatform();
+  let userCred: { user: User };
+
+  if (isNative) {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+    await FirebaseAuthentication.signInWithEmailAndPassword({ email, password: pass });
+    const firebaseUser = await waitForAuthUser();
+    userCred = { user: firebaseUser };
+  } else {
+    const { signInWithEmailAndPassword } = await import('firebase/auth');
+    userCred = await signInWithEmailAndPassword(auth, email, pass);
+  }
+
   storeTokens({
     localId: userCred.user.uid,
     email: userCred.user.email || undefined,
@@ -203,29 +232,53 @@ export async function loginWithEmailImpl(email: string, pass: string) {
 
 export async function changePasswordImpl(currentPassword: string, newPassword: string, user: User) {
   if (!auth || !user?.email) throw new Error('Firebase Auth no está disponible.');
-  const { signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
-  // Re-authenticate with current password
-  const userCred = await signInWithEmailAndPassword(auth, user.email, currentPassword);
-  // Update password
-  await updatePassword(userCred.user, newPassword);
+
+  const isNative = await isNativePlatform();
+  let currentUser: User;
+
+  if (isNative) {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+    await FirebaseAuthentication.signInWithEmailAndPassword({ email: user.email, password: currentPassword });
+    await FirebaseAuthentication.updatePassword({ newPassword });
+    currentUser = await waitForAuthUser();
+  } else {
+    const { signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
+    const userCred = await signInWithEmailAndPassword(auth, user.email, currentPassword);
+    await updatePassword(userCred.user, newPassword);
+    currentUser = userCred.user;
+  }
+
   // Refresh and store new tokens
-  const idToken = await userCred.user.getIdToken(true);
+  const idToken = await currentUser.getIdToken(true);
   storeTokens({
-    localId: userCred.user.uid,
-    email: userCred.user.email || undefined,
-    displayName: userCred.user.displayName || undefined,
-    photoUrl: userCred.user.photoURL || undefined,
+    localId: currentUser.uid,
+    email: currentUser.email || undefined,
+    displayName: currentUser.displayName || undefined,
+    photoUrl: currentUser.photoURL || undefined,
     idToken,
-    refreshToken: (userCred.user as any).refreshToken || '',
+    refreshToken: (currentUser as any).refreshToken || '',
     providerId: 'password',
   });
 }
 
 export async function registerWithEmailImpl(email: string, pass: string, name: string, currency?: CurrencyCode, language?: string, theme?: string, newsConsent?: boolean) {
   if (!auth) return;
-  const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-  const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-  await updateProfile(userCred.user, { displayName: name });
+
+  const isNative = await isNativePlatform();
+  let userCred: { user: User };
+
+  if (isNative) {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+    await FirebaseAuthentication.createUserWithEmailAndPassword({ email, password: pass });
+    await FirebaseAuthentication.updateProfile({ displayName: name });
+    const firebaseUser = await waitForAuthUser();
+    userCred = { user: firebaseUser };
+  } else {
+    const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+    userCred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(userCred.user, { displayName: name });
+  }
+
   storeTokens({
     localId: userCred.user.uid,
     email: userCred.user.email || undefined,
@@ -253,7 +306,12 @@ export async function registerWithEmailImpl(email: string, pass: string, name: s
 
 export async function logoutImpl() {
   clearStoredTokens();
-  if (auth) try { await signOut(auth); } catch {}
+  if (await isNativePlatform()) {
+    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+    try { await FirebaseAuthentication.signOut(); } catch {}
+  } else if (auth) {
+    try { await signOut(auth); } catch {}
+  }
 }
 
 export async function deleteAccountImpl(user: User) {
@@ -262,8 +320,13 @@ export async function deleteAccountImpl(user: User) {
     const { wipeAllUserData } = await import('@/lib/firestore/accounts');
     const result = await wipeAllUserData(user.uid);
     try {
-      const { deleteUser } = await import('firebase/auth');
-      await deleteUser(user);
+      if (await isNativePlatform()) {
+        const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+        await FirebaseAuthentication.deleteUser();
+      } else {
+        const { deleteUser } = await import('firebase/auth');
+        await deleteUser(user);
+      }
     } catch {}
     clearStoredTokens();
     return { success: true, wiped: result.wiped };
@@ -302,11 +365,16 @@ export async function enableNotificationsImpl(userId?: string) {
 export async function sendEmailVerificationImpl() {
   if (!auth || !auth.currentUser) return { success: false, error: 'No hay usuario autenticado.' };
   try {
-    const { sendEmailVerification } = await import('firebase/auth');
-    await sendEmailVerification(auth.currentUser, {
-      url: typeof window !== 'undefined' ? `${window.location.origin}/configuracion?tab=seguridad` : 'https://prosper-pro.vercel.app/configuracion?tab=seguridad',
-      handleCodeInApp: false,
-    });
+    if (await isNativePlatform()) {
+      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
+      await FirebaseAuthentication.sendEmailVerification();
+    } else {
+      const { sendEmailVerification } = await import('firebase/auth');
+      await sendEmailVerification(auth.currentUser, {
+        url: typeof window !== 'undefined' ? `${window.location.origin}/configuracion?tab=seguridad` : 'https://prosper-pro.vercel.app/configuracion?tab=seguridad',
+        handleCodeInApp: false,
+      });
+    }
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Error al enviar el correo de verificación.' };
