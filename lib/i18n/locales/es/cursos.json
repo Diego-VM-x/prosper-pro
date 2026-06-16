@@ -1,0 +1,23 @@
+{
+  "pageTitle": "Academia Prosper",
+  "pageSubtitle": "Desarrolla tus habilidades financieras con cursos interactivos.",
+  "loading": "Cargando cursos...",
+  "empty": "No hay cursos disponibles.",
+  "completed": "Completado",
+  "modulesCount": "{{count}} módulos",
+  "modulesProgress": "{{completed}}/{{total}} módulos",
+  "continue": "Continuar",
+  "start": "Iniciar",
+  "detail": {
+    "loading": "Cargando curso...",
+    "backToCourses": "← Volver a Cursos",
+    "modulesCount": "{{count}} módulos",
+    "yourProgress": "Tu Progreso",
+    "modulesCompleted": "{{completed}} de {{total}} módulos completados",
+    "enrollPrompt": "Inscríbete para comenzar este curso y ganar {{xp}} XP.",
+    "enrollButton": "Inscribirse en el Curso",
+    "durationMin": "{{duration}} min",
+    "completedBadge": "Completado",
+    "markCompleted": "Marcar como Completado"
+  }
+}

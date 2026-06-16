@@ -31,6 +31,10 @@
     "languageCurrencyTitle": "Language & Currency",
     "languageCurrencyDesc": "Customize your experience",
     "languageLabel": "Interface Language",
+    "languageOptions": {
+      "es": "Español",
+      "en": "English"
+    },
     "inDevelopment": "In Development",
     "currencyLabel": "Display Currency",
     "ratesLabel": "Active Exchange Rates",
@@ -51,9 +55,15 @@
     "publicDesc": "Other users can find you by name or email when sharing plans.",
     "privateDesc": "You can only be found by exact email. Your name won't appear in searches."
   },
+  "market": {
+    "fiat": "Fiat",
+    "cryptos": "Cryptocurrencies",
+    "p2pBadge": "P2P Binance"
+  },
   "notificaciones": {
     "panelTitle": "Notification Center",
     "panelDesc": "Control which alerts you receive",
+    "inDevelopment": "In development",
     "toggles": {
       "push": {
         "label": "Push Notifications",
@@ -109,6 +119,14 @@
     }
   },
   "seguridad": {
+    "passwordChangeNotAvailable": "Google users cannot change their password here",
+    "passwordEmpty": "Please fill in all fields",
+    "passwordMismatch": "New passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordNoUppercase": "Password must contain at least one uppercase letter",
+    "passwordNoLowercase": "Password must contain at least one lowercase letter",
+    "passwordNoNumber": "Password must contain at least one number",
+    "passwordChanged": "Password updated successfully",
     "sessionsTitle": "Active Sessions",
     "sessionsDesc": "Devices connected to your account",
     "thisDevice": "This Device",
@@ -128,11 +146,24 @@
       "offlineBadge": "Inactive",
       "offlineDetail": "Session expired"
     },
+    "changePassword": {
+      "title": "Change Password",
+      "desc": "Update your access password",
+      "btn": "Change password",
+      "current": "Current password",
+      "currentPlaceholder": "Your current password",
+      "new": "New password",
+      "newPlaceholder": "At least 8 characters",
+      "confirm": "Confirm new password",
+      "confirmPlaceholder": "Repeat the new password",
+      "saving": "Saving...",
+      "submit": "Update password"
+    },
     "deleteAccount": {
       "title": "Delete Account",
       "desc": "This action is irreversible. All your data will be permanently deleted.",
       "btn": "Delete my account",
-      "confirmLabel": "Type <strong>DELETE</strong> to confirm:",
+      "confirmLabel": "Type DELETE to confirm:",
       "placeholder": "DELETE",
       "cancel": "Cancel",
       "deleting": "Deleting...",
@@ -142,7 +173,7 @@
       "title": "Delete All My Data",
       "desc": "Removes all your goals, transactions, accounts, and settings. Your account will remain active with default accounts.",
       "btn": "Delete all my data",
-      "confirmLabel": "Type <strong>WIPE</strong> to confirm:",
+      "confirmLabel": "Type WIPE to confirm:",
       "placeholder": "WIPE",
       "cancel": "Cancel",
       "wiping": "Deleting...",

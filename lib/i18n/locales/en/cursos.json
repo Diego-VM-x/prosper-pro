@@ -1,0 +1,23 @@
+{
+  "pageTitle": "Prosper Academy",
+  "pageSubtitle": "Develop your financial skills with interactive courses.",
+  "loading": "Loading courses...",
+  "empty": "No courses available.",
+  "completed": "Completed",
+  "modulesCount": "{{count}} modules",
+  "modulesProgress": "{{completed}}/{{total}} modules",
+  "continue": "Continue",
+  "start": "Start",
+  "detail": {
+    "loading": "Loading course...",
+    "backToCourses": "← Back to Courses",
+    "modulesCount": "{{count}} modules",
+    "yourProgress": "Your Progress",
+    "modulesCompleted": "{{completed}} of {{total}} modules completed",
+    "enrollPrompt": "Enroll to start this course and earn {{xp}} XP.",
+    "enrollButton": "Enroll in Course",
+    "durationMin": "{{duration}} min",
+    "completedBadge": "Completed",
+    "markCompleted": "Mark as Completed"
+  }
+}

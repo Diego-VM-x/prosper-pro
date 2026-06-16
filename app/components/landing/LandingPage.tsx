@@ -19,82 +19,6 @@ import { Footer } from './Footer';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { DownloadButton } from './AndroidDownloadButton';
 
-const FEATURE_VISUALS = [
-  (
-    <div className="feature-visual-accounts">
-      <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
-        <span className="feature-account-icon"><InlineIcon icon="Banknote" size={16} /></span>
-        <span className="feature-account-name">Efectivo</span>
-        <span className="feature-account-balance">$1,240</span>
-      </div>
-      <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
-        <span className="feature-account-icon"><InlineIcon icon="Landmark" size={16} /></span>
-        <span className="feature-account-name">Banco</span>
-        <span className="feature-account-balance">$3,580</span>
-      </div>
-      <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
-        <span className="feature-account-icon"><InlineIcon icon="Diamond" size={16} /></span>
-        <span className="feature-account-name">USDT</span>
-        <span className="feature-account-balance">₮850</span>
-      </div>
-    </div>
-  ),
-  (
-    <div className="feature-visual-goals">
-      <div className="feature-goal-mini">
-        <span><InlineIcon icon="Car" size={16} /> Auto</span>
-        <div className="feature-goal-bar"><div className="feature-goal-fill" style={{ width: '65%' }} /></div>
-      </div>
-      <div className="feature-goal-mini">
-        <span><InlineIcon icon="Sunset" size={16} /> Vacaciones</span>
-        <div className="feature-goal-bar"><div className="feature-goal-fill blue" style={{ width: '42%' }} /></div>
-      </div>
-    </div>
-  ),
-  (
-    <div className="feature-visual-chart">
-      {[35, 55, 40, 70, 50, 85, 60].map((h, i) => (
-        <div key={i} className="feature-chart-bar" style={{ height: `${h}%` }} />
-      ))}
-    </div>
-  ),
-  (
-    <div className="feature-visual-rates">
-      <div className="feature-rate-pill"><span>USD/BS</span><span>567.00</span></div>
-      <div className="feature-rate-pill active"><span>USDT/BS</span><span>569.50</span></div>
-      <div className="feature-rate-pill"><span>EUR/BS</span><span>612.00</span></div>
-    </div>
-  ),
-  (
-    <div className="feature-visual-calendar">
-      {Array.from({ length: 12 }).map((_, i) => (
-        <div key={i} className={`feature-cal-day ${[2, 7, 10].includes(i) ? 'event' : ''}`}>{i + 1}</div>
-      ))}
-    </div>
-  ),
-  (
-    <div className="feature-visual-ocr">
-      <div className="feature-ocr-receipt">
-        <div className="feature-ocr-row"><span>Banco</span><span>Banesco</span></div>
-        <div className="feature-ocr-row"><span>Monto</span><span>$120.00</span></div>
-        <div className="feature-ocr-row"><span>Ref.</span><span>00992344</span></div>
-        <div className="feature-ocr-status"><InlineIcon icon="CheckCircle2" size={16} /> Verificado</div>
-      </div>
-    </div>
-  ),
-  (
-    <div className="feature-visual-share">
-      <div className="feature-share-avatars">
-        <span className="feature-share-avatar">M</span>
-        <span className="feature-share-avatar">C</span>
-        <span className="feature-share-avatar">A</span>
-        <span className="feature-share-avatar">+2</span>
-      </div>
-      <div className="feature-share-pill">$450 / 5 personas</div>
-    </div>
-  ),
-];
-
 interface FeatureItem {
   icon: string;
   title: string;
@@ -106,6 +30,82 @@ export function LandingPage() {
   const router = useRouter();
   const { t } = useTranslation('landing');
   const { user } = useAuth();
+
+  const FEATURE_VISUALS = [
+    (
+      <div className="feature-visual-accounts">
+        <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3DCC8E, #2BA87A)' }}>
+          <span className="feature-account-icon"><InlineIcon icon="Banknote" size={16} /></span>
+          <span className="feature-account-name">{t('visuals.cash')}</span>
+          <span className="feature-account-balance">$1,240</span>
+        </div>
+        <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #3B82F6, #2563EB)' }}>
+          <span className="feature-account-icon"><InlineIcon icon="Landmark" size={16} /></span>
+          <span className="feature-account-name">{t('visuals.bank')}</span>
+          <span className="feature-account-balance">$3,580</span>
+        </div>
+        <div className="feature-account-card" style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
+          <span className="feature-account-icon"><InlineIcon icon="Diamond" size={16} /></span>
+          <span className="feature-account-name">USDT</span>
+          <span className="feature-account-balance">₮850</span>
+        </div>
+      </div>
+    ),
+    (
+      <div className="feature-visual-goals">
+        <div className="feature-goal-mini">
+          <span><InlineIcon icon="Car" size={16} /> {t('visuals.car')}</span>
+          <div className="feature-goal-bar"><div className="feature-goal-fill" style={{ width: '65%' }} /></div>
+        </div>
+        <div className="feature-goal-mini">
+          <span><InlineIcon icon="Sunset" size={16} /> {t('visuals.vacations')}</span>
+          <div className="feature-goal-bar"><div className="feature-goal-fill blue" style={{ width: '42%' }} /></div>
+        </div>
+      </div>
+    ),
+    (
+      <div className="feature-visual-chart">
+        {[35, 55, 40, 70, 50, 85, 60].map((h, i) => (
+          <div key={i} className="feature-chart-bar" style={{ height: `${h}%` }} />
+        ))}
+      </div>
+    ),
+    (
+      <div className="feature-visual-rates">
+        <div className="feature-rate-pill"><span>USD/BS</span><span>567.00</span></div>
+        <div className="feature-rate-pill active"><span>USDT/BS</span><span>569.50</span></div>
+        <div className="feature-rate-pill"><span>EUR/BS</span><span>612.00</span></div>
+      </div>
+    ),
+    (
+      <div className="feature-visual-calendar">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div key={i} className={`feature-cal-day ${[2, 7, 10].includes(i) ? 'event' : ''}`}>{i + 1}</div>
+        ))}
+      </div>
+    ),
+    (
+      <div className="feature-visual-ocr">
+        <div className="feature-ocr-receipt">
+          <div className="feature-ocr-row"><span>{t('visuals.bankLabel')}</span><span>Banesco</span></div>
+          <div className="feature-ocr-row"><span>{t('visuals.amountLabel')}</span><span>$120.00</span></div>
+          <div className="feature-ocr-row"><span>{t('visuals.refLabel')}</span><span>00992344</span></div>
+          <div className="feature-ocr-status"><InlineIcon icon="CheckCircle2" size={16} /> {t('visuals.verified')}</div>
+        </div>
+      </div>
+    ),
+    (
+      <div className="feature-visual-share">
+        <div className="feature-share-avatars">
+          <span className="feature-share-avatar">M</span>
+          <span className="feature-share-avatar">C</span>
+          <span className="feature-share-avatar">A</span>
+          <span className="feature-share-avatar">+2</span>
+        </div>
+        <div className="feature-share-pill">$450 / 5 {t('visuals.people')}</div>
+      </div>
+    ),
+  ];
 
   const FEATURES_DATA = t('features.items', { returnObjects: true }) as FeatureItem[];
   const FEATURES = FEATURES_DATA.map((f, i) => ({

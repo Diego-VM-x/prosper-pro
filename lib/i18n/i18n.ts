@@ -28,6 +28,12 @@ import landingEN from './locales/en/landing.json';
 import authES from './locales/es/auth.json';
 import authEN from './locales/en/auth.json';
 
+import cursosES from './locales/es/cursos.json';
+import cursosEN from './locales/en/cursos.json';
+
+import legalES from './locales/es/legal.json';
+import legalEN from './locales/en/legal.json';
+
 export const resources = {
   es: {
     common: commonES,
@@ -39,6 +45,8 @@ export const resources = {
     ayuda: ayudaES,
     landing: landingES,
     auth: authES,
+    cursos: cursosES,
+    legal: legalES,
   },
   en: {
     common: commonEN,
@@ -50,6 +58,8 @@ export const resources = {
     ayuda: ayudaEN,
     landing: landingEN,
     auth: authEN,
+    cursos: cursosEN,
+    legal: legalEN,
   },
 };
 
@@ -59,7 +69,7 @@ export function createI18nInstance() {
     resources,
     fallbackLng: 'es',
     defaultNS: 'common',
-    ns: ['common', 'dashboard', 'finanzas', 'metas', 'calendario', 'configuracion', 'ayuda', 'landing', 'auth'],
+    ns: ['common', 'dashboard', 'finanzas', 'metas', 'calendario', 'configuracion', 'ayuda', 'landing', 'auth', 'cursos', 'legal'],
     interpolation: {
       escapeValue: false,
     },

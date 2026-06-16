@@ -65,11 +65,11 @@ export function DownloadButton({
         onClick={handleClick}
       >
         <DownloadIcon size={size === 'lg' ? 22 : size === 'sm' ? 16 : 18} />
-        <span>{isAndroid ? t('androidDownload.button', { defaultValue: 'Descargar apk' }) : t('androidDownload.buttonDesktop', { defaultValue: 'Descargar apk' })}</span>
+        <span>{isAndroid ? t('androidDownload.button') : t('androidDownload.buttonDesktop')}</span>
       </a>
       {showHint && (
         <div className="android-download-hint">
-          {t('androidDownload.iosHint', { defaultValue: 'El APK es para Android. En iPhone usa la versión web.' })}
+          {t('androidDownload.iosHint')}
         </div>
       )}
     </>

@@ -2,66 +2,67 @@
 
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { AnimatedSection } from '../AnimatedSection';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
-const TUTORIAL_MOCKUPS = [
-  (
+const TUTORIAL_MOCKUPS: ((t: TFunction) => React.ReactNode)[] = [
+  (t) => (
     <div className="tutorial-mockup">
       <div className="tm-row">
-        <div className="tm-badge green">Ingreso</div>
-        <span className="tm-text">Salario mensual</span>
+        <div className="tm-badge green">{t('tutorials.mockups.income')}</div>
+        <span className="tm-text">{t('tutorials.mockups.salary')}</span>
         <span className="tm-amount">+$1,200</span>
       </div>
       <div className="tm-row">
-        <div className="tm-badge red">Gasto</div>
-        <span className="tm-text">Supermercado</span>
+        <div className="tm-badge red">{t('tutorials.mockups.expense')}</div>
+        <span className="tm-text">{t('tutorials.mockups.supermarket')}</span>
         <span className="tm-amount">-$85.50</span>
       </div>
       <div className="tm-row">
-        <div className="tm-badge blue">Ahorro</div>
-        <span className="tm-text">Fondo emergencia</span>
+        <div className="tm-badge blue">{t('tutorials.mockups.saving')}</div>
+        <span className="tm-text">{t('tutorials.mockups.emergencyFund')}</span>
         <span className="tm-amount">+$200</span>
       </div>
     </div>
   ),
-  (
+  (t) => (
     <div className="tutorial-mockup">
       <div className="tm-goal">
         <div className="tm-goal-header">
-          <span><InlineIcon icon="Car" size={16} /> Auto nuevo</span>
+          <span><InlineIcon icon="Car" size={16} /> {t('tutorials.mockups.newCar')}</span>
           <span>65%</span>
         </div>
         <div className="tm-goal-bar"><div className="tm-goal-fill" style={{ width: '65%' }} /></div>
-        <div className="tm-goal-meta">$3,250 / $5,000 · vence en 4 meses</div>
+        <div className="tm-goal-meta">$3,250 / $5,000 · {t('tutorials.mockups.dueInMonths', { months: 4 })}</div>
       </div>
     </div>
   ),
-  (
+  (t) => (
     <div className="tutorial-mockup">
       <div className="tm-receipt">
-        <div className="tm-receipt-row"><span>Banco</span><span>Banesco</span></div>
-        <div className="tm-receipt-row"><span>Monto</span><span>$120.00</span></div>
-        <div className="tm-receipt-row"><span>Ref.</span><span>00992344</span></div>
-        <div className="tm-receipt-row"><span>Fecha</span><span>06/06/2026</span></div>
-        <div className="tm-receipt-status"><InlineIcon icon="CheckCircle2" size={16} /> Datos verificados</div>
+        <div className="tm-receipt-row"><span>{t('tutorials.mockups.bank')}</span><span>Banesco</span></div>
+        <div className="tm-receipt-row"><span>{t('tutorials.mockups.amount')}</span><span>$120.00</span></div>
+        <div className="tm-receipt-row"><span>{t('tutorials.mockups.ref')}</span><span>00992344</span></div>
+        <div className="tm-receipt-row"><span>{t('tutorials.mockups.date')}</span><span>06/06/2026</span></div>
+        <div className="tm-receipt-status"><InlineIcon icon="CheckCircle2" size={16} /> {t('tutorials.mockups.verified')}</div>
       </div>
     </div>
   ),
-  (
+  (t) => (
     <div className="tutorial-mockup">
       <div className="tm-toggle-row">
-        <span className="tm-toggle-label">Tasa USDT</span>
+        <span className="tm-toggle-label">{t('tutorials.mockups.usdtRate')}</span>
         <div className="tm-toggle-pills">
-          <span className="tm-pill">Oficial 45.20</span>
-          <span className="tm-pill active">P2P 46.80</span>
+          <span className="tm-pill">{t('tutorials.mockups.official')} 45.20</span>
+          <span className="tm-pill active">{t('tutorials.mockups.p2p')} 46.80</span>
         </div>
       </div>
       <div className="tm-toggle-row">
-        <span className="tm-toggle-label">Tasa BTC</span>
+        <span className="tm-toggle-label">{t('tutorials.mockups.btcRate')}</span>
         <div className="tm-toggle-pills">
-          <span className="tm-pill">Oficial 4,520,000</span>
-          <span className="tm-pill active">P2P 4,680,000</span>
+          <span className="tm-pill">{t('tutorials.mockups.official')} 4,520,000</span>
+          <span className="tm-pill active">{t('tutorials.mockups.p2p')} 4,680,000</span>
         </div>
       </div>
     </div>
@@ -80,7 +81,7 @@ export function TutorialTabs() {
   const TUTORIALS_DATA = t('tutorials.items', { returnObjects: true }) as TutorialItem[];
   const TUTORIALS = TUTORIALS_DATA.map((item, i) => ({
     ...item,
-    mockup: TUTORIAL_MOCKUPS[i],
+    mockup: TUTORIAL_MOCKUPS[i](t),
   }));
 
   const [active, setActive] = useState(TUTORIALS[0].id);

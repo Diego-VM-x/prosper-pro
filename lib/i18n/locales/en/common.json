@@ -50,6 +50,13 @@
     "login": "Log In",
     "pageHome": "Home",
     "goHome": "Go Home",
+    "errorBoundary": {
+      "title": "Something went wrong",
+      "message": "This page could not load correctly. Try reloading the page.",
+      "reload": "Reload page",
+      "details": "Error details",
+      "notAvailable": "Not available"
+    },
     "pages": "Pages",
     "goals": "Goals",
     "plans": "Plans",
@@ -65,17 +72,38 @@
     "savings": "Savings",
     "noResults": "No results found for \"{{query}}\"",
     "createToSearch": "Create goals, plans or transactions to search",
+    "searchKeywords": {
+      "home": "home landing main page",
+      "dashboard": "dashboard home main",
+      "plans": "plans goals objectives tasks finances",
+      "calendar": "calendar events dates",
+      "finances": "finances money expenses income accounts",
+      "settings": "settings configuration preferences",
+      "help": "help support assistance"
+    },
     "errorDeleteNotif": "Error deleting notification:",
     "errorClearNotif": "Error clearing notifications:",
     "browserNotificationTitle": "Prosper",
     "browserNotification_one": "You have {{count}} new notification",
     "browserNotification_other": "You have {{count}} new notifications"
   },
+  "loading": "Loading...",
+  "loadingApp": "Loading Prosper Pro...",
   "toast": {
     "success": "Success",
     "error": "Error",
     "warning": "Warning",
     "info": "Info"
+  },
+  "customSelect": {
+    "placeholder": "Select...",
+    "customPlaceholder": "Custom name",
+    "add": "Add",
+    "addCustom": "Add custom..."
+  },
+  "confirmDialog": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   },
   "buttons": {
     "save": "Save",

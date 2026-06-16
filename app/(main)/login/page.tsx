@@ -151,16 +151,16 @@ export default function LoginPage() {
                   <input type="password" placeholder={t('login.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
                   <div className="password-hints">
                     <span className={`password-hint ${password.length >= 8 ? 'valid' : ''}`}>
-                      {password.length >= 8 ? '✓' : '•'} {t('login.passwordHints.minLength', { defaultValue: 'Mínimo 8 caracteres' })}
+                      {password.length >= 8 ? '✓' : '•'} {t('login.passwordHints.minLength')}
                     </span>
                     <span className={`password-hint ${/[A-Z]/.test(password) ? 'valid' : ''}`}>
-                      {/[A-Z]/.test(password) ? '✓' : '•'} {t('login.passwordHints.uppercase', { defaultValue: 'Una mayúscula' })}
+                      {/[A-Z]/.test(password) ? '✓' : '•'} {t('login.passwordHints.uppercase')}
                     </span>
                     <span className={`password-hint ${/[a-z]/.test(password) ? 'valid' : ''}`}>
-                      {/[a-z]/.test(password) ? '✓' : '•'} {t('login.passwordHints.lowercase', { defaultValue: 'Una minúscula' })}
+                      {/[a-z]/.test(password) ? '✓' : '•'} {t('login.passwordHints.lowercase')}
                     </span>
                     <span className={`password-hint ${/[0-9]/.test(password) ? 'valid' : ''}`}>
-                      {/[0-9]/.test(password) ? '✓' : '•'} {t('login.passwordHints.number', { defaultValue: 'Un número' })}
+                      {/[0-9]/.test(password) ? '✓' : '•'} {t('login.passwordHints.number')}
                     </span>
                   </div>
                 </div>

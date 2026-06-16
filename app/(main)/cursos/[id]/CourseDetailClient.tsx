@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import {
@@ -15,6 +16,7 @@ import {
 import type { Course, CourseModule, UserCourseProgress } from '@/types';
 
 export default function CourseDetailClient() {
+  const { t } = useTranslation('cursos');
   const { id } = useParams() as { id: string };
   const router = useRouter();
   const { user } = useAuth();
@@ -71,7 +73,7 @@ export default function CourseDetailClient() {
   if (loading || !course) {
     return (
       <DashboardLayout>
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>Cargando...</div>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>{t('detail.loading')}</div>
       </DashboardLayout>
     );
   }
@@ -81,36 +83,36 @@ export default function CourseDetailClient() {
       <div className="page-header">
         <div className="page-header-left">
           <button className="btn btn-outline" onClick={() => router.push('/cursos')} style={{ marginBottom: 12, padding: '6px 12px', fontSize: '0.8125rem' }}>
-            ← Volver a Cursos
+            {t('detail.backToCourses')}
           </button>
           <h1 className="page-title">{course.title}</h1>
           <p className="page-subtitle">{course.description}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-prosper-green)' }}>{course.xpReward} XP</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{course.modulesCount} módulos</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{t('detail.modulesCount', { count: course.modulesCount })}</span>
         </div>
       </div>
 
       {progress && (
         <div className="card" style={{ marginBottom: 20, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>Tu Progreso</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t('detail.yourProgress')}</span>
             <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-prosper-green)' }}>{overallPct}%</span>
           </div>
           <div style={{ height: 8, background: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${overallPct}%`, background: overallPct === 100 ? 'var(--color-prosper-green)' : 'var(--color-pine-500)', borderRadius: 'var(--radius-full)', transition: 'width 0.5s' }} />
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 6 }}>
-            {progress.completedModules.length} de {course.modulesCount} módulos completados
+            {t('detail.modulesCompleted', { completed: progress.completedModules.length, total: course.modulesCount })}
           </p>
         </div>
       )}
 
       {!progress && (
         <div className="card" style={{ marginBottom: 20, padding: 20, textAlign: 'center' }}>
-          <p style={{ marginBottom: 16, color: 'var(--text-secondary)' }}>Inscríbete para comenzar este curso y ganar {course.xpReward} XP.</p>
-          <button className="btn btn-primary" onClick={handleEnroll}>Inscribirse en el Curso</button>
+          <p style={{ marginBottom: 16, color: 'var(--text-secondary)' }}>{t('detail.enrollPrompt', { xp: course.xpReward })}</p>
+          <button className="btn btn-primary" onClick={handleEnroll}>{t('detail.enrollButton')}</button>
         </div>
       )}
 
@@ -134,11 +136,11 @@ export default function CourseDetailClient() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{mod.title}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: '2px 0 0 0' }}>{mod.duration} min</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: '2px 0 0 0' }}>{t('detail.durationMin', { duration: mod.duration })}</p>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   {completed && (
-                    <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-prosper-green)', background: 'rgba(61,204,142,0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>Completado</span>
+                    <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--color-prosper-green)', background: 'rgba(61,204,142,0.1)', padding: '2px 8px', borderRadius: 'var(--radius-full)' }}>{t('detail.completedBadge')}</span>
                   )}
                   <span style={{ fontSize: '1.25rem', color: 'var(--text-tertiary)', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><ChevronDown size={18} /></span>
                 </div>
@@ -153,7 +155,7 @@ export default function CourseDetailClient() {
                       style={{ marginTop: 16, padding: '8px 16px', fontSize: '0.8125rem' }}
                       onClick={() => handleCompleteModule(mod.id || '')}
                     >
-                      Marcar como Completado
+                      {t('detail.markCompleted')}
                     </button>
                   )}
                 </div>

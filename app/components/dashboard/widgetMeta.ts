@@ -8,22 +8,22 @@ export interface WidgetMeta {
 }
 
 export const WIDGET_CATALOG: WidgetMeta[] = [
-  { type: 'welcome_banner', label: 'Bienvenida', description: 'Banner de saludo personalizado con tu nombre', icon: 'Sparkles' },
-  { type: 'stats_pills', label: 'Estadísticas', description: 'Resumen rápido de ahorros, recurrentes y metas', icon: 'BarChart3' },
-  { type: 'today_section', label: 'Para Hoy', description: 'Tareas, recordatorios y vencimientos del día', icon: 'CalendarDays' },
-  { type: 'quick_actions', label: 'Acciones Rápidas', description: 'Accesos directos a crear planes, cuentas y más', icon: 'Zap' },
-  { type: 'tool_invoice', label: 'Importar Factura', description: 'Escanea y registra facturas con OCR', icon: 'Receipt' },
-  { type: 'tool_shopping', label: 'Listas de Compra', description: 'Crea listas inteligentes con presupuesto', icon: 'ShoppingCart' },
-  { type: 'tool_ai', label: 'Asistente IA', description: 'Consulta tus finanzas con inteligencia artificial', icon: 'Bot' },
-  { type: 'monthly_summary', label: 'Resumen del Mes', description: 'Ingresos, gastos y balance mensual', icon: 'Wallet' },
-  { type: 'accounts', label: 'Mis Cuentas', description: 'Tus cuentas favoritas con saldos', icon: 'CreditCard' },
-  { type: 'recent_transactions', label: 'Últimos Movimientos', description: 'Las transacciones más recientes', icon: 'Banknote' },
-  { type: 'quick_transfer', label: 'Transferencia Rápida', description: 'Transfiere entre tus cuentas al instante', icon: 'Send' },
-  { type: 'active_plans', label: 'Planes Activos', description: 'Seguimiento de tus planes y metas', icon: 'Target' },
-  { type: 'upcoming_deadlines', label: 'Próximos Vencimientos', description: 'Alertas de fechas límite próximas', icon: 'Clock' },
-  { type: 'exchange_rates', label: 'Tasas de Cambio', description: 'Tasas de divisas y criptomonedas', icon: 'TrendingUp' },
-  { type: 'financial_chart', label: 'Rendimiento Financiero', description: 'Gráfico de tu rendimiento financiero', icon: 'BarChart3' },
-  { type: 'currency_converter', label: 'Conversor de Monedas', description: 'Convierte entre divisas con tasas oficial y P2P', icon: 'ArrowLeftRight' },
+  { type: 'welcome_banner', label: 'widgets.welcomeBanner.label', description: 'widgets.welcomeBanner.description', icon: 'Sparkles' },
+  { type: 'stats_pills', label: 'widgets.statsPills.label', description: 'widgets.statsPills.description', icon: 'BarChart3' },
+  { type: 'today_section', label: 'widgets.todaySection.label', description: 'widgets.todaySection.description', icon: 'CalendarDays' },
+  { type: 'quick_actions', label: 'widgets.quickActions.label', description: 'widgets.quickActions.description', icon: 'Zap' },
+  { type: 'tool_invoice', label: 'widgets.toolInvoice.label', description: 'widgets.toolInvoice.description', icon: 'Receipt' },
+  { type: 'tool_shopping', label: 'widgets.toolShopping.label', description: 'widgets.toolShopping.description', icon: 'ShoppingCart' },
+  { type: 'tool_ai', label: 'widgets.toolAi.label', description: 'widgets.toolAi.description', icon: 'Bot' },
+  { type: 'monthly_summary', label: 'widgets.monthlySummary.label', description: 'widgets.monthlySummary.description', icon: 'Wallet' },
+  { type: 'accounts', label: 'widgets.accounts.label', description: 'widgets.accounts.description', icon: 'CreditCard' },
+  { type: 'recent_transactions', label: 'widgets.recentTransactions.label', description: 'widgets.recentTransactions.description', icon: 'Banknote' },
+  { type: 'quick_transfer', label: 'widgets.quickTransfer.label', description: 'widgets.quickTransfer.description', icon: 'Send' },
+  { type: 'active_plans', label: 'widgets.activePlans.label', description: 'widgets.activePlans.description', icon: 'Target' },
+  { type: 'upcoming_deadlines', label: 'widgets.upcomingDeadlines.label', description: 'widgets.upcomingDeadlines.description', icon: 'Clock' },
+  { type: 'exchange_rates', label: 'widgets.exchangeRates.label', description: 'widgets.exchangeRates.description', icon: 'TrendingUp' },
+  { type: 'financial_chart', label: 'widgets.financialChart.label', description: 'widgets.financialChart.description', icon: 'BarChart3' },
+  { type: 'currency_converter', label: 'widgets.currencyConverter.label', description: 'widgets.currencyConverter.description', icon: 'ArrowLeftRight' },
 ];
 
 export function getWidgetMeta(type: WidgetType): WidgetMeta {

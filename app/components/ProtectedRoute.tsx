@@ -3,8 +3,10 @@
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function AuthSkeleton() {
+  const { t } = useTranslation('common');
   return (
     <div style={{
       minHeight: '100vh',
@@ -24,7 +26,7 @@ function AuthSkeleton() {
           margin: '0 auto 12px',
         }} />
         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary, #666)' }}>
-          Cargando...
+          {t('loading')}
         </p>
       </div>
     </div>

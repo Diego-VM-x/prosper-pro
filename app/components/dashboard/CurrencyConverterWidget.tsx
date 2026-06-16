@@ -79,27 +79,27 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
       <div className="content-card-header">
         <div className="content-card-header-left">
           <Repeat size={18} />
-          <h2 className="content-card-title">{title || t('dashboard:converter.title', { defaultValue: 'Conversor de Monedas' })}</h2>
+          <h2 className="content-card-title">{title || t('dashboard:converter.title')}</h2>
         </div>
         <div className="converter-mode-toggle">
           <button
             className={`converter-mode-btn ${!p2pMode ? 'active' : ''}`}
             onClick={() => setP2pMode(false)}
           >
-            {t('dashboard:converter.official', { defaultValue: 'Oficial' })}
+            {t('dashboard:converter.official')}
           </button>
           <button
             className={`converter-mode-btn ${p2pMode ? 'active' : ''}`}
             onClick={() => setP2pMode(true)}
           >
-            {t('dashboard:converter.p2p', { defaultValue: 'P2P' })}
+            {t('dashboard:converter.p2p')}
           </button>
         </div>
       </div>
 
       <div className="converter-body">
         <div className="converter-field">
-          <label className="converter-label">{t('dashboard:converter.amount', { defaultValue: 'Monto' })}</label>
+          <label className="converter-label">{t('dashboard:converter.amount')}</label>
           <div className="converter-amount-wrap">
             <span className="converter-symbol">{CURRENCY_MAP[from].symbol}</span>
             <input
@@ -115,16 +115,16 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
 
         <div className="converter-row">
           <div className="converter-field">
-            <label className="converter-label">{t('dashboard:converter.from', { defaultValue: 'De' })}</label>
+            <label className="converter-label">{t('dashboard:converter.from')}</label>
             <CustomSelect value={from} onChange={(val) => setFrom(val as CurrencyCode)} options={currencyOptions} />
           </div>
 
-          <button className="converter-swap-btn" onClick={handleSwap} title={t('dashboard:converter.swap', { defaultValue: 'Intercambiar' })}>
+          <button className="converter-swap-btn" onClick={handleSwap} title={t('dashboard:converter.swap')}>
             <Repeat size={18} />
           </button>
 
           <div className="converter-field">
-            <label className="converter-label">{t('dashboard:converter.to', { defaultValue: 'A' })}</label>
+            <label className="converter-label">{t('dashboard:converter.to')}</label>
             <CustomSelect value={to} onChange={(val) => setTo(val as CurrencyCode)} options={currencyOptions} />
           </div>
         </div>
@@ -141,8 +141,8 @@ export function CurrencyConverterWidget({ title, className = '' }: CurrencyConve
           </div>
           <div className="converter-result-mode">
             {p2pMode
-              ? t('dashboard:converter.usingP2P', { defaultValue: 'Usando tasa P2P' })
-              : t('dashboard:converter.usingOfficial', { defaultValue: 'Usando tasa oficial' })}
+              ? t('dashboard:converter.usingP2P')
+              : t('dashboard:converter.usingOfficial')}
           </div>
         </div>
       </div>

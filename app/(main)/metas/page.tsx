@@ -411,7 +411,7 @@ const MetasPage = memo(function MetasPage() {
       setEditingPlan(null);
       resetForm();
     } catch (e: any) {
-      error(`Error: ${e?.message || 'Error desconocido'}`);
+      error(`${t('common:toast.error')}: ${e?.message || t('common:toast.error')}`);
     } finally {
       setFormLoading(false);
     }
@@ -834,7 +834,7 @@ const MetasPage = memo(function MetasPage() {
 
           {hasSubPlans && (
             <div className="plan-card-subplans">
-              <p className="plan-card-subplans-label">{t('metas:subPlans.inlineTitle', { defaultValue: 'Sub-planes' })}</p>
+              <p className="plan-card-subplans-label">{t('metas:subPlans.inlineTitle')}</p>
               <div className="plan-card-subplans-list">
                 {plan.subPlans!.map((sub) => {
                   const subPct = sub.target > 0 ? Math.min(100, Math.round((sub.current / sub.target) * 100)) : 0;
@@ -1286,32 +1286,33 @@ const MetasPage = memo(function MetasPage() {
                   <button className="modal-close" onClick={() => { setShowShareModal(null); setShareFoundUser(null); }}><X size={18} /></button>
                 </div>
                 <div className="modal-body">
-                  <div className="plan-field">
+                  <div className="plan-field share-search-field">
                     <label className="plan-label">{t('metas:modals.share.userLabel')}</label>
-                    <input className="plan-input" type="text" placeholder={t('metas:modals.share.userPlaceholder')} value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
-                    {shareSearching && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>{t('metas:modals.share.searching')}</span>}
-                  </div>
-
-                  {/* Search Results (multiple users) */}
-                  {shareSearchResults.length > 0 && !shareFoundUser && (
-                    <div className="share-search-results">
-                      {shareSearchResults.map(user => (
-                        <div key={user.uid} className="share-user-card share-user-selectable" onClick={() => selectShareUser(user)}>
-                          <div className="share-user-avatar">
-                            {user.photoURL ? (
-                              <img src={user.photoURL} alt="" loading="lazy" />
-                            ) : (
-                              <span>{(user.displayName || user.email || '?')[0].toUpperCase()}</span>
-                            )}
-                          </div>
-                          <div className="share-user-info">
-                            <span className="share-user-name">{user.displayName || t('metas:modals.share.userDefault')}</span>
-                            <span className="share-user-email">{user.email}</span>
-                          </div>
+                    <div className="share-search-wrapper">
+                      <input className="plan-input" type="text" placeholder={t('metas:modals.share.userPlaceholder')} value={shareEmail} onChange={e => handleSearchShareUser(e.target.value)} autoFocus />
+                      {shareSearching && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>{t('metas:modals.share.searching')}</span>}
+                      {/* Search Results (multiple users) - floating upward on mobile */}
+                      {shareSearchResults.length > 0 && !shareFoundUser && (
+                        <div className="share-search-results">
+                          {shareSearchResults.map(user => (
+                            <div key={user.uid} className="share-user-card share-user-selectable" onClick={() => selectShareUser(user)}>
+                              <div className="share-user-avatar">
+                                {user.photoURL ? (
+                                  <img src={user.photoURL} alt="" loading="lazy" />
+                                ) : (
+                                  <span>{(user.displayName || user.email || '?')[0].toUpperCase()}</span>
+                                )}
+                              </div>
+                              <div className="share-user-info">
+                                <span className="share-user-name">{user.displayName || t('metas:modals.share.userDefault')}</span>
+                                <span className="share-user-email">{user.email}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
+                  </div>
 
                   {shareSearchResults.length === 0 && shareEmail.length >= 2 && !shareEmail.includes('@') && !shareSearching && !shareFoundUser && (
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', margin: 0 }}>{t('metas:modals.share.noResults')}</p>
@@ -1593,10 +1594,15 @@ const MetasPage = memo(function MetasPage() {
           .share-user-check { font-size: 1.25rem; color: var(--color-prosper-green); flex-shrink: 0; }
           .share-user-selectable { cursor: pointer; border-color: var(--border-default); transition: border-color 0.15s, background 0.15s; }
           .share-user-selectable:hover { border-color: var(--color-prosper-green); background: rgba(61,204,142,0.06); }
-          .share-search-results { display: flex; flex-direction: column; gap: 0; max-height: 240px; overflow-y: auto; }
+          .share-search-field { position: relative; }
+          .share-search-wrapper { position: relative; }
+          .share-search-results { display: flex; flex-direction: column; gap: 0; max-height: 240px; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: 10px; margin-top: 8px; }
           .share-search-results .share-user-card { margin-bottom: 0; border-radius: 0; border-bottom: none; }
           .share-search-results .share-user-card:first-child { border-radius: 10px 10px 0 0; }
           .share-search-results .share-user-card:last-child { border-radius: 0 0 10px 10px; border-bottom: 1px solid var(--border-default); }
+          @media (max-width: 768px) {
+            .share-search-results { position: absolute; bottom: 100%; left: 0; right: 0; margin-top: 0; margin-bottom: 8px; z-index: 100; max-height: 200px; box-shadow: 0 -8px 30px rgba(0,0,0,0.3); border: 1px solid var(--color-prosper-green); }
+          }
 
           /* Empty */
           .plans-empty { text-align: center; padding: 48px 24px; color: var(--text-secondary); }

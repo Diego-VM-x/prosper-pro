@@ -41,6 +41,7 @@
     "walletDigital": "Billetera Digital",
     "bank": "Banco",
     "foreign": "Divisas",
+    "cash": "Efectivo",
     "moveGroup": "Mover de grupo",
     "archiveHistory": "Archivar historial",
     "resetBalance": "Resetear balance",
@@ -115,7 +116,47 @@
   "typeLabels": {
     "income": "Ingreso",
     "expense": "Gasto",
-    "saving": "Ahorro"
+    "saving": "Ahorro",
+    "planPayment": "Abono a planes"
+  },
+  "categories": {
+    "income": {
+      "salario": "Salario",
+      "freelance": "Freelance",
+      "inversiones": "Inversiones",
+      "negocio": "Negocio",
+      "otro": "Otro"
+    },
+    "expense": {
+      "comida": "Comida",
+      "transporte": "Transporte",
+      "vivienda": "Vivienda",
+      "entretenimiento": "Entretenimiento",
+      "salud": "Salud",
+      "educacion": "Educación",
+      "otro": "Otro"
+    },
+    "saving": {
+      "ahorro": "Ahorro",
+      "inversion": "Inversión",
+      "fondoEmergencia": "Fondo Emergencia",
+      "otro": "Otro"
+    },
+    "common": {
+      "otro": "Otro",
+      "transferencia": "Transferencia"
+    }
+  },
+  "currencies": {
+    "BS": { "label": "Bolívares (BS)", "name": "Bolívar" },
+    "USD": { "label": "Dólares (USD)", "name": "Dólar" },
+    "EUR": { "label": "Euros (EUR)", "name": "Euro" },
+    "COP": { "label": "Pesos Colombianos (COP)", "name": "Peso Colombiano" },
+    "USDT": { "label": "Tether (USDT)", "name": "Tether" },
+    "SOL": { "label": "Solana (SOL)", "name": "Solana" },
+    "BTC": { "label": "Bitcoin (BTC)", "name": "Bitcoin" },
+    "ETH": { "label": "Ethereum (ETH)", "name": "Ethereum" },
+    "USDC": { "label": "USD Coin (USDC)", "name": "USD Coin" }
   },
   "modals": {
     "newTransaction": {
@@ -131,7 +172,15 @@
       "register": "Registrar {{type}}",
       "saving": "Guardando...",
       "selectPlaceholder": "Seleccionar...",
-      "categoryPlaceholder": "Nombre de la categoría..."
+      "categoryPlaceholder": "Nombre de la categoría...",
+      "plan": "Plan *",
+      "noPlan": "Seleccionar plan",
+      "selectPlan": "Seleccionar plan",
+      "subPlan": "Sub-plan (opcional)",
+      "noSubPlan": "Todo el plan",
+      "selectSubPlan": "Seleccionar sub-plan",
+      "planPaymentDesc": "Abono a: {{plan}}",
+      "planSubPaymentDesc": "Abono a: {{plan}} - {{subPlan}}"
     },
     "transfer": {
       "title": "Transferir",
@@ -143,7 +192,10 @@
       "amountToCredit": "Monto a acreditar ({{account}})",
       "availableBalance": "Saldo disponible: {{balance}}",
       "liveRate": "Tasa BCV en vivo aplicada",
-      "transferBtn": "Transferir"
+      "transferBtn": "Transferir",
+      "conversionPrefix": "Conv.",
+      "transferToDesc": "Transferencia a: {{account}} {{conversion}}",
+      "transferFromDesc": "Transferencia recibida de: {{account}} {{conversion}}"
     },
     "newAccount": {
       "title": "Nueva Cuenta",
@@ -228,7 +280,7 @@
       "deleteAndAdjust": "Eliminar y ajustar",
       "deleteFromHistory": "Solo del historial",
       "deleteGroup": "Eliminar Grupo",
-      "deleteGroupMessage": "¿Eliminar \"{{name}}\"? Las cuentas del grupo pasarán a \"Sin grupo\".",
+      "deleteGroupMessage": "¿Eliminar \"{{name}}\"? Las cuentas del grupo pasarán a \"{{noGroup}}\".",
       "deleteAccount": "Eliminar Cuenta",
       "deleteAccountMessage": "¿Eliminar \"{{name}}\" y todas sus transacciones? Esta acción no se puede deshacer.",
       "clearHistory": "Borrar Historial",
@@ -256,7 +308,9 @@
       "wipeAccountTypeConfirm": "Vaciar {{type}}s",
       "deleteTransactionMessage": "¿Eliminar \"{{description}}\" por {{amount}}?",
       "deleteAndAdjustDesc": "Eliminar y ajustar: recalcula el balance de la cuenta",
-      "deleteFromHistoryDesc": "Solo del historial: elimina el registro sin tocar el balance"
+      "deleteFromHistoryDesc": "Solo del historial: elimina el registro sin tocar el balance",
+      "actionAdd": "sumará",
+      "actionSubtract": "restará"
     }
   },
   "fab": {
@@ -269,7 +323,8 @@
     "showBalances": "Mostrar Saldos",
     "p2pMode": "Modo P2P",
     "officialMode": "Modo Oficial",
-    "clearHistory": "Borrar Historial"
+    "clearHistory": "Borrar Historial",
+    "actions": "Acciones"
   },
   "toast": {
     "p2pEnabled": "Modo P2P activado: conversiones usando precios P2P en tiempo real",
@@ -310,6 +365,48 @@
     "registerError": "Error al registrar: {{message}}",
     "deleteError": "Error al eliminar: {{message}}",
     "transferError": "Error al transferir: {{message}}",
-    "genericError": "Error: {{message}}"
+    "genericError": "Error: {{message}}",
+    "unknownError": "Error desconocido",
+    "adjustments": "Ajustes:"
+  },
+  "vepay": {
+    "title": "Importar desde Captura",
+    "screenshotAlt": "Captura",
+    "subtitle": "Sube un recibo de pago móvil (Bancamiga, Banesco, BDV, Mercantil, Provincial)",
+    "uploadOption": "Opción 1: Subir captura (solo funciona en escritorio)",
+    "processing": "Procesando captura con OCR...",
+    "selectScreenshot": "Seleccionar captura de recibo",
+    "manualOption": "Opción 2: Pegar el texto del recibo manualmente",
+    "manualPlaceholder": "Pega aquí el texto del recibo (pago móvil, transferencia)...",
+    "analyzing": "Analizando...",
+    "analyzeText": "Analizar texto",
+    "receiptsDetected": "Recibos detectados ({{count}})",
+    "accountLabel": "Cuenta Prosper",
+    "selectAccount": "Seleccionar cuenta...",
+    "bankLabel": "Banco del pago",
+    "autoDetected": "Detectado automáticamente",
+    "selectBank": "Seleccionar banco...",
+    "dateLabel": "Fecha de transacción",
+    "beneficiary": "Beneficiario:",
+    "originAccount": "Cuenta origen:",
+    "documentId": "CI/RIF:",
+    "incompleteFields": "Campos incompletos: {{fields}}",
+    "skip": "Omitir",
+    "register": "Registrar",
+    "saving": "Guardando...",
+    "receiptsDetectedToast": "{{count}} recibo(s) detectado(s)",
+    "noReceiptImage": "No se pudo detectar un recibo en la captura.",
+    "noReceiptText": "No se pudo detectar un recibo en el texto.",
+    "processError": "Error al procesar la captura",
+    "parseError": "Error al analizar el texto",
+    "registerError": "Error al registrar: {{message}}",
+    "unknownError": "Error desconocido",
+    "registered": "{{type}} de {{amount}} registrado desde captura",
+    "typeIncome": "Ingreso",
+    "typeExpense": "Gasto",
+    "typeSaving": "Ahorro",
+    "flowOut": "Salida",
+    "flowIn": "Entrada",
+    "originalAmount": "{{description}} (Original: Bs. {{amount}})"
   }
 }

@@ -65,19 +65,19 @@ export default function RegisterPage() {
       return;
     }
     if (password.length < 8) {
-      setError(t('register.errors.passwordTooShort', { defaultValue: 'La contraseña debe tener al menos 8 caracteres' }));
+      setError(t('register.errors.passwordTooShort'));
       return;
     }
     if (!/[A-Z]/.test(password)) {
-      setError(t('register.errors.passwordNoUppercase', { defaultValue: 'La contraseña debe tener al menos una mayúscula' }));
+      setError(t('register.errors.passwordNoUppercase'));
       return;
     }
     if (!/[a-z]/.test(password)) {
-      setError(t('register.errors.passwordNoLowercase', { defaultValue: 'La contraseña debe tener al menos una minúscula' }));
+      setError(t('register.errors.passwordNoLowercase'));
       return;
     }
     if (!/[0-9]/.test(password)) {
-      setError(t('register.errors.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
+      setError(t('register.errors.passwordNoNumber'));
       return;
     }
     if (!canRegister) {
@@ -170,6 +170,8 @@ export default function RegisterPage() {
               </div>
 
               <form className="auth-form" onSubmit={handleRegister}>
+                <div className="register-form-grid">
+                  <div className="register-block">
                 <div className="form-group">
                   <label>{t('register.nameLabel')}</label>
                   <input type="text" placeholder={t('register.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoComplete="name" />
@@ -183,27 +185,30 @@ export default function RegisterPage() {
                   <input type="password" placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="new-password" />
                   <div className="password-hints">
                     <span className={`password-hint ${password.length >= 8 ? 'valid' : ''}`}>
-                      {password.length >= 8 ? '✓' : '•'} {t('register.passwordHints.minLength', { defaultValue: 'Mínimo 8 caracteres' })}
+                      {password.length >= 8 ? '✓' : '•'} {t('register.passwordHints.minLength')}
                     </span>
                     <span className={`password-hint ${/[A-Z]/.test(password) ? 'valid' : ''}`}>
-                      {/[A-Z]/.test(password) ? '✓' : '•'} {t('register.passwordHints.uppercase', { defaultValue: 'Una mayúscula' })}
+                      {/[A-Z]/.test(password) ? '✓' : '•'} {t('register.passwordHints.uppercase')}
                     </span>
                     <span className={`password-hint ${/[a-z]/.test(password) ? 'valid' : ''}`}>
-                      {/[a-z]/.test(password) ? '✓' : '•'} {t('register.passwordHints.lowercase', { defaultValue: 'Una minúscula' })}
+                      {/[a-z]/.test(password) ? '✓' : '•'} {t('register.passwordHints.lowercase')}
                     </span>
                     <span className={`password-hint ${/[0-9]/.test(password) ? 'valid' : ''}`}>
-                      {/[0-9]/.test(password) ? '✓' : '•'} {t('register.passwordHints.number', { defaultValue: 'Un número' })}
+                      {/[0-9]/.test(password) ? '✓' : '•'} {t('register.passwordHints.number')}
                     </span>
                   </div>
                 </div>
 
+                  </div>
+                  <div className="register-block">
+
                 {/* Language Selector */}
                 <div className="form-group">
-                  <label>{t('register.languageLabel', { defaultValue: 'Idioma' })}</label>
+                  <label>{t('register.languageLabel')}</label>
                   <div className="option-selector">
                     {[
-                      { value: 'es', label: 'Español', flag: '🇪🇸' },
-                      { value: 'en', label: 'English', flag: '🇺🇸' },
+                      { value: 'es', label: t('register.languageOptions.es'), flag: '🇪🇸' },
+                      { value: 'en', label: t('register.languageOptions.en'), flag: '🇺🇸' },
                     ].map((opt) => (
                       <button
                         key={opt.value}
@@ -221,12 +226,12 @@ export default function RegisterPage() {
 
                 {/* Theme Selector */}
                 <div className="form-group">
-                  <label>{t('register.themeLabel', { defaultValue: 'Tema' })}</label>
+                  <label>{t('register.themeLabel')}</label>
                   <div className="theme-selector-register">
                     {[
-                      { value: 'light' as const, label: t('register.themes.light', { defaultValue: 'Claro' }) },
-                      { value: 'dark' as const, label: t('register.themes.dark', { defaultValue: 'Oscuro' }) },
-                      { value: 'amoled' as const, label: t('register.themes.amoled', { defaultValue: 'AMOLED' }) },
+                      { value: 'light' as const, label: t('register.themes.light') },
+                      { value: 'dark' as const, label: t('register.themes.dark') },
+                      { value: 'amoled' as const, label: t('register.themes.amoled') },
                     ].map((opt) => (
                       <button
                         key={opt.value}
@@ -323,6 +328,9 @@ export default function RegisterPage() {
                     </span>
                   ) : t('register.submitBtn.default')}
                 </button>
+
+                  </div>
+                </div>
               </form>
             </div>
 

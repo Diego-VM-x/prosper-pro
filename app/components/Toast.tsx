@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { IconX } from '@/app/components/icons';
 
@@ -183,14 +184,17 @@ export function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  confirmText,
+  cancelText,
   secondaryText,
   variant = 'info',
   onConfirm,
   onCancel,
   onSecondary,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation('common');
+  const finalConfirmText = confirmText || t('confirmDialog.confirm');
+  const finalCancelText = cancelText || t('confirmDialog.cancel');
   if (!isOpen) return null;
 
   const variantColors = {
@@ -212,14 +216,14 @@ export function ConfirmDialog({
           <p>{message}</p>
         </div>
         <div className="confirm-footer">
-          <button className="confirm-btn confirm-btn-cancel" onClick={onCancel}>{cancelText}</button>
+          <button className="confirm-btn confirm-btn-cancel" onClick={onCancel}>{finalCancelText}</button>
           {onSecondary && secondaryText && (
             <button className="confirm-btn confirm-btn-secondary" onClick={onSecondary}>
               {secondaryText}
             </button>
           )}
           <button className="confirm-btn confirm-btn-confirm" style={{ background: colors.btn }} onClick={onConfirm}>
-            {confirmText}
+            {finalConfirmText}
           </button>
         </div>
       </div>

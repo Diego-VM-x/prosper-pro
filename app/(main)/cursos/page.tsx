@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import { InlineIcon } from '@/app/components/IconMap';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -9,6 +10,7 @@ import type { Course, UserCourseProgress } from '@/types';
 import Link from 'next/link';
 
 export default function CoursesPage() {
+  const { t } = useTranslation('cursos');
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [progressList, setProgressList] = useState<UserCourseProgress[]>([]);
@@ -47,15 +49,15 @@ export default function CoursesPage() {
     <DashboardLayout>
       <div className="page-header">
         <div className="page-header-left">
-          <h1 className="page-title">Academia Prosper</h1>
-          <p className="page-subtitle">Desarrolla tus habilidades financieras con cursos interactivos.</p>
+          <h1 className="page-title">{t('pageTitle')}</h1>
+          <p className="page-subtitle">{t('pageSubtitle')}</p>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>Cargando cursos...</div>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>{t('loading')}</div>
       ) : courses.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>No hay cursos disponibles.</div>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>{t('empty')}</div>
       ) : (
         <div className="courses-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
           {courses.map((course) => {
@@ -71,7 +73,7 @@ export default function CoursesPage() {
                 <div style={{ position: 'relative' }}>
                   <img src={course.thumbnail} alt={course.title} loading="lazy" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
                   {isCompleted && (
-                    <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-prosper-green)', color: 'white', padding: '4px 8px', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><InlineIcon icon="CheckCircle2" size={12} /> Completado</div>
+                    <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-prosper-green)', color: 'white', padding: '4px 8px', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}><InlineIcon icon="CheckCircle2" size={12} /> {t('completed')}</div>
                   )}
                 </div>
                 <div style={{ padding: 16 }}>
@@ -85,7 +87,7 @@ export default function CoursesPage() {
                   {isStarted && (
                     <div style={{ marginBottom: 16 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 4 }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>{progress?.completedModules.length || 0}/{course.modulesCount} módulos</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{t('modulesProgress', { completed: progress?.completedModules.length || 0, total: course.modulesCount })}</span>
                         <span style={{ fontWeight: 600, color: 'var(--color-prosper-green)' }}>{pct}%</span>
                       </div>
                       <div style={{ height: 6, background: 'var(--bg-input)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
@@ -95,9 +97,9 @@ export default function CoursesPage() {
                   )}
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{course.modulesCount} módulos</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{t('modulesCount', { count: course.modulesCount })}</span>
                     <Link href={`/cursos/${course.id}`} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.8125rem' }}>
-                      {isStarted ? 'Continuar' : 'Iniciar'}
+                      {isStarted ? t('continue') : t('start')}
                     </Link>
                   </div>
                 </div>

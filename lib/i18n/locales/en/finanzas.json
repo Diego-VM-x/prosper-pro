@@ -41,6 +41,7 @@
     "walletDigital": "Digital Wallet",
     "bank": "Bank",
     "foreign": "Foreign Currency",
+    "cash": "Cash",
     "moveGroup": "Move group",
     "archiveHistory": "Archive history",
     "resetBalance": "Reset balance",
@@ -115,7 +116,47 @@
   "typeLabels": {
     "income": "Income",
     "expense": "Expense",
-    "saving": "Saving"
+    "saving": "Saving",
+    "planPayment": "Plan Payment"
+  },
+  "categories": {
+    "income": {
+      "salario": "Salary",
+      "freelance": "Freelance",
+      "inversiones": "Investments",
+      "negocio": "Business",
+      "otro": "Other"
+    },
+    "expense": {
+      "comida": "Food",
+      "transporte": "Transport",
+      "vivienda": "Housing",
+      "entretenimiento": "Entertainment",
+      "salud": "Health",
+      "educacion": "Education",
+      "otro": "Other"
+    },
+    "saving": {
+      "ahorro": "Savings",
+      "inversion": "Investment",
+      "fondoEmergencia": "Emergency Fund",
+      "otro": "Other"
+    },
+    "common": {
+      "otro": "Other",
+      "transferencia": "Transfer"
+    }
+  },
+  "currencies": {
+    "BS": { "label": "Bolivars (BS)", "name": "Bolivar" },
+    "USD": { "label": "US Dollars (USD)", "name": "US Dollar" },
+    "EUR": { "label": "Euros (EUR)", "name": "Euro" },
+    "COP": { "label": "Colombian Pesos (COP)", "name": "Colombian Peso" },
+    "USDT": { "label": "Tether (USDT)", "name": "Tether" },
+    "SOL": { "label": "Solana (SOL)", "name": "Solana" },
+    "BTC": { "label": "Bitcoin (BTC)", "name": "Bitcoin" },
+    "ETH": { "label": "Ethereum (ETH)", "name": "Ethereum" },
+    "USDC": { "label": "USD Coin (USDC)", "name": "USD Coin" }
   },
   "modals": {
     "newTransaction": {
@@ -131,7 +172,15 @@
       "register": "Record {{type}}",
       "saving": "Saving...",
       "selectPlaceholder": "Select...",
-      "categoryPlaceholder": "Category name..."
+      "categoryPlaceholder": "Category name...",
+      "plan": "Plan *",
+      "noPlan": "Select plan",
+      "selectPlan": "Select plan",
+      "subPlan": "Sub-plan (optional)",
+      "noSubPlan": "Whole plan",
+      "selectSubPlan": "Select sub-plan",
+      "planPaymentDesc": "Payment to: {{plan}}",
+      "planSubPaymentDesc": "Payment to: {{plan}} - {{subPlan}}"
     },
     "transfer": {
       "title": "Transfer",
@@ -143,7 +192,10 @@
       "amountToCredit": "Amount to credit ({{account}})",
       "availableBalance": "Available balance: {{balance}}",
       "liveRate": "Live BCV rate applied",
-      "transferBtn": "Transfer"
+      "transferBtn": "Transfer",
+      "conversionPrefix": "Conv.",
+      "transferToDesc": "Transfer to: {{account}} {{conversion}}",
+      "transferFromDesc": "Transfer received from: {{account}} {{conversion}}"
     },
     "newAccount": {
       "title": "New Account",
@@ -228,7 +280,7 @@
       "deleteAndAdjust": "Delete and adjust",
       "deleteFromHistory": "Remove from history only",
       "deleteGroup": "Delete Group",
-      "deleteGroupMessage": "Delete \"{{name}}\"? Accounts in the group will move to \"No group\".",
+      "deleteGroupMessage": "Delete \"{{name}}\"? Accounts in the group will move to \"{{noGroup}}\".",
       "deleteAccount": "Delete Account",
       "deleteAccountMessage": "Delete \"{{name}}\" and all its transactions? This action cannot be undone.",
       "clearHistory": "Clear History",
@@ -256,7 +308,9 @@
       "wipeAccountTypeConfirm": "Clear {{type}}s",
       "deleteTransactionMessage": "Delete \"{{description}}\" for {{amount}}?",
       "deleteAndAdjustDesc": "Delete and adjust: recalculates account balance",
-      "deleteFromHistoryDesc": "Remove from history only: deletes record without touching balance"
+      "deleteFromHistoryDesc": "Remove from history only: deletes record without touching balance",
+      "actionAdd": "increase",
+      "actionSubtract": "decrease"
     }
   },
   "fab": {
@@ -269,7 +323,8 @@
     "showBalances": "Show Balances",
     "p2pMode": "P2P Mode",
     "officialMode": "Official Mode",
-    "clearHistory": "Clear History"
+    "clearHistory": "Clear History",
+    "actions": "Actions"
   },
   "toast": {
     "p2pEnabled": "P2P mode enabled: conversions using real-time P2P prices",
@@ -310,6 +365,48 @@
     "registerError": "Error recording: {{message}}",
     "deleteError": "Error deleting: {{message}}",
     "transferError": "Error transferring: {{message}}",
-    "genericError": "Error: {{message}}"
+    "genericError": "Error: {{message}}",
+    "unknownError": "Unknown error",
+    "adjustments": "Adjustments:"
+  },
+  "vepay": {
+    "title": "Import from Screenshot",
+    "screenshotAlt": "Screenshot",
+    "subtitle": "Upload a mobile payment receipt (Bancamiga, Banesco, BDV, Mercantil, Provincial)",
+    "uploadOption": "Option 1: Upload screenshot (desktop only)",
+    "processing": "Processing screenshot with OCR...",
+    "selectScreenshot": "Select receipt screenshot",
+    "manualOption": "Option 2: Paste receipt text manually",
+    "manualPlaceholder": "Paste receipt text here (mobile payment, transfer)...",
+    "analyzing": "Analyzing...",
+    "analyzeText": "Analyze text",
+    "receiptsDetected": "Receipts detected ({{count}})",
+    "accountLabel": "Prosper Account",
+    "selectAccount": "Select account...",
+    "bankLabel": "Payment Bank",
+    "autoDetected": "Auto-detected",
+    "selectBank": "Select bank...",
+    "dateLabel": "Transaction Date",
+    "beneficiary": "Beneficiary:",
+    "originAccount": "Origin account:",
+    "documentId": "ID/Tax:",
+    "incompleteFields": "Incomplete fields: {{fields}}",
+    "skip": "Skip",
+    "register": "Register",
+    "saving": "Saving...",
+    "receiptsDetectedToast": "{{count}} receipt(s) detected",
+    "noReceiptImage": "Could not detect a receipt in the screenshot.",
+    "noReceiptText": "Could not detect a receipt in the text.",
+    "processError": "Error processing the screenshot",
+    "parseError": "Error analyzing the text",
+    "registerError": "Error recording: {{message}}",
+    "unknownError": "Unknown error",
+    "registered": "{{type}} of {{amount}} registered from screenshot",
+    "typeIncome": "Income",
+    "typeExpense": "Expense",
+    "typeSaving": "Saving",
+    "flowOut": "Outgoing",
+    "flowIn": "Incoming",
+    "originalAmount": "{{description}} (Original: Bs. {{amount}})"
   }
 }

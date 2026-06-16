@@ -74,14 +74,14 @@
 
 .auth-layout {
   display: grid;
-  grid-template-columns: 1fr 480px;
+  grid-template-columns: 1fr minmax(480px, 640px);
   width: 100%;
   max-width: 1200px;
   min-height: 90vh;
   min-height: 90dvh;
   position: relative;
   z-index: 1;
-  margin: 5vh 24px;
+  margin: 0 24px;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
@@ -205,7 +205,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 16px;
 }
 
 .auth-card {
@@ -214,7 +214,8 @@
 }
 
 .auth-card-register {
-  max-width: 440px;
+  max-width: 100%;
+  width: 100%;
 }
 
 .currency-selector {
@@ -771,4 +772,164 @@
   .form-group label {
     font-size: 0.75rem;
   }
+}
+
+/* Register two-column layout */
+.register-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.register-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .register-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .auth-card-register {
+    max-width: 440px;
+    margin: 0 auto;
+  }
+}
+
+/* Compact register card to avoid PC scroll */
+.auth-card-register .auth-header {
+  margin-bottom: 16px;
+}
+
+.auth-card-register .auth-header h2 {
+  font-size: 1.5rem;
+}
+
+.auth-card-register .google-btn {
+  padding: 12px 14px;
+}
+
+.auth-card-register .divider {
+  margin: 16px 0;
+}
+
+.auth-card-register .form-group {
+  gap: 6px;
+}
+
+.auth-card-register .form-group input {
+  padding: 12px 14px;
+  font-size: 0.875rem;
+}
+
+.auth-card-register .password-hints {
+  gap: 4px 10px;
+}
+
+.auth-card-register .theme-selector-register {
+  gap: 8px;
+}
+
+.auth-card-register .theme-option-register {
+  padding: 8px;
+}
+
+.auth-card-register .theme-preview-register {
+  height: 38px;
+}
+
+.auth-card-register .currency-option {
+  padding: 8px 6px;
+  font-size: 0.75rem;
+}
+
+.auth-card-register .terms-group {
+  margin-top: 0;
+}
+
+.auth-card-register .login-btn {
+  padding: 14px;
+  margin-top: 4px;
+}
+
+/* Extra compact register to fit viewport */
+.auth-card-register .auth-header {
+  margin-bottom: 12px;
+}
+
+.auth-card-register .auth-header h2 {
+  font-size: 1.375rem;
+}
+
+.auth-card-register .google-btn {
+  padding: 10px 14px;
+}
+
+.auth-card-register .divider {
+  margin: 12px 0;
+}
+
+.auth-card-register .form-group {
+  gap: 5px;
+}
+
+.auth-card-register .form-group input {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+}
+
+.auth-card-register .password-hints {
+  gap: 3px 8px;
+}
+
+.auth-card-register .register-form-grid {
+  gap: 16px;
+}
+
+.auth-card-register .register-block {
+  gap: 12px;
+}
+
+.auth-card-register .theme-selector-register {
+  gap: 6px;
+}
+
+.auth-card-register .theme-option-register {
+  padding: 6px;
+}
+
+.auth-card-register .theme-preview-register {
+  height: 30px;
+}
+
+.auth-card-register .theme-label-register {
+  font-size: 0.6875rem;
+}
+
+.auth-card-register .currency-option {
+  padding: 6px 4px;
+  font-size: 0.6875rem;
+  gap: 4px;
+}
+
+.auth-card-register .currency-option .currency-flag {
+  width: 16px;
+  height: 16px;
+}
+
+.auth-card-register .terms-group label {
+  font-size: 0.75rem;
+}
+
+.auth-card-register .login-btn {
+  padding: 12px;
+  font-size: 0.9375rem;
+  margin-top: 2px;
+}
+
+.auth-card-register .auth-footer {
+  margin-top: 12px;
+  padding-top: 12px;
 }

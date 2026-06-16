@@ -33,10 +33,11 @@ const DEFAULT_CATEGORIES: Record<string, string[]> = {
   saving: ['Ahorro', 'Inversión', 'Fondo Emergencia', 'Otro'],
 };
 
-const ACCOUNT_TX_TYPE_COLORS: Record<string, string> = {
-  checking: '#3B82F6',
-  savings: '#3DCC8E',
-  cash: '#F59E0B',
+const ACCOUNT_TX_TYPE_COLORS: Record<AccountType, string> = {
+  digital: '#3B82F6',
+  bank: '#3DCC8E',
+  foreign: '#F59E0B',
+  cash: '#10B981',
 };
 
 const ACCOUNT_COLORS = [
@@ -50,11 +51,9 @@ type TxFormType = 'income' | 'expense' | 'plan_payment';
 type TransactionType = Transaction['type'];
 
 const TX_FORM_ICONS: Record<TxFormType, string> = { income: 'Download', expense: 'Send', plan_payment: 'Target' };
-const TX_FORM_LABELS: Record<TxFormType, string> = { income: 'Ingreso', expense: 'Gasto', plan_payment: 'Abono a planes' };
 const TX_FORM_COLORS: Record<TxFormType, string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', plan_payment: 'var(--color-pine-500)' };
 
 const TX_TYPE_ICONS: Record<TransactionType, string> = { income: 'Download', expense: 'Send', saving: 'Wallet' };
-const TX_TYPE_LABELS: Record<TransactionType, string> = { income: 'Ingreso', expense: 'Gasto', saving: 'Ahorro' };
 const TX_TYPE_COLORS: Record<TransactionType, string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', saving: 'var(--color-pine-500)' };
 
 const CATEGORIES: Record<'income' | 'expense', string[]> = {
@@ -69,13 +68,6 @@ function todayISO() {
 
 function isoToTimestamp(iso: string): number {
   return new Date(iso + 'T12:00:00').getTime();
-}
-
-function formatCompact(n: number): string {
-  if (n >= 1_000_000_000) return (n / 1_000_000_000).toLocaleString('es-VE', { maximumFractionDigits: 2 }) + 'B';
-  if (n >= 1_000_000) return (n / 1_000_000).toLocaleString('es-VE', { maximumFractionDigits: 2 }) + 'M';
-  if (n >= 1_000) return n.toLocaleString('es-VE', { maximumFractionDigits: 2 });
-  return n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 }
 
 interface SummaryWidgetProps {
@@ -117,7 +109,54 @@ const FinanzasPage = memo(function FinanzasPage() {
   const { plans } = useGoals();
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
-  const { t } = useTranslation(['finanzas', 'common']);
+  const { t, i18n } = useTranslation(['finanzas', 'common']);
+  const locale = useMemo(() => i18n.language === 'en' ? 'en-US' : 'es-VE', [i18n.language]);
+
+  const formatCompact = useCallback((n: number): string => {
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toLocaleString(locale, { maximumFractionDigits: 2 }) + 'B';
+    if (n >= 1_000_000) return (n / 1_000_000).toLocaleString(locale, { maximumFractionDigits: 2 }) + 'M';
+    if (n >= 1_000) return n.toLocaleString(locale, { maximumFractionDigits: 2 });
+    return n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  }, [i18n.language]);
+
+  const formatDate = useCallback((ts: number) => new Date(ts).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'es', { day: '2-digit', month: 'short', year: 'numeric' }), [i18n.language]);
+
+  const TX_FORM_LABELS: Record<TxFormType, string> = useMemo(() => ({
+    income: t('finanzas:typeLabels.income'),
+    expense: t('finanzas:typeLabels.expense'),
+    plan_payment: t('finanzas:typeLabels.planPayment'),
+  }), [t]);
+
+  const TX_TYPE_LABELS: Record<TransactionType, string> = useMemo(() => ({
+    income: t('finanzas:typeLabels.income'),
+    expense: t('finanzas:typeLabels.expense'),
+    saving: t('finanzas:typeLabels.saving'),
+  }), [t]);
+
+  const getCategoryLabel = useCallback((category: string | undefined): string => {
+    if (!category) return category || '';
+    const normalized = category.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '');
+    const keyMap: Record<string, string> = {
+      salario: 'categories.income.salario',
+      freelance: 'categories.income.freelance',
+      inversiones: 'categories.income.inversiones',
+      negocio: 'categories.income.negocio',
+      otro: 'categories.common.otro',
+      comida: 'categories.expense.comida',
+      transporte: 'categories.expense.transporte',
+      vivienda: 'categories.expense.vivienda',
+      entretenimiento: 'categories.expense.entretenimiento',
+      salud: 'categories.expense.salud',
+      educacion: 'categories.expense.educacion',
+      ahorro: 'categories.saving.ahorro',
+      inversion: 'categories.saving.inversion',
+      fondoemergencia: 'categories.saving.fondoEmergencia',
+      transferencia: 'categories.common.transferencia',
+    };
+    const key = keyMap[normalized];
+    return key ? t(`finanzas:${key}` as any) : category;
+  }, [t]);
+
 
   /** Formatea monto para tabla: crypto muestra USD + BS, resto en su moneda nativa */
   const formatTableAmount = useCallback((amount: number, currency: CurrencyCode) => {
@@ -133,8 +172,8 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [txLimit, setTxLimit] = useState(5);
-  const [filterType, setFilterType] = useState<string>('Todos');
-  const [filterCategory, setFilterCategory] = useState<string>('Todas');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -242,7 +281,10 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [showVepayModal, setShowVepayModal] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
   const [ratesCollapsed, setRatesCollapsed] = useState(() => {
-    try { return safeLocalStorage.getItem('finanzas-rates-collapsed') === 'true'; } catch { return false; }
+    try {
+      const saved = safeLocalStorage.getItem('finanzas-rates-collapsed');
+      return saved === null ? true : saved === 'true';
+    } catch { return true; }
   });
 
   const [showAccountingModal, setShowAccountingModal] = useState(false);
@@ -363,10 +405,10 @@ const FinanzasPage = memo(function FinanzasPage() {
     ? transactions
     : transactions.filter((t) => t.accountId === selectedAccount);
 
-  const categories = filterType === 'Todos' ? Object.values(allCategories).flat() : (allCategories[filterType as keyof typeof allCategories] || []);
+  const categories = filterType === 'all' ? Object.values(allCategories).flat() : (allCategories[filterType as keyof typeof allCategories] || []);
   const filteredTx = filteredByAccount.filter((t) => {
-    if (filterType !== 'Todos' && t.type !== filterType) return false;
-    if (filterCategory !== 'Todas' && t.category !== filterCategory) return false;
+    if (filterType !== 'all' && t.type !== filterType) return false;
+    if (filterCategory !== 'all' && t.category !== filterCategory) return false;
     return true;
   });
 
@@ -412,9 +454,9 @@ const FinanzasPage = memo(function FinanzasPage() {
       type: txType,
       category: selectedPlan ? selectedPlan.category : newTx.category,
       description: selectedSubPlan
-        ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan?.title, subPlan: selectedSubPlan.title, defaultValue: `Abono a: ${selectedPlan?.title} - ${selectedSubPlan.title}` })
+        ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan?.title, subPlan: selectedSubPlan.title })
         : selectedPlan
-        ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: selectedPlan.title, defaultValue: `Abono a: ${selectedPlan.title}` })
+        ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: selectedPlan.title })
         : newTx.description,
       date: isoToTimestamp(newTx.date),
     };
@@ -468,7 +510,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       setNewTx({ amount: '', type: 'income', category: 'Salario', description: '', accountId: '', date: todayISO(), planId: '', subPlanId: '' });
     } catch (e: any) {
       console.error(e);
-      error(t('finanzas:toast.registerError', { message: e?.message || 'Error desconocido' }));
+      error(t('finanzas:toast.registerError', { message: e?.message || t('finanzas:toast.unknownError') }));
     } finally {
       setTxLoading(false);
     }
@@ -519,7 +561,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         amount,
         type: 'saving',
         category: 'Transferencia',
-        description: `Transferencia a: ${toAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(convertedAmount, toCurrency)})` : ''}`,
+        description: t('finanzas:modals.transfer.transferToDesc', { account: toAcc.name, conversion: fromCurrency !== toCurrency ? `(${t('finanzas:modals.transfer.conversionPrefix')} ${formatInCurrency(convertedAmount, toCurrency)})` : '' }),
         date: Date.now(),
         accountId: transfer.fromAccountId,
         currency: fromCurrency,
@@ -531,7 +573,7 @@ const FinanzasPage = memo(function FinanzasPage() {
         amount: convertedAmount,
         type: 'income',
         category: 'Transferencia',
-        description: `Transferencia recibida de: ${fromAcc.name}${fromCurrency !== toCurrency ? ` (Conv. ${formatInCurrency(amount, fromCurrency)})` : ''}`,
+        description: t('finanzas:modals.transfer.transferFromDesc', { account: fromAcc.name, conversion: fromCurrency !== toCurrency ? `(${t('finanzas:modals.transfer.conversionPrefix')} ${formatInCurrency(amount, fromCurrency)})` : '' }),
         date: Date.now(),
         accountId: transfer.toAccountId,
         currency: toCurrency,
@@ -552,7 +594,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       setShowTransferModal(false);
       setTransfer({ amount: '', fromAccountId: '', toAccountId: '' });
     } catch (e: any) {
-      error(t('finanzas:toast.transferError', { message: e?.message || 'Error desconocido' }));
+      error(t('finanzas:toast.transferError', { message: e?.message || t('finanzas:toast.unknownError') }));
     }
   };
 
@@ -564,7 +606,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       type: newAccount.type,
       balance: newAccount.balance,
       currency: newAccount.currency || 'BS',
-      icon: newAccount.type === 'digital' ? 'CreditCard' : newAccount.type === 'bank' ? 'Landmark' : 'ArrowLeftRight',
+      icon: newAccount.type === 'digital' ? 'CreditCard' : newAccount.type === 'bank' ? 'Landmark' : newAccount.type === 'cash' ? 'Banknote' : 'ArrowLeftRight',
       color: newAccount.color || ACCOUNT_TX_TYPE_COLORS[newAccount.type],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -624,7 +666,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       setGroupFormName('');
       setGroupFormColor(ACCOUNT_COLORS[0]);
     } catch (e: any) {
-      error(`Error: ${e?.message}`);
+      error(t('finanzas:toast.genericError', { message: e?.message }));
     } finally {
       setGroupFormLoading(false);
     }
@@ -634,7 +676,7 @@ const FinanzasPage = memo(function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: t('finanzas:modals.confirm.deleteGroup'),
-      message: `¿Eliminar "${group.name}"? Las cuentas del grupo pasarán a "{t('finanzas:accounts.noGroup')}".`,
+      message: t('finanzas:modals.confirm.deleteGroupMessage', { name: group.name, noGroup: t('finanzas:accounts.noGroup') }),
       variant: 'danger',
       confirmText: t('common:buttons.delete'),
       onConfirm: async () => {
@@ -645,7 +687,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           await deleteAccountGroup(group.id);
           success(t('finanzas:toast.groupDeleted'));
         } catch (e: any) {
-          error(`Error: ${e?.message}`);
+          error(t('finanzas:toast.genericError', { message: e?.message }));
         }
         setConfirmState(prev => ({ ...prev, isOpen: false }));
       },
@@ -671,7 +713,7 @@ const FinanzasPage = memo(function FinanzasPage() {
       success(groupId ? t('finanzas:toast.groupMovedIn') : t('finanzas:toast.groupMovedOut'));
       setShowAssignGroupModal(null);
     } catch (e: any) {
-      error(`Error: ${e?.message}`);
+      error(t('finanzas:toast.genericError', { message: e?.message }));
     }
   };
 
@@ -720,7 +762,7 @@ const FinanzasPage = memo(function FinanzasPage() {
     setConfirmState({
       isOpen: true,
       title: t('finanzas:modals.confirm.wipeType', { icon: TX_TYPE_ICONS[type], type: typeLabel }),
-      message: t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc?.name, action: type === 'income' ? 'restará' : 'sumará' }),
+      message: t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc?.name, action: type === 'income' ? t('finanzas:modals.confirm.actionSubtract') : t('finanzas:modals.confirm.actionAdd') }),
       variant: 'danger',
       confirmText: t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel }),
       onConfirm: async () => {
@@ -784,7 +826,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           await loadTransactions();
           success(t('finanzas:toast.allTransactionsWiped'));
         } catch (e: any) {
-          error(t('finanzas:toast.genericError', { message: e?.message || 'Error desconocido' }));
+          error(t('finanzas:toast.genericError', { message: e?.message || t('finanzas:toast.unknownError') }));
         } finally {
           setAccountingLoading(false);
           setConfirmState(prev => ({ ...prev, isOpen: false }));
@@ -796,7 +838,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const handleWipeUserTransactionsByType = async (type: 'income' | 'expense' | 'saving') => {
     const typeLabel = TX_TYPE_LABELS[type];
     const typeIcon = TX_TYPE_ICONS[type];
-    const actionText = type === 'income' ? 'restará' : 'sumará';
+    const actionText = type === 'income' ? t('finanzas:modals.confirm.actionSubtract') : t('finanzas:modals.confirm.actionAdd');
 
     setConfirmState({
       isOpen: true,
@@ -815,9 +857,9 @@ const FinanzasPage = memo(function FinanzasPage() {
             const sign = a.adjustment > 0 ? '+' : '';
             return `${acc?.icon || ''} ${acc?.name || t('finanzas:modals.newAccount.noAccount')}: ${sign}${formatAmount(Math.abs(a.adjustment))}`;
           }).join('\n');
-          success(t('finanzas:toast.typesWiped', { count: result.totalWiped, type: typeLabel.toLowerCase() }) + (result.adjustments.length > 0 ? '\nAjustes: ' + adjustText : ''));
+          success(t('finanzas:toast.typesWiped', { count: result.totalWiped, type: typeLabel.toLowerCase() }) + (result.adjustments.length > 0 ? '\n' + t('finanzas:toast.adjustments') + ' ' + adjustText : ''));
         } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
+          error(`Error: ${e?.message || t('finanzas:toast.unknownError')}`);
         } finally {
           setAccountingLoading(false);
           setConfirmState(prev => ({ ...prev, isOpen: false }));
@@ -845,7 +887,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           }).join('\n');
           success(t('finanzas:toast.balancesRecalculated') + summary);
         } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
+          error(`Error: ${e?.message || t('finanzas:toast.unknownError')}`);
         } finally {
           setAccountingLoading(false);
           setConfirmState(prev => ({ ...prev, isOpen: false }));
@@ -869,7 +911,7 @@ const FinanzasPage = memo(function FinanzasPage() {
     } else {
       const typeLabel = TX_TYPE_LABELS[action];
       const typeIcon = TX_TYPE_ICONS[action];
-      const actionText = action === 'income' ? 'restará' : 'sumará';
+      const actionText = action === 'income' ? t('finanzas:modals.confirm.actionSubtract') : t('finanzas:modals.confirm.actionAdd');
       title = t('finanzas:modals.confirm.wipeAccountType', { icon: typeIcon, type: typeLabel, name: acc.name });
       message = t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc.name, action: actionText });
       confirmText = t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel });
@@ -894,7 +936,7 @@ const FinanzasPage = memo(function FinanzasPage() {
           }
           await loadTransactions();
         } catch (e: any) {
-          error(`Error: ${e?.message || 'Error desconocido'}`);
+          error(`Error: ${e?.message || t('finanzas:toast.unknownError')}`);
         } finally {
           setAccountingLoading(false);
           setConfirmState(prev => ({ ...prev, isOpen: false }));
@@ -903,7 +945,6 @@ const FinanzasPage = memo(function FinanzasPage() {
     });
   };
 
-  const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es', { day: '2-digit', month: 'short', year: 'numeric' });
   const getAccountName = (accountId?: string) => {
     if (!accountId) return t('finanzas:modals.newTransaction.noAccount');
     const acc = accounts.find((a) => a.id === accountId);
@@ -1031,9 +1072,9 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                   <div className="rates-list">
                     {[
-                      { code: 'USD', name: 'Dólar' },
-                      { code: 'EUR', name: 'Euro' },
-                      { code: 'COP', name: 'Peso Colombiano' },
+                      { code: 'USD', name: t('finanzas:currencies.USD.name') },
+                      { code: 'EUR', name: t('finanzas:currencies.EUR.name') },
+                      { code: 'COP', name: t('finanzas:currencies.COP.name') },
                     ].map(({ code, name }) => {
                       const value = rates.rates[code as keyof typeof rates.rates] as number | undefined;
                       return (
@@ -1047,7 +1088,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                           </div>
                           <span className="rates-row-value">
                             {rates.source === 'api' && value
-                              ? `Bs. ${value.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })}`
+                              ? `Bs. ${new Intl.NumberFormat(locale, { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 }).format(value)}`
                               : '—'}
                           </span>
                         </div>
@@ -1069,11 +1110,11 @@ const FinanzasPage = memo(function FinanzasPage() {
                   </div>
                   <div className="rates-list">
                     {[
-                      { code: 'USDT', name: 'Tether' },
-                      { code: 'SOL', name: 'Solana' },
-                      { code: 'BTC', name: 'Bitcoin' },
-                      { code: 'ETH', name: 'Ethereum' },
-                      { code: 'USDC', name: 'USD Coin' },
+                      { code: 'USDT', name: t('finanzas:currencies.USDT.name') },
+                      { code: 'SOL', name: t('finanzas:currencies.SOL.name') },
+                      { code: 'BTC', name: t('finanzas:currencies.BTC.name') },
+                      { code: 'ETH', name: t('finanzas:currencies.ETH.name') },
+                      { code: 'USDC', name: t('finanzas:currencies.USDC.name') },
                     ].map(({ code, name }) => {
                       const usdPrice = rates.cryptoPrices?.[code] as number | undefined;
                       const bsOfficial = rates.rates[code as keyof typeof rates.rates] as number | undefined;
@@ -1141,7 +1182,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                     <div className="account-info">
                       <span className="account-name">{acc.name}</span>
                       <span className="account-type">
-                        {acc.type === 'digital' ? t('finanzas:accounts.walletDigital') : acc.type === 'bank' ? t('finanzas:accounts.bank') : t('finanzas:accounts.foreign')} • {acc.currency || 'BS'}
+                        {acc.type === 'digital' ? t('finanzas:accounts.walletDigital') : acc.type === 'bank' ? t('finanzas:accounts.bank') : acc.type === 'cash' ? t('finanzas:accounts.cash') : t('finanzas:accounts.foreign')} • {acc.currency || 'BS'}
                       </span>
                     </div>
                     <div className="account-actions-group">
@@ -1378,13 +1419,13 @@ const FinanzasPage = memo(function FinanzasPage() {
               <div className="tx-filter-group">
                 <span className="tx-filter-label">{t('finanzas:filters.type')}</span>
                 <div className="tx-filter-pills">
-                  {['Todos', 'income', 'expense', 'saving'].map((type) => (
+                  {['all', 'income', 'expense', 'saving'].map((type) => (
                     <button 
                       key={type} 
                       className={`tx-filter-pill ${filterType === type ? 'active' : ''}`} 
-                      onClick={() => { setFilterType(type); setFilterCategory('Todas'); }}
+                      onClick={() => { setFilterType(type); setFilterCategory('all'); }}
                     >
-                      {type === 'Todos' ? t('finanzas:filters.allM') : <InlineIcon icon={TX_TYPE_ICONS[type as TransactionType]} size={14} />}
+                      {type === 'all' ? t('finanzas:filters.allM') : <InlineIcon icon={TX_TYPE_ICONS[type as TransactionType]} size={14} />}
                     </button>
                   ))}
                 </div>
@@ -1395,8 +1436,8 @@ const FinanzasPage = memo(function FinanzasPage() {
                   value={filterCategory}
                   onChange={(val) => setFilterCategory(val)}
                   options={[
-                    { value: 'Todas', label: t('finanzas:filters.allF'), icon: 'ClipboardList' },
-                    ...categories.map((c) => ({ value: c, label: c })),
+                    { value: 'all', label: t('finanzas:filters.allF'), icon: 'ClipboardList' },
+                    ...categories.map((c) => ({ value: c, label: getCategoryLabel(c) })),
                   ]}
                   placeholder={t('finanzas:filters.allF')}
                 />
@@ -1404,10 +1445,10 @@ const FinanzasPage = memo(function FinanzasPage() {
             </div>
             <div className="tx-filters-summary">
               <span className="tx-filters-count">{t('finanzas:filters.transactionsCount', { count: filteredTx.length })}</span>
-              {(selectedAccount !== 'all' || filterType !== 'Todos' || filterCategory !== 'Todas') && (
+              {(selectedAccount !== 'all' || filterType !== 'all' || filterCategory !== 'all') && (
                 <button 
                   className="tx-filters-clear" 
-                  onClick={() => { setSelectedAccount('all'); setFilterType('Todos'); setFilterCategory('Todas'); }}
+                  onClick={() => { setSelectedAccount('all'); setFilterType('all'); setFilterCategory('all'); }}
                 >
                   {t('finanzas:filters.clearFilters')}
                 </button>
@@ -1443,7 +1484,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                           </div>
                         </div>
                       </td>
-                      <td><span className="tx-category-pill">{tx.category}</span></td>
+                      <td><span className="tx-category-pill">{getCategoryLabel(tx.category)}</span></td>
                       <td>
                         <span className="tx-status">
                           <span className="tx-status-dot" style={{ background: tx.type === 'expense' ? '#ffb3af' : '#4edea3' }} />
@@ -1468,7 +1509,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                                     return (
                                       <>
                                         <span style={{ fontSize: '10px', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
-                                          {tx.type === 'expense' ? '-' : '+'}${usdAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                                          {tx.type === 'expense' ? '-' : '+'}${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdAmount)} USD
                                         </span>
                                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 400 }}>
                                           ≈ {tx.type === 'expense' ? '-' : '+'}{formatInCurrency(bsAmount, 'BS')}
@@ -1590,7 +1631,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                       <CustomSelect
                         value={newTx.category}
                         onChange={(val) => setNewTx({ ...newTx, category: val })}
-                        options={currentTypeCats.map((c) => ({ value: c, label: c }))}
+                        options={currentTypeCats.map((c) => ({ value: c, label: getCategoryLabel(c) }))}
                         placeholder={t('finanzas:modals.newTransaction.selectPlaceholder')}
                         allowCustom
                         onAddCustom={async (value) => {
@@ -1607,7 +1648,7 @@ const FinanzasPage = memo(function FinanzasPage() {
 
                   {newTx.type === 'plan_payment' && (
                     <div className="tx-field">
-                      <label className="tx-label">{t('finanzas:modals.newTransaction.plan', { defaultValue: 'Plan *' })}</label>
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.plan')}</label>
                       <CustomSelect
                         value={newTx.planId}
                         onChange={(val) => {
@@ -1618,22 +1659,22 @@ const FinanzasPage = memo(function FinanzasPage() {
                             subPlanId: '',
                             category: plan ? plan.category : '',
                             description: plan
-                              ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: plan.title, defaultValue: `Abono a: ${plan.title}` })
+                              ? t('finanzas:modals.newTransaction.planPaymentDesc', { plan: plan.title })
                               : '',
                           }));
                         }}
                         options={[
-                          { value: '', label: t('finanzas:modals.newTransaction.noPlan', { defaultValue: 'Seleccionar plan' }) },
+                          { value: '', label: t('finanzas:modals.newTransaction.noPlan') },
                           ...compatiblePlans.map(p => ({ value: p.id, label: p.title })),
                         ]}
-                        placeholder={t('finanzas:modals.newTransaction.selectPlan', { defaultValue: 'Seleccionar plan' })}
+                        placeholder={t('finanzas:modals.newTransaction.selectPlan')}
                       />
                     </div>
                   )}
 
                   {selectedPlan?.subPlans && selectedPlan.subPlans.length > 0 && (
                     <div className="tx-field">
-                      <label className="tx-label">{t('finanzas:modals.newTransaction.subPlan', { defaultValue: 'Sub-plan (opcional)' })}</label>
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.subPlan')}</label>
                       <CustomSelect
                         value={newTx.subPlanId}
                         onChange={(val) => {
@@ -1642,15 +1683,15 @@ const FinanzasPage = memo(function FinanzasPage() {
                             ...prev,
                             subPlanId: val,
                             description: sub
-                              ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan.title, subPlan: sub.title, defaultValue: `Abono a: ${selectedPlan.title} - ${sub.title}` })
+                              ? t('finanzas:modals.newTransaction.planSubPaymentDesc', { plan: selectedPlan.title, subPlan: sub.title })
                               : prev.description,
                           }));
                         }}
                         options={[
-                          { value: '', label: t('finanzas:modals.newTransaction.noSubPlan', { defaultValue: 'Todo el plan' }) },
+                          { value: '', label: t('finanzas:modals.newTransaction.noSubPlan') },
                           ...selectedPlan.subPlans.map(sp => ({ value: sp.id, label: `${sp.title} (${formatInCurrency(sp.current, sp.currency)} / ${formatInCurrency(sp.target, sp.currency)})` })),
                         ]}
-                        placeholder={t('finanzas:modals.newTransaction.selectSubPlan', { defaultValue: 'Seleccionar sub-plan' })}
+                        placeholder={t('finanzas:modals.newTransaction.selectSubPlan')}
                       />
                     </div>
                   )}
@@ -1841,6 +1882,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                         { value: 'digital', label: t('finanzas:accounts.walletDigital'), icon: 'CreditCard' },
                         { value: 'bank', label: t('finanzas:accounts.bank'), icon: 'Landmark' },
                         { value: 'foreign', label: t('finanzas:accounts.foreign'), icon: 'ArrowLeftRight' },
+                        { value: 'cash', label: t('finanzas:accounts.cash'), icon: 'Banknote' },
                       ]}
                       placeholder={t('finanzas:modals.newAccount.typePlaceholder')}
                     />
@@ -1868,16 +1910,16 @@ const FinanzasPage = memo(function FinanzasPage() {
                       options={
                         accountCategory === 'criptos'
                           ? [
-                              { value: 'USDT', label: 'Tether (USDT)', icon: 'Diamond' },
-                              { value: 'SOL', label: 'Solana (SOL)', icon: 'Sun' },
-                              { value: 'BTC', label: 'Bitcoin (BTC)', icon: 'Circle' },
-                              { value: 'USDC', label: 'USD Coin (USDC)', icon: 'Gem' },
+                              { value: 'USDT', label: t('finanzas:currencies.USDT.label'), icon: 'Diamond' },
+                              { value: 'SOL', label: t('finanzas:currencies.SOL.label'), icon: 'Sun' },
+                              { value: 'BTC', label: t('finanzas:currencies.BTC.label'), icon: 'Circle' },
+                              { value: 'USDC', label: t('finanzas:currencies.USDC.label'), icon: 'Gem' },
                             ]
                           : [
-                              { value: 'BS', label: 'Bolívares (BS)', icon: 'Banknote' },
-                              { value: 'USD', label: 'Dólares (USD)', icon: 'DollarSign' },
-                              { value: 'EUR', label: 'Euros (EUR)', icon: 'Euro' },
-                              { value: 'COP', label: 'Pesos Colombianos (COP)', icon: 'Coins' },
+                              { value: 'BS', label: t('finanzas:currencies.BS.label'), icon: 'Banknote' },
+                              { value: 'USD', label: t('finanzas:currencies.USD.label'), icon: 'DollarSign' },
+                              { value: 'EUR', label: t('finanzas:currencies.EUR.label'), icon: 'Euro' },
+                              { value: 'COP', label: t('finanzas:currencies.COP.label'), icon: 'Coins' },
                             ]
                       }
                       placeholder={t('finanzas:modals.newAccount.currencyPlaceholder')}
@@ -2029,7 +2071,7 @@ const FinanzasPage = memo(function FinanzasPage() {
                             </div>
                             <div className="accounting-account-actions">
                               <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleWipeAccountTransactions(acc.id, 'all')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyAccountTooltip')}>
-                                <InlineIcon icon="Trash2" size={12} /> Vaciar
+                                <InlineIcon icon="Trash2" size={12} /> {t('finanzas:modals.accounting.emptyAccount')}
                               </button>
                               <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'income')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyIncomeTooltip')}>
                                 {t('finanzas:modals.accounting.income')}
@@ -2098,7 +2140,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             title={confirmState.title}
             message={confirmState.message}
             variant={confirmState.variant}
-            confirmText={confirmState.confirmText || 'Confirmar'}
+            confirmText={confirmState.confirmText || t('common:buttons.confirm')}
             secondaryText={confirmState.secondaryText}
             onConfirm={confirmState.onConfirm}
             onSecondary={confirmState.onSecondary}
@@ -2333,8 +2375,8 @@ const FinanzasPage = memo(function FinanzasPage() {
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
 
            /* Modal */
-           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding: 16px; box-sizing: border-box; overflow-y: auto; }
-           .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); display: flex; flex-direction: column; animation: modalIn 0.25s ease; margin: auto; }
+           .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: flex-start; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); -webkit-tap-highlight-color: transparent; padding: 40px 16px; box-sizing: border-box; overflow-y: auto; }
+           .modal-content { background: #ffffff; border: 1px solid var(--border-default); border-radius: var(--radius-xl); width: 92%; max-width: 440px; padding: 24px; max-height: calc(100vh - 80px); max-height: calc(100dvh - 80px); display: flex; flex-direction: column; animation: modalIn 0.25s ease; margin: auto; }
            .modal-body { flex: 1; overflow-y: auto; padding: 0; margin: 16px 0; display: flex; flex-direction: column; gap: 16px; }
           [data-theme="dark"] .modal-content { background: #0a1628; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6); }
           [data-theme="amoled"] .modal-content { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9); }
@@ -2505,7 +2547,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .rates-row-values { gap: 14px; }
             .rates-table-header { padding: 12px 14px; }
             .rates-table-icon { width: 32px; height: 32px; font-size: 1.125rem; }
-            .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .summary-grid { grid-template-columns: 1fr; gap: 10px; }
             .summary-card { padding: 12px; }
             .summary-section { margin-bottom: 24px; }
             .chart-wrapper { margin-bottom: 20px; }
@@ -2521,7 +2563,8 @@ const FinanzasPage = memo(function FinanzasPage() {
             .transactions-table { min-width: 600px; font-size: 0.8125rem; }
             .transactions-table th { padding: 10px 8px; font-size: 0.6875rem; }
             .transactions-table td { padding: 10px 8px; }
-            .modal-content { width: 96%; max-width: none; padding: 20px 16px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
+            .modal-overlay { padding: 24px 16px; }
+            .modal-content { width: 96%; max-width: none; padding: 20px 16px; max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); }
             .modal-tx { max-width: none; }
             .modal-footer { flex-direction: column-reverse; gap: 8px; }
             .modal-footer .btn { width: 100%; justify-content: center; padding: 14px; }
@@ -2548,7 +2591,7 @@ const FinanzasPage = memo(function FinanzasPage() {
             .rates-section-header { padding: 10px 12px; }
             .rates-section-icon { width: 32px; height: 32px; font-size: 1.125rem; }
             .page-title { font-size: 1.25rem; }
-            .summary-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .summary-grid { grid-template-columns: 1fr; gap: 8px; }
             .summary-card { padding: 10px 8px; }
             .summary-section { margin-bottom: 20px; }
             .chart-wrapper { margin-bottom: 16px; }
@@ -2562,7 +2605,8 @@ const FinanzasPage = memo(function FinanzasPage() {
             .account-name { font-size: 0.8125rem; }
             .account-balance { font-size: 1rem; }
             .page-header-actions .btn { font-size: 0.75rem; padding: 10px 12px; }
-            .modal-content { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); padding: 16px 12px; border-radius: 12px; }
+            .modal-overlay { padding: 20px 12px; }
+            .modal-content { max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); padding: 16px 12px; border-radius: 12px; }
             .modal-title { font-size: 1rem; }
             .modal-subtitle { font-size: 0.6875rem; }
             .tx-type-icon { font-size: 1rem; }
@@ -2752,7 +2796,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               <span className="mobile-fab-label">{t('finanzas:fab.clearHistory')}</span>
             </button>
           </div>
-          <button className="mobile-fab-main" onClick={() => setFabOpen(!fabOpen)} aria-label="Acciones">
+          <button className="mobile-fab-main" onClick={() => setFabOpen(!fabOpen)} aria-label={t('finanzas:fab.actions')}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />

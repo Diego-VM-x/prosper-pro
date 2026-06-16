@@ -50,6 +50,13 @@
     "login": "Iniciar Sesión",
     "pageHome": "Inicio",
     "goHome": "Ir al Inicio",
+    "errorBoundary": {
+      "title": "Algo salió mal",
+      "message": "Esta página no pudo cargar correctamente. Intenta recargar la página.",
+      "reload": "Recargar página",
+      "details": "Detalles del error",
+      "notAvailable": "No disponible"
+    },
     "pages": "Páginas",
     "goals": "Metas",
     "plans": "Planes",
@@ -65,17 +72,38 @@
     "savings": "Ahorro",
     "noResults": "No se encontraron resultados para \"{{query}}\"",
     "createToSearch": "Crea metas, planes o transacciones para buscar",
+    "searchKeywords": {
+      "home": "inicio landing página principal",
+      "dashboard": "inicio principal dashboard",
+      "plans": "planes metas objetivos tareas finanzas",
+      "calendar": "calendario eventos fechas",
+      "finances": "finanzas dinero gastos ingresos cuentas",
+      "settings": "configuración ajustes preferencias",
+      "help": "ayuda soporte ayuda"
+    },
     "errorDeleteNotif": "Error al eliminar notificación:",
     "errorClearNotif": "Error al limpiar notificaciones:",
     "browserNotificationTitle": "Prosper",
     "browserNotification_one": "Tienes {{count}} notificación nueva",
     "browserNotification_other": "Tienes {{count}} notificaciones nuevas"
   },
+  "loading": "Cargando...",
+  "loadingApp": "Cargando Prosper Pro...",
   "toast": {
     "success": "Éxito",
     "error": "Error",
     "warning": "Advertencia",
     "info": "Información"
+  },
+  "customSelect": {
+    "placeholder": "Seleccionar...",
+    "customPlaceholder": "Nombre personalizado",
+    "add": "Añadir",
+    "addCustom": "Añadir personalizado..."
+  },
+  "confirmDialog": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   },
   "buttons": {
     "save": "Guardar",

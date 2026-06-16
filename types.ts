@@ -15,7 +15,7 @@ export interface ExchangeRates {
 }
 
 // ─── Accounts ───
-export type AccountType = 'digital' | 'bank' | 'foreign';
+export type AccountType = 'digital' | 'bank' | 'foreign' | 'cash';
 
 export interface FinancialAccount {
   id: string;

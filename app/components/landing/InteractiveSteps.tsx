@@ -23,9 +23,9 @@ export function InteractiveSteps() {
       <div className="lp-container">
         <AnimatedSection animationType="fade-up" delay={0}>
           <div className="section-header">
-            <span className="section-tag">Cómo Funciona</span>
-            <h2 className="section-title">Empieza en 4 simples pasos</h2>
-            <p className="section-desc">Sin configuraciones complicadas. Haz clic en cada paso para explorar.</p>
+            <span className="section-tag">{t('howItWorks.sectionTag')}</span>
+            <h2 className="section-title">{t('howItWorks.sectionTitle')}</h2>
+            <p className="section-desc">{t('howItWorks.sectionDesc')}</p>
           </div>
         </AnimatedSection>
 

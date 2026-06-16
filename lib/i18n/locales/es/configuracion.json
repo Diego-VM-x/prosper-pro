@@ -31,6 +31,10 @@
     "languageCurrencyTitle": "Idioma y Moneda",
     "languageCurrencyDesc": "Personaliza tu experiencia",
     "languageLabel": "Idioma de Interfaz",
+    "languageOptions": {
+      "es": "Español",
+      "en": "English"
+    },
     "inDevelopment": "En Desarrollo",
     "currencyLabel": "Moneda de Visualización",
     "ratesLabel": "Tasas de Cambio Activas",
@@ -51,9 +55,15 @@
     "publicDesc": "Otros usuarios pueden encontrarte por nombre o email al compartir planes.",
     "privateDesc": "Solo te pueden encontrar por email exacto. Tu nombre no aparece en búsquedas."
   },
+  "market": {
+    "fiat": "Fiat",
+    "cryptos": "Criptomonedas",
+    "p2pBadge": "P2P Binance"
+  },
   "notificaciones": {
     "panelTitle": "Centro de Notificaciones",
     "panelDesc": "Controla qué alertas recibes",
+    "inDevelopment": "En desarrollo",
     "toggles": {
       "push": {
         "label": "Notificaciones Push",
@@ -109,6 +119,14 @@
     }
   },
   "seguridad": {
+    "passwordChangeNotAvailable": "Los usuarios de Google no pueden cambiar su contraseña aquí",
+    "passwordEmpty": "Completa todos los campos",
+    "passwordMismatch": "Las contraseñas nuevas no coinciden",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+    "passwordNoUppercase": "La contraseña debe tener al menos una mayúscula",
+    "passwordNoLowercase": "La contraseña debe tener al menos una minúscula",
+    "passwordNoNumber": "La contraseña debe tener al menos un número",
+    "passwordChanged": "Contraseña actualizada correctamente",
     "sessionsTitle": "Sesiones Activas",
     "sessionsDesc": "Dispositivos conectados a tu cuenta",
     "thisDevice": "Este Dispositivo",
@@ -128,11 +146,24 @@
       "offlineBadge": "Inactivo",
       "offlineDetail": "Sesión expirada"
     },
+    "changePassword": {
+      "title": "Cambiar Contraseña",
+      "desc": "Actualiza tu contraseña de acceso",
+      "btn": "Cambiar contraseña",
+      "current": "Contraseña actual",
+      "currentPlaceholder": "Tu contraseña actual",
+      "new": "Nueva contraseña",
+      "newPlaceholder": "Mínimo 8 caracteres",
+      "confirm": "Confirmar nueva contraseña",
+      "confirmPlaceholder": "Repite la nueva contraseña",
+      "saving": "Guardando...",
+      "submit": "Actualizar contraseña"
+    },
     "deleteAccount": {
       "title": "Eliminar Cuenta",
       "desc": "Esta acción es irreversible. Se borrarán todos tus datos permanentemente.",
       "btn": "Eliminar mi cuenta",
-      "confirmLabel": "Escribe <strong>ELIMINAR</strong> para confirmar:",
+      "confirmLabel": "Escribe ELIMINAR para confirmar:",
       "placeholder": "ELIMINAR",
       "cancel": "Cancelar",
       "deleting": "Eliminando...",
@@ -142,7 +173,7 @@
       "title": "Borrar Todos Mis Datos",
       "desc": "Elimina todas tus metas, transacciones, cuentas y configuraciones. Tu cuenta se mantendrá activa con cuentas por defecto.",
       "btn": "Borrar todos mis datos",
-      "confirmLabel": "Escribe <strong>BORRAR</strong> para confirmar:",
+      "confirmLabel": "Escribe BORRAR para confirmar:",
       "placeholder": "BORRAR",
       "cancel": "Cancelar",
       "wiping": "Borrando...",

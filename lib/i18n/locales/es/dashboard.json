@@ -61,7 +61,8 @@
     "accountTypes": {
       "digital": "Billetera Digital",
       "bank": "Banco",
-      "foreign": "Divisas"
+      "foreign": "Divisas",
+      "cash": "Efectivo"
     },
     "recentTransactions": "Últimos Movimientos",
     "viewAll": "Ver todo",
@@ -87,6 +88,17 @@
     "day_one": "día",
     "day_other": "días",
     "noUpcomingDeadlines": "No hay vencimientos próximos"
+  },
+  "converter": {
+    "title": "Conversor de Monedas",
+    "official": "Oficial",
+    "p2p": "P2P",
+    "amount": "Monto",
+    "from": "De",
+    "to": "A",
+    "swap": "Intercambiar",
+    "usingP2P": "Usando tasa P2P",
+    "usingOfficial": "Usando tasa oficial"
   },
   "market": {
     "exchangeRates": "Tasas de Cambio",
@@ -116,7 +128,10 @@
     "insufficientFunds": "Saldo insuficiente en la cuenta origen",
     "success": "Transferencia realizada",
     "error": "Error: {{message}}",
-    "retry": "intenta de nuevo"
+    "retry": "intenta de nuevo",
+    "descriptionTo": "Transferencia a: {{name}}{{conversion}}",
+    "descriptionFrom": "Transferencia recibida de: {{name}}{{conversion}}",
+    "conversion": " (Conv. {{amount}})"
   },
   "aria": {
     "expandSection": "Expandir sección",
@@ -188,8 +203,28 @@
     "Educación": "Educación",
     "Otro": "Otro"
   },
+  "widgets": {
+    "welcomeBanner": { "label": "Bienvenida", "description": "Banner de saludo personalizado con tu nombre" },
+    "statsPills": { "label": "Estadísticas", "description": "Resumen rápido de ahorros, recurrentes y metas" },
+    "todaySection": { "label": "Para Hoy", "description": "Tareas, recordatorios y vencimientos del día" },
+    "quickActions": { "label": "Acciones Rápidas", "description": "Accesos directos a crear planes, cuentas y más" },
+    "toolInvoice": { "label": "Importar Factura", "description": "Escanea y registra facturas con OCR" },
+    "toolShopping": { "label": "Listas de Compra", "description": "Crea listas inteligentes con presupuesto" },
+    "toolAi": { "label": "Asistente IA", "description": "Consulta tus finanzas con inteligencia artificial" },
+    "monthlySummary": { "label": "Resumen del Mes", "description": "Ingresos, gastos y balance mensual" },
+    "accounts": { "label": "Mis Cuentas", "description": "Tus cuentas favoritas con saldos" },
+    "recentTransactions": { "label": "Últimos Movimientos", "description": "Las transacciones más recientes" },
+    "quickTransfer": { "label": "Transferencia Rápida", "description": "Transfiere entre tus cuentas al instante" },
+    "activePlans": { "label": "Planes Activos", "description": "Seguimiento de tus planes y metas" },
+    "upcomingDeadlines": { "label": "Próximos Vencimientos", "description": "Alertas de fechas límite próximas" },
+    "exchangeRates": { "label": "Tasas de Cambio", "description": "Tasas de divisas y criptomonedas" },
+    "financialChart": { "label": "Rendimiento Financiero", "description": "Gráfico de tu rendimiento financiero" },
+    "currencyConverter": { "label": "Conversor de Monedas", "description": "Convierte entre divisas con tasas oficial y P2P" }
+  },
   "customize": {
     "title": "Personalizar",
+    "ungrouped": "Sin Grupo",
+    "noUngrouped": "No hay widgets sin grupo",
     "categories": "Categorías",
     "catalog": "Catálogo",
     "myWidgets": "Mis Widgets",
@@ -203,13 +238,17 @@
     "widgetSize": {
       "small": "Pequeño",
       "medium": "Mediano",
-      "large": "Grande"
+      "large": "Grande",
+      "columns_one": "{{count}} columna",
+      "columns_other": "{{count}} columnas"
     },
     "categoryName": "Nombre de categoría",
     "icon": "Icono",
     "add": "Agregar",
     "size": "Tamaño",
     "catalogDesc": "Haz clic en un widget para agregarlo a tu dashboard.",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
     "added": "Agregado",
     "reset": "Restaurar",
     "category": "Categoría",

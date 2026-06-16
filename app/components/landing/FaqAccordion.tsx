@@ -19,9 +19,9 @@ export function FaqAccordion() {
       <div className="landing-faq-inner">
         <AnimatedSection animationType="fade-up" delay={0}>
           <div className="section-header">
-            <span className="section-tag">FAQ</span>
-            <h2 className="section-title">Preguntas frecuentes</h2>
-            <p className="section-desc">Todo lo que necesitas saber antes de empezar.</p>
+            <span className="section-tag">{t('faq.sectionTag')}</span>
+            <h2 className="section-title">{t('faq.sectionTitle')}</h2>
+            <p className="section-desc">{t('faq.sectionDesc')}</p>
           </div>
         </AnimatedSection>
 

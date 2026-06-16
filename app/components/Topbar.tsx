@@ -190,13 +190,13 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
 
   // Rutas disponibles para búsqueda
   const searchRoutes = useMemo(() => [
-    { name: t('topbar.pageHome'), route: '/', icon: 'Home', keywords: 'inicio landing página principal' },
-    { name: t('sidebar.dashboard'), route: '/', icon: 'BarChart3', keywords: 'dashboard inicio principal' },
-    { name: t('sidebar.planes'), route: '/metas', icon: 'Target', keywords: 'planes metas objetivos tareas finanzas' },
-    { name: t('sidebar.calendario'), route: '/calendario', icon: 'CalendarDays', keywords: 'calendario eventos fechas' },
-    { name: t('sidebar.finanzas'), route: '/finanzas', icon: 'Wallet', keywords: 'finanzas dinero gastos ingresos cuentas' },
-    { name: t('sidebar.configuracion'), route: '/configuracion', icon: 'Settings', keywords: 'configuración ajustes preferencias' },
-    { name: t('sidebar.ayuda'), route: '/ayuda', icon: 'HelpCircle', keywords: 'ayuda soporte ayuda' },
+    { name: t('topbar.pageHome'), route: '/', icon: 'Home', keywords: t('topbar.searchKeywords.home') },
+    { name: t('sidebar.dashboard'), route: '/', icon: 'BarChart3', keywords: t('topbar.searchKeywords.dashboard') },
+    { name: t('sidebar.planes'), route: '/metas', icon: 'Target', keywords: t('topbar.searchKeywords.plans') },
+    { name: t('sidebar.calendario'), route: '/calendario', icon: 'CalendarDays', keywords: t('topbar.searchKeywords.calendar') },
+    { name: t('sidebar.finanzas'), route: '/finanzas', icon: 'Wallet', keywords: t('topbar.searchKeywords.finances') },
+    { name: t('sidebar.configuracion'), route: '/configuracion', icon: 'Settings', keywords: t('topbar.searchKeywords.settings') },
+    { name: t('sidebar.ayuda'), route: '/ayuda', icon: 'HelpCircle', keywords: t('topbar.searchKeywords.help') },
   ], [t]);
 
   // Memoizar resultados de búsqueda para evitar re-filtrado en cada render

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InlineIcon } from '@/app/components/IconMap';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { mapReceiptToTransaction, VEPayReceipt, VEPAY_BANKS } from '@/lib/vepay-data';
@@ -41,6 +42,7 @@ export function VepayModal({
   setTxLoading,
   formatInCurrency,
 }: VepayModalProps) {
+  const { t } = useTranslation(['finanzas', 'common']);
   const [vepayProcessing, setVepayProcessing] = useState(false);
   const [vepayReceipts, setVepayReceipts] = useState<VEPayReceipt[]>([]);
   const [vepayPreview, setVepayPreview] = useState<string>('');
@@ -84,19 +86,19 @@ export function VepayModal({
           initialOverrides[key] = { flow: 'expense', accountId: '', bank: '', date: dateStr };
         });
         setVepayOverrides(initialOverrides);
-        success(`${result.receipts.length} recibo(s) detectado(s)`);
+        success(t('finanzas:vepay.receiptsDetectedToast', { count: result.receipts.length }));
       } else {
-        warning('No se pudo detectar un recibo en la captura.');
+        warning(t('finanzas:vepay.noReceiptImage'));
       }
 
       if (result.errors && result.errors.length > 0) {
         result.errors.forEach(err => {
-          error(`Error: ${err.message}`);
+          error(t('finanzas:toast.genericError', { message: err.message }));
         });
       }
     } catch (err: any) {
       console.error(err);
-      error(err?.message || 'Error al procesar la captura');
+      error(err?.message || t('finanzas:vepay.processError'));
     } finally {
       setVepayProcessing(false);
       if (e.target) e.target.value = '';
@@ -122,15 +124,15 @@ export function VepayModal({
           initialOverrides[key] = { flow: 'expense', accountId: '', bank: '', date: dateStr };
         });
         setVepayOverrides(initialOverrides);
-        success(`${result.receipts.length} recibo(s) detectado(s)`);
+        success(t('finanzas:vepay.receiptsDetectedToast', { count: result.receipts.length }));
       } else {
-        warning('No se pudo detectar un recibo en el texto.');
+        warning(t('finanzas:vepay.noReceiptText'));
       }
       if (result.errors && result.errors.length > 0) {
-        result.errors.forEach(err => error(`Error: ${err.message}`));
+        result.errors.forEach(err => error(t('finanzas:toast.genericError', { message: err.message })));
       }
     } catch (err: any) {
-      error(err?.message || 'Error al analizar el texto');
+      error(err?.message || t('finanzas:vepay.parseError'));
     }
     setVepayManualProcessing(false);
   };
@@ -158,7 +160,7 @@ export function VepayModal({
         type: tx.type,
         category: tx.category,
         description: accCurrency === 'USD'
-          ? `${tx.description} (Original: Bs. ${tx.amount.toLocaleString('es')})`
+          ? t('finanzas:vepay.originalAmount', { description: tx.description, amount: tx.amount.toLocaleString('es') })
           : tx.description,
         date: tx.date,
       };
@@ -175,8 +177,8 @@ export function VepayModal({
 
       await onTransactionCreated();
 
-      const typeLabel = tx.type === 'income' ? 'Ingreso' : tx.type === 'expense' ? 'Gasto' : 'Ahorro';
-      success(`${typeLabel} de ${formatInCurrency(finalAmount, accCurrency)} registrado desde captura`);
+      const typeLabel = tx.type === 'income' ? t('finanzas:vepay.typeIncome') : tx.type === 'expense' ? t('finanzas:vepay.typeExpense') : t('finanzas:vepay.typeSaving');
+      success(t('finanzas:vepay.registered', { type: typeLabel, amount: formatInCurrency(finalAmount, accCurrency) }));
 
       setVepayReceipts(prev => prev.filter(r => r.transaction_key !== receipt.transaction_key));
       if (vepayReceipts.length <= 1) {
@@ -187,7 +189,7 @@ export function VepayModal({
       }
     } catch (err: any) {
       console.error(err);
-      error(`Error al registrar: ${err?.message || 'Error desconocido'}`);
+      error(t('finanzas:vepay.registerError', { message: err?.message || t('finanzas:vepay.unknownError') }));
     } finally {
       setTxLoading(false);
     }
@@ -208,8 +210,8 @@ export function VepayModal({
         <div className="modal-content modal-vepay" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <div>
-              <h2 className="modal-title">Importar desde Captura</h2>
-              <p className="modal-subtitle">Sube un recibo de pago móvil (Bancamiga, Banesco, BDV, Mercantil, Provincial)</p>
+              <h2 className="modal-title">{t('finanzas:vepay.title')}</h2>
+              <p className="modal-subtitle">{t('finanzas:vepay.subtitle')}</p>
             </div>
             <button className="modal-close" onClick={handleClose}><InlineIcon icon="X" size={18} /></button>
           </div>
@@ -217,7 +219,7 @@ export function VepayModal({
           {/* Upload area (desktop only) */}
           <div className="vepay-upload-area">
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 8 }}>
-              Opción 1: Subir captura (solo funciona en escritorio)
+              {t('finanzas:vepay.uploadOption')}
             </div>
             <input
               type="file"
@@ -230,7 +232,7 @@ export function VepayModal({
               {vepayProcessing ? (
                 <div className="vepay-uploading">
                   <span className="spinner vepay-spinner" />
-                  <span>Procesando captura con OCR...</span>
+                  <span>{t('finanzas:vepay.processing')}</span>
                 </div>
               ) : (
                 <>
@@ -239,7 +241,7 @@ export function VepayModal({
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
                   </svg>
-                  <span>Seleccionar captura de recibo</span>
+                  <span>{t('finanzas:vepay.selectScreenshot')}</span>
                 </>
               )}
             </label>
@@ -248,19 +250,19 @@ export function VepayModal({
           {/* Preview */}
           {vepayPreview && (
             <div className="vepay-preview">
-              <img src={vepayPreview} alt="Captura" loading="lazy" />
+              <img src={vepayPreview} alt={t('finanzas:vepay.screenshotAlt')} loading="lazy" />
             </div>
           )}
 
           {/* Manual text input */}
           <div className="vepay-manual-area" style={{ padding: '0 4px', marginTop: 4 }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 6 }}>
-              Opción 2: Pegar el texto del recibo manualmente
+              {t('finanzas:vepay.manualOption')}
             </div>
               <textarea
                 className="form-input"
                 rows={6}
-                placeholder="Pega aquí el texto del recibo (pago móvil, transferencia)..."
+                placeholder={t('finanzas:vepay.manualPlaceholder')}
                 value={vepayManualText}
                 onChange={(e) => setVepayManualText(e.target.value)}
                 style={{ width: '100%', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.8rem' }}
@@ -271,20 +273,20 @@ export function VepayModal({
                 disabled={vepayManualProcessing || !vepayManualText.trim()}
                 style={{ marginTop: 8, width: '100%' }}
               >
-                {vepayManualProcessing ? 'Analizando...' : 'Analizar texto'}
+                {vepayManualProcessing ? t('finanzas:vepay.analyzing') : t('finanzas:vepay.analyzeText')}
               </button>
             </div>
 
           {/* Receipts detected */}
           {vepayReceipts.length > 0 && (
             <div className="vepay-receipts">
-              <h2 className="vepay-receipts-title">Recibos detectados ({vepayReceipts.length})</h2>
+              <h2 className="vepay-receipts-title">{t('finanzas:vepay.receiptsDetected', { count: vepayReceipts.length })}</h2>
               {vepayReceipts.map((receipt, idx) => {
                 const key = receipt.transaction_key || String(idx);
                 const override = vepayOverrides[key] || { flow: 'expense', accountId: '', bank: '', date: todayISO() };
                 const tx = mapReceiptToTransaction(receipt, override);
                 const typeColor = tx.type === 'income' ? 'var(--color-prosper-green)' : tx.type === 'expense' ? 'var(--color-error)' : 'var(--color-pine-500)';
-                const typeLabel = tx.type === 'income' ? 'Entrada' : tx.type === 'expense' ? 'Salida' : 'Ahorro';
+                const typeLabel = tx.type === 'income' ? t('finanzas:vepay.flowIn') : tx.type === 'expense' ? t('finanzas:vepay.flowOut') : t('finanzas:vepay.flowOut');
                 const flowIcon = tx.type === 'income' ? '↓' : '↑';
 
                 const updateOverride = (updates: Partial<typeof override>) => {
@@ -302,47 +304,47 @@ export function VepayModal({
                         className={`vepay-flow-btn ${override.flow === 'expense' ? 'active-out' : ''}`}
                         onClick={() => updateOverride({ flow: 'expense' })}
                       >
-                        ↑ Salida
+                        ↑ {t('finanzas:vepay.flowOut')}
                       </button>
                       <button
                         className={`vepay-flow-btn ${override.flow === 'income' ? 'active-in' : ''}`}
                         onClick={() => updateOverride({ flow: 'income' })}
                       >
-                        ↓ Entrada
+                        ↓ {t('finanzas:vepay.flowIn')}
                       </button>
                     </div>
 
                     {/* Account selector */}
                     <div className="vepay-field">
-                      <label className="vepay-field-label">Cuenta Prosper</label>
+                      <label className="vepay-field-label">{t('finanzas:vepay.accountLabel')}</label>
                        <CustomSelect
                          value={override.accountId}
                          onChange={(val) => updateOverride({ accountId: val })}
                          options={[
-                           { value: '', label: 'Seleccionar cuenta...' },
+                           { value: '', label: t('finanzas:vepay.selectAccount') },
                            ...accounts.map(acc => ({ value: acc.id, label: `${acc.name} ($${acc.balance.toLocaleString()})`, icon: acc.icon })),
                          ]}
-                         placeholder="Seleccionar cuenta..."
+                         placeholder={t('finanzas:vepay.selectAccount')}
                        />
                     </div>
 
                     {/* Bank selector */}
                     <div className="vepay-field">
-                      <label className="vepay-field-label">Banco del pago</label>
+                      <label className="vepay-field-label">{t('finanzas:vepay.bankLabel')}</label>
                       <CustomSelect
                         value={override.bank || tx.bank}
                         onChange={(val) => updateOverride({ bank: val })}
                         options={[
-                          { value: '', label: 'Detectado automáticamente' },
+                          { value: '', label: t('finanzas:vepay.autoDetected') },
                           ...VEPAY_BANKS.map(b => ({ value: b.value, label: b.label })),
                         ]}
-                        placeholder="Seleccionar banco..."
+                        placeholder={t('finanzas:vepay.selectBank')}
                       />
                     </div>
 
                     {/* Date selector */}
                     <div className="vepay-field">
-                      <label className="vepay-field-label">Fecha de transacción</label>
+                      <label className="vepay-field-label">{t('finanzas:vepay.dateLabel')}</label>
                       <input
                         className="vepay-select vepay-date-input"
                         type="date"
@@ -356,25 +358,25 @@ export function VepayModal({
                       <span className="vepay-type-badge" style={{ background: typeColor + '20', color: typeColor }}>{flowIcon} {typeLabel}</span>
                     </div>
                     <div className="vepay-receipt-amount" style={{ color: typeColor }}>
-                      {tx.type === 'expense' ? '-' : '+'}${formatAmount(tx.amount)}
+                      {tx.type === 'expense' ? '-' : '+'}{formatAmount(tx.amount)}
                     </div>
                     <p className="vepay-receipt-concept">{tx.description}</p>
                     <div className="vepay-receipt-details">
                       {receipt.recipient.name && (
                         <div className="vepay-detail-row">
-                          <span className="vepay-detail-label">Beneficiario:</span>
+                          <span className="vepay-detail-label">{t('finanzas:vepay.beneficiary')}</span>
                           <span className="vepay-detail-value">{receipt.recipient.name}</span>
                         </div>
                       )}
                       {receipt.origin.account_last_digits && (
                         <div className="vepay-detail-row">
-                          <span className="vepay-detail-label">Cuenta origen:</span>
+                          <span className="vepay-detail-label">{t('finanzas:vepay.originAccount')}</span>
                           <span className="vepay-detail-value">****{receipt.origin.account_last_digits}</span>
                         </div>
                       )}
                       {receipt.recipient.document_id && (
                         <div className="vepay-detail-row">
-                          <span className="vepay-detail-label">CI/RIF:</span>
+                          <span className="vepay-detail-label">{t('finanzas:vepay.documentId')}</span>
                           <span className="vepay-detail-value">{receipt.recipient.document_id}</span>
                         </div>
                       )}
@@ -384,12 +386,12 @@ export function VepayModal({
                       {receipt.payment.date_time.raw && <span>{receipt.payment.date_time.raw}</span>}
                     </div>
                     {!receipt.validation.is_complete && receipt.validation.missing_fields.length > 0 && (
-                      <p className="vepay-receipt-warning"><InlineIcon icon="AlertTriangle" size={14} /> Campos incompletos: {receipt.validation.missing_fields.join(', ')}</p>
+                      <p className="vepay-receipt-warning"><InlineIcon icon="AlertTriangle" size={14} /> {t('finanzas:vepay.incompleteFields', { fields: receipt.validation.missing_fields.join(', ') })}</p>
                     )}
                     <div className="vepay-receipt-actions">
-                      <button className="btn btn-outline btn-sm" onClick={() => handleVepaySkip(receipt)}>Omitir</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleVepaySkip(receipt)}>{t('finanzas:vepay.skip')}</button>
                       <button className="btn btn-primary btn-sm" onClick={() => handleVepayConfirm(receipt)} disabled={txLoading || !override.accountId}>
-                        {txLoading ? <span className="btn-loading"><span className="spinner" /> Guardando...</span> : 'Registrar'}
+                        {txLoading ? <span className="btn-loading"><span className="spinner" /> {t('finanzas:vepay.saving')}</span> : t('finanzas:vepay.register')}
                       </button>
                     </div>
                   </div>
@@ -400,7 +402,8 @@ export function VepayModal({
         </div>
       </div>
       <style>{`
-        .modal-vepay { max-width: 520px; }
+        .modal-vepay { max-width: 520px; max-height: calc(100vh - 80px); overflow-y: auto; padding: 24px; }
+        .modal-vepay .modal-header { padding: 0 0 16px 0; }
         .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
         .modal-close:hover { background: var(--bg-input); }
         .vepay-upload-area {
@@ -435,7 +438,7 @@ export function VepayModal({
           border-radius: 10px;
           padding: 14px;
         }
-        .vepay-receipt-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .vepay-receipt-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
         .vepay-bank-badge {
           padding: 3px 10px;
           border-radius: 6px;
@@ -444,17 +447,20 @@ export function VepayModal({
           font-weight: 700;
           color: var(--text-primary);
           text-transform: capitalize;
+          max-width: 100%;
+          word-break: break-word;
+          line-height: 1.3;
         }
         .vepay-type-badge { padding: 3px 8px; border-radius: 6px; font-size: 0.625rem; font-weight: 700; }
-        .vepay-receipt-amount { font-size: 1.375rem; font-weight: 800; margin-bottom: 6px; }
-        .vepay-receipt-concept { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 8px 0; line-height: 1.4; }
-        .vepay-receipt-meta { display: flex; gap: 12px; font-size: 0.625rem; color: var(--text-tertiary); margin-bottom: 8px; }
+        .vepay-receipt-amount { font-size: 1.125rem; font-weight: 800; margin-bottom: 6px; word-break: break-word; line-height: 1.2; overflow-wrap: anywhere; }
+        .vepay-receipt-concept { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 8px 0; line-height: 1.4; word-break: break-word; overflow-wrap: anywhere; }
+        .vepay-receipt-meta { display: flex; gap: 12px; font-size: 0.625rem; color: var(--text-tertiary); margin-bottom: 8px; flex-wrap: wrap; word-break: break-all; }
         .vepay-receipt-warning { font-size: 0.6875rem; color: var(--color-gold-500); margin: 0 0 8px 0; }
         .vepay-receipt-actions { display: flex; gap: 8px; justify-content: flex-end; }
         .vepay-receipt-details { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; padding: 8px 10px; background: var(--bg-card); border-radius: 8px; }
-        .vepay-detail-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.6875rem; }
-        .vepay-detail-label { color: var(--text-tertiary); font-weight: 600; }
-        .vepay-detail-value { color: var(--text-primary); font-weight: 700; }
+        .vepay-detail-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; font-size: 0.6875rem; flex-wrap: wrap; }
+        .vepay-detail-label { color: var(--text-tertiary); font-weight: 600; flex-shrink: 0; max-width: 45%; }
+        .vepay-detail-value { color: var(--text-primary); font-weight: 700; word-break: break-all; text-align: right; max-width: 55%; }
         .vepay-flow-selector { display: flex; gap: 8px; margin-bottom: 12px; }
         .vepay-flow-btn {
           flex: 1;

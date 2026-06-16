@@ -138,7 +138,52 @@
         "title": "Never miss an important date again",
         "description": "View due dates, reminders, recurring payments, and plans with deadlines in a clear interface."
       }
-    ]
+    ],
+    "mockups": {
+      "dashboard": {
+        "nav": { "dashboard": "Dashboard", "finanzas": "Finances", "metas": "Goals", "calendario": "Calendar" },
+        "topbar": "Dashboard",
+        "income": "Income",
+        "expenses": "Expenses",
+        "balance": "Balance",
+        "monthlySummary": "Monthly Summary",
+        "myAccounts": "My Accounts",
+        "savings": "Savings",
+        "checking": "Checking"
+      },
+      "finanzas": {
+        "myAccounts": "My Accounts",
+        "newAccount": "New",
+        "savings": "Savings",
+        "checking": "Checking",
+        "usdt": "USDT",
+        "digitalWallet": "Digital Wallet",
+        "bank": "Bank",
+        "crypto": "Crypto",
+        "income": "Income",
+        "salary": "Monthly salary",
+        "expense": "Expense",
+        "supermarket": "Supermarket",
+        "saving": "Saving",
+        "emergencyFund": "Emergency fund"
+      },
+      "metas": {
+        "newCar": "New car",
+        "vacations": "Vacations",
+        "onlineCourse": "Online course",
+        "dueInMonths": "due in {{months}} months",
+        "completed": "completed"
+      },
+      "calendario": {
+        "monthYear": "June 2026",
+        "incomeLabel": "Income",
+        "expenseLabel": "Expense",
+        "reminderLabel": "Reminder",
+        "salaryEvent": "Salary",
+        "rentEvent": "Rent",
+        "reviewGoals": "Review goals"
+      }
+    }
   },
   "features": {
     "sectionTag": "Features",
@@ -299,18 +344,27 @@
           "Official uses CoinGecko · P2P uses real Binance price.",
           "Switch modes from the dashboard in one click."
         ]
-      },
-      {
-        "id": "personalizar",
-        "icon": "LayoutGrid",
-        "title": "Customize your dashboard",
-        "steps": [
-          "Click the green 'Customize' button on your dashboard.",
-          "Create categories and add widgets from the catalog.",
-          "Adjust sizes, reorder, and edit titles to your liking."
-        ]
       }
-    ]
+    ],
+    "mockups": {
+      "income": "Income",
+      "salary": "Monthly salary",
+      "expense": "Expense",
+      "supermarket": "Supermarket",
+      "saving": "Saving",
+      "emergencyFund": "Emergency fund",
+      "newCar": "New car",
+      "dueInMonths": "due in {{months}} months",
+      "bank": "Bank",
+      "amount": "Amount",
+      "ref": "Ref.",
+      "date": "Date",
+      "verified": "Data verified",
+      "usdtRate": "USDT rate",
+      "btcRate": "BTC rate",
+      "official": "Official",
+      "p2p": "P2P"
+    }
   },
   "howItWorks": {
     "sectionTag": "How It Works",
@@ -554,5 +608,21 @@
     "login": "Log In",
     "startFree": "Start Free",
     "goToDashboard": "Go to Dashboard"
+  },
+  "androidDownload": {
+    "button": "Download APK",
+    "buttonDesktop": "Download APK",
+    "iosHint": "The APK is for Android. On iPhone use the web version."
+  },
+  "visuals": {
+    "cash": "Cash",
+    "bank": "Bank",
+    "car": "Car",
+    "vacations": "Vacations",
+    "bankLabel": "Bank",
+    "amountLabel": "Amount",
+    "refLabel": "Ref.",
+    "verified": "Verified",
+    "people": "people"
   }
 }

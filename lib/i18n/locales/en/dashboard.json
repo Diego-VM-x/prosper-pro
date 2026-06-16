@@ -61,7 +61,8 @@
     "accountTypes": {
       "digital": "Digital Wallet",
       "bank": "Bank",
-      "foreign": "Foreign Currency"
+      "foreign": "Foreign Currency",
+      "cash": "Cash"
     },
     "recentTransactions": "Recent Transactions",
     "viewAll": "View all",
@@ -87,6 +88,17 @@
     "day_one": "day",
     "day_other": "days",
     "noUpcomingDeadlines": "No upcoming deadlines"
+  },
+  "converter": {
+    "title": "Currency Converter",
+    "official": "Official",
+    "p2p": "P2P",
+    "amount": "Amount",
+    "from": "From",
+    "to": "To",
+    "swap": "Swap",
+    "usingP2P": "Using P2P rate",
+    "usingOfficial": "Using official rate"
   },
   "market": {
     "exchangeRates": "Exchange Rates",
@@ -116,7 +128,10 @@
     "insufficientFunds": "Insufficient balance in source account",
     "success": "Transfer completed",
     "error": "Error: {{message}}",
-    "retry": "try again"
+    "retry": "try again",
+    "descriptionTo": "Transfer to: {{name}}{{conversion}}",
+    "descriptionFrom": "Transfer received from: {{name}}{{conversion}}",
+    "conversion": " (Conv. {{amount}})"
   },
   "aria": {
     "expandSection": "Expand section",
@@ -188,8 +203,28 @@
     "Educación": "Education",
     "Otro": "Other"
   },
+  "widgets": {
+    "welcomeBanner": { "label": "Welcome", "description": "Personalized greeting banner with your name" },
+    "statsPills": { "label": "Statistics", "description": "Quick summary of savings, recurring payments and goals" },
+    "todaySection": { "label": "For Today", "description": "Tasks, reminders and due dates for the day" },
+    "quickActions": { "label": "Quick Actions", "description": "Shortcuts to create plans, accounts and more" },
+    "toolInvoice": { "label": "Import Invoice", "description": "Scan and register invoices with OCR" },
+    "toolShopping": { "label": "Shopping Lists", "description": "Create smart shopping lists with budget" },
+    "toolAi": { "label": "AI Assistant", "description": "Ask about your finances with artificial intelligence" },
+    "monthlySummary": { "label": "Monthly Summary", "description": "Income, expenses and monthly balance" },
+    "accounts": { "label": "My Accounts", "description": "Your favorite accounts with balances" },
+    "recentTransactions": { "label": "Recent Transactions", "description": "The most recent transactions" },
+    "quickTransfer": { "label": "Quick Transfer", "description": "Transfer between your accounts instantly" },
+    "activePlans": { "label": "Active Plans", "description": "Tracking of your plans and goals" },
+    "upcomingDeadlines": { "label": "Upcoming Deadlines", "description": "Alerts for upcoming due dates" },
+    "exchangeRates": { "label": "Exchange Rates", "description": "Fiat and cryptocurrency rates" },
+    "financialChart": { "label": "Financial Performance", "description": "Chart of your financial performance" },
+    "currencyConverter": { "label": "Currency Converter", "description": "Convert currencies using official and P2P rates" }
+  },
   "customize": {
     "title": "Customize",
+    "ungrouped": "Ungrouped",
+    "noUngrouped": "No ungrouped widgets",
     "categories": "Categories",
     "catalog": "Catalog",
     "myWidgets": "My Widgets",
@@ -203,13 +238,17 @@
     "widgetSize": {
       "small": "Small",
       "medium": "Medium",
-      "large": "Large"
+      "large": "Large",
+      "columns_one": "{{count}} column",
+      "columns_other": "{{count}} columns"
     },
     "categoryName": "Category name",
     "icon": "Icon",
     "add": "Add",
     "size": "Size",
     "catalogDesc": "Click a widget to add it to your dashboard.",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
     "added": "Added",
     "reset": "Reset",
     "category": "Category",

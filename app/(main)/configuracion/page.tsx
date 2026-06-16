@@ -238,32 +238,32 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
 
   const handleChangePassword = async () => {
     if (!isEmailUser) {
-      setErrorMsg(t('seguridad.passwordChangeNotAvailable', { defaultValue: 'Los usuarios de Google no pueden cambiar su contraseña aquí' }));
+      setErrorMsg(t('seguridad.passwordChangeNotAvailable'));
       setTimeout(() => setErrorMsg(''), 4000);
       return;
     }
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setErrorMsg(t('seguridad.passwordEmpty', { defaultValue: 'Completa todos los campos' }));
+      setErrorMsg(t('seguridad.passwordEmpty'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setErrorMsg(t('seguridad.passwordMismatch', { defaultValue: 'Las contraseñas nuevas no coinciden' }));
+      setErrorMsg(t('seguridad.passwordMismatch'));
       return;
     }
     if (newPassword.length < 8) {
-      setErrorMsg(t('seguridad.passwordTooShort', { defaultValue: 'La contraseña debe tener al menos 8 caracteres' }));
+      setErrorMsg(t('seguridad.passwordTooShort'));
       return;
     }
     if (!/[A-Z]/.test(newPassword)) {
-      setErrorMsg(t('seguridad.passwordNoUppercase', { defaultValue: 'La contraseña debe tener al menos una mayúscula' }));
+      setErrorMsg(t('seguridad.passwordNoUppercase'));
       return;
     }
     if (!/[a-z]/.test(newPassword)) {
-      setErrorMsg(t('seguridad.passwordNoLowercase', { defaultValue: 'La contraseña debe tener al menos una minúscula' }));
+      setErrorMsg(t('seguridad.passwordNoLowercase'));
       return;
     }
     if (!/[0-9]/.test(newPassword)) {
-      setErrorMsg(t('seguridad.passwordNoNumber', { defaultValue: 'La contraseña debe tener al menos un número' }));
+      setErrorMsg(t('seguridad.passwordNoNumber'));
       return;
     }
 
@@ -273,7 +273,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     try {
       const result = await changePassword(currentPassword, newPassword);
       if (result.success) {
-        setSuccessMsg(t('seguridad.passwordChanged', { defaultValue: 'Contraseña actualizada correctamente' }));
+        setSuccessMsg(t('seguridad.passwordChanged'));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -320,6 +320,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     { id: 'notificaciones', label: t('tabs.notificaciones'), icon: 'Bell' },
     { id: 'seguridad', label: t('tabs.seguridad'), icon: 'Lock' },
   ];
+
+  const numberLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-VE';
+  const fmtNumber = (value: number, options?: Intl.NumberFormatOptions) => new Intl.NumberFormat(numberLocale, options).format(value);
 
   return (
     <ProtectedRoute>
@@ -486,8 +489,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <label className="pref-label">{t('preferencias.languageLabel')}</label>
                       <div className="option-grid">
                         {[
-                          { value: 'es', label: 'Español', flag: '🇪🇸' },
-                          { value: 'en', label: 'English', flag: '🇺🇸' },
+                          { value: 'es', label: t('preferencias.languageOptions.es'), flag: '🇪🇸' },
+                          { value: 'en', label: t('preferencias.languageOptions.en'), flag: '🇺🇸' },
                         ].map(opt => (
                           <button
                             key={opt.value}
@@ -530,7 +533,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                               </div>
                               {!isBs && rateToBs && rateToBs > 0 && (
                                 <div className="currency-card-rate">
-                                  1 {cfg.code} ≈ {rateToBs.toLocaleString('es-VE', { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })} Bs.
+                                  1 {cfg.code} ≈ {fmtNumber(rateToBs, { minimumFractionDigits: code === 'COP' ? 4 : 2, maximumFractionDigits: code === 'COP' ? 4 : 2 })} Bs.
                                 </div>
                               )}
                             </button>
@@ -545,25 +548,25 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                         <label className="pref-label">{t('preferencias.ratesLabel')}</label>
                         <div className="rates-table">
                           {/* Fiat Header */}
-                          <div className="rates-section-title">{t('market.fiat', { defaultValue: 'Fiat' })}</div>
+                          <div className="rates-section-title">{t('market.fiat')}</div>
                           <div className="rates-row">
                             <CurrencyFlag code="USD" size={18} />
                             <span className="rates-name">USD</span>
-                            <span className="rates-value">{rates.rates.USD?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                            <span className="rates-value">{fmtNumber(rates.rates.USD || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                           </div>
                           <div className="rates-row">
                             <CurrencyFlag code="EUR" size={18} />
                             <span className="rates-name">EUR</span>
-                            <span className="rates-value">{rates.rates.EUR?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                            <span className="rates-value">{fmtNumber(rates.rates.EUR || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                           </div>
                           <div className="rates-row">
                             <CurrencyFlag code="COP" size={18} />
                             <span className="rates-name">COP</span>
-                            <span className="rates-value">{rates.rates.COP?.toLocaleString('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</span>
+                            <span className="rates-value">{fmtNumber(rates.rates.COP || 0, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} Bs.</span>
                           </div>
 
                           {/* Crypto Header */}
-                          <div className="rates-section-title" style={{ marginTop: '12px' }}>{t('market.cryptos', { defaultValue: 'Criptomonedas' })}</div>
+                          <div className="rates-section-title" style={{ marginTop: '12px' }}>{t('market.cryptos')}</div>
                           {[
                             { code: 'USDT', usdPrice: rates.rates.USDT / rates.rates.USD, bsPrice: rates.rates.USDT },
                             { code: 'SOL', usdPrice: rates.rates.SOL / rates.rates.USD, bsPrice: rates.rates.SOL },
@@ -575,8 +578,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                               <CurrencyFlag code={crypto.code} size={18} />
                               <span className="rates-name">{crypto.code}</span>
                               <span className="rates-value">
-                                ${crypto.usdPrice?.toLocaleString('es-VE', { maximumFractionDigits: 2 })}
-                                <span className="rates-sub">≈ {crypto.bsPrice?.toLocaleString('es-VE', { maximumFractionDigits: 2 })} Bs.</span>
+                                ${fmtNumber(crypto.usdPrice || 0, { maximumFractionDigits: 2 })}
+                                <span className="rates-sub">≈ {fmtNumber(crypto.bsPrice || 0, { maximumFractionDigits: 2 })} Bs.</span>
                               </span>
                             </div>
                           ))}
@@ -585,13 +588,13 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           {rates.p2pRates && Object.keys(rates.p2pRates).length > 0 && (
                             <>
                               <div className="rates-section-title" style={{ marginTop: '12px' }}>
-                                <span className="rates-p2p-badge">P2P Binance</span>
+                                <span className="rates-p2p-badge">{t('market.p2pBadge')}</span>
                               </div>
                               {Object.entries(rates.p2pRates).map(([code, rate]) => (
                                 <div className="rates-row" key={`p2p-${code}`}>
                                   <CurrencyFlag code={code} size={18} />
                                   <span className="rates-name">{code}</span>
-                                  <span className="rates-value p2p">{rate?.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
+                                  <span className="rates-value p2p">{fmtNumber(rate || 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.</span>
                                 </div>
                               ))}
                             </>
@@ -688,7 +691,10 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                 <div className="settings-panel">
                   <div className="panel-card">
                     <div className="panel-header">
-                      <h2 className="panel-title">{t('notificaciones.panelTitle')}</h2>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <h2 className="panel-title">{t('notificaciones.panelTitle')}</h2>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '3px 10px', borderRadius: '999px', background: 'rgba(61,204,142,0.15)', color: '#3DCC8E' }}>{t('notificaciones.inDevelopment')}</span>
+                      </div>
                       <p className="panel-desc">{t('notificaciones.panelDesc')}</p>
                     </div>
 
@@ -907,9 +913,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                       <div className="panel-header">
                         <h2 className="panel-title">
                           <Lock size={16} style={{ display: 'inline', marginRight: 8, verticalAlign: 'middle' }} />
-                          {t('seguridad.changePassword.title', { defaultValue: 'Cambiar Contraseña' })}
+                          {t('seguridad.changePassword.title')}
                         </h2>
-                        <p className="panel-desc">{t('seguridad.changePassword.desc', { defaultValue: 'Actualiza tu contraseña de acceso' })}</p>
+                        <p className="panel-desc">{t('seguridad.changePassword.desc')}</p>
                       </div>
 
                       {!showPasswordForm ? (
@@ -917,49 +923,49 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                           className="btn-outline-security"
                           onClick={() => setShowPasswordForm(true)}
                         >
-                          <Lock size={14} /> {t('seguridad.changePassword.btn', { defaultValue: 'Cambiar contraseña' })}
+                          <Lock size={14} /> {t('seguridad.changePassword.btn')}
                         </button>
                       ) : (
                         <div className="password-change-form">
                           <div className="password-field">
-                            <label>{t('seguridad.changePassword.current', { defaultValue: 'Contraseña actual' })}</label>
+                            <label>{t('seguridad.changePassword.current')}</label>
                             <input
                               type="password"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              placeholder={t('seguridad.changePassword.currentPlaceholder', { defaultValue: 'Tu contraseña actual' })}
+                              placeholder={t('seguridad.changePassword.currentPlaceholder')}
                             />
                           </div>
                           <div className="password-field">
-                            <label>{t('seguridad.changePassword.new', { defaultValue: 'Nueva contraseña' })}</label>
+                            <label>{t('seguridad.changePassword.new')}</label>
                             <input
                               type="password"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              placeholder={t('seguridad.changePassword.newPlaceholder', { defaultValue: 'Mínimo 8 caracteres' })}
+                              placeholder={t('seguridad.changePassword.newPlaceholder')}
                             />
                             <div className="password-hints-security">
                               <span className={`password-hint ${newPassword.length >= 8 ? 'valid' : ''}`}>
-                                {newPassword.length >= 8 ? '✓' : '•'} {t('login.passwordHints.minLength', { defaultValue: 'Mínimo 8 caracteres' })}
+                                {newPassword.length >= 8 ? '✓' : '•'} {t('auth:register.passwordHints.minLength')}
                               </span>
                               <span className={`password-hint ${/[A-Z]/.test(newPassword) ? 'valid' : ''}`}>
-                                {/[A-Z]/.test(newPassword) ? '✓' : '•'} {t('login.passwordHints.uppercase', { defaultValue: 'Una mayúscula' })}
+                                {/[A-Z]/.test(newPassword) ? '✓' : '•'} {t('auth:register.passwordHints.uppercase')}
                               </span>
                               <span className={`password-hint ${/[a-z]/.test(newPassword) ? 'valid' : ''}`}>
-                                {/[a-z]/.test(newPassword) ? '✓' : '•'} {t('login.passwordHints.lowercase', { defaultValue: 'Una minúscula' })}
+                                {/[a-z]/.test(newPassword) ? '✓' : '•'} {t('auth:register.passwordHints.lowercase')}
                               </span>
                               <span className={`password-hint ${/[0-9]/.test(newPassword) ? 'valid' : ''}`}>
-                                {/[0-9]/.test(newPassword) ? '✓' : '•'} {t('login.passwordHints.number', { defaultValue: 'Un número' })}
+                                {/[0-9]/.test(newPassword) ? '✓' : '•'} {t('auth:register.passwordHints.number')}
                               </span>
                             </div>
                           </div>
                           <div className="password-field">
-                            <label>{t('seguridad.changePassword.confirm', { defaultValue: 'Confirmar nueva contraseña' })}</label>
+                            <label>{t('seguridad.changePassword.confirm')}</label>
                             <input
                               type="password"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
-                              placeholder={t('seguridad.changePassword.confirmPlaceholder', { defaultValue: 'Repite la nueva contraseña' })}
+                              placeholder={t('seguridad.changePassword.confirmPlaceholder')}
                             />
                           </div>
                           <div className="password-change-actions">
@@ -972,7 +978,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                                 setConfirmPassword('');
                               }}
                             >
-                              {t('common:buttons.cancel', { defaultValue: 'Cancelar' })}
+                              {t('common:buttons.cancel')}
                             </button>
                             <button
                               className="btn-save"
@@ -980,9 +986,9 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                               disabled={changingPassword}
                             >
                               {changingPassword ? (
-                                <span className="btn-loading"><span className="spinner" /> {t('seguridad.changePassword.saving', { defaultValue: 'Guardando...' })}</span>
+                                <span className="btn-loading"><span className="spinner" /> {t('seguridad.changePassword.saving')}</span>
                               ) : (
-                                t('seguridad.changePassword.submit', { defaultValue: 'Actualizar contraseña' })
+                                t('seguridad.changePassword.submit')
                               )}
                             </button>
                           </div>
@@ -1012,7 +1018,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     ) : (
                       <div className="delete-confirm">
                         <p className="delete-confirm-label">
-                          {t('seguridad.deleteAccount.confirmLabel', { defaultValue: 'Esta acción es irreversible. Escribe ELIMINAR para confirmar.' })}
+                          {t('seguridad.deleteAccount.confirmLabel')}
                         </p>
                         <input
                           className="delete-confirm-input"
@@ -1061,7 +1067,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     ) : (
                       <div className="delete-confirm">
                         <p className="delete-confirm-label">
-                          {t('seguridad.wipeData.confirmLabel', { defaultValue: 'Escribe BORRAR para confirmar que deseas eliminar todos tus datos.' })}
+                          {t('seguridad.wipeData.confirmLabel')}
                         </p>
                         <input
                           className="delete-confirm-input"

@@ -138,7 +138,52 @@
         "title": "Nunca más olvides una fecha importante",
         "description": "Visualiza vencimientos, recordatorios, pagos recurrentes y planes con fecha límite en una interfaz clara."
       }
-    ]
+    ],
+    "mockups": {
+      "dashboard": {
+        "nav": { "dashboard": "Dashboard", "finanzas": "Finanzas", "metas": "Metas", "calendario": "Calendario" },
+        "topbar": "Dashboard",
+        "income": "Ingresos",
+        "expenses": "Gastos",
+        "balance": "Balance",
+        "monthlySummary": "Resumen del Mes",
+        "myAccounts": "Mis Cuentas",
+        "savings": "Ahorro",
+        "checking": "Corriente"
+      },
+      "finanzas": {
+        "myAccounts": "Mis Cuentas",
+        "newAccount": "Nueva",
+        "savings": "Ahorro",
+        "checking": "Corriente",
+        "usdt": "USDT",
+        "digitalWallet": "Billetera Digital",
+        "bank": "Banco",
+        "crypto": "Cripto",
+        "income": "Ingreso",
+        "salary": "Salario mensual",
+        "expense": "Gasto",
+        "supermarket": "Supermercado",
+        "saving": "Ahorro",
+        "emergencyFund": "Fondo emergencia"
+      },
+      "metas": {
+        "newCar": "Auto nuevo",
+        "vacations": "Vacaciones",
+        "onlineCourse": "Curso online",
+        "dueInMonths": "vence en {{months}} meses",
+        "completed": "completado"
+      },
+      "calendario": {
+        "monthYear": "Junio 2026",
+        "incomeLabel": "Ingreso",
+        "expenseLabel": "Gasto",
+        "reminderLabel": "Recordatorio",
+        "salaryEvent": "Salario",
+        "rentEvent": "Alquiler",
+        "reviewGoals": "Revisar metas"
+      }
+    }
   },
   "features": {
     "sectionTag": "Funciones",
@@ -289,28 +334,27 @@
           "Súbela en Finanzas → Importar Captura.",
           "Revisa los datos extraídos y guarda la transacción."
         ]
-      },
-      {
-        "id": "transfer",
-        "icon": "RefreshCw",
-        "title": "Transferir entre cuentas",
-        "steps": [
-          "Ve al Dashboard o Finanzas y selecciona Transferencia.",
-          "Elige cuenta origen, destino y monto.",
-          "Confirma y revisa el historial de movimientos."
-        ]
-      },
-      {
-        "id": "personalizar",
-        "icon": "LayoutGrid",
-        "title": "Personalizar tu dashboard",
-        "steps": [
-          "Haz clic en el botón verde 'Personalizar' en tu dashboard.",
-          "Crea categorías y agrega widgets desde el catálogo.",
-          "Ajusta tamaños, reordena y edita títulos a tu gusto."
-        ]
       }
-    ]
+    ],
+    "mockups": {
+      "income": "Ingreso",
+      "salary": "Salario mensual",
+      "expense": "Gasto",
+      "supermarket": "Supermercado",
+      "saving": "Ahorro",
+      "emergencyFund": "Fondo emergencia",
+      "newCar": "Auto nuevo",
+      "dueInMonths": "vence en {{months}} meses",
+      "bank": "Banco",
+      "amount": "Monto",
+      "ref": "Ref.",
+      "date": "Fecha",
+      "verified": "Datos verificados",
+      "usdtRate": "Tasa USDT",
+      "btcRate": "Tasa BTC",
+      "official": "Oficial",
+      "p2p": "P2P"
+    }
   },
   "howItWorks": {
     "sectionTag": "Cómo Funciona",
@@ -554,5 +598,21 @@
     "login": "Iniciar Sesión",
     "startFree": "Comenzar Gratis",
     "goToDashboard": "Ir al Dashboard"
+  },
+  "androidDownload": {
+    "button": "Descargar apk",
+    "buttonDesktop": "Descargar apk",
+    "iosHint": "El APK es para Android. En iPhone usa la versión web."
+  },
+  "visuals": {
+    "cash": "Efectivo",
+    "bank": "Banco",
+    "car": "Auto",
+    "vacations": "Vacaciones",
+    "bankLabel": "Banco",
+    "amountLabel": "Monto",
+    "refLabel": "Ref.",
+    "verified": "Verificado",
+    "people": "personas"
   }
 }

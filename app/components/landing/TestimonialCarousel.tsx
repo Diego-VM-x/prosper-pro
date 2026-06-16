@@ -32,9 +32,9 @@ export function TestimonialCarousel() {
       <div className="landing-testimonials-inner">
         <AnimatedSection animationType="fade-up" delay={0}>
           <div className="section-header">
-            <span className="section-tag">Testimonios</span>
-            <h2 className="section-title">Lo que dicen nuestros usuarios</h2>
-            <p className="section-desc">Miles de personas ya organizan sus finanzas con Prosper Pro.</p>
+            <span className="section-tag">{t('testimonials.sectionTag')}</span>
+            <h2 className="section-title">{t('testimonials.sectionTitle')}</h2>
+            <p className="section-desc">{t('testimonials.sectionDesc')}</p>
           </div>
         </AnimatedSection>
 

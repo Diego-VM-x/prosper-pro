@@ -2,6 +2,7 @@
 
 import { useEffect, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
 
 
@@ -9,6 +10,7 @@ const UpdateModal = lazy(() => import('@/app/components/UpdateModal').then(m => 
 const Dashboard = lazy(() => import('@/app/components/Dashboard').then(m => ({ default: m.Dashboard })));
 
 function LoadingHome() {
+  const { t } = useTranslation('common');
   return (
     <div style={{
       display: 'flex',
@@ -18,7 +20,7 @@ function LoadingHome() {
       color: 'var(--text-secondary)',
     }}>
       <div className="landing-spinner" style={{ width: 32, height: 32, marginRight: 12 }} />
-      <span>Cargando Prosper Pro...</span>
+      <span>{t('loadingApp')}</span>
     </div>
   );
 }

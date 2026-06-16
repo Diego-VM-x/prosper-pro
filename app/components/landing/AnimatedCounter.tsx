@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
 interface AnimatedCounterProps {
@@ -13,6 +14,8 @@ interface AnimatedCounterProps {
 }
 
 export function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000, label, icon }: AnimatedCounterProps) {
+  const { i18n } = useTranslation();
+  const numberLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-VE';
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -58,7 +61,7 @@ export function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000
     <div ref={ref} className="counter-card">
       <span className="counter-icon"><InlineIcon icon={icon} size={20} /></span>
       <div className="counter-value">
-        {prefix}{count.toLocaleString('es-VE')}{suffix}
+        {prefix}{count.toLocaleString(numberLocale)}{suffix}
       </div>
       <span className="counter-label">{label}</span>
     </div>

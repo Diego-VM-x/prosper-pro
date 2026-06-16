@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
 import { InlineIcon } from './IconMap';
 
@@ -26,12 +27,17 @@ export function CustomSelect({
   value,
   onChange,
   options,
-  placeholder = 'Seleccionar...',
+  placeholder,
   allowCustom = false,
   onAddCustom,
-  customPlaceholder = 'Nombre personalizado',
+  customPlaceholder,
   className = '',
 }: CustomSelectProps) {
+  const { t } = useTranslation('common');
+  const placeholderText = placeholder || t('customSelect.placeholder');
+  const customPlaceholderText = customPlaceholder || t('customSelect.customPlaceholder');
+  const addText = t('customSelect.add');
+  const addCustomText = t('customSelect.addCustom');
   const [isOpen, setIsOpen] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState('');
@@ -140,7 +146,7 @@ export function CustomSelect({
             ref={customInputRef}
             type="text"
             className="custom-input-field"
-            placeholder={customPlaceholder}
+            placeholder={customPlaceholderText}
             value={customValue}
             onChange={(e) => setCustomValue(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -150,7 +156,7 @@ export function CustomSelect({
               <X size={14} />
             </button>
             <button className={`custom-btn-add ${!customValue.trim() ? 'disabled' : ''}`} onClick={handleAddCustom} disabled={!customValue.trim()}>
-              <Check size={14} /> Añadir
+              <Check size={14} /> {addText}
             </button>
           </div>
         </div>
@@ -179,7 +185,7 @@ export function CustomSelect({
               onClick={() => handleSelect('__custom__')}
             >
               <span className="custom-select-icon">+</span>
-              Añadir personalizado...
+              {addCustomText}
             </button>
           )}
         </>
@@ -208,7 +214,7 @@ export function CustomSelect({
               {selectedOption.label}
             </>
           ) : (
-            placeholder
+            placeholderText
           )}
         </span>
         <svg className={`custom-select-arrow ${isOpen ? 'rotated' : ''}`} width="16" height="16" viewBox="0 0 16 16" fill="none">

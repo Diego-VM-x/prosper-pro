@@ -21,9 +21,9 @@ export function SecuritySection() {
       <div className="lp-container">
         <AnimatedSection animationType="fade-up" delay={0}>
           <div className="section-header">
-            <span className="section-tag">Seguridad</span>
-            <h2 className="section-title">Tu información financiera está protegida</h2>
-            <p className="section-desc">Diseñamos Prosper con privacidad y seguridad desde el primer día.</p>
+            <span className="section-tag">{t('security.sectionTag')}</span>
+            <h2 className="section-title">{t('security.sectionTitle')}</h2>
+            <p className="section-desc">{t('security.sectionDesc')}</p>
           </div>
         </AnimatedSection>
 

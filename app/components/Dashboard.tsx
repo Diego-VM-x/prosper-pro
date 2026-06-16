@@ -109,14 +109,10 @@ const CRYPTO_LIST = [
   { code: 'USDC', name: 'USD Coin' },
 ] as const;
 
-const FIAT_LIST = [
-  { code: 'USD', name: 'Dólar', flag: '🇺🇸' },
-  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
-  { code: 'COP', name: 'Peso Col.', flag: '🇨🇴' },
-] as const;
-
 function WidgetTasasCambio({ rates, p2pMode, className = '' }: { rates: import('@/types').ExchangeRates; p2pMode: boolean; className?: string }) {
-  const { t } = useTranslation('dashboard');
+  const { t, i18n } = useTranslation('dashboard');
+  const numberLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-VE';
+  const fmtNumber = (value: number, options?: Intl.NumberFormatOptions) => new Intl.NumberFormat(numberLocale, options).format(value);
   const oficialRate = rates.rates.USD || 40;
   const eurRate = rates.rates.EUR || 48.5;
   const copRate = rates.rates.COP || 0.0105;
@@ -140,17 +136,17 @@ function WidgetTasasCambio({ rates, p2pMode, className = '' }: { rates: import('
             <div className="rate-item">
               <CurrencyFlag code="USD" size={16} className="rate-flag" />
               <span className="rate-name">USD</span>
-              <span className="rate-value">{CURRENCY_MAP.BS.symbol}{oficialRate.toLocaleString('es-VE', { maximumFractionDigits: 2 })}</span>
+              <span className="rate-value">{CURRENCY_MAP.BS.symbol}{fmtNumber(oficialRate, { maximumFractionDigits: 2 })}</span>
             </div>
             <div className="rate-item">
               <CurrencyFlag code="EUR" size={16} className="rate-flag" />
               <span className="rate-name">EUR</span>
-              <span className="rate-value">{CURRENCY_MAP.BS.symbol}{eurRate.toLocaleString('es-VE', { maximumFractionDigits: 2 })}</span>
+              <span className="rate-value">{CURRENCY_MAP.BS.symbol}{fmtNumber(eurRate, { maximumFractionDigits: 2 })}</span>
             </div>
             <div className="rate-item">
               <CurrencyFlag code="COP" size={16} className="rate-flag" />
               <span className="rate-name">COP</span>
-              <span className="rate-value">{CURRENCY_MAP.BS.symbol}{copRate.toLocaleString('es-VE', { maximumFractionDigits: 4 })}</span>
+              <span className="rate-value">{CURRENCY_MAP.BS.symbol}{fmtNumber(copRate, { maximumFractionDigits: 4 })}</span>
             </div>
           </div>
         </div>
@@ -169,10 +165,10 @@ function WidgetTasasCambio({ rates, p2pMode, className = '' }: { rates: import('
                   <span className="rate-name">{code}</span>
                   <div className="rate-values">
                     {usdPrice && (
-                      <span className="rate-usd">${usdPrice.toLocaleString('en-US', { maximumFractionDigits: code === 'BTC' || code === 'ETH' ? 0 : 2 })}</span>
+                      <span className="rate-usd">${fmtNumber(usdPrice, { maximumFractionDigits: code === 'BTC' || code === 'ETH' ? 0 : 2 })}</span>
                     )}
                     {displayBs && (
-                      <span className="rate-bs">{CURRENCY_MAP.BS.symbol}{displayBs.toLocaleString('es-VE', { maximumFractionDigits: 0 })}</span>
+                      <span className="rate-bs">{CURRENCY_MAP.BS.symbol}{fmtNumber(displayBs, { maximumFractionDigits: 0 })}</span>
                     )}
                   </div>
                 </div>
@@ -218,7 +214,9 @@ export const Dashboard = memo(function Dashboard() {
   const { goals, plans, reminders, goalsToday, plansToday, remindersToday, pendingRequests, userId, addGoal } = useGoals();
   const { user } = useAuth();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, baseCurrency, p2pMode } = useCurrency();
-  const { t } = useTranslation(['dashboard', 'common']);
+  const { t, i18n } = useTranslation(['dashboard', 'common']);
+  const numberLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-VE';
+  const fmtNumber = (value: number, options?: Intl.NumberFormatOptions) => new Intl.NumberFormat(numberLocale, options).format(value);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthlyRecurring, setMonthlyRecurring] = useState(0);
@@ -403,15 +401,15 @@ export const Dashboard = memo(function Dashboard() {
       await updateAccountBalance(from.id, -amount);
       await updateAccountBalance(to.id, convertedAmount);
       const date = Date.now();
-      await createTransaction({ ownerId: uid, amount, type: 'saving', category: 'Transferencia', description: `Transferencia a: ${to.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(convertedAmount, toCurr)})` : ''}`, date, accountId: from.id, currency: fromCurr });
-      await createTransaction({ ownerId: uid, amount: convertedAmount, type: 'income', category: 'Transferencia', description: `Transferencia recibida de: ${from.name}${fromCurr !== toCurr ? ` (Conv. ${formatInCurrency(amount, fromCurr)})` : ''}`, date, accountId: to.id, currency: toCurr });
+      await createTransaction({ ownerId: uid, amount, type: 'saving', category: 'Transferencia', description: t('transfer.descriptionTo', { name: to.name, conversion: fromCurr !== toCurr ? t('transfer.conversion', { amount: formatInCurrency(convertedAmount, toCurr) }) : '' }), date, accountId: from.id, currency: fromCurr });
+      await createTransaction({ ownerId: uid, amount: convertedAmount, type: 'income', category: 'Transferencia', description: t('transfer.descriptionFrom', { name: from.name, conversion: fromCurr !== toCurr ? t('transfer.conversion', { amount: formatInCurrency(amount, fromCurr) }) : '' }), date, accountId: to.id, currency: toCurr });
       setTransferAmount('');
       setTransferFrom('');
       setTransferTo('');
       setTransferMsg(t('transfer.success'));
       showTransferMsg();
     } catch (e: any) {
-      setTransferMsg(t('transfer.error', { message: e?.message || t('transfer.retry', { defaultValue: 'intenta de nuevo' }) }));
+      setTransferMsg(t('transfer.error', { message: e?.message || t('transfer.retry') }));
       showTransferMsg();
     }
     setTransferring(false);
@@ -573,7 +571,7 @@ export const Dashboard = memo(function Dashboard() {
     const bsAmount = convertCurrency(usdAmount, 'USD', 'BS', rates.rates);
     return (
       <span className="recent-tx-crypto">
-        ≈ ${usdAmount.toLocaleString('en-US', { maximumFractionDigits: 2 })} · {CURRENCY_MAP.BS.symbol}{bsAmount.toLocaleString('es-VE', { maximumFractionDigits: 0 })}
+        ≈ ${fmtNumber(usdAmount, { maximumFractionDigits: 2 })} · {CURRENCY_MAP.BS.symbol}{fmtNumber(bsAmount, { maximumFractionDigits: 0 })}
       </span>
     );
   };
@@ -807,7 +805,7 @@ export const Dashboard = memo(function Dashboard() {
                       <div className="account-item-info">
                         <span className="account-item-name">{acc.name}</span>
                         <span className="account-item-type">
-                          {t(`finances.accountTypes.${acc.type}`, { defaultValue: acc.type })} • {acc.currency || 'BS'}
+                          {t(`finances.accountTypes.${acc.type}`)} • {acc.currency || 'BS'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -957,7 +955,7 @@ export const Dashboard = memo(function Dashboard() {
                       <div className="plan-item-icon"><InlineIcon icon={plan.icon || typeIcons[plan.type] || 'Pin'} size={16} /></div>
                       <div className="plan-item-info">
                         <span className="plan-item-title">{plan.title}</span>
-                        <span className="plan-item-meta">{plan.category} · {t(`goals.planTypes.${plan.type}`, { defaultValue: plan.type })}</span>
+                        <span className="plan-item-meta">{plan.category} · {t(`goals.planTypes.${plan.type}`)}</span>
                       </div>
                     </div>
                     <div className="plan-item-progress">
@@ -1065,7 +1063,7 @@ export const Dashboard = memo(function Dashboard() {
           <div className="dash-section">
             <SectionHeader
               icon={<InlineIcon icon="LayoutGrid" size={18} />}
-              title={t('customize.ungrouped', { defaultValue: 'Sin Grupo' })}
+              title={t('customize.ungrouped')}
               count={ungroupedWidgets.length}
               collapsed={collapsed['ungrouped'] || false}
               onToggle={() => toggle('ungrouped')}
@@ -1097,7 +1095,7 @@ export const Dashboard = memo(function Dashboard() {
         })}
 
         <button className="dashboard-customize-btn" onClick={() => router.push('/configuracion/dashboard')}>
-          <Settings size={16} /> {t('customize.title', { defaultValue: 'Personalizar' })}
+          <Settings size={16} /> {t('customize.title')}
         </button>
       </div>
 
@@ -1116,7 +1114,7 @@ export const Dashboard = memo(function Dashboard() {
               <CustomSelect
                 value={newGoal.category}
                 onChange={(val) => setNewGoal({ ...newGoal, category: val as GoalCategory })}
-                options={Object.entries(allCategories).map(([key, icon]) => ({ value: key, label: t(`categories.${key}`, { defaultValue: key }), icon }))}
+                options={Object.entries(allCategories).map(([key, icon]) => ({ value: key, label: t(`categories.${key}`), icon }))}
                 placeholder={t('modal.categoryPlaceholder')}
                 allowCustom
                 onAddCustom={async (value, label) => {

@@ -18,7 +18,6 @@ import type { Reminder, FinancialPlan, Transaction } from '@/types';
 const DEFAULT_TYPES: Record<string, string> = { mentor: 'GraduationCap', course: 'Library', meeting: 'Handshake', other: 'Pin' };
 const TYPE_ICONS: Record<string, string> = { mentor: 'GraduationCap', course: 'Library', meeting: 'Handshake', other: 'Pin' };
 // TYPE_LABELS moved into component for i18n
-const CATEGORY_COLORS: Record<string, string> = { Ahorro: '#3DCC8E', Inversión: '#3B82F6', Educación: '#F59E0B', Otro: '#8B5CF6' };
 
 
 

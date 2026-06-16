@@ -1,0 +1,102 @@
+{
+  "backToHome": "Back to home",
+  "footer": {
+    "rights": "All rights reserved."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: June 12, 2026",
+    "sections": {
+      "1": {
+        "title": "1. Introduction",
+        "text": "At Prosper Pro, your privacy is our priority. This Privacy Policy explains how we collect, use, store and protect your personal information when you use our platform. By using Prosper Pro, you agree to the practices described in this policy."
+      },
+      "2": {
+        "title": "2. Information We Collect",
+        "text": "We collect the following information: (a) Account information: name, email, profile photo (if you use Google Sign-In), preferred currency, language and selected theme. (b) Financial information: data from your accounts, transactions, savings plans, expenses and income that you voluntarily register. (c) Technical information: IP address, browser type, device and anonymous usage data to improve the service. We do not collect credit card information or sensitive banking data."
+      },
+      "3": {
+        "title": "3. How We Use Your Information",
+        "text": "We use your information to: provide and maintain the service; sync your data across devices; generate personalized financial reports; send notifications about due dates and reminders (if enabled); improve the platform through anonymous usage analysis; and respond to your support inquiries. We do not use your financial data for targeted advertising nor sell it to third parties."
+      },
+      "4": {
+        "title": "4. Storage and Security",
+        "text": "Your data is stored in Firebase (Google Cloud), which complies with international security standards. Each user has their own isolated space in Firestore. Communication between your browser and our servers uses encrypted HTTPS/TLS. We do not store passwords in plain text; we use secure hashing. We implement implicit two-factor authentication through email verification."
+      },
+      "5": {
+        "title": "5. Sharing Information",
+        "text": "We do not sell, rent or share your personal information with third parties for commercial purposes. We only share data in the following cases: (a) with essential service providers (Firebase/Google Cloud for hosting); (b) when required by law or legal process; (c) to protect our rights or user safety; (d) in shared expense plans, only with users you explicitly invite."
+      },
+      "6": {
+        "title": "6. Cookies and Similar Technologies",
+        "text": "We use essential cookies for the platform to function (authentication, theme and language preferences). We do not use third-party cookies or advertising trackers. You can disable cookies in your browser, but some features may not work properly."
+      },
+      "7": {
+        "title": "7. Your Rights",
+        "text": "You have the right to: access your personal data; correct inaccurate information; delete your account and all associated data; export your financial data; and opt out of non-essential communications. You can exercise these rights from your profile settings or by contacting support."
+      },
+      "8": {
+        "title": "8. Data Retention",
+        "text": "We retain your data while you maintain an active account. If you delete your account, your personal data is permanently removed from our servers within 30 days, except when the law requires longer retention. Anonymous usage data may be retained for statistical analysis."
+      },
+      "9": {
+        "title": "9. Changes to This Policy",
+        "text": "We may update this Privacy Policy occasionally. We will notify you about significant changes through a notice on the platform or by email. The \"last updated\" date at the top of this policy indicates when the last review was made."
+      },
+      "10": {
+        "title": "10. Contact",
+        "text": "If you have questions or concerns about this Privacy Policy or how we handle your data, contact us at:"
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms and Conditions of Use",
+    "lastUpdated": "Last updated: June 12, 2026",
+    "sections": {
+      "1": {
+        "title": "1. Acceptance of Terms",
+        "text": "By accessing or using Prosper Pro (\"the Platform\"), you accept these Terms and Conditions of Use. If you do not agree with any of these terms, you must not use the Platform."
+      },
+      "2": {
+        "title": "2. Description of Service",
+        "text": "Prosper Pro is a personal financial management platform that allows users to: record income and expenses, create savings plans, manage multiple accounts in different currencies, view financial reports, import bank receipts using OCR (VEPay), and share expenses with other users. The service is 100% free and does not require a credit card."
+      },
+      "3": {
+        "title": "3. Registration and User Account",
+        "text": "To use certain features of the Platform, you must create an account by providing accurate and complete information. You are responsible for maintaining the confidentiality of your password and for all activities that occur under your account. You must notify us immediately of any unauthorized use. Registration is available via email or Google Sign-In."
+      },
+      "4": {
+        "title": "4. Acceptable Use",
+        "text": "You agree to use the Platform only for lawful purposes and in accordance with these Terms. The following is prohibited: using the Platform for fraudulent or illegal activities; attempting to access other users' accounts; interfering with the operation of the Platform; distributing malware or malicious content; or using the Platform in a way that may damage, disable or overload our servers."
+      },
+      "5": {
+        "title": "5. Intellectual Property",
+        "text": "All intellectual property rights related to the Platform, including but not limited to software, designs, logos, trademarks and content, are the property of Prosper Pro or its licensors. No implied license is granted to use these materials beyond what is permitted by these Terms."
+      },
+      "6": {
+        "title": "6. Privacy and Data",
+        "text": "Your privacy is important to us. The collection and use of your personal data is governed by our Privacy Policy, which is part of these Terms. By using the Platform, you consent to the collection and use of information as described in that policy."
+      },
+      "7": {
+        "title": "7. Service Availability",
+        "text": "We strive to keep the Platform available 24 hours a day, but we do not guarantee uninterrupted availability. We may perform scheduled or unscheduled maintenance that may temporarily affect access. We are not responsible for interruptions caused by factors beyond our control."
+      },
+      "8": {
+        "title": "8. Limitation of Liability",
+        "text": "Prosper Pro is provided \"as is\" and \"as available\". We do not guarantee that the Platform will be completely error-free. To the maximum extent permitted by law, we will not be liable for indirect, incidental, special or consequential damages arising from the use or inability to use the Platform."
+      },
+      "9": {
+        "title": "9. Modifications to the Terms",
+        "text": "We reserve the right to modify these Terms at any time. Changes will take effect immediately upon publication. We will notify you of significant changes. Your continued use of the Platform after any modification constitutes your acceptance of the new terms."
+      },
+      "10": {
+        "title": "10. Termination",
+        "text": "We may suspend or terminate your access to the Platform at any time, with or without cause, with or without notice. You may also delete your account at any time from your profile settings. Upon termination, certain provisions of these Terms will remain in effect."
+      },
+      "11": {
+        "title": "11. Contact",
+        "text": "If you have questions about these Terms, you can contact us at:"
+      }
+    }
+  }
+}
