@@ -602,6 +602,7 @@
   "androidDownload": {
     "button": "Descargar apk",
     "buttonDesktop": "Descargar apk",
+    "apkSize": "{{size}} MB",
     "iosHint": "El APK es para Android. En iPhone usa la versión web."
   },
   "visuals": {

@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (13 de Junio, 2026 - v1.0.3)
+## Estado Actual (16 de Junio, 2026 - v1.0.3)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Dashboard**: Personalización independiente para escritorio y móvil. El contexto detecta el breakpoint y el customizer permite editar cada layout por separado.
 - **Tecnología**: Next.js 16.2.1 (App Router/webpack), Vanilla CSS, React 19, TypeScript.
@@ -12,6 +12,7 @@
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
 - **Plataforma**: Web + Android nativo vía Capacitor 8.
 - **Versión actual**: 1.0.3 (publicada en test-deploy y master).
+- **APK Android**: `public/prosper-pro.apk` generado (debug, ~9.0 MB) y listo para descarga desde la landing.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -65,6 +66,12 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.3 — APK Android, Badges "En Desarrollo" y Landing (16/06/2026)**:
+  - **APK debug compilado**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.3-debug.apk` (~9.0 MB) copiado a `public/prosper-pro.apk`.
+  - **Badge de tamaño del APK en landing**: `AndroidDownloadButton` detecta el tamaño vía `HEAD` y muestra un badge con el peso en MB (`{{size}} MB`) junto al texto del botón.
+  - **Badges "En Desarrollo" en Configuración**: Se añadió/confirmó el badge verde en las secciones **Alertas** y **Idioma** usando la clave `preferencias.inDevelopment` / `notificaciones.inDevelopment` con traducciones ES/EN.
+  - **Build verificado**: `npx tsc --noEmit` y `npm run build` exitosos, 20/20 páginas generadas.
+  - **Deploy**: Push a `test-deploy` y `master`.
 - ✅ **v1.0.3 — Conversor de Monedas, Dropdowns e Iconos (13/06/2026)**:
   - **Nuevo widget Conversor de Monedas**: modo Oficial/P2P funcional, sin emojis, con iconos SVG/Lucide.
   - **Fix dropdowns**: `CustomSelect` renderizado vía portal al body, corrige corte en modales y widgets.

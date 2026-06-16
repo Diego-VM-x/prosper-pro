@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 function DownloadIcon({ size = 18 }: { size?: number }) {
@@ -27,6 +27,20 @@ export function DownloadButton({
   const { t } = useTranslation('landing');
   const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent);
   const [showHint, setShowHint] = useState(false);
+  const [apkSize, setApkSize] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    fetch('/prosper-pro.apk', { method: 'HEAD' })
+      .then((res) => {
+        const len = res.headers.get('content-length');
+        if (len) {
+          const mb = (Number(len) / 1024 / 1024).toFixed(1);
+          setApkSize(mb);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // En iOS o desktop el .apk no sirve directamente; mostramos un mensaje
@@ -66,6 +80,11 @@ export function DownloadButton({
       >
         <DownloadIcon size={size === 'lg' ? 22 : size === 'sm' ? 16 : 18} />
         <span>{isAndroid ? t('androidDownload.button') : t('androidDownload.buttonDesktop')}</span>
+        {apkSize && (
+          <span className="apk-size-badge">
+            {t('androidDownload.apkSize', { size: apkSize })}
+          </span>
+        )}
       </a>
       {showHint && (
         <div className="android-download-hint">

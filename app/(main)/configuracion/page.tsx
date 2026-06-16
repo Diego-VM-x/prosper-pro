@@ -486,7 +486,10 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                     </div>
 
                     <div className="pref-section">
-                      <label className="pref-label">{t('preferencias.languageLabel')}</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <label className="pref-label" style={{ marginBottom: 0 }}>{t('preferencias.languageLabel')}</label>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', padding: '3px 10px', borderRadius: '999px', background: 'rgba(61,204,142,0.15)', color: '#3DCC8E' }}>{t('preferencias.inDevelopment')}</span>
+                      </div>
                       <div className="option-grid">
                         {[
                           { value: 'es', label: t('preferencias.languageOptions.es'), flag: '🇪🇸' },
