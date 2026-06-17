@@ -14,7 +14,6 @@
     "finances": "Finances",
     "plans": "Financial Plans",
     "calendar": "Calendar",
-    "courses": "Courses",
     "settings": "Settings",
     "help": "Help"
   },
@@ -139,28 +138,6 @@
       {
         "name": "Custom types",
         "desc": "Define your own reminder types to adapt the calendar to your needs."
-      }
-    ]
-  },
-  "courses": {
-    "title": "Courses",
-    "intro": "The Prosper Academy offers financial education courses to improve your money decisions.",
-    "features": [
-      {
-        "name": "Course catalog",
-        "desc": "Browse available courses with description, duration and level."
-      },
-      {
-        "name": "Modules and lessons",
-        "desc": "Each course is divided into modules. Complete lessons to progress."
-      },
-      {
-        "name": "Progress",
-        "desc": "Your progress is saved automatically and you can resume where you left off."
-      },
-      {
-        "name": "Enrollment",
-        "desc": "Enroll in courses that interest you and earn rewards upon completion."
       }
     ]
   },

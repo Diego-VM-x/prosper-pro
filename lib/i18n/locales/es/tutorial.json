@@ -14,7 +14,6 @@
     "finances": "Finanzas",
     "plans": "Planes Financieros",
     "calendar": "Calendario",
-    "courses": "Cursos",
     "settings": "Configuración",
     "help": "Ayuda"
   },
@@ -139,28 +138,6 @@
       {
         "name": "Tipos personalizados",
         "desc": "Define tipos de recordatorio propios para adaptar el calendario a tus necesidades."
-      }
-    ]
-  },
-  "courses": {
-    "title": "Cursos",
-    "intro": "La Academia Prosper ofrece cursos de educación financiera para mejorar tus decisiones de dinero.",
-    "features": [
-      {
-        "name": "Catálogo de cursos",
-        "desc": "Explora cursos disponibles con descripción, duración y nivel."
-      },
-      {
-        "name": "Módulos y lecciones",
-        "desc": "Cada curso se divide en módulos. Completa las lecciones para avanzar."
-      },
-      {
-        "name": "Progreso",
-        "desc": "Tu avance se guarda automáticamente y puedes retomar donde lo dejaste."
-      },
-      {
-        "name": "Inscripción",
-        "desc": "Inscríbete en cursos de tu interés y recibe recompensas al completarlos."
       }
     ]
   },

@@ -27,7 +27,6 @@ export default function TutorialPage() {
     { key: 'finances', icon: 'Wallet', route: '/finanzas' },
     { key: 'plans', icon: 'Target', route: '/metas' },
     { key: 'calendar', icon: 'CalendarDays', route: '/calendario' },
-    { key: 'courses', icon: 'GraduationCap', route: '/cursos' },
     { key: 'settings', icon: 'Settings', route: '/configuracion' },
     { key: 'help', icon: 'HelpCircle', route: '/ayuda' },
   ], []);
