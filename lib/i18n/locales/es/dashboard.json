@@ -62,7 +62,10 @@
       "digital": "Billetera Digital",
       "bank": "Banco",
       "foreign": "Divisas",
-      "cash": "Efectivo"
+      "cash": "Efectivo",
+      "checking": "Cuenta Corriente",
+      "savings": "Ahorros",
+      "custom": "Personalizada"
     },
     "recentTransactions": "Últimos Movimientos",
     "viewAll": "Ver todo",

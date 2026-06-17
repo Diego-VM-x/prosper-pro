@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "title": "Tutorial de Prosper Pro",
+    "description": "Guía completa de cada vista y función de Prosper Pro."
+  },
+  "hero": {
+    "title": "Tutorial de Prosper Pro",
+    "subtitle": "Aprende a sacar el máximo provecho a cada vista y función de tu dashboard financiero.",
+    "backToDashboard": "Volver al Dashboard"
+  },
+  "nav": {
+    "goTo": "Ir a",
+    "dashboard": "Dashboard",
+    "finances": "Finanzas",
+    "plans": "Planes Financieros",
+    "calendar": "Calendario",
+    "courses": "Cursos",
+    "settings": "Configuración",
+    "help": "Ayuda"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "intro": "El Dashboard es tu centro de control financiero. Aquí ves un resumen consolidado de tu situación económica en un solo vistazo.",
+    "features": [
+      {
+        "name": "Píldoras de resumen",
+        "desc": "Muestran Ahorro en Planes, pagos Recurrentes/Mes y Metas/Planes completados. Toca una para navegar a la sección correspondiente."
+      },
+      {
+        "name": "Widget Mis Cuentas",
+        "desc": "Visualiza hasta 3 cuentas favoritas. Puedes ocultar/mostrar saldos y marcar o desmarcar favoritos desde Finanzas."
+      },
+      {
+        "name": "Conversor de Monedas",
+        "desc": "Convierte entre USD, EUR, BS y criptomonedas en modo Oficial o P2P."
+      },
+      {
+        "name": "Gráfica financiera",
+        "desc": "Analiza ingresos, gastos y ahorro por período (día, semana, mes o año)."
+      },
+      {
+        "name": "Acciones rápidas",
+        "desc": "Atajos para crear un plan, registrar una transacción, abrir el calendario o añadir una cuenta."
+      },
+      {
+        "name": "Personalización",
+        "desc": "Usa el botón flotante 'Personalizar' para agregar, quitar, reordenar y cambiar el tamaño de los widgets."
+      }
+    ]
+  },
+  "finances": {
+    "title": "Finanzas",
+    "intro": "La sección Finanzas agrupa todas tus cuentas, transacciones y herramientas contables.",
+    "features": [
+      {
+        "name": "Cuentas",
+        "desc": "Crea cuentas en USD, BS, EUR o cripto. Edita su nombre, tipo, moneda y color. Marca favoritas para que aparezcan en el Dashboard."
+      },
+      {
+        "name": "Transacciones",
+        "desc": "Registra ingresos, gastos, transferencias y abonos a planes. Cada movimiento actualiza el balance de la cuenta automáticamente."
+      },
+      {
+        "name": "Filtros y búsqueda",
+        "desc": "Filtra por tipo, categoría, cuenta, moneda o rango de fechas. Usa el buscador para encontrar movimientos por descripción."
+      },
+      {
+        "name": "Gráfica de finanzas",
+        "desc": "Revisa ingresos, gastos y ahorro en un gráfico de barras con diferentes períodos."
+      },
+      {
+        "name": "VEPay",
+        "desc": "Captura comprobantes de pago para extraer datos automáticamente y registrar transacciones más rápido."
+      },
+      {
+        "name": "Gestión contable",
+        "desc": "Recalcula balances, borra historial por tipo o cuenta y reinicia saldos cuando necesites reorganizar tus datos."
+      },
+      {
+        "name": "Transferencias entre cuentas",
+        "desc": "Mueve dinero entre cuentas; si las monedas difieren, se convierte automáticamente con la tasa oficial."
+      }
+    ]
+  },
+  "plans": {
+    "title": "Planes Financieros",
+    "intro": "Antes llamada Metas, esta vista te permite planificar ahorros, gastos planificados y pagos recurrentes.",
+    "features": [
+      {
+        "name": "Tipos de plan",
+        "desc": "Crea planes de Ahorro, Gasto Planificado o Recurrente. Cada uno tiene su propio flujo y métricas."
+      },
+      {
+        "name": "Categorías personalizadas",
+        "desc": "Elige una categoría predefinida o crea la tuya propia para organizar mejor tus planes."
+      },
+      {
+        "name": "Abonos y pagos",
+        "desc": "Añade fondos a planes de ahorro, registra pagos de recurrentes y abona a gastos planificados."
+      },
+      {
+        "name": "Sub-planes",
+        "desc": "Divide un plan grande en etapas o conceptos menores y abona a cada uno por separado."
+      },
+      {
+        "name": "Planes compartidos",
+        "desc": "Invita a otros usuarios por email para dividir un gasto y registrar quién aporta."
+      },
+      {
+        "name": "Solicitudes",
+        "desc": "Acepta o rechaza invitaciones a planes compartidos que hayas recibido."
+      },
+      {
+        "name": "Filtros y estado",
+        "desc": "Filtra por tipo, estado (pendiente, en progreso, completado, cancelado) y busca por nombre."
+      }
+    ]
+  },
+  "calendar": {
+    "title": "Calendario",
+    "intro": "El Calendario unifica tus planes, recordatorios y transacciones en una línea de tiempo visual.",
+    "features": [
+      {
+        "name": "Vista mensual",
+        "desc": "Navega por meses y visualiza días con actividad mediante indicadores de color."
+      },
+      {
+        "name": "Recordatorios",
+        "desc": "Crea recordatorios con título, descripción, hora y tipo. Activa recurrencia para recordatorios periódicos."
+      },
+      {
+        "name": "Eventos financieros",
+        "desc": "Los planes con fecha límite y próximos pagos recurrentes aparecen automáticamente."
+      },
+      {
+        "name": "Panel lateral",
+        "desc": "Al seleccionar un día, revisa el detalle de recordatorios y eventos programados."
+      },
+      {
+        "name": "Tipos personalizados",
+        "desc": "Define tipos de recordatorio propios para adaptar el calendario a tus necesidades."
+      }
+    ]
+  },
+  "courses": {
+    "title": "Cursos",
+    "intro": "La Academia Prosper ofrece cursos de educación financiera para mejorar tus decisiones de dinero.",
+    "features": [
+      {
+        "name": "Catálogo de cursos",
+        "desc": "Explora cursos disponibles con descripción, duración y nivel."
+      },
+      {
+        "name": "Módulos y lecciones",
+        "desc": "Cada curso se divide en módulos. Completa las lecciones para avanzar."
+      },
+      {
+        "name": "Progreso",
+        "desc": "Tu avance se guarda automáticamente y puedes retomar donde lo dejaste."
+      },
+      {
+        "name": "Inscripción",
+        "desc": "Inscríbete en cursos de tu interés y recibe recompensas al completarlos."
+      }
+    ]
+  },
+  "settings": {
+    "title": "Configuración",
+    "intro": "Personaliza tu perfil, preferencias globales y seguridad desde un solo lugar.",
+    "features": [
+      {
+        "name": "Perfil",
+        "desc": "Edita tu nombre, foto, biografía y moneda base."
+      },
+      {
+        "name": "Idioma y tema",
+        "desc": "Cambia entre Español e Inglés, y selecciona el tema Claro, Oscuro o AMOLED."
+      },
+      {
+        "name": "Moneda y tasas",
+        "desc": "Configura tu moneda de visualización y elige entre tasa BCV Oficial o P2P para criptomonedas."
+      },
+      {
+        "name": "Notificaciones",
+        "desc": "Activa alertas de tasas, resumen diario y notificaciones push del navegador o dispositivo."
+      },
+      {
+        "name": "Dashboard",
+        "desc": "Personaliza widgets, categorías y el layout de escritorio y móvil por separado."
+      },
+      {
+        "name": "Seguridad",
+        "desc": "Cambia tu contraseña, revisa sesiones activas, borra tus datos o elimina tu cuenta."
+      }
+    ]
+  },
+  "help": {
+    "title": "Ayuda",
+    "intro": "El Centro de Ayuda responde preguntas frecuentes y te permite contactar soporte.",
+    "features": [
+      {
+        "name": "Preguntas frecuentes",
+        "desc": "Busca respuestas por categoría o palabra clave."
+      },
+      {
+        "name": "Accesos rápidos",
+        "desc": "Navega rápidamente a las acciones más comunes como crear un plan o registrar una transacción."
+      },
+      {
+        "name": "Chat de soporte",
+        "desc": "Envía reportes de errores o sugerencias. El historial se guarda para que puedas seguir la conversación."
+      },
+      {
+        "name": "Notas de versión",
+        "desc": "Consulta las novedades y mejoras de cada actualización."
+      }
+    ]
+  }
+}

@@ -62,7 +62,10 @@
       "digital": "Digital Wallet",
       "bank": "Bank",
       "foreign": "Foreign Currency",
-      "cash": "Cash"
+      "cash": "Cash",
+      "checking": "Checking",
+      "savings": "Savings",
+      "custom": "Custom"
     },
     "recentTransactions": "Recent Transactions",
     "viewAll": "View all",

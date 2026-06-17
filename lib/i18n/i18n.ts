@@ -31,6 +31,9 @@ import authEN from './locales/en/auth.json';
 import cursosES from './locales/es/cursos.json';
 import cursosEN from './locales/en/cursos.json';
 
+import tutorialES from './locales/es/tutorial.json';
+import tutorialEN from './locales/en/tutorial.json';
+
 import legalES from './locales/es/legal.json';
 import legalEN from './locales/en/legal.json';
 
@@ -46,6 +49,7 @@ export const resources = {
     landing: landingES,
     auth: authES,
     cursos: cursosES,
+    tutorial: tutorialES,
     legal: legalES,
   },
   en: {
@@ -59,6 +63,7 @@ export const resources = {
     landing: landingEN,
     auth: authEN,
     cursos: cursosEN,
+    tutorial: tutorialEN,
     legal: legalEN,
   },
 };
@@ -69,7 +74,7 @@ export function createI18nInstance() {
     resources,
     fallbackLng: 'es',
     defaultNS: 'common',
-    ns: ['common', 'dashboard', 'finanzas', 'metas', 'calendario', 'configuracion', 'ayuda', 'landing', 'auth', 'cursos', 'legal'],
+    ns: ['common', 'dashboard', 'finanzas', 'metas', 'calendario', 'configuracion', 'ayuda', 'landing', 'auth', 'cursos', 'tutorial', 'legal'],
     interpolation: {
       escapeValue: false,
     },

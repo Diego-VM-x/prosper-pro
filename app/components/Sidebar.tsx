@@ -21,6 +21,7 @@ import {
   IconAnalytics,
   IconSettings,
   IconHelp,
+  IconTutorial,
   IconLogout,
   IconProsperLeaf,
   IconX,
@@ -118,6 +119,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
           {!isCollapsed && <p className="sidebar-label">{t('sidebar.general')}</p>}
           <Link href="/configuracion" className={`nav-item ${isActive('/configuracion') ? 'active' : ''}`} id="nav-settings" title={isCollapsed ? t('sidebar.configuracion') : undefined}>
             <IconSettings /> {!isCollapsed && t('sidebar.configuracion')}
+          </Link>
+          <Link href="/tutorial" className={`nav-item ${isActive('/tutorial') ? 'active' : ''}`} id="nav-tutorial" title={isCollapsed ? t('sidebar.tutorial') : undefined}>
+            <IconTutorial /> {!isCollapsed && t('sidebar.tutorial')}
           </Link>
           <Link href="/ayuda" className={`nav-item ${isActive('/ayuda') ? 'active' : ''}`} id="nav-help" title={isCollapsed ? t('sidebar.ayuda') : undefined}>
             <IconHelp /> {!isCollapsed && t('sidebar.ayuda')}

@@ -805,7 +805,7 @@ export const Dashboard = memo(function Dashboard() {
                       <div className="account-item-info">
                         <span className="account-item-name">{acc.name}</span>
                         <span className="account-item-type">
-                          {t(`finances.accountTypes.${acc.type}`)} • {acc.currency || 'BS'}
+                          {t(`finances.accountTypes.${acc.type}`, acc.type)} • {acc.currency || 'BS'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>

@@ -31,6 +31,7 @@ import {
   IconCalendar,
   IconAnalytics,
   IconHelp,
+  IconTutorial,
 } from './icons';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import type { Notification, Transaction, FinancialAccount, ExpenseRequest } from '@/types';
@@ -197,6 +198,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     { name: t('sidebar.finanzas'), route: '/finanzas', icon: 'Wallet', keywords: t('topbar.searchKeywords.finances') },
     { name: t('sidebar.configuracion'), route: '/configuracion', icon: 'Settings', keywords: t('topbar.searchKeywords.settings') },
     { name: t('sidebar.ayuda'), route: '/ayuda', icon: 'HelpCircle', keywords: t('topbar.searchKeywords.help') },
+    { name: t('sidebar.tutorial'), route: '/tutorial', icon: 'GraduationCap', keywords: t('topbar.searchKeywords.tutorial') },
   ], [t]);
 
   // Memoizar resultados de búsqueda para evitar re-filtrado en cada render
@@ -793,6 +795,9 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
               )}
               <Link href="/ayuda" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
                 <IconHelp /> {t('sidebar.ayuda')}
+              </Link>
+              <Link href="/tutorial" className="mobile-menu-item" onClick={() => setShowMobileMenu(false)}>
+                <IconTutorial /> {t('sidebar.tutorial')}
               </Link>
             </nav>
 

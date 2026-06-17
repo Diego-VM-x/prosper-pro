@@ -8,6 +8,7 @@
     "general": "General",
     "configuracion": "Settings",
     "ayuda": "Help",
+    "tutorial": "Tutorial",
     "logout": "Log Out",
     "logoutGuest": "Exit Guest Mode",
     "closeMenu": "Close menu",
@@ -79,7 +80,8 @@
       "calendar": "calendar events dates",
       "finances": "finances money expenses income accounts",
       "settings": "settings configuration preferences",
-      "help": "help support assistance"
+      "help": "help support assistance",
+      "tutorial": "tutorial guide learn help features views"
     },
     "errorDeleteNotif": "Error deleting notification:",
     "errorClearNotif": "Error clearing notifications:",

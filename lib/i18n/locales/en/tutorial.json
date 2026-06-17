@@ -1,0 +1,219 @@
+{
+  "meta": {
+    "title": "Prosper Pro Tutorial",
+    "description": "Complete guide to every view and feature in Prosper Pro."
+  },
+  "hero": {
+    "title": "Prosper Pro Tutorial",
+    "subtitle": "Learn how to get the most out of every view and feature in your financial dashboard.",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "nav": {
+    "goTo": "Go to",
+    "dashboard": "Dashboard",
+    "finances": "Finances",
+    "plans": "Financial Plans",
+    "calendar": "Calendar",
+    "courses": "Courses",
+    "settings": "Settings",
+    "help": "Help"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "intro": "The Dashboard is your financial control center. Here you see a consolidated overview of your financial situation at a glance.",
+    "features": [
+      {
+        "name": "Summary pills",
+        "desc": "Show Savings in Plans, Recurring Payments/Month and Completed Goals/Plans. Tap one to navigate to the related section."
+      },
+      {
+        "name": "My Accounts widget",
+        "desc": "View up to 3 favorite accounts. You can hide/show balances and mark/unmark favorites from Finances."
+      },
+      {
+        "name": "Currency Converter",
+        "desc": "Convert between USD, EUR, BS and cryptocurrencies in Official or P2P mode."
+      },
+      {
+        "name": "Financial chart",
+        "desc": "Analyze income, expenses and savings by period (day, week, month or year)."
+      },
+      {
+        "name": "Quick actions",
+        "desc": "Shortcuts to create a plan, record a transaction, open the calendar or add an account."
+      },
+      {
+        "name": "Customization",
+        "desc": "Use the floating 'Customize' button to add, remove, reorder and resize widgets."
+      }
+    ]
+  },
+  "finances": {
+    "title": "Finances",
+    "intro": "The Finances section groups all your accounts, transactions and accounting tools.",
+    "features": [
+      {
+        "name": "Accounts",
+        "desc": "Create accounts in USD, BS, EUR or crypto. Edit name, type, currency and color. Mark favorites so they appear on the Dashboard."
+      },
+      {
+        "name": "Transactions",
+        "desc": "Record income, expenses, transfers and plan contributions. Every movement updates the account balance automatically."
+      },
+      {
+        "name": "Filters and search",
+        "desc": "Filter by type, category, account, currency or date range. Use the search box to find movements by description."
+      },
+      {
+        "name": "Finances chart",
+        "desc": "Review income, expenses and savings in a bar chart with different periods."
+      },
+      {
+        "name": "VEPay",
+        "desc": "Capture payment receipts to extract data automatically and record transactions faster."
+      },
+      {
+        "name": "Accounting management",
+        "desc": "Recalculate balances, delete history by type or account, and reset balances when you need to reorganize your data."
+      },
+      {
+        "name": "Transfers between accounts",
+        "desc": "Move money between accounts; if currencies differ, it converts automatically using the official rate."
+      }
+    ]
+  },
+  "plans": {
+    "title": "Financial Plans",
+    "intro": "Formerly called Goals, this view lets you plan savings, planned expenses and recurring payments.",
+    "features": [
+      {
+        "name": "Plan types",
+        "desc": "Create Savings, Planned Expense or Recurring plans. Each has its own flow and metrics."
+      },
+      {
+        "name": "Custom categories",
+        "desc": "Choose a predefined category or create your own to better organize your plans."
+      },
+      {
+        "name": "Contributions and payments",
+        "desc": "Add funds to savings plans, record recurring payments and contribute to planned expenses."
+      },
+      {
+        "name": "Sub-plans",
+        "desc": "Split a large plan into smaller stages or concepts and contribute to each one separately."
+      },
+      {
+        "name": "Shared plans",
+        "desc": "Invite other users by email to split an expense and track who contributed."
+      },
+      {
+        "name": "Requests",
+        "desc": "Accept or reject invitations to shared plans you have received."
+      },
+      {
+        "name": "Filters and status",
+        "desc": "Filter by type, status (pending, in progress, completed, cancelled) and search by name."
+      }
+    ]
+  },
+  "calendar": {
+    "title": "Calendar",
+    "intro": "The Calendar unifies your plans, reminders and transactions in a visual timeline.",
+    "features": [
+      {
+        "name": "Monthly view",
+        "desc": "Navigate months and see days with activity through color indicators."
+      },
+      {
+        "name": "Reminders",
+        "desc": "Create reminders with title, description, time and type. Enable recurrence for periodic reminders."
+      },
+      {
+        "name": "Financial events",
+        "desc": "Plans with deadlines and upcoming recurring payments appear automatically."
+      },
+      {
+        "name": "Side panel",
+        "desc": "When you select a day, review the details of scheduled reminders and events."
+      },
+      {
+        "name": "Custom types",
+        "desc": "Define your own reminder types to adapt the calendar to your needs."
+      }
+    ]
+  },
+  "courses": {
+    "title": "Courses",
+    "intro": "The Prosper Academy offers financial education courses to improve your money decisions.",
+    "features": [
+      {
+        "name": "Course catalog",
+        "desc": "Browse available courses with description, duration and level."
+      },
+      {
+        "name": "Modules and lessons",
+        "desc": "Each course is divided into modules. Complete lessons to progress."
+      },
+      {
+        "name": "Progress",
+        "desc": "Your progress is saved automatically and you can resume where you left off."
+      },
+      {
+        "name": "Enrollment",
+        "desc": "Enroll in courses that interest you and earn rewards upon completion."
+      }
+    ]
+  },
+  "settings": {
+    "title": "Settings",
+    "intro": "Customize your profile, global preferences and security from one place.",
+    "features": [
+      {
+        "name": "Profile",
+        "desc": "Edit your name, photo, bio and base currency."
+      },
+      {
+        "name": "Language and theme",
+        "desc": "Switch between Spanish and English, and select Light, Dark or AMOLED theme."
+      },
+      {
+        "name": "Currency and rates",
+        "desc": "Set your display currency and choose between Official BCV rate or P2P for cryptocurrencies."
+      },
+      {
+        "name": "Notifications",
+        "desc": "Enable rate alerts, daily balance summary and browser/device push notifications."
+      },
+      {
+        "name": "Dashboard",
+        "desc": "Customize widgets, categories and the desktop and mobile layouts separately."
+      },
+      {
+        "name": "Security",
+        "desc": "Change your password, review active sessions, wipe your data or delete your account."
+      }
+    ]
+  },
+  "help": {
+    "title": "Help",
+    "intro": "The Help Center answers frequently asked questions and lets you contact support.",
+    "features": [
+      {
+        "name": "FAQ",
+        "desc": "Search answers by category or keyword."
+      },
+      {
+        "name": "Quick links",
+        "desc": "Quickly navigate to the most common actions like creating a plan or recording a transaction."
+      },
+      {
+        "name": "Support chat",
+        "desc": "Send bug reports or suggestions. History is saved so you can follow the conversation."
+      },
+      {
+        "name": "Release notes",
+        "desc": "Check the news and improvements of each update."
+      }
+    ]
+  }
+}

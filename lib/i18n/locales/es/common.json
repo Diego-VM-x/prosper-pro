@@ -8,6 +8,7 @@
     "general": "General",
     "configuracion": "Configuración",
     "ayuda": "Ayuda",
+    "tutorial": "Tutorial",
     "logout": "Cerrar Sesión",
     "logoutGuest": "Salir del modo invitado",
     "closeMenu": "Cerrar menú",
@@ -79,7 +80,8 @@
       "calendar": "calendario eventos fechas",
       "finances": "finanzas dinero gastos ingresos cuentas",
       "settings": "configuración ajustes preferencias",
-      "help": "ayuda soporte ayuda"
+      "help": "ayuda soporte ayuda",
+      "tutorial": "tutorial guía aprender ayuda funciones vistas"
     },
     "errorDeleteNotif": "Error al eliminar notificación:",
     "errorClearNotif": "Error al limpiar notificaciones:",
