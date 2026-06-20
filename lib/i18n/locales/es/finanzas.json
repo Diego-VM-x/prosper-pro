@@ -108,6 +108,7 @@
     "amount": "Monto",
     "actions": "Acciones",
     "completed": "COMPLETADO",
+    "transfer": "Transferencia",
     "empty": "No hay transacciones. ¡Agrega tu primera!",
     "emptyArchived": "No hay transacciones archivadas.",
     "viewMore": "Ver más",
@@ -216,6 +217,14 @@
       "initialBalance": "Balance Inicial",
       "color": "Color (opcional)",
       "create": "Crear Cuenta"
+    },
+    "editTransaction": {
+      "title": "Editar Transacción",
+      "subtitle": "Modifica monto, cuenta, categoría y más",
+      "type": "Tipo",
+      "transferWarning": "Edición manual de transferencias puede desbalancear la contraparte. Usa con precaución.",
+      "save": "Guardar cambios",
+      "saving": "Guardando..."
     },
     "editAccount": {
       "title": "Editar Cuenta",
@@ -349,6 +358,9 @@
     "transactionRegistered": "{{type}} de {{amount}} registrado",
     "transactionDeletedAdjusted": "Transacción eliminada y balance ajustado",
     "transactionDeletedHistory": "Transacción eliminada del historial",
+    "transactionUpdated": "Transacción actualizada",
+    "transactionDeleted": "Transacción eliminada",
+    "updateError": "Error al actualizar: {{message}}",
     "historyCleared": "Historial borrado",
     "allHistoryCleared": "Historial completo borrado",
     "transactionsArchived": "{{count}} transacciones archivadas",

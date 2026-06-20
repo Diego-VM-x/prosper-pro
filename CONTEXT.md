@@ -1,7 +1,10 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (16 de Junio, 2026 - v1.0.3)
+## Estado Actual (20 de Junio, 2026 - v1.0.3)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
+- **Historial de transacciones rediseñado**: lista compacta tipo cards con acciones de editar/eliminar, adaptada a móvil y PC sin scroll horizontal.
+- **Edición de transacciones**: modal que permite cambiar tipo, monto, cuenta, fecha, categoría y descripción; ajusta balances de cuentas automáticamente.
+- **TypeScript**: carpeta `android/` excluida de `tsconfig.json` para evitar errores de compilación por assets residuales de builds móviles.
 - **Dashboard**: Personalización independiente para escritorio y móvil. El contexto detecta el breakpoint y el customizer permite editar cada layout por separado.
 - **Tecnología**: Next.js 16.2.1 (App Router/webpack), Vanilla CSS, React 19, TypeScript.
 - **Identidad**: Basada en "Prosper." (Azul Navy #1E3A6E y Verde Esmeralda #3DCC8E).
@@ -43,7 +46,7 @@
 - `app/cursos/page.tsx` → Listado de cursos con progreso
 - `app/cursos/[id]/page.tsx` → Detalle de curso con módulos
 - `app/calendario/page.tsx` → Calendario con recordatorios, tipos custom
-- `app/finanzas/page.tsx` → Cuentas financieras, transacciones vinculadas, balance por cuenta
+- `app/finanzas/page.tsx` → Cuentas financieras, historial de transacciones tipo cards con edición/eliminación, balance por cuenta
 - `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
 - `app/configuracion/page.tsx` → Perfil editable, preferencias, notificaciones, seguridad, zona de peligro (rediseñado)
 - `app/logros/` → **ELIMINADO** (backup en `_backup_comunidad_logros/logros/`)
@@ -66,6 +69,14 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.3 — Historial de Transacciones Rediseñado + Edición (20/06/2026)**:
+  - **Nuevo historial tipo cards**: reemplaza la tabla HTML en `/finanzas` por una lista compacta con icono, descripción, fecha/cuenta, categoría, monto y botones de acción. Diseño responsive: fila horizontal en PC y apilada en móvil.
+  - **Editar transacciones**: nuevo modal de edición con campos de tipo, monto, cuenta, fecha, categoría y descripción. Al guardar se revierte el impacto contable original y se aplica el nuevo, ajustando balances de cuentas automáticamente.
+  - **Eliminar transacciones**: botón de eliminar con confirmación; ajusta el balance de la cuenta al revertir el impacto contable antes de borrar el registro.
+  - **Advertencia en transferencias**: el modal de edición muestra una advertencia cuando la transacción pertenece a una transferencia, ya que la contraparte no se sincroniza automáticamente.
+  - **Traducciones**: añadidas claves ES/EN para edición, eliminación, badge de transferencia y toasts.
+  - **Fix tsconfig**: carpeta `android/` añadida a `exclude` para evitar errores de `tsc` causados por archivos de build nativo residuales.
+  - **Build verificado**: `npx tsc --noEmit` y `npm run build` exitosos, 21/21 páginas generadas.
 - ✅ **v1.0.3 — APK Android, Badges "En Desarrollo" y Landing (16/06/2026)**:
   - **APK debug compilado**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.3-debug.apk` (~9.0 MB) copiado a `public/prosper-pro.apk`.
   - **Badge de tamaño del APK en landing**: `AndroidDownloadButton` detecta el tamaño vía `HEAD` y muestra un badge con el peso en MB (`{{size}} MB`) junto al texto del botón.

@@ -9,7 +9,7 @@ import { useCurrency } from '@/lib/contexts/CurrencyContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
-import { getTransactionsByOwnerId, getAllTransactionsByOwnerId, createTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
+import { getTransactionsByOwnerId, getAllTransactionsByOwnerId, createTransaction, updateTransaction, deleteTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
 import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
@@ -68,6 +68,11 @@ function todayISO() {
 
 function isoToTimestamp(iso: string): number {
   return new Date(iso + 'T12:00:00').getTime();
+}
+
+function timestampToISOLocal(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 interface SummaryWidgetProps {
@@ -175,6 +180,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [newTx, setNewTx] = useState({ amount: '', type: 'income' as TxFormType, category: 'Salario', description: '', accountId: '', date: todayISO(), planId: '', subPlanId: '' });
@@ -183,6 +189,9 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; color: string } | null>(null);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [editTxForm, setEditTxForm] = useState({ amount: '', type: 'income' as TransactionType, category: '', description: '', accountId: '', date: todayISO() });
+  const [editTxLoading, setEditTxLoading] = useState(false);
   const [customTxCategories, setCustomTxCategories] = useState<string[]>([]);
   const [allCategories, setAllCategories] = useState<Record<string, string[]>>({ ...DEFAULT_CATEGORIES });
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant: 'danger' | 'warning' | 'info'; confirmText?: string; secondaryText?: string; onSecondary?: () => void }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'info' });
@@ -515,6 +524,115 @@ const FinanzasPage = memo(function FinanzasPage() {
       setTxLoading(false);
     }
   };
+
+  const openEditTx = (tx: Transaction) => {
+    setEditingTx(tx);
+    setEditTxForm({
+      amount: String(tx.amount),
+      type: tx.type,
+      category: tx.category,
+      description: tx.description || '',
+      accountId: tx.accountId || '',
+      date: timestampToISOLocal(tx.date),
+    });
+    setShowEditModal(true);
+  };
+
+  const closeEditTx = () => {
+    setShowEditModal(false);
+    setEditingTx(null);
+    setEditTxForm({ amount: '', type: 'income', category: '', description: '', accountId: '', date: todayISO() });
+  };
+
+  const handleUpdateTransaction = async () => {
+    if (!editingTx || !uid) return;
+    const amount = Number(editTxForm.amount);
+    if (!amount || amount <= 0 || isNaN(amount)) {
+      warning(t('finanzas:toast.invalidAmount'));
+      return;
+    }
+
+    const originalAccount = accounts.find(a => a.id === editingTx.accountId);
+    const newAccount = accounts.find(a => a.id === editTxForm.accountId);
+    const originalDelta = editingTx.type === 'income' ? editingTx.amount : -editingTx.amount;
+    const newDelta = editTxForm.type === 'income' ? amount : -amount;
+
+    // Validar fondos para gasto/ahorro en la cuenta destino
+    if ((editTxForm.type === 'expense' || editTxForm.type === 'saving') && editTxForm.accountId) {
+      const acc = newAccount;
+      if (acc) {
+        // Simular el balance después de revertir el original
+        let simulatedBalance = acc.balance;
+        if (editingTx.accountId === editTxForm.accountId) {
+          simulatedBalance = acc.balance - originalDelta;
+        }
+        if (simulatedBalance < amount) {
+          error(t('finanzas:toast.insufficientFunds', { name: acc.name, balance: formatInCurrency(simulatedBalance, acc.currency) }));
+          return;
+        }
+      }
+    }
+
+    setEditTxLoading(true);
+    try {
+      // Revertir impacto contable original
+      if (editingTx.accountId) {
+        await updateAccountBalance(editingTx.accountId, -originalDelta);
+      }
+      // Aplicar nuevo impacto contable
+      if (editTxForm.accountId) {
+        await updateAccountBalance(editTxForm.accountId, newDelta);
+      }
+
+      await updateTransaction(editingTx.id, {
+        amount,
+        type: editTxForm.type,
+        category: editTxForm.category,
+        description: editTxForm.description,
+        accountId: editTxForm.accountId,
+        date: isoToTimestamp(editTxForm.date),
+      });
+
+      await loadTransactions();
+      success(t('finanzas:toast.transactionUpdated'));
+      closeEditTx();
+    } catch (e: any) {
+      console.error(e);
+      error(t('finanzas:toast.updateError', { message: e?.message || t('finanzas:toast.unknownError') }));
+      // Reintentar recargar para reflejar estado real
+      await loadTransactions();
+    } finally {
+      setEditTxLoading(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (tx: Transaction) => {
+    if (!uid) return;
+    const typeLabel = TX_TYPE_LABELS[tx.type];
+    setConfirmState({
+      isOpen: true,
+      title: t('finanzas:modals.confirm.deleteTransaction'),
+      message: t('finanzas:modals.confirm.deleteTransactionMessage', { description: tx.description || typeLabel }),
+      variant: 'danger',
+      confirmText: t('common:buttons.delete'),
+      onConfirm: async () => {
+        try {
+          const delta = tx.type === 'income' ? tx.amount : -tx.amount;
+          if (tx.accountId) {
+            await updateAccountBalance(tx.accountId, -delta);
+          }
+          await deleteTransaction(tx.id);
+          await loadTransactions();
+          success(t('finanzas:toast.transactionDeleted'));
+        } catch (e: any) {
+          console.error(e);
+          error(t('finanzas:toast.deleteError', { message: e?.message || t('finanzas:toast.unknownError') }));
+        }
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+      },
+    });
+  };
+
   const toggleShowAmounts = () => {
     const newVal = !showAmounts;
     setShowAmounts(newVal);
@@ -1456,99 +1574,108 @@ const FinanzasPage = memo(function FinanzasPage() {
             </div>
           </div>
 
-          {/* Tabla de transacciones */}
-          <div className="transactions-table-wrapper">
-            <table className="transactions-table">
-              <thead>
-                <tr>
-                  <th scope="col">{t('finanzas:table.description')}</th>
-                  <th scope="col">{t('finanzas:table.category')}</th>
-                  <th scope="col">{t('finanzas:table.status')}</th>
-                  <th scope="col">{t('finanzas:table.amount')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTx.length > 0 ? filteredTx.slice(0, txLimit).map((tx, index) => {
-                  const txAccount = accounts.find((a) => a.id === tx.accountId);
-                  const txCurrency = txAccount?.currency || 'USD';
-                  return (
-                    <tr key={tx.id} className="stagger-item" style={{ animationDelay: `${index * 0.05}s` }}>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div className="tx-icon-box" style={{ background: TX_TYPE_COLORS[tx.type] + '18', color: TX_TYPE_COLORS[tx.type] }}>
-                            <InlineIcon icon={TX_TYPE_ICONS[tx.type]} size={16} />
+          {/* Historial de transacciones - Diseño compacto tipo cards */}
+          <div className="tx-history-section">
+            {filteredTx.length > 0 ? (
+              <>
+                <div className="tx-history-list">
+                  {filteredTx.slice(0, txLimit).map((tx, index) => {
+                    const txAccount = accounts.find((a) => a.id === tx.accountId);
+                    const txCurrency = txAccount?.currency || 'USD';
+                    const isTransfer = tx.category === 'Transferencia';
+                    return (
+                      <div
+                        key={tx.id}
+                        className="tx-history-item stagger-item"
+                        style={{ animationDelay: `${index * 0.05}s`, borderLeftColor: TX_TYPE_COLORS[tx.type] }}
+                      >
+                        <div className="tx-history-main">
+                          <div className="tx-history-icon" style={{ background: TX_TYPE_COLORS[tx.type] + '18', color: TX_TYPE_COLORS[tx.type] }}>
+                            <InlineIcon icon={TX_TYPE_ICONS[tx.type]} size={18} />
                           </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>{tx.description || '—'}</span>
-                            <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{formatDate(tx.date)} • {getAccountName(tx.accountId)}</span>
+                          <div className="tx-history-info">
+                            <span className="tx-history-description">{tx.description || '—'}</span>
+                            <div className="tx-history-meta">
+                              <span className="tx-history-date">{formatDate(tx.date)}</span>
+                              <span className="tx-history-dot">•</span>
+                              <span className="tx-history-account">{getAccountName(tx.accountId)}</span>
+                              {isTransfer && (
+                                <>
+                                  <span className="tx-history-dot">•</span>
+                                  <span className="tx-history-transfer-badge">{t('finanzas:table.transfer')}</span>
+                                </>
+                              )}
+                            </div>
+                            <div className="tx-history-tags">
+                              <span className="tx-category-pill">{getCategoryLabel(tx.category)}</span>
+                            </div>
                           </div>
                         </div>
-                      </td>
-                      <td><span className="tx-category-pill">{getCategoryLabel(tx.category)}</span></td>
-                      <td>
-                        <span className="tx-status">
-                          <span className="tx-status-dot" style={{ background: tx.type === 'expense' ? '#ffb3af' : '#4edea3' }} />
-                          {t('finanzas:table.completed')}
-                        </span>
-                      </td>
-                      <td className={`amount-cell ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
-                        {showAmounts ? (
-                          <>
-                            <div style={{ fontWeight: 700, fontSize: '0.9375rem' }}>
-                              {tx.type === 'expense' ? '-' : '+'}
-                              {formatTableAmount(tx.amount, txCurrency)}
-                            </div>
-                            {/* Para cryptos: mostrar USD y BS simultáneamente */}
-                            {(['BTC', 'ETH', 'SOL', 'USDT', 'USDC'] as CurrencyCode[]).includes(txCurrency) && (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: '2px' }}>
-                                {(() => {
-                                  const usdPrice = getCryptoUsdPrice(txCurrency);
-                                  if (usdPrice) {
-                                    const usdAmount = tx.amount * usdPrice;
-                                    const bsAmount = convertBetween(tx.amount, txCurrency, 'BS');
-                                    return (
-                                      <>
-                                        <span style={{ fontSize: '10px', color: 'var(--color-prosper-green)', fontWeight: 500 }}>
-                                          {tx.type === 'expense' ? '-' : '+'}${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdAmount)} USD
-                                        </span>
-                                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 400 }}>
-                                          ≈ {tx.type === 'expense' ? '-' : '+'}{formatInCurrency(bsAmount, 'BS')}
-                                        </span>
-                                      </>
-                                    );
-                                  }
-                                  return null;
-                                })()}
-                              </div>
+                        <div className="tx-history-right">
+                          <div className={`tx-history-amount ${tx.type === 'income' ? 'amount-income' : tx.type === 'expense' ? 'amount-expense' : 'amount-saving'}`}>
+                            {showAmounts ? (
+                              <>
+                                <span className="tx-history-primary-amount">
+                                  {tx.type === 'expense' ? '-' : '+'}
+                                  {formatTableAmount(tx.amount, txCurrency)}
+                                </span>
+                                {(['BTC', 'ETH', 'SOL', 'USDT', 'USDC'] as CurrencyCode[]).includes(txCurrency) && (
+                                  <span className="tx-history-conversion">
+                                    {(() => {
+                                      const usdPrice = getCryptoUsdPrice(txCurrency);
+                                      if (usdPrice) {
+                                        const usdAmount = tx.amount * usdPrice;
+                                        return `${tx.type === 'expense' ? '-' : '+'}${new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(usdAmount)} USD`;
+                                      }
+                                      return null;
+                                    })()}
+                                  </span>
+                                )}
+                                {![ 'BTC', 'ETH', 'SOL', 'USDT', 'USDC' ].includes(txCurrency) && txCurrency !== displayCurrency && (
+                                  <span className="tx-history-conversion">
+                                    ≈ {tx.type === 'expense' ? '-' : '+'}
+                                    {formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="tx-history-hidden">••••••</span>
                             )}
-                            {/* Para no-cryptos: mostrar conversión a displayCurrency */}
-                            {![ 'BTC', 'ETH', 'SOL', 'USDT', 'USDC' ].includes(txCurrency) && txCurrency !== displayCurrency && (
-                              <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 400 }}>
-                                ≈ {tx.type === 'expense' ? '-' : '+'}
-                                {formatInCurrency(convertBetween(tx.amount, txCurrency, displayCurrency), displayCurrency)}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          '••••••'
-                        )}
-                      </td>
-                    </tr>
-                  );
-                }) : (
-                  <tr><td colSpan={4} className="empty-state">{t('finanzas:table.empty')}</td></tr>
+                          </div>
+                          <div className="tx-history-actions">
+                            <button
+                              className="tx-history-btn tx-history-btn-edit"
+                              onClick={() => openEditTx(tx)}
+                              title={t('common:buttons.edit')}
+                            >
+                              <InlineIcon icon="Pencil" size={14} />
+                            </button>
+                            <button
+                              className="tx-history-btn tx-history-btn-delete"
+                              onClick={() => handleDeleteTransaction(tx)}
+                              title={t('common:buttons.delete')}
+                            >
+                              <InlineIcon icon="Trash2" size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {filteredTx.length > txLimit && (
+                  <div className="tx-history-load-more">
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => setTxLimit(prev => prev + 5)}
+                    >
+                      {t('finanzas:table.viewMore')} ({filteredTx.length - txLimit} {t('finanzas:table.remaining')})
+                    </button>
+                  </div>
                 )}
-              </tbody>
-            </table>
-            {filteredTx.length > txLimit && (
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
-                <button
-                  className="btn btn-outline"
-                  onClick={() => setTxLimit(prev => prev + 5)}
-                >
-                  {t('finanzas:table.viewMore')} ({filteredTx.length - txLimit} {t('finanzas:table.remaining')})
-                </button>
-              </div>
+              </>
+            ) : (
+              <div className="tx-history-empty">{t('finanzas:table.empty')}</div>
             )}
           </div>
 
@@ -1715,6 +1842,132 @@ const FinanzasPage = memo(function FinanzasPage() {
                         <span className="spinner" /> {t('finanzas:modals.newTransaction.saving')}
                       </span>
                     ) : t('finanzas:modals.newTransaction.register', { type: TX_FORM_LABELS[newTx.type] })}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal Editar Transacción */}
+          {showEditModal && editingTx && (
+            <div className="modal-overlay" onClick={closeEditTx}>
+              <div className="modal-content modal-tx" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <div>
+                    <h2 className="modal-title">{t('finanzas:modals.editTransaction.title')}</h2>
+                    <p className="modal-subtitle">{t('finanzas:modals.editTransaction.subtitle')}</p>
+                  </div>
+                  <button className="modal-close" onClick={closeEditTx}><X size={18} /></button>
+                </div>
+                <div className="modal-body">
+                  {editingTx.category === 'Transferencia' && (
+                    <div className="tx-edit-warning">
+                      <InlineIcon icon="AlertTriangle" size={16} />
+                      <span>{t('finanzas:modals.editTransaction.transferWarning')}</span>
+                    </div>
+                  )}
+
+                  <div className="tx-field">
+                    <label className="tx-label">{t('finanzas:modals.editTransaction.type')}</label>
+                    <div className="tx-type-selector">
+                      {(['income', 'expense', 'saving'] as const).map(type => (
+                        <button
+                          key={type}
+                          className={`tx-type-btn ${editTxForm.type === type ? 'active' : ''}`}
+                          style={editTxForm.type === type ? { borderColor: TX_TYPE_COLORS[type], background: TX_TYPE_COLORS[type] + '12' } : {}}
+                          onClick={() => {
+                            const cats = allCategories[type] || DEFAULT_CATEGORIES[type] || [];
+                            setEditTxForm(prev => ({ ...prev, type, category: cats.includes(prev.category) ? prev.category : (cats[0] || prev.category) }));
+                          }}
+                        >
+                          <span className="tx-type-icon"><InlineIcon icon={TX_TYPE_ICONS[type]} size={18} /></span>
+                          <span className="tx-type-label">{TX_TYPE_LABELS[type]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="tx-field">
+                    <label className="tx-label">{t('finanzas:modals.newTransaction.amount')} *</label>
+                    <div className="tx-input-wrap">
+                      <span className="tx-currency">
+                        {currencyMap[accounts.find(a => a.id === editTxForm.accountId)?.currency || displayCurrency].symbol}
+                      </span>
+                      <input
+                        className="tx-input tx-input-amount"
+                        type="number"
+                        min="0"
+                        step={(['BTC','ETH','SOL','USDT','USDC'] as CurrencyCode[]).includes(accounts.find(a => a.id === editTxForm.accountId)?.currency || displayCurrency) ? '0.00000001' : '0.01'}
+                        placeholder="0.00"
+                        value={editTxForm.amount}
+                        onChange={(e) => setEditTxForm({ ...editTxForm, amount: e.target.value })}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="tx-field-row">
+                    <div className="tx-field">
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.account')}</label>
+                      <CustomSelect
+                        value={editTxForm.accountId}
+                        onChange={(val) => setEditTxForm({ ...editTxForm, accountId: val })}
+                        options={[
+                          { value: '', label: t('finanzas:modals.newTransaction.noAccount'), icon: '—' },
+                          ...accounts.map((a) => ({ value: a.id, label: a.name, icon: a.icon })),
+                        ]}
+                        placeholder={t('finanzas:modals.newTransaction.account')}
+                      />
+                    </div>
+                    <div className="tx-field">
+                      <label className="tx-label">{t('finanzas:modals.newTransaction.date')}</label>
+                      <input
+                        className="tx-input tx-input-date"
+                        type="date"
+                        value={editTxForm.date}
+                        onChange={(e) => setEditTxForm({ ...editTxForm, date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="tx-field">
+                    <label className="tx-label">{t('finanzas:modals.newTransaction.category')}</label>
+                    <CustomSelect
+                      value={editTxForm.category}
+                      onChange={(val) => setEditTxForm({ ...editTxForm, category: val })}
+                      options={(allCategories[editTxForm.type] || DEFAULT_CATEGORIES[editTxForm.type] || []).map((c) => ({ value: c, label: getCategoryLabel(c) }))}
+                      placeholder={t('finanzas:modals.newTransaction.selectPlaceholder')}
+                      allowCustom
+                      onAddCustom={async (value) => {
+                        if (uid) {
+                          await addCustomTransactionCategory(uid, value);
+                          setCustomTxCategories(prev => [...prev, value]);
+                          setAllCategories(prev => ({ ...prev, expense: [...(prev.expense || []), value] }));
+                        }
+                      }}
+                      customPlaceholder={t('finanzas:modals.newTransaction.categoryPlaceholder')}
+                    />
+                  </div>
+
+                  <div className="tx-field">
+                    <label className="tx-label">{t('finanzas:modals.newTransaction.description')}</label>
+                    <input
+                      className="tx-input"
+                      type="text"
+                      placeholder={t('finanzas:modals.newTransaction.descriptionPlaceholder')}
+                      value={editTxForm.description}
+                      onChange={(e) => setEditTxForm({ ...editTxForm, description: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button className="btn btn-outline" onClick={closeEditTx}>{t('common:buttons.cancel')}</button>
+                  <button className="btn btn-primary btn-tx-submit" onClick={handleUpdateTransaction} disabled={editTxLoading || !editTxForm.amount}>
+                    {editTxLoading ? (
+                      <span className="btn-loading">
+                        <span className="spinner" /> {t('finanzas:modals.editTransaction.saving')}
+                      </span>
+                    ) : t('finanzas:modals.editTransaction.save')}
                   </button>
                 </div>
               </div>
@@ -2326,50 +2579,84 @@ const FinanzasPage = memo(function FinanzasPage() {
           .rates-section-title { display: block; font-size: 0.875rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
           .rates-section-subtitle { display: block; font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; line-height: 1.3; }
 
-          /* Table */
-          .transactions-table-wrapper { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-          .transactions-table { width: 100%; border-collapse: collapse; }
-          .transactions-table th { text-align: left; padding: 12px 16px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); background: var(--bg-input); border-bottom: 1px solid var(--border-default); }
-          .transactions-table td { padding: 12px 16px; font-size: 0.8125rem; color: var(--text-primary); border-bottom: 1px solid var(--border-default); }
-          .transactions-table tr:last-child td { border-bottom: none; }
-          .transactions-table tr:hover { background: var(--bg-input); }
-          .type-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.6875rem; font-weight: 600; }
-          .account-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.6875rem; font-weight: 600; background: var(--bg-input); color: var(--text-secondary); }
-          .amount-cell { font-weight: 700; }
-          .amount-income { color: var(--color-prosper-green); }
-          .amount-expense { color: var(--color-error); }
-          .amount-saving { color: var(--color-pine-500); }
-
-          /* Tabla premium */
-          .tx-icon-box {
+          /* Transaction History - Compact Card List */
+          .tx-history-section { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; }
+          .tx-history-list { display: flex; flex-direction: column; }
+          .tx-history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-default);
+            border-left: 3px solid;
+            transition: background 0.15s ease;
+          }
+          .tx-history-item:last-child { border-bottom: none; }
+          .tx-history-item:hover { background: var(--bg-input); }
+          .tx-history-main { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+          .tx-history-icon {
             width: 38px; height: 38px;
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.125rem;
             flex-shrink: 0;
           }
+          .tx-history-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+          .tx-history-description { font-weight: 600; color: var(--text-primary); font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .tx-history-meta { display: flex; align-items: center; gap: 6px; font-size: 0.6875rem; color: var(--text-secondary); flex-wrap: wrap; }
+          .tx-history-dot { color: var(--text-tertiary); }
+          .tx-history-account { display: inline-flex; align-items: center; gap: 4px; }
+          .tx-history-transfer-badge { color: var(--color-gold-500); font-weight: 600; }
+          .tx-history-tags { display: flex; gap: 6px; flex-wrap: wrap; }
           .tx-category-pill {
             display: inline-block;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 9999px;
             background: rgba(255,255,255,0.06);
             color: var(--text-secondary);
-            font-size: 0.6875rem;
+            font-size: 0.625rem;
             font-weight: 600;
           }
-          .tx-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.6875rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
+          .tx-history-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+          .tx-history-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 90px; }
+          .tx-history-primary-amount { font-weight: 700; font-size: 0.9375rem; }
+          .tx-history-conversion { font-size: 10px; color: var(--text-secondary); font-weight: 400; }
+          .tx-history-hidden { font-size: 0.9375rem; color: var(--text-secondary); }
+          .amount-income { color: var(--color-prosper-green); }
+          .amount-expense { color: var(--color-error); }
+          .amount-saving { color: var(--color-pine-500); }
+          .tx-history-actions { display: flex; align-items: center; gap: 4px; }
+          .tx-history-btn {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
             color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
           }
-          .tx-status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
+          .tx-history-btn:hover { background: var(--bg-input); }
+          .tx-history-btn-edit:hover { color: var(--color-prosper-green); }
+          .tx-history-btn-delete:hover { color: var(--color-error); }
+          .tx-history-load-more { display: flex; justify-content: center; padding: 16px; border-top: 1px solid var(--border-default); }
+          .tx-history-empty { text-align: center; padding: 40px 24px; color: var(--text-secondary); font-size: 0.875rem; }
+
+          /* Edit modal warning */
+          .tx-edit-warning {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            color: var(--color-gold-500);
+            font-size: 0.75rem;
+            font-weight: 500;
           }
 
           .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
@@ -2559,10 +2846,15 @@ const FinanzasPage = memo(function FinanzasPage() {
             .account-balance { font-size: 1.125rem; }
             .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
             .filter-bar > .custom-select-wrapper { width: 100%; }
-            .transactions-table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid var(--border-default); }
-            .transactions-table { min-width: 600px; font-size: 0.8125rem; }
-            .transactions-table th { padding: 10px 8px; font-size: 0.6875rem; }
-            .transactions-table td { padding: 10px 8px; }
+            .tx-history-item { padding: 10px 12px; gap: 10px; }
+            .tx-history-icon { width: 34px; height: 34px; }
+            .tx-history-main { gap: 10px; }
+            .tx-history-description { font-size: 0.8125rem; }
+            .tx-history-meta { font-size: 0.625rem; }
+            .tx-history-right { gap: 8px; }
+            .tx-history-primary-amount { font-size: 0.875rem; }
+            .tx-history-actions { gap: 2px; }
+            .tx-history-btn { width: 28px; height: 28px; }
             .modal-overlay { padding: 24px 16px; }
             .modal-content { width: 96%; max-width: none; padding: 20px 16px; max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); }
             .modal-tx { max-width: none; }
@@ -2612,6 +2904,9 @@ const FinanzasPage = memo(function FinanzasPage() {
             .tx-type-icon { font-size: 1rem; }
             .tx-type-label { font-size: 0.625rem; }
             .tx-input-amount { font-size: 1.125rem; }
+            .tx-history-item { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px; }
+            .tx-history-right { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+            .tx-history-amount { align-items: flex-start; }
             .accounting-actions { grid-template-columns: 1fr 1fr; }
             .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
             .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }
@@ -2632,7 +2927,10 @@ const FinanzasPage = memo(function FinanzasPage() {
             .page-title { font-size: 1.125rem; }
             .summary-value { font-size: 1rem; }
             .account-balance { font-size: 0.9375rem; }
-            .transactions-table { min-width: 550px; font-size: 0.75rem; }
+            .tx-history-item { padding: 8px; }
+            .tx-history-icon { width: 30px; height: 30px; }
+            .tx-history-description { font-size: 0.75rem; }
+            .tx-history-primary-amount { font-size: 0.8125rem; }
             .modal-content { padding: 14px 10px; }
           }
 

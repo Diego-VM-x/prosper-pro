@@ -108,6 +108,7 @@
     "amount": "Amount",
     "actions": "Actions",
     "completed": "COMPLETED",
+    "transfer": "Transfer",
     "empty": "No transactions. Add your first one!",
     "emptyArchived": "No archived transactions.",
     "viewMore": "View more",
@@ -216,6 +217,14 @@
       "initialBalance": "Initial Balance",
       "color": "Color (optional)",
       "create": "Create Account"
+    },
+    "editTransaction": {
+      "title": "Edit Transaction",
+      "subtitle": "Modify amount, account, category and more",
+      "type": "Type",
+      "transferWarning": "Manually editing transfers may unbalance the counterpart. Use with caution.",
+      "save": "Save changes",
+      "saving": "Saving..."
     },
     "editAccount": {
       "title": "Edit Account",
@@ -349,6 +358,9 @@
     "transactionRegistered": "{{type}} of {{amount}} recorded",
     "transactionDeletedAdjusted": "Transaction deleted and balance adjusted",
     "transactionDeletedHistory": "Transaction deleted from history",
+    "transactionUpdated": "Transaction updated",
+    "transactionDeleted": "Transaction deleted",
+    "updateError": "Error updating: {{message}}",
     "historyCleared": "History cleared",
     "allHistoryCleared": "All history cleared",
     "transactionsArchived": "{{count}} transactions archived",
