@@ -79,18 +79,19 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const closeUserMenu = () => setShowUserMenu(false);
   const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
 
+  const APK_URL = 'https://prosper-pro.vercel.app/prosper-pro.apk';
+
   const handleDownloadApk = async () => {
-    const apkUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://prosper-pro.vercel.app'}/prosper-pro.apk`;
     try {
       const { Browser } = await import('@capacitor/browser');
-      await Browser.open({ url: apkUrl });
+      await Browser.open({ url: APK_URL });
     } catch {
-      window.open(apkUrl, '_blank');
+      window.open(APK_URL, '_blank');
     }
   };
 
   const openUpdateUrl = async (url?: string) => {
-    const target = url || `${typeof window !== 'undefined' ? window.location.origin : 'https://prosper-pro.vercel.app'}/prosper-pro.apk`;
+    const target = url || APK_URL;
     try {
       const { Browser } = await import('@capacitor/browser');
       await Browser.open({ url: target });
