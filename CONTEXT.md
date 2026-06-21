@@ -16,7 +16,8 @@
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
 - **Plataforma**: Web + Android nativo vía Capacitor 8.
 - **Versión actual**: 1.0.4 (publicada en test-deploy y master).
-- **APK Android**: `public/prosper-pro.apk` generado (debug, ~9.0 MB, v1.0.4) y listo para descarga desde la landing.
+- **Gestión Contable en Configuración**: el modal de gestión contable de `/finanzas` se convirtió en una pestaña completa dentro de `/configuracion` (`tab=contabilidad`), centralizando tipos de cuenta personalizados, CRUD de cuentas y acciones contables masivas.
+- **APK Android**: `public/prosper-pro.apk` regenerado (debug, ~11 MB, v1.0.4) y accesible desde el menú desplegable de usuario en lugar del modal de novedades.
 - **Notificación global**: script `scripts/send-global-notification.js` ejecutado exitosamente; 11 usuarios notificados sobre la v1.0.4.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
@@ -50,7 +51,8 @@
 - `app/calendario/page.tsx` → Calendario con recordatorios, tipos custom
 - `app/finanzas/page.tsx` → Cuentas financieras, historial de transacciones tipo cards con edición/eliminación, balance por cuenta
 - `app/components/FinancialStatusChart.tsx` → Gráfica AreaChart con Recharts, datos en tiempo real via onSnapshot
-- `app/configuracion/page.tsx` → Perfil editable, preferencias, notificaciones, seguridad, zona de peligro (rediseñado)
+- `app/configuracion/page.tsx` → Perfil editable, preferencias, notificaciones, seguridad, zona de peligro y **Gestión Contable** (`tab=contabilidad`).
+- `app/components/config/ContabilidadPanel.tsx` → Panel completo de gestión contable: tipos de cuenta, CRUD de cuentas, acciones masivas y recálculo de balances.
 - `app/logros/` → **ELIMINADO** (backup en `_backup_comunidad_logros/logros/`)
 - `app/ayuda/page.tsx` → FAQ con 40+ preguntas, accesos rápidos, filtros por categoría
 - `app/comunidad/` → **ELIMINADO** (código preservado en backups de diseño)
@@ -77,8 +79,13 @@
   - **Build móvil robusto**: script `scripts/build-mobile-export.js` ahora limpia `.next` antes de compilar para evitar errores de tipos residuales cuando se mueve `app/api`.
   - **APK debug v1.0.4**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.4-debug.apk` (~11 MB) copiado a `public/prosper-pro.apk`.
   - **Fix autenticación en Android**: cambiado `skipNativeAuth` a `true` en `capacitor.config.ts`; `firebase-auth-core.ts` ahora sincroniza el login nativo de Google con el SDK JS mediante `signInWithCredential`, y email/password usa directamente el SDK JS, eliminando el timeout en el botón "Continuar con Google".
-  - **Modal de actualización forzada**: en Android nativo, el `UpdateModal` ahora oculta el botón de cierre y muestra "Descargar actualización" (abre el APK vía `@capacitor/browser`) junto a "Recordar luego". En web mantiene el comportamiento actual.
-  - **Notificación global**: creado y ejecutado `scripts/send-global-notification.js`; 11 usuarios notificados sobre la v1.0.4.
+  - **Gestión Contable en Configuración**: el modal de gestión contable de `/finanzas` se migró a una pestaña completa dentro de `/configuracion` (`tab=contabilidad`). Incluye tipos de cuenta personalizados, creación/edición/eliminación de cuentas, acciones masivas (vaciar transacciones por tipo/global) y recálculo de balances.
+  - **Tipos de cuenta personalizados**: extensión de `AccountType` en `types.ts` y persistencia de `customAccountTypes` en `UserProfile`/`UserPreferences` vía `addCustomAccountType` en `lib/firestore/users.ts`.
+  - **Descarga de APK en menú de usuario**: el botón "Descargar actualización" se removió del `UpdateModal` y se agregó al dropdown de usuario (`Topbar.tsx`), disponible en desktop y móvil. El `UpdateModal` ahora usa el mismo flujo web/nativo uniforme.
+  - **Limpieza en `/finanzas`**: eliminados modal de gestión contable, modal simple de edición de cuenta y handlers asociados; el botón y FAB móvil redirigen a Configuración.
+  - **Notificación global**: creado y ejecutado `scripts/send-global-notification.js`; 11 usuarios notificados sobre la v1.04.
+  - **APK debug v1.0.4 regenerado**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.4-debug.apk` (~11 MB) copiado a `public/prosper-pro.apk`.
+  - **Deploy**: push a `master` y `test-deploy`.
   - **Build verificado**: `npx tsc --noEmit` y `npm run build` exitosos, 21/21 páginas generadas.
 - ✅ **v1.0.3 — Widget de Historial en Dashboard (20/06/2026)**:
   - **Mejora del widget `recent_transactions`**: diseño compacto tipo cards alineado con el historial de `/finanzas`. Muestra icono por tipo, descripción, fecha, cuenta, categoría, monto nativo y conversión para cryptos/divisas.
