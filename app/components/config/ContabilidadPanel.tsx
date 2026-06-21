@@ -694,6 +694,84 @@ export default function ContabilidadPanel() {
         .accounting-mini-danger { color: var(--color-error) !important; border-color: rgba(239,68,68,0.3) !important; }
         .accounting-mini-danger:hover { background: rgba(239,68,68,0.1) !important; }
 
+        .accounting-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .accounting-btn {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          border: 1px solid var(--border-default);
+          background: var(--bg-input);
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: left;
+          width: 100%;
+        }
+        .accounting-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        .accounting-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .accounting-btn-icon { font-size: 1.125rem; flex-shrink: 0; color: var(--text-primary); }
+        .accounting-btn-content { flex: 1; min-width: 0; }
+        .accounting-btn-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); }
+        .accounting-btn-desc { display: block; font-size: 0.625rem; color: var(--text-tertiary); margin-top: 2px; line-height: 1.3; }
+
+        .accounting-btn-danger { border-color: var(--color-error); }
+        .accounting-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: var(--color-error); }
+        .accounting-btn-danger .accounting-btn-label { color: var(--color-error); }
+
+        .accounting-btn-warning { border-color: var(--color-gold-500); }
+        .accounting-btn-warning:hover:not(:disabled) { background: rgba(245,158,11,0.1); border-color: var(--color-gold-500); }
+        .accounting-btn-warning .accounting-btn-label { color: var(--color-gold-500); }
+
+        .accounting-btn-info { border-color: var(--color-blue-500); }
+        .accounting-btn-info:hover:not(:disabled) { background: rgba(59,130,246,0.1); border-color: var(--color-blue-500); }
+        .accounting-btn-info .accounting-btn-label { color: var(--color-blue-500); }
+
+        .accounting-accounts-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .accounting-account-card {
+          background: var(--bg-input);
+          border: 1px solid var(--border-default);
+          border-left: 4px solid;
+          border-radius: 10px;
+          padding: 10px;
+        }
+        .accounting-account-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .accounting-account-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; color: var(--text-primary); }
+        .accounting-account-info { flex: 1; min-width: 0; }
+        .accounting-account-name { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .accounting-account-balance { display: block; font-size: 0.8125rem; font-weight: 800; }
+        .accounting-account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .accounting-mini-btn {
+          padding: 5px 6px;
+          border-radius: 6px;
+          border: 1px solid var(--border-default);
+          background: var(--bg-card);
+          font-size: 0.625rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s;
+          color: var(--text-secondary);
+          text-align: center;
+        }
+        .accounting-mini-btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .accounting-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .accounting-mini-danger:hover:not(:disabled) { border-color: var(--color-error); color: var(--color-error); background: rgba(239,68,68,0.1); }
+        .accounting-mini-warning:hover:not(:disabled) { border-color: var(--color-gold-500); color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
+        .accounting-mini-info:hover:not(:disabled) { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: rgba(61,204,142,0.1); }
+
+        .accounting-info-box {
+          display: flex;
+          gap: 10px;
+          padding: 12px;
+          border-radius: 10px;
+          background: rgba(61,204,142,0.08);
+          border: 1px solid rgba(61,204,142,0.2);
+          margin-top: 16px;
+        }
+        .accounting-info-icon { font-size: 1.25rem; flex-shrink: 0; color: var(--text-primary); }
+        .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
+        .accounting-info-text strong { color: var(--text-primary); }
+
         @media (max-width: 768px) {
           .contabilidad-section-header { flex-direction: column; }
           .contabilidad-accounts-list { grid-template-columns: 1fr; }
