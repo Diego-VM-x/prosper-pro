@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications, Token } from '@capacitor/push-notifications';
+import { PushNotifications, Token, ActionPerformed } from '@capacitor/push-notifications';
 import { doc, setDoc } from '@/lib/firebase';
 import type { NotificationType } from '@/types';
 
@@ -144,6 +144,18 @@ export async function registerPushNotifications(userId: string): Promise<void> {
 
     PushNotifications.addListener('registrationError', (err) => {
       console.error('[PushNotifications] Registration error:', err);
+    });
+
+    PushNotifications.addListener('pushNotificationActionPerformed', async (action: ActionPerformed) => {
+      const data = action.notification.data as { type?: string; url?: string } | undefined;
+      if (data?.type === 'app_update' && data?.url) {
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: data.url });
+        } catch (e) {
+          console.error('[PushNotifications] Failed to open update URL:', e);
+        }
+      }
     });
   } catch (e) {
     console.error('[PushNotifications] Init error:', e);

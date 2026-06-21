@@ -52,6 +52,7 @@
     "pageHome": "Inicio",
     "goHome": "Ir al Inicio",
     "downloadApk": "Descargar APK",
+    "downloadUpdate": "Descargar actualización",
     "errorBoundary": {
       "title": "Algo salió mal",
       "message": "Esta página no pudo cargar correctamente. Intenta recargar la página.",

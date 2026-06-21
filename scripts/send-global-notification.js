@@ -6,7 +6,7 @@
  *   - FIREBASE_SERVICE_ACCOUNT_JSON env var containing the raw JSON string.
  *
  * Usage:
- *   node scripts/send-global-notification.js "1.0.4" "Nueva versión disponible" "Prosper Pro 1.0.4 ya está aquí con historial rediseñado, edición de transacciones y más."
+ *   node scripts/send-global-notification.js "1.0.4" "Nueva versión disponible" "Prosper Pro 1.0.4 ya está aquí con historial rediseñado, edición de transacciones y más." "https://prosper-pro.vercel.app/prosper-pro.apk"
  */
 
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
@@ -18,6 +18,7 @@ const TITLE = process.argv[3] || `Prosper Pro ${VERSION} disponible`;
 const MESSAGE =
   process.argv[4] ||
   `Actualiza a la versión ${VERSION} para disfrutar del historial de transacciones rediseñado, edición de movimientos y el nuevo widget de últimos movimientos.`;
+const APK_URL = process.argv[5] || `https://prosper-pro.vercel.app/prosper-pro.apk`;
 
 function getCredential() {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
@@ -68,7 +69,7 @@ async function main() {
           message: MESSAGE,
           type: 'app_update',
           read: false,
-          meta: { version: VERSION },
+          meta: { version: VERSION, url: APK_URL },
           createdAt: Date.now(),
         });
       }

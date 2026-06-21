@@ -89,6 +89,16 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     }
   };
 
+  const openUpdateUrl = async (url?: string) => {
+    const target = url || `${typeof window !== 'undefined' ? window.location.origin : 'https://prosper-pro.vercel.app'}/prosper-pro.apk`;
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url: target });
+    } catch {
+      window.open(target, '_blank');
+    }
+  };
+
   // Detect desktop viewport to enable only the correct click-outside hook
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -597,9 +607,17 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                   key={notif.id}
                   className={`notif-item ${notif.read ? 'read' : 'unread'}`}
                 >
-                  <div className="notif-content" onClick={() => handleMarkRead(notif.id)}>
+                  <div className="notif-content">
                     <p className="notif-title">{notif.title}</p>
                     <p className="notif-message">{notif.message}</p>
+                    {notif.type === 'app_update' && typeof notif.meta?.url === 'string' && (
+                      <button
+                        className="notif-download-btn"
+                        onClick={() => { handleMarkRead(notif.id); openUpdateUrl(notif.meta?.url as string); }}
+                      >
+                        {t('topbar.downloadUpdate')}
+                      </button>
+                    )}
                   </div>
                   <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title={t('topbar.delete')}>
                     <IconX width={14} height={14} />
@@ -691,9 +709,17 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     key={notif.id}
                     className={`notif-item ${notif.read ? 'read' : 'unread'}`}
                   >
-                    <div className="notif-content" onClick={() => handleMarkRead(notif.id)}>
+                    <div className="notif-content">
                       <p className="notif-title">{notif.title}</p>
                       <p className="notif-message">{notif.message}</p>
+                      {notif.type === 'app_update' && typeof notif.meta?.url === 'string' && (
+                        <button
+                          className="notif-download-btn"
+                          onClick={() => { handleMarkRead(notif.id); openUpdateUrl(notif.meta?.url as string); }}
+                        >
+                          {t('topbar.downloadUpdate')}
+                        </button>
+                      )}
                     </div>
                     <button className="notif-delete-btn" onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); handleDeleteNotif(notif.id); }} title={t('topbar.delete')}>
                       <IconX width={14} height={14} />
@@ -1291,6 +1317,22 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
           color: var(--color-error);
           background: rgba(239,68,68,0.08);
         }
+        .notif-download-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 8px;
+          padding: 6px 10px;
+          border-radius: var(--radius-md);
+          border: none;
+          background: var(--color-prosper-green);
+          color: #fff;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all var(--transition-fast);
+        }
+        .notif-download-btn:hover { filter: brightness(1.1); }
         .notif-empty { padding: 24px 16px; text-align: center; font-size: 0.8125rem; color: var(--text-secondary); }
 
         /* User dropdown */

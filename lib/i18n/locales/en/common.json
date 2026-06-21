@@ -52,6 +52,7 @@
     "pageHome": "Home",
     "goHome": "Go Home",
     "downloadApk": "Download APK",
+    "downloadUpdate": "Download update",
     "errorBoundary": {
       "title": "Something went wrong",
       "message": "This page could not load correctly. Try reloading the page.",
