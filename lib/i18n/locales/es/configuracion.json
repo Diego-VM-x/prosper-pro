@@ -210,6 +210,7 @@
     "accountsDesc": "Crea, edita y elimina cuentas de forma centralizada.",
     "noAccounts": "No tienes cuentas creadas todavía.",
     "addType": "Añadir",
+    "iconLabel": "Icono del tipo",
     "newTypePlaceholder": "Nuevo tipo personalizado",
     "typeAdded": "Tipo \"{{type}}\" añadido.",
     "deleteTypeTitle": "Eliminar tipo personalizado",

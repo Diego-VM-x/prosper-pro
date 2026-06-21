@@ -254,8 +254,10 @@ export interface UserProfile {
   devices?: UserDevice[];
   newsConsent?: boolean;
   /** Custom account types created by the user (e.g. "Ahorro", "Inversión") */
-  customAccountTypes?: string[];
+  customAccountTypes?: CustomAccountType[];
 }
+
+export type CustomAccountType = string | { name: string; icon?: string };
 
 // ─── Courses ───
 export interface Course {

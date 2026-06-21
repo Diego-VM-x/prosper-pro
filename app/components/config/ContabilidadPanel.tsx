@@ -21,7 +21,7 @@ import {
 } from '@/lib/firestore/accounts';
 import { getUserProfile, updateUserProfile, addCustomAccountType } from '@/lib/firestore/users';
 import { safeLocalStorage } from '@/lib/utils/safeStorage';
-import type { FinancialAccount, AccountType, CurrencyCode } from '@/types';
+import type { FinancialAccount, AccountType, CurrencyCode, CustomAccountType } from '@/types';
 
 const ACCOUNT_COLORS = [
   '#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899',
@@ -43,13 +43,28 @@ const TX_TYPE_LABELS: Record<'income' | 'expense' | 'saving', string> = {
   saving: 'Ahorro',
 };
 
-function getAccountIcon(type: AccountType): string {
+const CUSTOM_TYPE_ICONS = [
+  'Wallet', 'Landmark', 'CreditCard', 'Banknote', 'ArrowLeftRight',
+  'DollarSign', 'Euro', 'Coins', 'Save', 'TrendingUp', 'Briefcase',
+  'ShoppingCart', 'Car', 'Home', 'Smartphone', 'Laptop', 'Gem', 'Diamond',
+  'Target', 'Heart', 'Sparkles', 'Lightbulb', 'Shield', 'Receipt', 'Plane', 'Rocket',
+];
+
+function normalizeCustomType(item: CustomAccountType): { name: string; icon: string } {
+  if (typeof item === 'string') return { name: item, icon: 'Wallet' };
+  return { name: item.name, icon: item.icon || 'Wallet' };
+}
+
+function getAccountIcon(type: AccountType, customTypes: CustomAccountType[] = []): string {
   switch (type) {
     case 'digital': return 'CreditCard';
     case 'bank': return 'Landmark';
     case 'cash': return 'Banknote';
     case 'foreign': return 'ArrowLeftRight';
-    default: return 'Wallet';
+    default: {
+      const found = customTypes.find((t) => normalizeCustomType(t).name === type);
+      return found ? normalizeCustomType(found).icon : 'Wallet';
+    }
   }
 }
 
@@ -72,7 +87,7 @@ export default function ContabilidadPanel() {
   const uid = user?.uid;
 
   const [accounts, setAccounts] = useState<FinancialAccount[]>([]);
-  const [customTypes, setCustomTypes] = useState<string[]>([]);
+  const [customTypes, setCustomTypes] = useState<CustomAccountType[]>([]);
   const [loading, setLoading] = useState(true);
   const [accountingLoading, setAccountingLoading] = useState(false);
   const [showAmounts, setShowAmounts] = useState(() => {
@@ -94,6 +109,7 @@ export default function ContabilidadPanel() {
 
   // Custom type input
   const [newCustomType, setNewCustomType] = useState('');
+  const [newCustomTypeIcon, setNewCustomTypeIcon] = useState('Wallet');
 
   // Confirm dialog
   const [confirmState, setConfirmState] = useState<{ isOpen: boolean; title: string; message: string; variant: 'danger' | 'warning' | 'info'; confirmText?: string; onConfirm: () => void }>({ isOpen: false, title: '', message: '', variant: 'info', onConfirm: () => {} });
@@ -113,7 +129,10 @@ export default function ContabilidadPanel() {
 
   const allTypeOptions = useMemo(() => {
     const fixed = FIXED_ACCOUNT_TYPES.map((ft) => ({ value: ft.value, label: t(ft.labelKey), icon: ft.icon }));
-    const custom = customTypes.map((type) => ({ value: type, label: type, icon: 'Wallet' }));
+    const custom = customTypes.map((type) => {
+      const { name, icon } = normalizeCustomType(type);
+      return { value: name, label: name, icon };
+    });
     return [...fixed, ...custom];
   }, [customTypes, t]);
 
@@ -160,7 +179,7 @@ export default function ContabilidadPanel() {
           type: accountForm.type,
           currency: accountForm.currency,
           color: accountForm.color || getAccountColor(accountForm.type),
-          icon: getAccountIcon(accountForm.type),
+          icon: getAccountIcon(accountForm.type, customTypes),
           rateMode: accountForm.rateMode,
           updatedAt: Date.now(),
         });
@@ -172,7 +191,7 @@ export default function ContabilidadPanel() {
           type: accountForm.type,
           balance: accountForm.balance,
           currency: accountForm.currency,
-          icon: getAccountIcon(accountForm.type),
+          icon: getAccountIcon(accountForm.type, customTypes),
           color: accountForm.color || getAccountColor(accountForm.type),
           rateMode: accountForm.rateMode,
           createdAt: Date.now(),
@@ -189,14 +208,17 @@ export default function ContabilidadPanel() {
   const handleAddCustomType = async () => {
     if (!uid || !newCustomType.trim()) return;
     const type = newCustomType.trim();
-    if (customTypes.includes(type) || FIXED_ACCOUNT_TYPES.some((ft) => ft.value === type)) {
+    const existingNames = customTypes.map((t) => normalizeCustomType(t).name);
+    if (existingNames.includes(type) || FIXED_ACCOUNT_TYPES.some((ft) => ft.value === type)) {
       setNewCustomType('');
+      setNewCustomTypeIcon('Wallet');
       return;
     }
     try {
-      await addCustomAccountType(uid, type);
-      setCustomTypes((prev) => [...prev, type]);
+      await addCustomAccountType(uid, type, newCustomTypeIcon);
+      setCustomTypes((prev) => [...prev, { name: type, icon: newCustomTypeIcon }]);
       setNewCustomType('');
+      setNewCustomTypeIcon('Wallet');
       success(t('configuracion:contabilidad.typeAdded', { type }));
     } catch (e: any) {
       error(e?.message || t('messages.saveError'));
@@ -213,7 +235,7 @@ export default function ContabilidadPanel() {
       confirmText: t('common:buttons.delete'),
       onConfirm: async () => {
         try {
-          const next = customTypes.filter((t) => t !== type);
+          const next = customTypes.filter((t) => normalizeCustomType(t).name !== type);
           await updateUserProfile(uid, { customAccountTypes: next } as any);
           setCustomTypes(next);
           success(t('configuracion:contabilidad.typeDeleted'));
@@ -389,28 +411,49 @@ export default function ContabilidadPanel() {
                     <span className="contabilidad-type-badge">{t('configuracion:contabilidad.fixed')}</span>
                   </div>
                 ))}
-                {customTypes.map((type) => (
-                  <div key={type} className="contabilidad-type-card custom">
-                    <span className="contabilidad-type-icon"><InlineIcon icon="Wallet" size={18} /></span>
-                    <span className="contabilidad-type-name">{type}</span>
-                    <button className="contabilidad-type-delete" onClick={() => handleDeleteCustomType(type)} title={t('common:buttons.delete')}>
-                      <IconX width={12} height={12} />
-                    </button>
-                  </div>
-                ))}
+                {customTypes.map((type) => {
+                  const { name, icon } = normalizeCustomType(type);
+                  return (
+                    <div key={name} className="contabilidad-type-card custom">
+                      <span className="contabilidad-type-icon"><InlineIcon icon={icon} size={18} /></span>
+                      <span className="contabilidad-type-name">{name}</span>
+                      <button className="contabilidad-type-delete" onClick={() => handleDeleteCustomType(name)} title={t('common:buttons.delete')}>
+                        <IconX width={12} height={12} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
               <div className="contabilidad-add-type">
-                <input
-                  type="text"
-                  className="tx-input"
-                  placeholder={t('configuracion:contabilidad.newTypePlaceholder')}
-                  value={newCustomType}
-                  onChange={(e) => setNewCustomType(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomType()}
-                />
-                <button className="btn btn-primary" onClick={handleAddCustomType} disabled={!newCustomType.trim()}>
-                  <IconPlus width={14} /> {t('configuracion:contabilidad.addType')}
-                </button>
+                <div className="contabilidad-add-type-field">
+                  <input
+                    type="text"
+                    className="contabilidad-add-type-input"
+                    placeholder={t('configuracion:contabilidad.newTypePlaceholder')}
+                    value={newCustomType}
+                    onChange={(e) => setNewCustomType(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddCustomType()}
+                  />
+                  <button className="btn btn-primary" onClick={handleAddCustomType} disabled={!newCustomType.trim()}>
+                    <IconPlus width={14} /> {t('configuracion:contabilidad.addType')}
+                  </button>
+                </div>
+                <div className="contabilidad-add-type-icons">
+                  <span className="contabilidad-add-type-icons-label">{t('configuracion:contabilidad.iconLabel')}</span>
+                  <div className="contabilidad-add-type-icons-grid">
+                    {CUSTOM_TYPE_ICONS.map((icon) => (
+                      <button
+                        key={icon}
+                        type="button"
+                        className={`contabilidad-type-icon-btn ${newCustomTypeIcon === icon ? 'active' : ''}`}
+                        onClick={() => setNewCustomTypeIcon(icon)}
+                        title={icon}
+                      >
+                        <InlineIcon icon={icon} size={16} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -659,36 +702,80 @@ export default function ContabilidadPanel() {
       />
 
       <style>{`
-        .contabilidad-content { display: flex; flex-direction: column; gap: 24px; }
+        .contabilidad-content { display: flex; flex-direction: column; gap: 28px; }
         .contabilidad-section { }
         .contabilidad-section-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-        .contabilidad-section-title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
-        .contabilidad-section-desc { font-size: 0.75rem; color: var(--text-tertiary); margin: 0 0 12px 0; }
+        .contabilidad-section-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
+        .contabilidad-section-desc { font-size: 0.8rem; color: var(--text-tertiary); margin: 0 0 14px 0; }
 
-        .contabilidad-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
-        .contabilidad-type-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border-radius: 10px; border: 1px solid var(--border-default); background: var(--bg-input); text-align: center; }
+        .contabilidad-types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .contabilidad-type-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 12px; border-radius: 12px; border: 1px solid var(--border-default); background: var(--bg-input); text-align: center; }
         .contabilidad-type-card.fixed { border-color: rgba(61,204,142,0.25); }
         .contabilidad-type-card.custom { border-style: dashed; }
-        .contabilidad-type-icon { color: var(--text-primary); }
-        .contabilidad-type-name { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); }
-        .contabilidad-type-badge { font-size: 0.6rem; color: var(--color-prosper-green); background: rgba(61,204,142,0.12); padding: 2px 6px; border-radius: 999px; }
-        .contabilidad-type-delete { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; border: none; background: rgba(239,68,68,0.1); color: var(--color-error); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .contabilidad-type-icon { color: var(--text-primary); display: inline-flex; }
+        .contabilidad-type-name { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
+        .contabilidad-type-badge { font-size: 0.65rem; color: var(--color-prosper-green); background: rgba(61,204,142,0.12); padding: 3px 8px; border-radius: 999px; }
+        .contabilidad-type-delete { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(239,68,68,0.1); color: var(--color-error); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s; }
         .contabilidad-type-delete:hover { background: rgba(239,68,68,0.2); }
 
-        .contabilidad-add-type { display: flex; gap: 8px; }
-        .contabilidad-add-type .tx-input { flex: 1; }
+        .contabilidad-add-type { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 12px; border: 1px dashed var(--border-default); background: var(--bg-card); }
+        .contabilidad-add-type-field { display: flex; align-items: center; gap: 10px; }
+        .contabilidad-add-type-input {
+          flex: 1;
+          min-width: 0;
+          padding: 10px 12px;
+          border-radius: 10px;
+          border: 1px solid var(--border-default);
+          background: var(--bg-input);
+          color: var(--text-primary);
+          font-size: 0.875rem;
+          outline: none;
+          transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .contabilidad-add-type-input::placeholder { color: var(--text-tertiary); }
+        .contabilidad-add-type-input:focus { border-color: var(--color-prosper-green); box-shadow: 0 0 0 2px rgba(61,204,142,0.15); }
+        .contabilidad-add-type-icons { display: flex; flex-direction: column; gap: 8px; }
+        .contabilidad-add-type-icons-label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+        .contabilidad-add-type-icons-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .contabilidad-type-icon-btn {
+          width: 34px;
+          height: 34px;
+          border-radius: 8px;
+          border: 1px solid var(--border-default);
+          background: var(--bg-input);
+          color: var(--text-secondary);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .contabilidad-type-icon-btn:hover { border-color: var(--color-prosper-green); color: var(--text-primary); background: rgba(61,204,142,0.08); }
+        .contabilidad-type-icon-btn.active { border-color: var(--color-prosper-green); background: rgba(61,204,142,0.15); color: var(--color-prosper-green); }
 
-        .contabilidad-accounts-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-        .contabilidad-account-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; border-radius: 12px; border: 1px solid var(--border-default); border-left: 4px solid; background: var(--bg-input); }
-        .contabilidad-account-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-        .contabilidad-account-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .contabilidad-account-info { flex: 1; min-width: 0; }
-        .contabilidad-account-name { display: block; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .contabilidad-account-meta { display: block; font-size: 0.65rem; color: var(--text-tertiary); text-transform: capitalize; }
-        .contabilidad-account-balance { display: block; font-size: 0.875rem; font-weight: 800; }
-        .contabilidad-account-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .contabilidad-accounts-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .contabilidad-account-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 16px;
+          border-radius: 14px;
+          border: 1px solid var(--border-default);
+          border-left: 4px solid;
+          background: var(--bg-input);
+          min-width: 0;
+        }
+        .contabilidad-account-main { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+        .contabilidad-account-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-primary); }
+        .contabilidad-account-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .contabilidad-account-name { display: block; font-size: 0.95rem; font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; line-height: 1.2; }
+        .contabilidad-account-meta { display: block; font-size: 0.75rem; color: var(--text-tertiary); text-transform: capitalize; }
+        .contabilidad-account-balance { display: block; font-size: 1rem; font-weight: 800; }
+        .contabilidad-account-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .contabilidad-account-actions .btn-sm { padding: 7px 12px; font-size: 0.75rem; }
 
-        .contabilidad-empty { padding: 24px; text-align: center; color: var(--text-secondary); font-size: 0.85rem; border: 1px dashed var(--border-default); border-radius: 12px; }
+        .contabilidad-empty { padding: 28px; text-align: center; color: var(--text-secondary); font-size: 0.875rem; border: 1px dashed var(--border-default); border-radius: 12px; }
         .panel-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px; color: var(--text-secondary); font-size: 0.875rem; }
 
         .accounting-mini-danger { color: var(--color-error) !important; border-color: rgba(239,68,68,0.3) !important; }
@@ -775,10 +862,11 @@ export default function ContabilidadPanel() {
         @media (max-width: 768px) {
           .contabilidad-section-header { flex-direction: column; }
           .contabilidad-accounts-list { grid-template-columns: 1fr; }
-          .contabilidad-account-card { flex-direction: column; align-items: flex-start; }
+          .contabilidad-account-card { flex-direction: column; align-items: flex-start; gap: 12px; }
           .contabilidad-account-actions { width: 100%; justify-content: flex-end; }
           .contabilidad-types-grid { grid-template-columns: repeat(2, 1fr); }
-          .contabilidad-add-type { flex-direction: column; }
+          .contabilidad-add-type { gap: 10px; }
+          .contabilidad-add-type-field { flex-direction: column; align-items: stretch; }
           .accounting-actions { grid-template-columns: 1fr 1fr; }
           .accounting-accounts-list { grid-template-columns: 1fr; }
           .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }

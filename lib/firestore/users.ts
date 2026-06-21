@@ -23,17 +23,20 @@ export async function addCustomTransactionCategory(userId: string, category: str
   });
 }
 
-export async function addCustomAccountType(userId: string, type: string) {
-  await updateDoc(doc(db, COLLECTION, userId), {
-    customAccountTypes: arrayUnion(type),
-  });
+export async function addCustomAccountType(userId: string, type: string, icon = 'Wallet') {
+  const ref = doc(db, COLLECTION, userId);
+  const snap = await getDoc(ref);
+  const existing: Array<string | { name: string; icon?: string }> = snap.exists() ? (snap.data() as any).customAccountTypes || [] : [];
+  const names = existing.map((item) => typeof item === 'string' ? item : item.name);
+  if (names.includes(type)) return;
+  await updateDoc(ref, { customAccountTypes: [...existing, { name: type, icon }] });
 }
 
 export interface UserPreferences {
   customCategories?: string[];
   customReminderTypes?: string[];
   customTransactionCategories?: string[];
-  customAccountTypes?: string[];
+  customAccountTypes?: Array<string | { name: string; icon?: string }>;
 }
 
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {

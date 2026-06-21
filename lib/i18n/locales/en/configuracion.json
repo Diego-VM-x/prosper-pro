@@ -210,6 +210,7 @@
     "accountsDesc": "Create, edit and delete accounts centrally.",
     "noAccounts": "You don't have any accounts yet.",
     "addType": "Add",
+    "iconLabel": "Type icon",
     "newTypePlaceholder": "New custom type",
     "typeAdded": "Type \"{{type}}\" added.",
     "deleteTypeTitle": "Delete custom type",
