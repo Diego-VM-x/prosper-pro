@@ -127,28 +127,28 @@
     "dialogAria": "Version release notes",
     "notes": [
       {
-        "emoji": "ArrowLeftRight",
-        "text": "New Currency Converter widget with Official and P2P rates."
-      },
-      {
         "emoji": "List",
-        "text": "Fixed dropdowns: they now open above modals and widgets."
+        "text": "Redesigned transaction history: compact cards, responsive, no horizontal scroll."
       },
       {
-        "emoji": "Coins",
-        "text": "SVG and Lucide icons for all currencies, replacing flag emojis."
-      },
-      {
-        "emoji": "Globe",
-        "text": "Fixed persistence of language and display currency in settings."
-      },
-      {
-        "emoji": "Wallet",
-        "text": "Daily balance notification now shows the converted global balance."
+        "emoji": "Pencil",
+        "text": "Edit existing transactions: type, amount, account, date, category and description."
       },
       {
         "emoji": "Trash2",
-        "text": "Removed the old USD/BS widget; replaced by Currency Converter."
+        "text": "Delete transactions with confirmation; account balances auto-adjust."
+      },
+      {
+        "emoji": "LayoutGrid",
+        "text": "New Recent Transactions widget on the dashboard with card-style layout."
+      },
+      {
+        "emoji": "ArrowLeftRight",
+        "text": "Currency Converter with Official and P2P rates."
+      },
+      {
+        "emoji": "Coins",
+        "text": "SVG and Lucide icons for all currencies."
       }
     ]
   }

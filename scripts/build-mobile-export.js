@@ -60,7 +60,16 @@ function run(cmd) {
   execSync(cmd, { stdio: 'inherit', cwd: root });
 }
 
+function cleanNextCache() {
+  const nextDir = path.join(root, '.next');
+  if (fs.existsSync(nextDir)) {
+    console.log('[mobile-build] Cleaning .next cache to avoid stale type references...');
+    fs.rmSync(nextDir, { recursive: true, force: true });
+  }
+}
+
 try {
+  cleanNextCache();
   moveApiFolder();
   moveApkFile();
   swapToMobileConfig();

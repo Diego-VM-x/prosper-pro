@@ -1,6 +1,6 @@
 # Contexto del Proyecto: Prosper-Pro
 
-## Estado Actual (20 de Junio, 2026 - v1.0.3)
+## Estado Actual (21 de Junio, 2026 - v1.0.4)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
 - **Widget de historial en Dashboard**: el widget `recent_transactions` muestra los últimos movimientos con diseño compacto tipo cards (icono, descripción, fecha/cuenta, categoría, monto y conversión). Se asegura automáticamente en layouts guardados.
 - **Historial de transacciones rediseñado**: lista compacta tipo cards con acciones de editar/eliminar, adaptada a móvil y PC sin scroll horizontal.
@@ -15,8 +15,9 @@
 - **Borrado de datos**: Al eliminar cuenta o borrar datos, se eliminan TODAS las colecciones del usuario en Firestore.
 - **Nota**: Secciones de Comunidad y Logros eliminadas de la web. Código preservado en `_backup_comunidad_logros/`.
 - **Plataforma**: Web + Android nativo vía Capacitor 8.
-- **Versión actual**: 1.0.3 (publicada en test-deploy y master).
-- **APK Android**: `public/prosper-pro.apk` generado (debug, ~9.0 MB) y listo para descarga desde la landing.
+- **Versión actual**: 1.0.4 (publicada en test-deploy y master).
+- **APK Android**: `public/prosper-pro.apk` generado (debug, ~9.0 MB, v1.0.4) y listo para descarga desde la landing.
+- **Notificación global**: script `scripts/send-global-notification.js` ejecutado exitosamente; 11 usuarios notificados sobre la v1.0.4.
 
 ## Reglas de Eficiencia de Tokens (AGENTS.md)
 - **Lectura:** Solo archivos necesarios, ignorar carpetas pesadas (node_modules, .next, dist), usar resúmenes.
@@ -70,6 +71,14 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.4 — APK Android + Modal de Novedades + Notificación Global + Fix Auth (21/06/2026)**:
+  - **Bump de versión**: `package.json`, `UpdateModal.tsx`, `app/(main)/page.tsx` y `android/app/build.gradle` actualizados a v1.0.4 (`versionCode 3`).
+  - **Notas de versión**: clave `updateModal.notes` actualizada en ES/EN con las novedades de v1.0.4 (historial rediseñado, edición/eliminación de transacciones, widget de últimos movimientos).
+  - **Build móvil robusto**: script `scripts/build-mobile-export.js` ahora limpia `.next` antes de compilar para evitar errores de tipos residuales cuando se mueve `app/api`.
+  - **APK debug v1.0.4**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.4-debug.apk` (~9.0 MB) copiado a `public/prosper-pro.apk`.
+  - **Fix autenticación en Android**: cambiado `skipNativeAuth` a `true` en `capacitor.config.ts`; `firebase-auth-core.ts` ahora sincroniza el login nativo de Google con el SDK JS mediante `signInWithCredential`, y email/password usa directamente el SDK JS, eliminando el timeout en el botón "Continuar con Google".
+  - **Notificación global**: creado y ejecutado `scripts/send-global-notification.js`; 11 usuarios notificados sobre la v1.0.4.
+  - **Build verificado**: `npx tsc --noEmit` y `npm run build` exitosos, 21/21 páginas generadas.
 - ✅ **v1.0.3 — Widget de Historial en Dashboard (20/06/2026)**:
   - **Mejora del widget `recent_transactions`**: diseño compacto tipo cards alineado con el historial de `/finanzas`. Muestra icono por tipo, descripción, fecha, cuenta, categoría, monto nativo y conversión para cryptos/divisas.
   - **Disponibilidad garantizada**: nueva función `ensureDefaultWidgets` en `DashboardLayoutContext` que asegura el widget de últimos movimientos en layouts guardados que no lo tengan.

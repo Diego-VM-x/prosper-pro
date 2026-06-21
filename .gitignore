@@ -54,3 +54,5 @@ next-env.d.ts
 /android/app/build/
 /android/captures/
 /android/.gradle/
+scripts/service-account.json
+prospeweb-firebase-adminsdk-*.json

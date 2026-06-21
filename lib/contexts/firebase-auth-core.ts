@@ -161,8 +161,11 @@ export async function loginWithGoogleImpl(newsConsent?: boolean) {
   if (isNative) {
     const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
     const nativeResult = await FirebaseAuthentication.signInWithGoogle();
-    const firebaseUser = await waitForAuthUser();
-    result = { user: firebaseUser, isNewUser: nativeResult.additionalUserInfo?.isNewUser };
+    const { GoogleAuthProvider, signInWithCredential, getAdditionalUserInfo } = await import('firebase/auth');
+    const credential = GoogleAuthProvider.credential(nativeResult.credential?.idToken);
+    const userCred = await signInWithCredential(auth, credential);
+    const additionalInfo = getAdditionalUserInfo(userCred);
+    result = { user: userCred.user, isNewUser: additionalInfo?.isNewUser };
   } else {
     const { signInWithPopup, GoogleAuthProvider, getAdditionalUserInfo } = await import('firebase/auth');
     const popupResult = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -207,15 +210,8 @@ export async function loginWithEmailImpl(email: string, pass: string) {
   const isNative = await isNativePlatform();
   let userCred: { user: User };
 
-  if (isNative) {
-    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-    await FirebaseAuthentication.signInWithEmailAndPassword({ email, password: pass });
-    const firebaseUser = await waitForAuthUser();
-    userCred = { user: firebaseUser };
-  } else {
-    const { signInWithEmailAndPassword } = await import('firebase/auth');
-    userCred = await signInWithEmailAndPassword(auth, email, pass);
-  }
+  const { signInWithEmailAndPassword } = await import('firebase/auth');
+  userCred = await signInWithEmailAndPassword(auth, email, pass);
 
   storeTokens({
     localId: userCred.user.uid,
@@ -236,17 +232,10 @@ export async function changePasswordImpl(currentPassword: string, newPassword: s
   const isNative = await isNativePlatform();
   let currentUser: User;
 
-  if (isNative) {
-    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-    await FirebaseAuthentication.signInWithEmailAndPassword({ email: user.email, password: currentPassword });
-    await FirebaseAuthentication.updatePassword({ newPassword });
-    currentUser = await waitForAuthUser();
-  } else {
-    const { signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
-    const userCred = await signInWithEmailAndPassword(auth, user.email, currentPassword);
-    await updatePassword(userCred.user, newPassword);
-    currentUser = userCred.user;
-  }
+  const { signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
+  const userCred = await signInWithEmailAndPassword(auth, user.email, currentPassword);
+  await updatePassword(userCred.user, newPassword);
+  currentUser = userCred.user;
 
   // Refresh and store new tokens
   const idToken = await currentUser.getIdToken(true);
@@ -267,17 +256,9 @@ export async function registerWithEmailImpl(email: string, pass: string, name: s
   const isNative = await isNativePlatform();
   let userCred: { user: User };
 
-  if (isNative) {
-    const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-    await FirebaseAuthentication.createUserWithEmailAndPassword({ email, password: pass });
-    await FirebaseAuthentication.updateProfile({ displayName: name });
-    const firebaseUser = await waitForAuthUser();
-    userCred = { user: firebaseUser };
-  } else {
-    const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-    userCred = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateProfile(userCred.user, { displayName: name });
-  }
+  const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+  userCred = await createUserWithEmailAndPassword(auth, email, pass);
+  await updateProfile(userCred.user, { displayName: name });
 
   storeTokens({
     localId: userCred.user.uid,
@@ -309,7 +290,8 @@ export async function logoutImpl() {
   if (await isNativePlatform()) {
     const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
     try { await FirebaseAuthentication.signOut(); } catch {}
-  } else if (auth) {
+  }
+  if (auth) {
     try { await signOut(auth); } catch {}
   }
 }
@@ -322,10 +304,11 @@ export async function deleteAccountImpl(user: User) {
     try {
       if (await isNativePlatform()) {
         const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-        await FirebaseAuthentication.deleteUser();
-      } else {
+        try { await FirebaseAuthentication.deleteUser(); } catch {}
+      }
+      if (auth?.currentUser) {
         const { deleteUser } = await import('firebase/auth');
-        await deleteUser(user);
+        await deleteUser(auth.currentUser);
       }
     } catch {}
     clearStoredTokens();
@@ -365,16 +348,11 @@ export async function enableNotificationsImpl(userId?: string) {
 export async function sendEmailVerificationImpl() {
   if (!auth || !auth.currentUser) return { success: false, error: 'No hay usuario autenticado.' };
   try {
-    if (await isNativePlatform()) {
-      const { FirebaseAuthentication } = await import('@capacitor-firebase/authentication');
-      await FirebaseAuthentication.sendEmailVerification();
-    } else {
-      const { sendEmailVerification } = await import('firebase/auth');
-      await sendEmailVerification(auth.currentUser, {
-        url: typeof window !== 'undefined' ? `${window.location.origin}/configuracion?tab=seguridad` : 'https://prosper-pro.vercel.app/configuracion?tab=seguridad',
-        handleCodeInApp: false,
-      });
-    }
+    const { sendEmailVerification } = await import('firebase/auth');
+    await sendEmailVerification(auth.currentUser, {
+      url: typeof window !== 'undefined' ? `${window.location.origin}/configuracion?tab=seguridad` : 'https://prosper-pro.vercel.app/configuracion?tab=seguridad',
+      handleCodeInApp: false,
+    });
     return { success: true };
   } catch (e: any) {
     return { success: false, error: e?.message || 'Error al enviar el correo de verificación.' };
