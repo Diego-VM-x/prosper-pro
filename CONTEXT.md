@@ -71,12 +71,13 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
-- ✅ **v1.0.4 — APK Android + Modal de Novedades + Notificación Global + Fix Auth (21/06/2026)**:
+- ✅ **v1.0.4 — APK Android + Modal de Novedades + Notificación Global + Fix Auth + Modal de Actualización Forzada (21/06/2026)**:
   - **Bump de versión**: `package.json`, `UpdateModal.tsx`, `app/(main)/page.tsx` y `android/app/build.gradle` actualizados a v1.0.4 (`versionCode 3`).
   - **Notas de versión**: clave `updateModal.notes` actualizada en ES/EN con las novedades de v1.0.4 (historial rediseñado, edición/eliminación de transacciones, widget de últimos movimientos).
   - **Build móvil robusto**: script `scripts/build-mobile-export.js` ahora limpia `.next` antes de compilar para evitar errores de tipos residuales cuando se mueve `app/api`.
-  - **APK debug v1.0.4**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.4-debug.apk` (~9.0 MB) copiado a `public/prosper-pro.apk`.
+  - **APK debug v1.0.4**: Gradle `assembleDebug` exitoso con JDK 21 local; APK `Prosper Pro-1.0.4-debug.apk` (~11 MB) copiado a `public/prosper-pro.apk`.
   - **Fix autenticación en Android**: cambiado `skipNativeAuth` a `true` en `capacitor.config.ts`; `firebase-auth-core.ts` ahora sincroniza el login nativo de Google con el SDK JS mediante `signInWithCredential`, y email/password usa directamente el SDK JS, eliminando el timeout en el botón "Continuar con Google".
+  - **Modal de actualización forzada**: en Android nativo, el `UpdateModal` ahora oculta el botón de cierre y muestra "Descargar actualización" (abre el APK vía `@capacitor/browser`) junto a "Recordar luego". En web mantiene el comportamiento actual.
   - **Notificación global**: creado y ejecutado `scripts/send-global-notification.js`; 11 usuarios notificados sobre la v1.0.4.
   - **Build verificado**: `npx tsc --noEmit` y `npm run build` exitosos, 21/21 páginas generadas.
 - ✅ **v1.0.3 — Widget de Historial en Dashboard (20/06/2026)**:

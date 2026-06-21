@@ -1,8 +1,9 @@
 # Historial de Versiones — Prosper Pro
 
 ## v1.0.4 (21/06/2026)
-- APK Android v1.0.4 generado (`versionCode 3`, ~9.0 MB debug).
+- APK Android v1.0.4 generado (`versionCode 3`, ~11 MB debug).
 - Modal de novedades actualizado con notas de v1.0.4 en español e inglés.
+- Modal de actualización forzada en Android nativo: botón "Descargar actualización" vía `@capacitor/browser`.
 - Fix autenticación en Android: `skipNativeAuth: true` + sincronización con `signInWithCredential` para Google; email/password vía SDK JS.
 - Script `scripts/send-global-notification.js` para notificación global de nuevas versiones vía Firebase Admin SDK (11 usuarios notificados).
 - Build móvil robusto: limpieza de caché `.next` antes de compilar.

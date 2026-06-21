@@ -123,6 +123,8 @@
     "subtitle": "Actualización {{version}} — ya disponible para ti",
     "primaryBtn": "¡Vamos! 🚀",
     "secondaryBtn": "No volver a mostrar",
+    "downloadBtn": "Descargar actualización 📲",
+    "remindLater": "Recordar luego",
     "closeAria": "Cerrar",
     "dialogAria": "Novedades de la versión",
     "notes": [

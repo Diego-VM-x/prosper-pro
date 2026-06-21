@@ -123,6 +123,8 @@
     "subtitle": "Update {{version}} — available now",
     "primaryBtn": "Let's go! 🚀",
     "secondaryBtn": "Don't show again",
+    "downloadBtn": "Download update 📲",
+    "remindLater": "Remind me later",
     "closeAria": "Close",
     "dialogAria": "Version release notes",
     "notes": [

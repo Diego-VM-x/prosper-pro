@@ -23,6 +23,15 @@ export function UpdateModal({
   const [isOpen, setIsOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [shouldHide, setShouldHide] = useState(false);
+  const [isNative, setIsNative] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    import('@capacitor/core').then(({ Capacitor }) => {
+      if (!cancelled) setIsNative(Capacitor.isNativePlatform());
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   const notes = useMemo<UpdateNote[]>(() => {
     if (notesProp && notesProp.length > 0) return notesProp;
@@ -73,6 +82,17 @@ export function UpdateModal({
   const handleNeverShow = () => {
     try { safeLocalStorage.setItem('prosper_show_update_modal', 'false'); } catch {}
     setIsOpen(false);
+  };
+
+  const handleDownload = async () => {
+    const apkUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://prosper-pro.vercel.app'}/prosper-pro.apk`;
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url: apkUrl });
+    } catch {
+      window.open(apkUrl, '_blank');
+    }
+    handleClose();
   };
 
   if (!isOpen || shouldHide) return null;
@@ -300,6 +320,15 @@ export function UpdateModal({
         .um-btn:active {
           transform: translateY(0);
         }
+        .um-btn-outline {
+          background: transparent;
+          color: var(--text-primary, #e2e8f0);
+          box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.2);
+        }
+        .um-btn-outline:hover {
+          background: rgba(255,255,255,0.08);
+          box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35);
+        }
 
         /* ── RESPONSIVE ── */
         @media (max-width: 768px) {
@@ -355,7 +384,9 @@ export function UpdateModal({
           <div className="um-header">
             <div className="um-header-dots" />
             <div className="um-badge">{t('updateModal.badge')}</div>
-            <button className="um-close" onClick={handleClose} aria-label={t('updateModal.closeAria')}><IconX width={18} height={18} /></button>
+            {!isNative && (
+              <button className="um-close" onClick={handleClose} aria-label={t('updateModal.closeAria')}><IconX width={18} height={18} /></button>
+            )}
             <h2 className="um-title">{t('updateModal.title')}</h2>
             <p className="um-subtitle">{t('updateModal.subtitle', { version })}</p>
           </div>
@@ -370,8 +401,17 @@ export function UpdateModal({
           </div>
           {/* FOOTER */}
           <div className="um-footer">
-            <button className="um-btn" onClick={handleNeverShow}>{t('updateModal.secondaryBtn')}</button>
-            <button className="um-btn" onClick={handleClose}>{t('updateModal.primaryBtn')}</button>
+            {isNative ? (
+              <>
+                <button className="um-btn um-btn-outline" onClick={handleClose}>{t('updateModal.remindLater')}</button>
+                <button className="um-btn" onClick={handleDownload}>{t('updateModal.downloadBtn')}</button>
+              </>
+            ) : (
+              <>
+                <button className="um-btn um-btn-outline" onClick={handleNeverShow}>{t('updateModal.secondaryBtn')}</button>
+                <button className="um-btn" onClick={handleClose}>{t('updateModal.primaryBtn')}</button>
+              </>
+            )}
           </div>
         </div>
       </div>
