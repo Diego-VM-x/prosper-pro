@@ -21,6 +21,7 @@ import { useSearchParams } from 'next/navigation';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut, Shield, Mail, Clock, UserCheck, Scale } from 'lucide-react';
+import '@/app/components/config/contabilidad-panel.css';
 
 type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad' | 'contabilidad';
 

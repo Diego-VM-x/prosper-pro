@@ -662,9 +662,6 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                    <IconSettings /> {t('topbar.settings')}
                  </Link>
                )}
-               <button className="user-dropdown-item" onClick={() => { closeUserMenu(); handleDownloadApk(); }}>
-                 <InlineIcon icon="Download" size={18} /> {t('topbar.downloadApk')}
-               </button>
                <div className="user-dropdown-divider" />
                <button
                  className="user-dropdown-item user-dropdown-logout"
@@ -757,9 +754,6 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <IconSettings /> {t('sidebar.configuracion')}
                   </Link>
                 )}
-                <button className="user-dropdown-item" onClick={() => { closeUserMenu(); handleDownloadApk(); }}>
-                  <InlineIcon icon="Download" size={18} /> {t('topbar.downloadApk')}
-                </button>
                 <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
                   <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.light')} aria-label={t('topbar.theme.light')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -845,10 +839,6 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
             </nav>
 
              <div className="mobile-menu-footer">
-               <button className="mobile-menu-item mobile-menu-footer-link" onClick={() => { setShowMobileMenu(false); handleDownloadApk(); }}>
-                 <InlineIcon icon="Download" size={20} />
-                 {t('topbar.downloadApk')}
-               </button>
                <a href="https://prosper-pro.vercel.app/inicio" target="_blank" rel="noopener noreferrer" className="mobile-menu-item mobile-menu-footer-link" onClick={() => setShowMobileMenu(false)}>
                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2 2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                  {t('topbar.goHome')}
