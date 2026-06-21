@@ -43,6 +43,13 @@ import type { Goal, GoalCategory, FinancialAccount, FinancialPlan, Reminder, Tra
 
 const DEFAULT_CATEGORIES: Record<string, string> = { Ahorro: 'Wallet', Inversión: 'TrendingUp', Educación: 'GraduationCap', Otro: 'Pin' };
 
+const TX_TYPE_ICONS: Record<Transaction['type'], string> = { income: 'Download', expense: 'Send', saving: 'Wallet' };
+const TX_TYPE_COLORS: Record<Transaction['type'], string> = { income: 'var(--color-prosper-green)', expense: 'var(--color-error)', saving: 'var(--color-pine-500)' };
+
+function formatTxDate(ts: number, locale: string) {
+  return new Date(ts).toLocaleDateString(locale, { day: '2-digit', month: 'short' });
+}
+
 function parseDeadlineToISO(deadline: string): string | null {
   if (!deadline) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return deadline;
@@ -843,21 +850,54 @@ export const Dashboard = memo(function Dashboard() {
             </div>
             <div className="recent-tx-list">
               {recentTransactions.length > 0 ? recentTransactions.map((tx) => {
-                const txIcon = tx.type === 'income' ? 'Download' : tx.type === 'expense' ? 'Send' : 'Wallet';
                 const txAccount = accounts.find(a => a.id === tx.accountId);
                 const txCurr = txAccount?.currency || 'USD';
                 const isCrypto = ['BTC', 'ETH', 'SOL', 'USDT', 'USDC'].includes(txCurr);
+                const isTransfer = tx.category === 'Transferencia';
                 return (
                   <div className="recent-tx-item" key={tx.id} onClick={() => router.push('/finanzas')}>
-                    <div className={`recent-tx-icon tx-${tx.type}`}><InlineIcon icon={txIcon} size={16} /></div>
+                    <div className="recent-tx-main">
+                    <div className="recent-tx-icon" style={{ background: TX_TYPE_COLORS[tx.type] + '18', color: TX_TYPE_COLORS[tx.type] }}>
+                      <InlineIcon icon={TX_TYPE_ICONS[tx.type]} size={16} />
+                    </div>
                     <div className="recent-tx-info">
                       <span className="recent-tx-desc">{tx.description || tx.category}</span>
-                      <span className="recent-tx-date">{tx.date ? new Date(tx.date).toLocaleDateString() : ''}</span>
-                      {isCrypto && formatCryptoTx(tx, txCurr)}
+                      <div className="recent-tx-meta">
+                        <span>{formatTxDate(tx.date, numberLocale)}</span>
+                        {txAccount && (
+                          <>
+                            <span className="recent-tx-dot">•</span>
+                            <span className="recent-tx-account"><InlineIcon icon={txAccount.icon || 'Wallet'} size={10} /> {txAccount.name}</span>
+                          </>
+                        )}
+                        {isTransfer && (
+                          <>
+                            <span className="recent-tx-dot">•</span>
+                            <span className="recent-tx-transfer">{t('finances.transfer')}</span>
+                          </>
+                        )}
+                      </div>
+                      <div className="recent-tx-tags">
+                        <span className="recent-tx-category">{tx.category}</span>
+                      </div>
                     </div>
-                    <span className={`recent-tx-amount tx-${tx.type}`}>
-                      {tx.type === 'income' ? '+' : '-'}{formatInCurrency(tx.amount, txCurr)}
-                    </span>
+                    </div>
+                    <div className="recent-tx-right">
+                      <span className={`recent-tx-amount tx-${tx.type}`}>
+                        {tx.type === 'income' ? '+' : '-'}{formatInCurrency(tx.amount, txCurr)}
+                      </span>
+                      {isCrypto && rates.cryptoPrices?.[txCurr] && (
+                        <span className="recent-tx-crypto">
+                          {tx.type === 'income' ? '+' : '-'}
+                          ${fmtNumber(tx.amount * rates.cryptoPrices[txCurr], { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                        </span>
+                      )}
+                      {!isCrypto && txCurr !== displayCurrency && (
+                        <span className="recent-tx-conversion">
+                          ≈ {tx.type === 'income' ? '+' : '-'}{formatInCurrency(convertBetween(tx.amount, txCurr, displayCurrency), displayCurrency)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               }) : (

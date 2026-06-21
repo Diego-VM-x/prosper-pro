@@ -2,6 +2,7 @@
 
 ## Estado Actual (20 de Junio, 2026 - v1.0.3)
 - **Objetivo**: Dashboard de Libertad Financiera y Educación Financiera.
+- **Widget de historial en Dashboard**: el widget `recent_transactions` muestra los últimos movimientos con diseño compacto tipo cards (icono, descripción, fecha/cuenta, categoría, monto y conversión). Se asegura automáticamente en layouts guardados.
 - **Historial de transacciones rediseñado**: lista compacta tipo cards con acciones de editar/eliminar, adaptada a móvil y PC sin scroll horizontal.
 - **Edición de transacciones**: modal que permite cambiar tipo, monto, cuenta, fecha, categoría y descripción; ajusta balances de cuentas automáticamente.
 - **TypeScript**: carpeta `android/` excluida de `tsconfig.json` para evitar errores de compilación por assets residuales de builds móviles.
@@ -69,6 +70,11 @@
 - `types/index.ts` → Interfaces TypeScript (UserProfile, Goal, Transaction con archived, XPState, Course, etc.)
 
 ## Hitos Completados
+- ✅ **v1.0.3 — Widget de Historial en Dashboard (20/06/2026)**:
+  - **Mejora del widget `recent_transactions`**: diseño compacto tipo cards alineado con el historial de `/finanzas`. Muestra icono por tipo, descripción, fecha, cuenta, categoría, monto nativo y conversión para cryptos/divisas.
+  - **Disponibilidad garantizada**: nueva función `ensureDefaultWidgets` en `DashboardLayoutContext` que asegura el widget de últimos movimientos en layouts guardados que no lo tengan.
+  - **Traducciones**: añadida clave `finances.transfer` en ES/EN del dashboard.
+  - **Build verificado**: `npx tsc --noEmit` y `npm run build` exitosos, 21/21 páginas generadas.
 - ✅ **v1.0.3 — Historial de Transacciones Rediseñado + Edición (20/06/2026)**:
   - **Nuevo historial tipo cards**: reemplaza la tabla HTML en `/finanzas` por una lista compacta con icono, descripción, fecha/cuenta, categoría, monto y botones de acción. Diseño responsive: fila horizontal en PC y apilada en móvil.
   - **Editar transacciones**: nuevo modal de edición con campos de tipo, monto, cuenta, fecha, categoría y descripción. Al guardar se revierte el impacto contable original y se aplica el nuevo, ajustando balances de cuentas automáticamente.

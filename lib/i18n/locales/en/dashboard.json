@@ -71,6 +71,7 @@
     "viewAll": "View all",
     "noRecentTransactions": "No recent transactions",
     "quickTransfer": "Quick Transfer",
+    "transfer": "Transfer",
     "fromPlaceholder": "From...",
     "toPlaceholder": "To...",
     "amountPlaceholder": "Amount",

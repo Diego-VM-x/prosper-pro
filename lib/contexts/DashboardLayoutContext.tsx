@@ -93,6 +93,31 @@ function ensureWelcomeWidget(layout: DashboardLayout): DashboardLayout {
   };
 }
 
+function ensureDefaultWidgets(layout: DashboardLayout): DashboardLayout {
+  return ensureRecentTransactionsWidget(ensureWelcomeWidget(layout));
+}
+
+function ensureRecentTransactionsWidget(layout: DashboardLayout): DashboardLayout {
+  const hasRecentTx = layout.widgets.some(w => w.type === 'recent_transactions');
+  if (hasRecentTx) return layout;
+  const financeCategory = layout.categories.find(c => c.id === 'cat_finanzas');
+  const targetCategoryId = financeCategory?.id || layout.categories[0]?.id;
+  if (!targetCategoryId) return layout;
+  const catWidgets = layout.widgets.filter(w => w.categoryId === targetCategoryId);
+  const recentTxWidget: DashboardWidgetConfig = {
+    id: generateId('w'),
+    categoryId: targetCategoryId,
+    type: 'recent_transactions',
+    title: 'Últimos Movimientos',
+    size: 'small',
+    order: catWidgets.length,
+  };
+  return {
+    ...layout,
+    widgets: [...layout.widgets, recentTxWidget],
+  };
+}
+
 interface DashboardLayoutContextValue {
   layout: DashboardLayout;
   layouts: DashboardLayouts;
@@ -149,8 +174,8 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
           const firestoreLayouts = await getDashboardLayouts(user.uid);
           if (firestoreLayouts && isDashboardLayouts(firestoreLayouts)) {
             const ensured = {
-              desktop: ensureWelcomeWidget(firestoreLayouts.desktop),
-              mobile: ensureWelcomeWidget(firestoreLayouts.mobile),
+              desktop: ensureDefaultWidgets(firestoreLayouts.desktop),
+              mobile: ensureDefaultWidgets(firestoreLayouts.mobile),
             };
             if (!cancelled) {
               setLayouts(ensured);
@@ -166,8 +191,8 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
           const parsed = JSON.parse(saved);
           if (isDashboardLayouts(parsed)) {
             const ensured = {
-              desktop: ensureWelcomeWidget(parsed.desktop),
-              mobile: ensureWelcomeWidget(parsed.mobile),
+              desktop: ensureDefaultWidgets(parsed.desktop),
+              mobile: ensureDefaultWidgets(parsed.mobile),
             };
             if (!cancelled) {
               setLayouts(ensured);
@@ -183,8 +208,8 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
           const migrated = migrateFromLegacy(parsed);
           if (migrated) {
             const ensured = {
-              desktop: ensureWelcomeWidget(migrated.desktop),
-              mobile: ensureWelcomeWidget(migrated.mobile),
+              desktop: ensureDefaultWidgets(migrated.desktop),
+              mobile: ensureDefaultWidgets(migrated.mobile),
             };
             if (!cancelled) {
               setLayouts(ensured);
@@ -234,7 +259,7 @@ export function DashboardLayoutProvider({ children }: { children: React.ReactNod
   const updateActiveLayout = useCallback((updater: (prev: DashboardLayout) => DashboardLayout) => {
     setLayoutsAndPersist(prev => ({
       ...prev,
-      [breakpoint]: ensureWelcomeWidget(updater(prev[breakpoint])),
+      [breakpoint]: ensureDefaultWidgets(updater(prev[breakpoint])),
     }));
   }, [breakpoint, setLayoutsAndPersist]);
 
