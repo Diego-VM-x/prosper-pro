@@ -859,6 +859,31 @@ export default function ContabilidadPanel() {
         .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
         .accounting-info-text strong { color: var(--text-primary); }
 
+        .tx-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .tx-label { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); }
+        .tx-input {
+          width: 100%;
+          padding: 10px 12px;
+          border-radius: 10px;
+          border: 1px solid var(--border-default);
+          background: var(--bg-input);
+          color: var(--text-primary);
+          font-size: 0.875rem;
+          outline: none;
+          transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .tx-input::placeholder { color: var(--text-tertiary); }
+        .tx-input:focus { border-color: var(--color-prosper-green); box-shadow: 0 0 0 2px rgba(61,204,142,0.15); }
+        .tx-input-wrap { display: flex; align-items: center; gap: 0; border: 1px solid var(--border-default); border-radius: 10px; background: var(--bg-input); overflow: hidden; }
+        .tx-input-wrap:focus-within { border-color: var(--color-prosper-green); box-shadow: 0 0 0 2px rgba(61,204,142,0.15); }
+        .tx-currency { padding: 10px 12px; background: var(--bg-card); color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; border-right: 1px solid var(--border-default); }
+        .tx-input-amount { flex: 1; border: none; background: transparent; border-radius: 0; padding: 10px 12px; }
+        .tx-input-amount:focus { box-shadow: none; }
+        .color-picker-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .color-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.15s, border-color 0.15s; }
+        .color-dot:hover { transform: scale(1.1); }
+        .color-dot.active { border-color: var(--text-primary); transform: scale(1.1); }
+
         @media (max-width: 768px) {
           .contabilidad-section-header { flex-direction: column; }
           .contabilidad-accounts-list { grid-template-columns: 1fr; }
