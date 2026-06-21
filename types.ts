@@ -15,7 +15,8 @@ export interface ExchangeRates {
 }
 
 // ─── Accounts ───
-export type AccountType = 'digital' | 'bank' | 'foreign' | 'cash';
+export const ACCOUNT_TYPES = ['digital', 'bank', 'foreign', 'cash'] as const;
+export type AccountType = typeof ACCOUNT_TYPES[number] | string;
 
 export interface FinancialAccount {
   id: string;
@@ -252,6 +253,8 @@ export interface UserProfile {
   isSeeded?: boolean;
   devices?: UserDevice[];
   newsConsent?: boolean;
+  /** Custom account types created by the user (e.g. "Ahorro", "Inversión") */
+  customAccountTypes?: string[];
 }
 
 // ─── Courses ───

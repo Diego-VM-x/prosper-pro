@@ -23,10 +23,17 @@ export async function addCustomTransactionCategory(userId: string, category: str
   });
 }
 
+export async function addCustomAccountType(userId: string, type: string) {
+  await updateDoc(doc(db, COLLECTION, userId), {
+    customAccountTypes: arrayUnion(type),
+  });
+}
+
 export interface UserPreferences {
   customCategories?: string[];
   customReminderTypes?: string[];
   customTransactionCategories?: string[];
+  customAccountTypes?: string[];
 }
 
 export async function getUserPreferences(userId: string): Promise<UserPreferences> {

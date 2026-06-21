@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { getUserProfile, updateUserProfile, subscribeToUserProfile } from '@/lib/firestore/users';
+import ContabilidadPanel from '@/app/components/config/ContabilidadPanel';
 import { subscribeToDevices, removeDevice } from '@/lib/firestore/devices';
 import { useTheme } from '@/app/components/ThemeProvider';
 import { useCurrency } from '@/lib/contexts/CurrencyContext';
@@ -16,11 +17,12 @@ import { triggerTestNotification, checkNotificationPermissions } from '@/lib/not
 import type { UserProfile, CurrencyCode, UserDevice, NotificationType } from '@/types';
 import i18n from '@/lib/i18n/client';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'next/navigation';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
-import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut, Shield, Mail, Clock, UserCheck } from 'lucide-react';
+import { Check, AlertTriangle, CheckCircle2, XCircle, Globe2, Lock, LogOut, Shield, Mail, Clock, UserCheck, Scale } from 'lucide-react';
 
-type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad';
+type TabId = 'perfil' | 'preferencias' | 'notificaciones' | 'seguridad' | 'contabilidad';
 
 const ConfiguracionPage = memo(function ConfiguracionPage() {
   const { user, logout, changePassword, deleteAccount, wipeAllData, enableNotifications, sendVerificationEmail, reloadUser } = useAuth();
@@ -55,6 +57,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
   const [showWipeConfirm, setShowWipeConfirm] = useState(false);
   const [wipeConfirmText, setWipeConfirmText] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('perfil');
+  const searchParams = useSearchParams();
   const [devices, setDevices] = useState<UserDevice[]>([]);
   const [removingDevice, setRemovingDevice] = useState<string | null>(null);
   const [currentDeviceId, setCurrentDeviceId] = useState('');
@@ -65,6 +68,14 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
       getDeviceId(user.uid).then((deviceId) => setCurrentDeviceId(deviceId));
     }
   }, [user?.uid]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab') as TabId | null;
+    const validTabs: TabId[] = ['perfil', 'preferencias', 'notificaciones', 'seguridad', 'contabilidad'];
+    if (tab && validTabs.includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -319,6 +330,7 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
     { id: 'preferencias', label: t('tabs.preferencias'), icon: 'Settings' },
     { id: 'notificaciones', label: t('tabs.notificaciones'), icon: 'Bell' },
     { id: 'seguridad', label: t('tabs.seguridad'), icon: 'Lock' },
+    { id: 'contabilidad', label: t('tabs.contabilidad'), icon: 'Scale' },
   ];
 
   const numberLocale = i18n.language?.startsWith('en') ? 'en-US' : 'es-VE';
@@ -1099,6 +1111,8 @@ const ConfiguracionPage = memo(function ConfiguracionPage() {
                   </div>
                 </div>
               )}
+
+              {activeTab === 'contabilidad' && <ContabilidadPanel />}
             </div>
           </div>
 

@@ -79,6 +79,16 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const closeUserMenu = () => setShowUserMenu(false);
   const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
 
+  const handleDownloadApk = async () => {
+    const apkUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://prosper-pro.vercel.app'}/prosper-pro.apk`;
+    try {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url: apkUrl });
+    } catch {
+      window.open(apkUrl, '_blank');
+    }
+  };
+
   // Detect desktop viewport to enable only the correct click-outside hook
   const [isDesktop, setIsDesktop] = useState(() => {
     if (typeof window === 'undefined') return true;
@@ -633,6 +643,9 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                    <IconSettings /> {t('topbar.settings')}
                  </Link>
                )}
+               <button className="user-dropdown-item" onClick={() => { closeUserMenu(); handleDownloadApk(); }}>
+                 <InlineIcon icon="Download" size={18} /> {t('topbar.downloadApk')}
+               </button>
                <div className="user-dropdown-divider" />
                <button
                  className="user-dropdown-item user-dropdown-logout"
@@ -717,6 +730,9 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
                     <IconSettings /> {t('sidebar.configuracion')}
                   </Link>
                 )}
+                <button className="user-dropdown-item" onClick={() => { closeUserMenu(); handleDownloadApk(); }}>
+                  <InlineIcon icon="Download" size={18} /> {t('topbar.downloadApk')}
+                </button>
                 <div className="theme-buttons" style={{ display: 'flex', gap: '8px', padding: '8px 16px' }}>
                   <button className="mobile-menu-theme" onClick={() => { setShowUserMenu(false); setTheme('light'); }} style={{ flex: 1, padding: '10px 0' }} title={t('topbar.theme.light')} aria-label={t('topbar.theme.light')}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

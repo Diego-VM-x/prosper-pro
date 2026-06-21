@@ -7,7 +7,8 @@
     "perfil": "Profile",
     "preferencias": "Preferences",
     "notificaciones": "Alerts",
-    "seguridad": "Security"
+    "seguridad": "Security",
+    "contabilidad": "Accounting"
   },
   "perfil": {
     "panelTitle": "Personal Information",
@@ -198,5 +199,21 @@
   "fallbacks": {
     "userName": "User",
     "email": "no-email@example.com"
+  },
+  "contabilidad": {
+    "title": "Accounting Management",
+    "subtitle": "Manage account types, create and edit accounts, and run bulk accounting actions.",
+    "typesTitle": "Account Types",
+    "typesDesc": "Predefined and custom types available for your accounts.",
+    "fixed": "Fixed",
+    "accountsTitle": "Accounts",
+    "accountsDesc": "Create, edit and delete accounts centrally.",
+    "noAccounts": "You don't have any accounts yet.",
+    "addType": "Add",
+    "newTypePlaceholder": "New custom type",
+    "typeAdded": "Type \"{{type}}\" added.",
+    "deleteTypeTitle": "Delete custom type",
+    "deleteTypeMessage": "Delete type \"{{type}}\"? Accounts already using it will keep working, but you won't be able to create new accounts with this type.",
+    "typeDeleted": "Custom type deleted."
   }
 }

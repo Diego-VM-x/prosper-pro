@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/app/components/DashboardLayout';
 import ProtectedRoute from '@/app/components/ProtectedRoute';
 import { useAuth } from '@/lib/contexts/AuthContext';
@@ -11,7 +12,7 @@ import { useToast } from '@/app/components/Toast';
 import { ConfirmDialog } from '@/app/components/Toast';
 import { getTransactionsByOwnerId, getAllTransactionsByOwnerId, createTransaction, updateTransaction, deleteTransaction, getLifetimeSummaryAll } from '@/lib/firestore/transactions';
 import { addNotification } from '@/lib/firestore/notifications';
-import { subscribeToAccounts, createAccount, deleteAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, getTotalBalance, updateAccountBalance, updateAccount, wipeAllTransactions, wipeTransactionsByTypeWithAdjustment, recalculateAccountBalance, recalculateAllBalances, wipeAllUserTransactions, wipeUserTransactionsByType, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
+import { subscribeToAccounts, createAccount, clearAccountHistory, deleteTransactionsByType, resetAccountBalance, clearAllTransactionHistory, updateAccountBalance, subscribeToAccountGroups, createAccountGroup, updateAccountGroup, deleteAccountGroup, moveAccountToGroup, toggleAccountFavorite } from '@/lib/firestore/accounts';
 import { CustomSelect } from '@/app/components/CustomSelect';
 import { addCustomTransactionCategory, getUserPreferences } from '@/lib/firestore/users';
 import { addFundsToPlan, recordPayment, recordSubPlanPayment, updatePlan } from '@/lib/firestore/plans';
@@ -39,6 +40,20 @@ const ACCOUNT_TX_TYPE_COLORS: Record<AccountType, string> = {
   foreign: '#F59E0B',
   cash: '#10B981',
 };
+
+function getAccountIcon(type: AccountType): string {
+  switch (type) {
+    case 'digital': return 'CreditCard';
+    case 'bank': return 'Landmark';
+    case 'cash': return 'Banknote';
+    case 'foreign': return 'ArrowLeftRight';
+    default: return 'Wallet';
+  }
+}
+
+function getAccountColor(type: AccountType): string {
+  return ACCOUNT_TX_TYPE_COLORS[type] || '#3DCC8E';
+}
 
 const ACCOUNT_COLORS = [
   '#3B82F6', '#3DCC8E', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899',
@@ -115,6 +130,7 @@ const FinanzasPage = memo(function FinanzasPage() {
   const { success, error, warning } = useToast();
   const { formatAmount, currencyMap, displayCurrency, convertBetween, formatInCurrency, rates, p2pMode, setP2pMode } = useCurrency();
   const { t, i18n } = useTranslation(['finanzas', 'common']);
+  const router = useRouter();
   const locale = useMemo(() => i18n.language === 'en' ? 'en-US' : 'es-VE', [i18n.language]);
 
   const formatCompact = useCallback((n: number): string => {
@@ -187,8 +203,6 @@ const FinanzasPage = memo(function FinanzasPage() {
   const [newAccount, setNewAccount] = useState({ name: '', type: 'digital' as AccountType, balance: 0, currency: 'BS' as CurrencyCode, color: '', rateMode: undefined as 'official' | 'p2p' | undefined });
   const [accountCategory, setAccountCategory] = useState<'monedas' | 'criptos'>('monedas');
   const [transfer, setTransfer] = useState({ amount: '', fromAccountId: '', toAccountId: '' });
-  const [showEditAccountModal, setShowEditAccountModal] = useState(false);
-  const [editingAccount, setEditingAccount] = useState<{ id: string; name: string; color: string } | null>(null);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [editTxForm, setEditTxForm] = useState({ amount: '', type: 'income' as TransactionType, category: '', description: '', accountId: '', date: todayISO() });
   const [editTxLoading, setEditTxLoading] = useState(false);
@@ -295,11 +309,6 @@ const FinanzasPage = memo(function FinanzasPage() {
       return saved === null ? true : saved === 'true';
     } catch { return true; }
   });
-
-  const [showAccountingModal, setShowAccountingModal] = useState(false);
-  const [accountingAction, setAccountingAction] = useState<string>('');
-  const [accountingLoading, setAccountingLoading] = useState(false);
-
   const altCurrency: CurrencyCode = displayCurrency === 'USD' ? 'BS' : 'USD';
   const altSummary = useMemo(() => ({
     income: convertBetween(summary.income, displayCurrency, altCurrency),
@@ -737,14 +746,6 @@ const FinanzasPage = memo(function FinanzasPage() {
     setAccountCategory('monedas');
   };
 
-  const handleEditAccount = async () => {
-    if (!editingAccount || !uid) return;
-    await updateAccount(editingAccount.id, { name: editingAccount.name, color: editingAccount.color, updatedAt: Date.now() });
-    success(t('finanzas:toast.accountUpdated'));
-    setShowEditAccountModal(false);
-    setEditingAccount(null);
-  };
-
   // ── Account Groups Handlers ──
   const handleCreateGroup = async () => {
     if (!groupFormName.trim() || !uid) return;
@@ -835,28 +836,6 @@ const FinanzasPage = memo(function FinanzasPage() {
     }
   };
 
-  const openEditAccount = (acc: FinancialAccount) => {
-    setEditingAccount({ id: acc.id, name: acc.name, color: acc.color || '#3DCC8E' });
-    setShowEditAccountModal(true);
-  };
-
-  const handleDeleteAccount = async (id: string) => {
-    const acc = accounts.find((a) => a.id === id);
-    setConfirmState({
-      isOpen: true,
-      title: t('finanzas:modals.confirm.deleteAccount'),
-      message: t('finanzas:modals.confirm.deleteAccountMessage', { name: acc?.name }),
-      variant: 'danger',
-      confirmText: t('common:buttons.delete'),
-      onConfirm: async () => {
-        await deleteAccount(id);
-        await loadTransactions();
-        success(t('finanzas:toast.accountDeleted'));
-        setConfirmState(prev => ({ ...prev, isOpen: false }));
-      },
-    });
-  };
-
   const handleClearHistory = async (id: string) => {
     const acc = accounts.find((a) => a.id === id);
     setConfirmState({
@@ -925,144 +904,6 @@ const FinanzasPage = memo(function FinanzasPage() {
     });
   };
 
-  // ============================================================
-  // GESTIÓN CONTABLE AVANZADA
-  // ============================================================
-
-  const handleWipeAllUserTransactions = async () => {
-    setConfirmState({
-      isOpen: true,
-      title: t('finanzas:modals.confirm.wipeAllTransactions'),
-      message: t('finanzas:modals.confirm.wipeAllTransactionsMessage'),
-      variant: 'danger',
-      confirmText: t('finanzas:modals.confirm.wipeAllConfirm'),
-      onConfirm: async () => {
-        if (!uid) return;
-        setAccountingLoading(true);
-        try {
-          await wipeAllUserTransactions(uid);
-          await loadTransactions();
-          success(t('finanzas:toast.allTransactionsWiped'));
-        } catch (e: any) {
-          error(t('finanzas:toast.genericError', { message: e?.message || t('finanzas:toast.unknownError') }));
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const handleWipeUserTransactionsByType = async (type: 'income' | 'expense' | 'saving') => {
-    const typeLabel = TX_TYPE_LABELS[type];
-    const typeIcon = TX_TYPE_ICONS[type];
-    const actionText = type === 'income' ? t('finanzas:modals.confirm.actionSubtract') : t('finanzas:modals.confirm.actionAdd');
-
-    setConfirmState({
-      isOpen: true,
-      title: t('finanzas:modals.confirm.wipeType', { icon: typeIcon, type: typeLabel }),
-      message: t('finanzas:modals.confirm.wipeTypeMessage', { type: typeLabel.toLowerCase(), action: actionText }),
-      variant: type === 'income' ? 'warning' : 'danger',
-      confirmText: t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel }),
-      onConfirm: async () => {
-        if (!uid) return;
-        setAccountingLoading(true);
-        try {
-          const result = await wipeUserTransactionsByType(uid, type);
-          await loadTransactions();
-          const adjustText = result.adjustments.map(a => {
-            const acc = accounts.find(acc => acc.id === a.accountId);
-            const sign = a.adjustment > 0 ? '+' : '';
-            return `${acc?.icon || ''} ${acc?.name || t('finanzas:modals.newAccount.noAccount')}: ${sign}${formatAmount(Math.abs(a.adjustment))}`;
-          }).join('\n');
-          success(t('finanzas:toast.typesWiped', { count: result.totalWiped, type: typeLabel.toLowerCase() }) + (result.adjustments.length > 0 ? '\n' + t('finanzas:toast.adjustments') + ' ' + adjustText : ''));
-        } catch (e: any) {
-          error(`Error: ${e?.message || t('finanzas:toast.unknownError')}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const handleRecalculateAllBalances = async () => {
-    setConfirmState({
-      isOpen: true,
-      title: t('finanzas:modals.confirm.recalculateBalances'),
-      message: t('finanzas:modals.confirm.recalculateBalancesMessage'),
-      variant: 'info',
-      confirmText: t('finanzas:modals.confirm.recalculateConfirm'),
-      onConfirm: async () => {
-        if (!uid) return;
-        setAccountingLoading(true);
-        try {
-          const results = await recalculateAllBalances(uid);
-          await loadTransactions();
-          const summary = results.map(r => {
-            const acc = accounts.find(a => a.id === r.accountId);
-            return `${acc?.icon || ''} ${acc?.name || t('finanzas:modals.newAccount.noAccount')}: ${formatAmount(r.balance)}`;
-          }).join('\n');
-          success(t('finanzas:toast.balancesRecalculated') + summary);
-        } catch (e: any) {
-          error(`Error: ${e?.message || t('finanzas:toast.unknownError')}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
-  const handleWipeAccountTransactions = async (accountId: string, action: 'all' | 'income' | 'expense' | 'saving') => {
-    const acc = accounts.find(a => a.id === accountId);
-    if (!acc) return;
-
-    let title = '';
-    let message = '';
-    let confirmText = '';
-
-    if (action === 'all') {
-      title = t('finanzas:modals.confirm.wipeAccount', { name: acc.name });
-      message = t('finanzas:modals.confirm.wipeAccountMessage', { name: acc.name, amount: formatInCurrency(0, acc.currency) });
-      confirmText = t('finanzas:modals.confirm.wipeAccountConfirm');
-    } else {
-      const typeLabel = TX_TYPE_LABELS[action];
-      const typeIcon = TX_TYPE_ICONS[action];
-      const actionText = action === 'income' ? t('finanzas:modals.confirm.actionSubtract') : t('finanzas:modals.confirm.actionAdd');
-      title = t('finanzas:modals.confirm.wipeAccountType', { icon: typeIcon, type: typeLabel, name: acc.name });
-      message = t('finanzas:modals.confirm.wipeAccountTypeMessage', { type: typeLabel.toLowerCase(), name: acc.name, action: actionText });
-      confirmText = t('finanzas:modals.confirm.wipeAccountTypeConfirm', { type: typeLabel });
-    }
-
-    setConfirmState({
-      isOpen: true,
-      title,
-      message,
-      variant: action === 'all' ? 'danger' : 'warning',
-      confirmText,
-      onConfirm: async () => {
-        setAccountingLoading(true);
-        try {
-          if (action === 'all') {
-            await wipeAllTransactions(accountId);
-            success(t('finanzas:toast.accountEmptied', { name: acc.name, balance: formatInCurrency(0, acc.currency) }));
-          } else {
-            const result = await wipeTransactionsByTypeWithAdjustment(accountId, action);
-            const sign = result.balanceAdjustment > 0 ? '+' : '';
-            success(t('finanzas:toast.typesWipedFromAccount', { count: result.wipedCount, type: TX_TYPE_LABELS[action].toLowerCase(), adjustment: sign + formatInCurrency(Math.abs(result.balanceAdjustment), acc.currency) }));
-          }
-          await loadTransactions();
-        } catch (e: any) {
-          error(`Error: ${e?.message || t('finanzas:toast.unknownError')}`);
-        } finally {
-          setAccountingLoading(false);
-          setConfirmState(prev => ({ ...prev, isOpen: false }));
-        }
-      },
-    });
-  };
-
   const getAccountName = (accountId?: string) => {
     if (!accountId) return t('finanzas:modals.newTransaction.noAccount');
     const acc = accounts.find((a) => a.id === accountId);
@@ -1101,7 +942,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               <button className="btn btn-outline btn-danger-outline" onClick={handleClearAllHistory} title={t('finanzas:header.archiveAllHistory')}>
                 <IconArchive width={14} /> {t('finanzas:header.clearHistory')}
               </button>
-              <button className="btn btn-outline btn-accounting" onClick={() => setShowAccountingModal(true)} title={t('finanzas:header.accountingAdvanced')}>
+              <button className="btn btn-outline btn-accounting" onClick={() => router.push('/configuracion?tab=contabilidad')} title={t('finanzas:header.accountingAdvanced')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                 </svg>
@@ -1380,44 +1221,6 @@ const FinanzasPage = memo(function FinanzasPage() {
               );
             })()}
           </div>
-
-          {/* Modal Editar Cuenta */}
-          {showEditAccountModal && editingAccount && (
-            <div className="modal-overlay" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>
-              <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 400 }}>
-                <div className="modal-header">
-                  <div>
-                    <h2 className="modal-title">{t('finanzas:modals.editAccount.title')}</h2>
-                    <p className="modal-subtitle">{t('finanzas:modals.editAccount.subtitle')}</p>
-                  </div>
-                  <button className="modal-close" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}><X size={18} /></button>
-                </div>
-                <div className="modal-body">
-                  <div className="tx-field">
-                    <label className="tx-label">{t('finanzas:modals.editAccount.name')}</label>
-                    <input className="tx-input" type="text" placeholder={t('finanzas:modals.editAccount.namePlaceholder')} value={editingAccount.name} onChange={(e) => setEditingAccount({ ...editingAccount, name: e.target.value })} />
-                  </div>
-                  <div className="tx-field">
-                    <label className="tx-label">{t('finanzas:modals.editAccount.color')}</label>
-                    <div className="color-picker-row">
-                      {ACCOUNT_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          className={`color-dot ${editingAccount.color === c ? 'active' : ''}`}
-                          style={{ background: c }}
-                          onClick={() => setEditingAccount({ ...editingAccount, color: c })}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => { setShowEditAccountModal(false); setEditingAccount(null); }}>{t('common:buttons.cancel')}</button>
-                  <button className="btn btn-primary" onClick={handleEditAccount}>{t('common:buttons.save')}</button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Modal Grupo (Crear/Editar) */}
           {showGroupModal && (
@@ -2250,144 +2053,6 @@ const FinanzasPage = memo(function FinanzasPage() {
             formatInCurrency={formatInCurrency}
           />
 
-          {/* Modal Gestión Contable */}
-          {showAccountingModal && (
-            <div className="modal-overlay" onClick={() => setShowAccountingModal(false)}>
-              <div className="modal-content modal-accounting" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                  <div>
-                    <h2 className="modal-title">{t('finanzas:modals.accounting.title')}</h2>
-                    <p className="modal-subtitle">{t('finanzas:modals.accounting.subtitle')}</p>
-                  </div>
-                  <button className="modal-close" onClick={() => setShowAccountingModal(false)}><X size={18} /></button>
-                </div>
-                <div className="modal-body">
-                  {/* Sección: Acciones Globales */}
-                  <div className="accounting-section">
-                    <h2 className="accounting-section-title">{t('finanzas:modals.accounting.globalActions')}</h2>
-                    <p className="accounting-section-desc">{t('finanzas:modals.accounting.globalActionsDesc')}</p>
-                    <div className="accounting-actions">
-                      <button className="accounting-btn accounting-btn-danger" onClick={handleWipeAllUserTransactions} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon"><InlineIcon icon="Trash2" size={18} /></span>
-                        <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeAll')}</span>
-                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeAllDesc')}</span>
-                        </div>
-                      </button>
-                      <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('income')} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon"><InlineIcon icon="Download" size={18} /></span>
-                        <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeIncome')}</span>
-                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeIncomeDesc')}</span>
-                        </div>
-                      </button>
-                      <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('expense')} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon"><InlineIcon icon="Send" size={18} /></span>
-                        <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeExpenses')}</span>
-                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeExpensesDesc')}</span>
-                        </div>
-                      </button>
-                      <button className="accounting-btn accounting-btn-warning" onClick={() => handleWipeUserTransactionsByType('saving')} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon"><InlineIcon icon="Wallet" size={18} /></span>
-                        <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.wipeSavings')}</span>
-                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.wipeSavingsDesc')}</span>
-                        </div>
-                      </button>
-                      <button className="accounting-btn accounting-btn-info" onClick={handleRecalculateAllBalances} disabled={accountingLoading}>
-                        <span className="accounting-btn-icon"><InlineIcon icon="RefreshCw" size={18} /></span>
-                        <div className="accounting-btn-content">
-                          <span className="accounting-btn-label">{t('finanzas:modals.accounting.recalculate')}</span>
-                          <span className="accounting-btn-desc">{t('finanzas:modals.accounting.recalculateDesc')}</span>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Sección: Por Cuenta */}
-                  {accounts.length > 0 && (
-                    <div className="accounting-section">
-                      <h2 className="accounting-section-title">{t('finanzas:modals.accounting.perAccount')}</h2>
-                      <p className="accounting-section-desc">{t('finanzas:modals.accounting.perAccountDesc')}</p>
-                      <div className="accounting-accounts-list">
-                        {accounts.map(acc => (
-                          <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
-                            <div className="accounting-account-header">
-                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}><InlineIcon icon={acc.icon || 'Wallet'} size={14} /></span>
-                              <div className="accounting-account-info">
-                                <span className="accounting-account-name">{acc.name}</span>
-                                <span className="accounting-account-balance" style={{ color: acc.color }}>
-                                  {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="accounting-account-actions">
-                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleWipeAccountTransactions(acc.id, 'all')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyAccountTooltip')}>
-                                <InlineIcon icon="Trash2" size={12} /> {t('finanzas:modals.accounting.emptyAccount')}
-                              </button>
-                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'income')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyIncomeTooltip')}>
-                                {t('finanzas:modals.accounting.income')}
-                              </button>
-                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'expense')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptyExpensesTooltip')}>
-                                {t('finanzas:modals.accounting.expenses')}
-                              </button>
-                              <button className="accounting-mini-btn accounting-mini-warning" onClick={() => handleWipeAccountTransactions(acc.id, 'saving')} disabled={accountingLoading} title={t('finanzas:modals.accounting.emptySavingsTooltip')}>
-                                {t('finanzas:modals.accounting.savings')}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Info contable */}
-                  <div className="accounting-info-box">
-                    <span className="accounting-info-icon"><InlineIcon icon="Lightbulb" size={18} /></span>
-                    <div className="accounting-info-text">
-                      <strong>{t('finanzas:modals.accounting.accountingLogic')}</strong> {t('finanzas:modals.accounting.accountingInfo')}
-                    </div>
-                  </div>
-
-                  {/* Sección: Editar Cuentas */}
-                  {accounts.length > 0 && (
-                    <div className="accounting-section">
-                      <h2 className="accounting-section-title">{t('finanzas:modals.accounting.editAccounts')}</h2>
-                      <p className="accounting-section-desc">{t('finanzas:modals.accounting.editAccountsDesc')}</p>
-                      <div className="accounting-accounts-list">
-                        {accounts.map(acc => (
-                          <div key={acc.id} className="accounting-account-card" style={{ borderLeftColor: acc.color }}>
-                            <div className="accounting-account-header">
-                              <span className="accounting-account-icon" style={{ background: `${acc.color}20` }}><InlineIcon icon={acc.icon || 'Wallet'} size={16} /></span>
-                              <div className="accounting-account-info">
-                                <span className="accounting-account-name">{acc.name}</span>
-                                <span className="accounting-account-balance" style={{ color: acc.color }}>
-                                  {showAmounts ? formatInCurrency(acc.balance, acc.currency) : '••••••'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="accounting-account-actions">
-                              <button className="accounting-mini-btn accounting-mini-info" onClick={() => { openEditAccount(acc); setShowAccountingModal(false); }} title={t('finanzas:modals.accounting.editNameColorTooltip')}>
-                                {t('finanzas:modals.accounting.editNameColor')}
-                              </button>
-                              <button className="accounting-mini-btn accounting-mini-danger" onClick={() => handleDeleteAccount(acc.id)} title={t('finanzas:modals.accounting.deleteAccountTooltip')}>
-                                {t('common:buttons.delete')}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="modal-footer">
-                  <button className="btn btn-outline" onClick={() => setShowAccountingModal(false)}>{t('finanzas:modals.accounting.close')}</button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <ConfirmDialog
             isOpen={confirmState.isOpen}
             title={confirmState.title}
@@ -2696,94 +2361,9 @@ const FinanzasPage = memo(function FinanzasPage() {
           .btn-p2p-toggle button.active:last-child { background: #4edea3; color: #003824; }
 
 
-          /* Gestión Contable Modal */
           .btn-accounting { border-color: var(--color-gold-500); color: var(--color-gold-500); }
           .btn-accounting:hover { background: var(--color-gold-500); color: white; }
           .btn-accounting-label { display: none; }
-          .modal-accounting { max-width: 600px; }
-
-          .accounting-section { margin-bottom: 20px; }
-          .accounting-section:last-child { margin-bottom: 0; }
-          .accounting-section-title { font-size: 0.875rem; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; }
-          .accounting-section-desc { font-size: 0.6875rem; color: var(--text-tertiary); margin: 0 0 12px 0; }
-
-          .accounting-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-          .accounting-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border-default);
-            background: var(--bg-input);
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-            width: 100%;
-          }
-          .accounting-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-          .accounting-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-          .accounting-btn-icon { font-size: 1.125rem; flex-shrink: 0; color: var(--text-primary); }
-          .accounting-btn-content { flex: 1; min-width: 0; }
-          .accounting-btn-label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); }
-          .accounting-btn-desc { display: block; font-size: 0.625rem; color: var(--text-tertiary); margin-top: 2px; line-height: 1.3; }
-
-          .accounting-btn-danger { border-color: var(--color-error); }
-          .accounting-btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: var(--color-error); }
-          .accounting-btn-danger .accounting-btn-label { color: var(--color-error); }
-
-          .accounting-btn-warning { border-color: var(--color-gold-500); }
-          .accounting-btn-warning:hover:not(:disabled) { background: rgba(245,158,11,0.1); border-color: var(--color-gold-500); }
-          .accounting-btn-warning .accounting-btn-label { color: var(--color-gold-500); }
-
-          .accounting-btn-info { border-color: var(--color-blue-500); }
-          .accounting-btn-info:hover:not(:disabled) { background: rgba(59,130,246,0.1); border-color: var(--color-blue-500); }
-          .accounting-btn-info .accounting-btn-label { color: var(--color-blue-500); }
-
-          .accounting-accounts-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-          .accounting-account-card {
-            background: var(--bg-input);
-            border: 1px solid var(--border-default);
-            border-left: 4px solid;
-            border-radius: 10px;
-            padding: 10px;
-          }
-          .accounting-account-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-          .accounting-account-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; color: var(--text-primary); }
-          .accounting-account-info { flex: 1; min-width: 0; }
-          .accounting-account-name { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .accounting-account-balance { display: block; font-size: 0.8125rem; font-weight: 800; }
-          .accounting-account-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-          .accounting-mini-btn {
-            padding: 5px 6px;
-            border-radius: 6px;
-            border: 1px solid var(--border-default);
-            background: var(--bg-card);
-            font-size: 0.625rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-            color: var(--text-secondary);
-            text-align: center;
-          }
-          .accounting-mini-btn:hover:not(:disabled) { transform: translateY(-1px); }
-          .accounting-mini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-          .accounting-mini-danger:hover:not(:disabled) { border-color: var(--color-error); color: var(--color-error); background: rgba(239,68,68,0.1); }
-          .accounting-mini-warning:hover:not(:disabled) { border-color: var(--color-gold-500); color: var(--color-gold-500); background: rgba(245,158,11,0.1); }
-          .accounting-mini-info:hover:not(:disabled) { border-color: var(--color-prosper-green); color: var(--color-prosper-green); background: rgba(61,204,142,0.1); }
-
-          .accounting-info-box {
-            display: flex;
-            gap: 10px;
-            padding: 12px;
-            border-radius: 10px;
-            background: rgba(61,204,142,0.08);
-            border: 1px solid rgba(61,204,142,0.2);
-            margin-top: 16px;
-          }
-          .accounting-info-icon { font-size: 1.25rem; flex-shrink: 0; color: var(--text-primary); }
-          .accounting-info-text { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.5; }
-          .accounting-info-text strong { color: var(--text-primary); }
 
 
           @media (max-width: 1024px) {
@@ -2808,16 +2388,6 @@ const FinanzasPage = memo(function FinanzasPage() {
             .btn-toggle-label { display: inline; }
             .btn-vepay-label { display: inline; }
             .btn-accounting-label { display: inline; }
-            .modal-accounting { max-width: none; }
-            .accounting-actions { grid-template-columns: 1fr 1fr; }
-            .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
-            .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }
-            .accounting-btn { padding: 8px 10px; gap: 8px; }
-            .accounting-btn-icon { font-size: 1rem; }
-            .accounting-btn-label { font-size: 0.6875rem; }
-            .accounting-btn-desc { font-size: 0.5625rem; }
-            .accounting-account-card { padding: 8px; }
-            .accounting-mini-btn { padding: 4px 4px; font-size: 0.5625rem; }
             /* Force rates tables to show on mobile */
             .rates-tables-wrapper { display: grid !important; grid-template-columns: 1fr !important; gap: 12px !important; margin-bottom: 20px !important; visibility: visible !important; }
             .rates-table-container { display: block !important; visibility: visible !important; }
@@ -2907,21 +2477,6 @@ const FinanzasPage = memo(function FinanzasPage() {
             .tx-history-item { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px; }
             .tx-history-right { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
             .tx-history-amount { align-items: flex-start; }
-            .accounting-actions { grid-template-columns: 1fr 1fr; }
-            .accounting-accounts-list { grid-template-columns: 1fr 1fr; }
-            .accounting-account-actions { grid-template-columns: repeat(4, 1fr); }
-            .accounting-btn { padding: 6px 8px; gap: 6px; }
-            .accounting-btn-icon { font-size: 0.875rem; }
-            .accounting-btn-label { font-size: 0.625rem; }
-            .accounting-btn-desc { font-size: 0.5rem; }
-            .accounting-account-card { padding: 6px; }
-            .accounting-account-icon { width: 24px; height: 24px; font-size: 0.75rem; }
-            .accounting-account-name { font-size: 0.6875rem; }
-            .accounting-account-balance { font-size: 0.75rem; }
-            .accounting-mini-btn { padding: 3px 2px; font-size: 0.5rem; }
-            .accounting-info-box { padding: 8px; gap: 8px; }
-            .accounting-info-icon { font-size: 1rem; }
-            .accounting-info-text { font-size: 0.625rem; }
           }
           @media (max-width: 360px) {
             .page-title { font-size: 1.125rem; }
@@ -3077,7 +2632,7 @@ const FinanzasPage = memo(function FinanzasPage() {
               <span className="mobile-fab-icon"><InlineIcon icon="Camera" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.importScreenshot')}</span>
             </button>
-            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); setShowAccountingModal(true); }}>
+            <button className="mobile-fab-item" onClick={() => { setFabOpen(false); router.push('/configuracion?tab=contabilidad'); }}>
               <span className="mobile-fab-icon"><InlineIcon icon="BarChart3" size={18} /></span>
               <span className="mobile-fab-label">{t('finanzas:fab.accounting')}</span>
             </button>

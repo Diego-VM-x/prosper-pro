@@ -7,7 +7,8 @@
     "perfil": "Perfil",
     "preferencias": "Preferencias",
     "notificaciones": "Alertas",
-    "seguridad": "Seguridad"
+    "seguridad": "Seguridad",
+    "contabilidad": "Gestión Contable"
   },
   "perfil": {
     "panelTitle": "Información Personal",
@@ -198,5 +199,21 @@
   "fallbacks": {
     "userName": "Usuario",
     "email": "sin-email@ejemplo.com"
+  },
+  "contabilidad": {
+    "title": "Gestión Contable",
+    "subtitle": "Administra los tipos de cuenta, crea y edita cuentas, y ejecuta acciones contables masivas.",
+    "typesTitle": "Tipos de Cuenta",
+    "typesDesc": "Tipos predefinidos y personalizados disponibles para tus cuentas.",
+    "fixed": "Fijo",
+    "accountsTitle": "Cuentas",
+    "accountsDesc": "Crea, edita y elimina cuentas de forma centralizada.",
+    "noAccounts": "No tienes cuentas creadas todavía.",
+    "addType": "Añadir",
+    "newTypePlaceholder": "Nuevo tipo personalizado",
+    "typeAdded": "Tipo \"{{type}}\" añadido.",
+    "deleteTypeTitle": "Eliminar tipo personalizado",
+    "deleteTypeMessage": "¿Eliminar el tipo \"{{type}}\"? Las cuentas que lo usen seguirán funcionando, pero no podrás crear cuentas nuevas con este tipo.",
+    "typeDeleted": "Tipo personalizado eliminado."
   }
 }
