@@ -77,6 +77,15 @@ async function onUserReady(u: User) {
     // Notifications are not critical for auth
   }
 
+  // Register web/PWA push notifications via Firebase Messaging service worker.
+  // This only activates on browsers; on Capacitor native apps it is a no-op.
+  try {
+    const { initWebPushNotifications } = await import('@/lib/firebase-messaging');
+    await initWebPushNotifications(u.uid);
+  } catch {
+    // Web push is optional
+  }
+
   try {
     const profile = await getUserProfile(u.uid);
     if (!profile) {
@@ -341,6 +350,13 @@ export async function enableNotificationsImpl(userId?: string) {
     const granted = await requestNotificationPermissions();
     if (granted && userId) {
       await registerPushNotifications(userId);
+      // Also register web/PWA push if running in a browser.
+      try {
+        const { initWebPushNotifications } = await import('@/lib/firebase-messaging');
+        await initWebPushNotifications(userId);
+      } catch {
+        // Ignore web push errors
+      }
     }
     return granted;
   } catch {

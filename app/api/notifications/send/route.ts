@@ -96,6 +96,12 @@ export async function POST(request: NextRequest) {
       // Data-only messages are handled by our custom FirebaseMessagingService
       // in Android, which guarantees the notification is shown even when the
       // app is closed. Keep priority high so Doze mode allows delivery.
+      // Estructura FCM HTTP v1 para forzar el despertar del dispositivo:
+      // - android.priority = 'high'  -> evita que Doze Mode retrase/descarte el mensaje.
+      // - Sin objeto "notification"  -> fuerza a Android a entregar el payload al
+      //   servicio/handler correspondiente en lugar de mostrar una notificación
+      //   estándar pasiva que el sistema puede retrasar.
+      // - directBootOk = true        -> permite la entrega temprana tras reinicio.
       const response = await adminMessaging.sendEachForMulticast({
         tokens: batch,
         data: {
@@ -105,6 +111,7 @@ export async function POST(request: NextRequest) {
         },
         android: {
           priority: 'high',
+          directBootOk: true,
         },
       });
 
