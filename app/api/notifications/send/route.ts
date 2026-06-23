@@ -93,18 +93,18 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
       const batch = tokens.slice(i, i + BATCH_SIZE);
+      // Data-only messages are handled by our custom FirebaseMessagingService
+      // in Android, which guarantees the notification is shown even when the
+      // app is closed. Keep priority high so Doze mode allows delivery.
       const response = await adminMessaging.sendEachForMulticast({
         tokens: batch,
-        notification: { title, body: messageBody },
-        data: cleanData,
+        data: {
+          title,
+          body: messageBody,
+          ...cleanData,
+        },
         android: {
           priority: 'high',
-          notification: {
-            channelId: 'prosper_general_v2',
-            sound: 'default',
-            icon: 'ic_stat_notification',
-            color: '#24D398',
-          },
         },
       });
 

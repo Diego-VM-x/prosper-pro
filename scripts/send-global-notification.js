@@ -98,16 +98,15 @@ async function main() {
     const batch = tokens.slice(i, i + PUSH_BATCH);
     const response = await messaging.sendEachForMulticast({
       tokens: batch,
-      notification: { title: TITLE, body: MESSAGE },
-      data: { type: 'app_update', version: VERSION, url: APK_URL },
+      data: {
+        title: TITLE,
+        body: MESSAGE,
+        type: 'app_update',
+        version: VERSION,
+        url: APK_URL,
+      },
       android: {
         priority: 'high',
-        notification: {
-          channelId: 'prosper_general_v2',
-          sound: 'default',
-          icon: 'ic_stat_notification',
-          color: '#24D398',
-        },
       },
     });
     totalPushSent += response.successCount;

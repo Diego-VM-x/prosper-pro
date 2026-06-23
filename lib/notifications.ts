@@ -198,9 +198,10 @@ export async function registerPushNotifications(userId: string): Promise<void> {
     PushNotifications.addListener('pushNotificationReceived', async (notification: PushNotificationSchema) => {
       console.log('[PushNotifications] Received in foreground:', notification);
       try {
+        const data = notification.data as Record<string, string> | undefined;
         await showLocalNotification({
-          title: notification.title || 'Prosper Pro',
-          body: notification.body || '',
+          title: notification.title || data?.title || 'Prosper Pro',
+          body: notification.body || data?.body || '',
           channelId: 'prosper_general_v2',
         });
       } catch (e) {

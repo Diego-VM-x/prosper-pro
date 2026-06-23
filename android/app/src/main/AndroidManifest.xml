@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".ProsperApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -35,17 +36,22 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- Remove the default FCM service so only the Capacitor plugin service handles messages -->
+        <!-- Remove the default FCM service so only our service handles messages -->
         <service
             android:name="com.google.firebase.messaging.FirebaseMessagingService"
             tools:node="remove" />
 
-        <!-- Capacitor Push Notifications service with direct boot awareness -->
+        <!-- Remove the Capacitor plugin service; we use our own for background support -->
         <service
             android:name="com.capacitorjs.plugins.pushnotifications.MessagingService"
+            tools:node="remove" />
+
+        <!-- Custom FCM service that shows notifications even when the app is closed -->
+        <service
+            android:name=".ProsperMessagingService"
             android:exported="false"
             android:directBootAware="true">
-            <intent-filter>
+            <intent-filter android:priority="100">
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
