@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 
 import { AnimatedSection } from '../AnimatedSection';
 import { LandingHeader } from './LandingHeader';
@@ -30,6 +31,7 @@ export function LandingPage() {
   const router = useRouter();
   const { t } = useTranslation('landing');
   const { user } = useAuth();
+  const { disableRegister } = useFeatureFlags();
 
   const FEATURE_VISUALS = [
     (
@@ -162,10 +164,12 @@ export function LandingPage() {
                   </button>
                 ) : (
                   <>
-                    <button className="btn btn-primary btn-xl" onClick={() => router.push('/register')}>
-                      {t('hero.cta.createAccount')}
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                    </button>
+                    {!disableRegister && (
+                      <button className="btn btn-primary btn-xl" onClick={() => router.push('/register')}>
+                        {t('hero.cta.createAccount')}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                      </button>
+                    )}
                     <button className="btn btn-outline btn-xl" onClick={() => router.push('/login')}>
                       {t('hero.cta.haveAccount')}
                     </button>
@@ -267,10 +271,12 @@ export function LandingPage() {
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     </button>
                   ) : (
-                    <button className="btn btn-white btn-xl" onClick={() => router.push('/register')}>
-                      {t('cta.startFree')}
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                    </button>
+                    !disableRegister && (
+                      <button className="btn btn-white btn-xl" onClick={() => router.push('/register')}>
+                        {t('cta.startFree')}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                      </button>
+                    )
                   )}
                 </div>
                 <p className="cta-note">{user ? t('cta.note.registered') : t('cta.note.guest')}</p>

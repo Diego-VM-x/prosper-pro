@@ -11,6 +11,7 @@ import '../login/auth.css';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 import { CurrencyFlag } from '@/app/components/CryptoIcons';
 import { useTheme } from '@/app/components/ThemeProvider';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 import i18n from '@/lib/i18n/client';
 
 interface AuthFeature {
@@ -32,7 +33,8 @@ export default function RegisterPage() {
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [newsConsent, setNewsConsent] = useState(false);
   const { loginWithGoogle, registerWithEmail, user, loading: authLoading } = useAuth();
-  const canRegister = acceptedTerms && acceptedPrivacy;
+  const { disableRegister } = useFeatureFlags();
+  const canRegister = acceptedTerms && acceptedPrivacy && !disableRegister;
   const { setTheme } = useTheme();
   const router = useRouter();
   const { t } = useTranslation('auth');
@@ -44,6 +46,10 @@ export default function RegisterPage() {
   }, [user, authLoading, router]);
 
   const handleGoogleLogin = async () => {
+    if (disableRegister) {
+      setError(t('register.errors.disabled'));
+      return;
+    }
     if (!canRegister) {
       setError(t('register.errors.termsRequired'));
       return;
@@ -82,6 +88,11 @@ export default function RegisterPage() {
     }
     if (!canRegister) {
       setError(t('register.errors.termsRequired'));
+      return;
+    }
+
+    if (disableRegister) {
+      setError(t('register.errors.disabled'));
       return;
     }
 
@@ -154,6 +165,11 @@ export default function RegisterPage() {
             </div>
 
             <div className="auth-content">
+              {disableRegister && (
+                <div className="error-alert" style={{ background: '#FEF2F2', color: '#991B1B', border: '1px solid #FECACA' }}>
+                  {t('register.errors.disabled')}
+                </div>
+              )}
               {error && <div className="error-alert">{error}</div>}
               <button onClick={handleGoogleLogin} className="google-btn" disabled={loading || !canRegister}>
                 <svg width="20" height="20" viewBox="0 0 24 24">
@@ -174,15 +190,15 @@ export default function RegisterPage() {
                   <div className="register-block">
                 <div className="form-group">
                   <label>{t('register.nameLabel')}</label>
-                  <input type="text" placeholder={t('register.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} disabled={loading} autoComplete="name" />
+                  <input type="text" placeholder={t('register.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} disabled={loading || disableRegister} autoComplete="name" />
                 </div>
                 <div className="form-group">
                   <label>{t('register.emailLabel')}</label>
-                  <input type="email" placeholder={t('register.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} autoComplete="email" />
+                  <input type="email" placeholder={t('register.emailPlaceholder')} value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading || disableRegister} autoComplete="email" />
                 </div>
                 <div className="form-group">
                   <label>{t('register.passwordLabel')}</label>
-                  <input type="password" placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} autoComplete="new-password" />
+                  <input type="password" placeholder={t('register.passwordPlaceholder')} value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading || disableRegister} autoComplete="new-password" />
                   <div className="password-hints">
                     <span className={`password-hint ${password.length >= 8 ? 'valid' : ''}`}>
                       {password.length >= 8 ? '✓' : '•'} {t('register.passwordHints.minLength')}
@@ -215,7 +231,7 @@ export default function RegisterPage() {
                         type="button"
                         className={`option-btn ${language === opt.value ? 'active' : ''}`}
                         onClick={() => setLanguage(opt.value)}
-                        disabled={loading}
+                        disabled={loading || disableRegister}
                       >
                         <span className="option-flag">{opt.flag}</span>
                         <span className="option-text">{opt.label}</span>
@@ -238,7 +254,7 @@ export default function RegisterPage() {
                         type="button"
                         className={`theme-option-register ${theme === opt.value ? 'active' : ''}`}
                         onClick={() => setThemeState(opt.value)}
-                        disabled={loading}
+                        disabled={loading || disableRegister}
                       >
                         <div className={`theme-preview-register theme-preview-register-${opt.value}`}>
                           <div className="theme-preview-bar-register" />
@@ -265,7 +281,7 @@ export default function RegisterPage() {
                           type="button"
                           className={`currency-option ${currency === code ? 'active' : ''}`}
                           onClick={() => setCurrency(code)}
-                          disabled={loading}
+                          disabled={loading || disableRegister}
                         >
                           <CurrencyFlag code={code} size={20} className="currency-flag" />
                           <span className="currency-name">{cfg.symbol} {cfg.name}</span>
@@ -282,7 +298,7 @@ export default function RegisterPage() {
                     id="terms"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    disabled={loading}
+                    disabled={loading || disableRegister}
                   />
                   <label htmlFor="terms">
                     {t('register.termsLabel')}
@@ -298,7 +314,7 @@ export default function RegisterPage() {
                     id="privacy"
                     checked={acceptedPrivacy}
                     onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-                    disabled={loading}
+                    disabled={loading || disableRegister}
                   />
                   <label htmlFor="privacy">
                     {t('register.privacyLabel')}
@@ -314,14 +330,14 @@ export default function RegisterPage() {
                     id="newsConsent"
                     checked={newsConsent}
                     onChange={(e) => setNewsConsent(e.target.checked)}
-                    disabled={loading}
+                    disabled={loading || disableRegister}
                   />
                   <label htmlFor="newsConsent">
                     {t('register.newsConsentLabel')}
                   </label>
                 </div>
 
-                <button type="submit" className="login-btn" disabled={loading}>
+                <button type="submit" className="login-btn" disabled={loading || disableRegister}>
                   {loading ? (
                     <span className="login-btn-loading">
                       <span className="spinner" /> {t('register.submitBtn.loading')}

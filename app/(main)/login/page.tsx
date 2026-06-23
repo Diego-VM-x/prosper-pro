@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 import { auth } from '@/lib/firebase';
 
 import './auth.css';
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { loginWithGoogle, loginWithEmail, user, loading: authLoading, isGuest, enterGuestMode } = useAuth();
+  const { disableRegister } = useFeatureFlags();
   const router = useRouter();
   const { t } = useTranslation('auth');
 
@@ -174,9 +176,11 @@ export default function LoginPage() {
               </form>
             </div>
 
-            <div className="auth-footer">
-              {t('login.footer.noAccount')} <Link href="/register">{t('login.footer.register')}</Link>
-            </div>
+            {!disableRegister && (
+              <div className="auth-footer">
+                {t('login.footer.noAccount')} <Link href="/register">{t('login.footer.register')}</Link>
+              </div>
+            )}
             <div className="auth-footer" style={{ marginTop: 8 }}>
               <button
                 onClick={handleGuestMode}

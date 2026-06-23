@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 
 function DownloadIcon({ size = 18 }: { size?: number }) {
   return (
@@ -25,7 +26,10 @@ export function DownloadButton({
   className = '',
 }: AndroidDownloadButtonProps) {
   const { t } = useTranslation('landing');
+  const { hideAndroidDownload } = useFeatureFlags();
   const isAndroid = typeof navigator !== 'undefined' && /Android/.test(navigator.userAgent);
+
+  if (hideAndroidDownload) return null;
   const [showHint, setShowHint] = useState(false);
   const [apkSize, setApkSize] = useState<string | null>(null);
 

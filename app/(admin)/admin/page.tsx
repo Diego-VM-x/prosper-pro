@@ -44,9 +44,8 @@ import {
   IconSettings,
 } from '@/app/components/icons';
 import type { AdminTask, AdminStats, FeedbackReport, GlobalConfig } from '@/types';
+import { SUPER_ADMIN_UID } from '@/lib/constants/admin';
 import styles from './admin.module.css';
-
-const SUPER_ADMIN_UID = 'qpjtErB8lxWmxNdbOmoCdqZBeAl1';
 const TOKEN_REFRESH_MS = 10 * 60 * 1000;
 
 function formatDate(ts: number): string {

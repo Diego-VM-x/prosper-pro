@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 import { DownloadButton } from './AndroidDownloadButton';
 
 interface MobileNavProps {
@@ -15,6 +16,7 @@ interface MobileNavProps {
 
 export function MobileNav({ isOpen, onClose, user, onLogin, onRegister, onDashboard }: MobileNavProps) {
   const { t } = useTranslation('landing');
+  const { disableRegister } = useFeatureFlags();
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -61,7 +63,9 @@ export function MobileNav({ isOpen, onClose, user, onLogin, onRegister, onDashbo
           ) : (
             <>
               <button className="btn btn-ghost" onClick={onLogin}>{t('mobileNav.login')}</button>
-              <button className="btn btn-primary" onClick={onRegister}>{t('mobileNav.startFree')}</button>
+              {!disableRegister && (
+                <button className="btn btn-primary" onClick={onRegister}>{t('mobileNav.startFree')}</button>
+              )}
             </>
           )}
         </div>

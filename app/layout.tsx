@@ -6,6 +6,8 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { I18nProvider } from './components/I18nProvider';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from '@/lib/contexts/AuthContext';
+import { FeatureFlagsProvider } from '@/lib/contexts/FeatureFlagsContext';
+import { MaintenanceGate } from './components/MaintenanceGate';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -157,8 +159,12 @@ export default function RootLayout({
           <ThemeProvider>
             <I18nProvider>
           <AuthProvider>
-              {children}
-            </AuthProvider>
+            <FeatureFlagsProvider>
+              <MaintenanceGate>
+                {children}
+              </MaintenanceGate>
+            </FeatureFlagsProvider>
+          </AuthProvider>
           </I18nProvider>
           </ThemeProvider>
         </ErrorBoundary>

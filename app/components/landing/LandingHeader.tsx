@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 import { DownloadButton } from './AndroidDownloadButton';
 
 interface LandingHeaderProps {
@@ -11,6 +12,7 @@ interface LandingHeaderProps {
 
 export function LandingHeader({ user }: LandingHeaderProps) {
   const { t } = useTranslation('landing');
+  const { disableRegister } = useFeatureFlags();
   const router = useRouter();
   const [scrollY, setScrollY] = useState(0);
 
@@ -52,7 +54,9 @@ export function LandingHeader({ user }: LandingHeaderProps) {
             ) : (
               <>
                 <button className="btn btn-ghost desktop-only" onClick={() => router.push('/login')}>{t('header.login')}</button>
-                <button className="btn btn-primary" onClick={() => router.push('/register')}>{t('header.startFree')}</button>
+                {!disableRegister && (
+                  <button className="btn btn-primary" onClick={() => router.push('/register')}>{t('header.startFree')}</button>
+                )}
               </>
             )}
 

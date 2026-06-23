@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { useFeatureFlags } from '@/lib/contexts/FeatureFlagsContext';
 import { NewsletterForm } from './NewsletterForm';
 import { InlineIcon, IconBadge } from '@/app/components/IconMap';
 
@@ -11,6 +12,7 @@ interface FooterProps {
 
 export function Footer({ user }: FooterProps) {
   const { t } = useTranslation('landing');
+  const { disableRegister } = useFeatureFlags();
   const router = useRouter();
 
   const scrollTo = (id: string) => {
@@ -56,7 +58,9 @@ export function Footer({ user }: FooterProps) {
             ) : (
               <>
                 <button onClick={() => router.push('/login')}>{t('footer.columns.account.login')}</button>
-                <button onClick={() => router.push('/register')}>{t('footer.columns.account.register')}</button>
+                {!user && !disableRegister && (
+                  <button onClick={() => router.push('/register')}>{t('footer.columns.account.register')}</button>
+                )}
               </>
             )}
           </div>

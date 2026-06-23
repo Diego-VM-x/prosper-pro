@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getAdminSessionCookieServer } from '@/lib/utils/adminCookieServer';
-
-const SUPER_ADMIN_UID = 'qpjtErB8lxWmxNdbOmoCdqZBeAl1';
+import { SUPER_ADMIN_UID } from '@/lib/constants/admin';
 const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDUGxu2cfgxVrgSS1xamE0NaVUOv7TnX2E';
 
 async function verifyIdToken(idToken: string): Promise<string | null> {
