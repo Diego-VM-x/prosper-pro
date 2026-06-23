@@ -39,22 +39,27 @@ Al iniciar cada sesión de chat, ejecuta SIEMPRE este orden:
 - `app/(admin)/admin/layout.tsx` — Layout secreto del admin. Valida sesión en servidor con `notFound()`.
 
 ### Páginas principales
-- `app/page.tsx` → Dashboard principal.
-- `app/metas/page.tsx` → Planes financieros.
-- `app/finanzas/page.tsx` → Cuentas y transacciones.
-- `app/calendario/page.tsx` → Calendario.
-- `app/cursos/page.tsx` y `app/cursos/[id]/page.tsx` → Cursos.
-- `app/configuracion/page.tsx` → Perfil y preferencias.
-- `app/ayuda/page.tsx` → FAQ y feedback.
+- `app/(main)/page.tsx` → Dashboard principal.
+- `app/(main)/metas/page.tsx` → Planes financieros.
+- `app/(main)/finanzas/page.tsx` → Cuentas y transacciones.
+- `app/(main)/calendario/page.tsx` → Calendario.
+- `app/(main)/cursos/page.tsx` y `app/(main)/cursos/[id]/page.tsx` → Cursos.
+- `app/(main)/configuracion/page.tsx` → Perfil y preferencias.
+- `app/(main)/ayuda/page.tsx` → FAQ y feedback.
+- `app/(main)/login/page.tsx` y `app/(main)/register/page.tsx` → Auth.
+- `app/inicio/page.tsx` → Landing page.
 - `app/(admin)/admin/page.tsx` → Panel de administración secreto.
 
 ### Configuración y utilidades
 - `lib/firebase.ts` → Configuración de Firebase, exports de Firestore/Auth.
 - `lib/contexts/AuthContext.tsx` → Contexto de autenticación.
+- `lib/contexts/FeatureFlagsContext.tsx` → Suscripción en tiempo real a `/config/global`.
 - `lib/contexts/firebase-auth-core.ts` → Lógica core de login/logout y cookie admin.
+- `lib/constants/admin.ts` → Constantes administrativas (`SUPER_ADMIN_UID`).
 - `types.ts` → Tipos globales TypeScript.
 - `firestore.rules` → Reglas de seguridad de Firestore.
 - `next.config.ts` → Configuración de Next.js.
+- `app/components/MaintenanceGate.tsx` + `.module.css` → Pantalla de mantenimiento global.
 
 ### Admin (nuevo)
 - `app/(admin)/admin/layout.tsx` — Validación servidor.
@@ -111,10 +116,34 @@ Al iniciar cada sesión de chat, ejecuta SIEMPRE este orden:
 
 ## 7. CAMBIOS RECIENTES Y NOTAS TÉCNICAS
 
-### Panel de Administración Secreto `/admin` (último hito)
+### Notificaciones nativas y push (FCM)
+- **Registro push:** `lib/notifications.ts` → `registerPushNotifications()`.
+  - Escucha `registration` **antes** de llamar `PushNotifications.register()` para no perder el token en Android.
+  - Guarda el token en `users/{uid}/devices/{token}` y en `push_tokens/{token}`.
+  - Al recibir `pushNotificationReceived` en primer plano, dispara una `LocalNotifications` para que se vea.
+  - `unregisterPushToken()` limpia el token en logout.
+- **Permisos:** `requestNotificationPermissions()` pide tanto push (FCM) como local en nativo.
+- **Backend push:**
+  - `lib/firebase-admin.ts` inicializa `firebase-admin` con `FIREBASE_SERVICE_ACCOUNT_JSON` o `GOOGLE_APPLICATION_CREDENTIALS`.
+  - `app/api/notifications/send/route.ts` envía FCM masivo (Super Admin only).
+  - `scripts/send-global-notification.js` envía in-app + push nativo.
+- **Panel admin:** checkbox "Enviar también como notificación push nativa" en notificación global y notificación directa.
+- **Local notifications:** `showLocalNotification()` usa `LocalNotifications.schedule` en nativo y `Notification` API en web. Se dispara automáticamente desde `Topbar` al llegar notificaciones in-app nuevas.
+- **Requisito Android:** `android/app/build.gradle` aplica `com.google.gms.google-services` y declara `firebase-messaging`. El APK debe re-compilarse (`npx cap sync android && gradlew assembleDebug`) tras cambios nativos.
+
+### Feature flags conectados a la app
+- **Fuente de verdad:** documento `/config/global` en Firestore (`lib/firestore/admin.ts` → `subscribeToGlobalConfig`).
+- **Contexto:** `lib/contexts/FeatureFlagsContext.tsx` provee `maintenanceMode`, `hideAndroidDownload`, `disableRegister` y `rates`.
+- **Comportamientos:**
+  - `maintenanceMode`: `MaintenanceGate` bloquea toda la app con pantalla fija, excepto para el Super Admin.
+  - `hideAndroidDownload`: `AndroidDownloadButton` retorna `null` automáticamente.
+  - `disableRegister`: `/register` bloquea el formulario; landing/login ocultan CTAs de registro.
+- **Super Admin centralizado:** `lib/constants/admin.ts` exporta `SUPER_ADMIN_UID`. Cualquier cambio de cuenta admin solo requiere editar ese archivo (y re-deploy de `firestore.rules`).
+
+### Panel de Administración Secreto `/admin`
 - **Ruta:** `app/(admin)/admin`
 - **Seguridad:** Layout servidor valida cookie `prosper_admin_session` contra Firebase REST API y ejecuta `notFound()` si el UID no coincide con el Super Admin.
-- **UID Super Admin hardcodeado:** `qpjtErB8lxWmxNdbOmoCdqZBeAl1` (reemplazar por UID real en producción en `layout.tsx`, `page.tsx`, `route.ts` y `firestore.rules`).
+- **UID Super Admin hardcodeado:** `qpjtErB8lxWmxNdbOmoCdqZBeAl1` centralizado en `lib/constants/admin.ts`. Si cambia la cuenta admin, actualiza ese archivo y re-deploya `firestore.rules`.
 - **Funcionalidades:** KPIs `/stats/global`, notificaciones globales `/global_notifications`, feedback `/feedback` en tiempo real, roadmap `/admin_tasks`, automatización feedback→tarea con deadline +7 días.
 - **Auth SSR:** La cookie se sincroniza desde `lib/contexts/firebase-auth-core.ts` en login/logout. El cliente renueva el token cada 10 minutos mientras el admin panel está abierto.
 
@@ -131,3 +160,41 @@ Al iniciar cada sesión de chat, ejecuta SIEMPRE este orden:
 2. `npm run build` exitoso.
 3. Verificar que no se hayan agregado archivos no relacionados al commit.
 4. Si se modificó `CONTEXT.md` o `version.md`, preguntar por push a Git.
+5. Si se agregó/renombró una ruta o feature flag, actualizar este `AGENTS.md`.
+
+---
+
+## 8. RUTA DE TRABAJO EFICAZ (Workflow para cualquier tarea)
+
+Sigue este orden para no desperdiciar tokens ni perder tiempo:
+
+### 1. Diagnóstico rápido
+- Lee `CONTEXT.md` y `TASK_PLAN.md` (si existe).
+- Carga `orquestador-maestro` si está disponible.
+- Reporta estado actual al usuario con el formato de la Sección 1.
+
+### 2. Definir el alcance
+- Pregunta solo lo imprescindible si el requerimiento es ambiguo.
+- Identifica si es bug, feature o refactor.
+- Estima si consumirá >50k tokens; si es así, avisa antes.
+
+### 3. Exploración dirigida
+- Si la tarea requiere más de 3 búsquedas, usa `Agent(subagent_type="explore")`.
+- No leas archivos >300 líneas completos sin resumen previo.
+- Nunca leas `node_modules`, `.next`, `dist` ni carpetas de build.
+
+### 4. Implementación
+- Prefiere cambios mínimos y modulares.
+- Reutiliza estilos, hooks y componentes existentes.
+- No instales librerías pesadas si puedes resolverlo con código propio o APIs nativas.
+- Para Firebase, usa el SDK cliente o la REST API; evita `firebase-admin` en el frontend.
+
+### 5. Verificación
+- Ejecuta `npx tsc --noEmit`.
+- Ejecuta `npm run build`.
+- Si el build tarda demasiado (PC de bajos recursos), sugiere pausar.
+
+### 6. Cierre
+- Resume qué cambiaste y por qué.
+- Si el build fue exitoso, pregunta si actualizar `CONTEXT.md` / `version.md`.
+- No ejecutes git mutations (`commit`, `push`, etc.) sin confirmación explícita del usuario en la conversación actual.

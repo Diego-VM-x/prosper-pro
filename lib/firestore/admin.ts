@@ -327,8 +327,9 @@ export async function addGlobalNotification(
 }
 
 export async function dispatchGlobalNotification(
-  notification: Omit<GlobalNotification, 'id' | 'createdAt'>
-): Promise<{ recipients: number; globalId: string }> {
+  notification: Omit<GlobalNotification, 'id' | 'createdAt'>,
+  push = false
+): Promise<{ recipients: number; globalId: string; pushResult?: { sent: number; failed: number } }> {
   const globalRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
     ...notification,
     createdAt: Date.now(),
@@ -371,14 +372,36 @@ export async function dispatchGlobalNotification(
     await batch.commit();
   }
 
-  return { recipients: targetUids.length, globalId: globalRef.id };
+  let pushResult: { sent: number; failed: number } | undefined;
+  if (push && targetUids.length > 0) {
+    try {
+      const res = await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: notification.title,
+          body: notification.message,
+          data: { type: 'info', globalNotificationId: globalRef.id },
+          ...(notification.target === 'all' ? { all: true } : { userIds: targetUids }),
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      pushResult = { sent: json.sent || 0, failed: json.failed || 0 };
+    } catch (e) {
+      console.error('[dispatchGlobalNotification] Push send failed:', e);
+      pushResult = { sent: 0, failed: targetUids.length };
+    }
+  }
+
+  return { recipients: targetUids.length, globalId: globalRef.id, pushResult };
 }
 
 export async function sendDirectNotification(
   ownerId: string,
   title: string,
   message: string,
-  sentBy: string
+  sentBy: string,
+  push = false
 ) {
   await addNotification({
     ownerId,
@@ -391,6 +414,23 @@ export async function sendDirectNotification(
       isDirect: true,
     },
   });
+
+  if (push) {
+    try {
+      await fetch('/api/notifications/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          body: message,
+          data: { type: 'info' },
+          userIds: [ownerId],
+        }),
+      });
+    } catch (e) {
+      console.error('[sendDirectNotification] Push send failed:', e);
+    }
+  }
 }
 
 export async function wipeUserData(ownerId: string): Promise<void> {

@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications, Token, ActionPerformed } from '@capacitor/push-notifications';
-import { doc, setDoc } from '@/lib/firebase';
+import { PushNotifications, Token, ActionPerformed, PushNotificationSchema } from '@capacitor/push-notifications';
+import { doc, setDoc, deleteDoc } from '@/lib/firebase';
 import type { NotificationType } from '@/types';
 
 function isNative(): boolean {
@@ -18,13 +18,37 @@ function getNextNotificationId(): number {
 }
 
 /**
+ * Request push notification permissions (FCM) on native platforms.
+ */
+export async function requestPushPermissions(): Promise<boolean> {
+  if (!isNative()) return false;
+  const result = await PushNotifications.requestPermissions();
+  console.log('[Notifications] push requestPermissions result:', result);
+  return result.receive === 'granted';
+}
+
+/**
+ * Request local notification permissions on native platforms.
+ */
+export async function requestLocalNotificationPermissions(): Promise<boolean> {
+  if (!isNative()) return false;
+  const result = await LocalNotifications.requestPermissions();
+  console.log('[Notifications] local requestPermissions result:', result);
+  return result.display === 'granted';
+}
+
+/**
  * Request notification permissions for both web and native.
+ * On native it asks for both push (FCM) and local notifications.
  */
 export async function requestNotificationPermissions(): Promise<boolean> {
   if (isNative()) {
-    const result = await LocalNotifications.requestPermissions();
-    console.log('[Notifications] requestPermissions result:', result);
-    return result.display === 'granted';
+    const [push, local] = await Promise.all([
+      requestPushPermissions(),
+      requestLocalNotificationPermissions(),
+    ]);
+    console.log('[Notifications] requestPermissions result:', { push, local });
+    return push && local;
   }
 
   if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -41,9 +65,12 @@ export async function requestNotificationPermissions(): Promise<boolean> {
  */
 export async function checkNotificationPermissions(): Promise<boolean> {
   if (isNative()) {
-    const result = await LocalNotifications.checkPermissions();
-    console.log('[Notifications] checkPermissions result:', result);
-    return result.display === 'granted';
+    const [push, local] = await Promise.all([
+      PushNotifications.checkPermissions(),
+      LocalNotifications.checkPermissions(),
+    ]);
+    console.log('[Notifications] checkPermissions result:', { push, local });
+    return push.receive === 'granted' && local.display === 'granted';
   }
 
   if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -117,23 +144,45 @@ export async function openExactAlarmSettings(): Promise<void> {
 
 /**
  * Register for push notifications on native platforms and save the token
- * to Firestore under the user's devices collection.
+ * to Firestore under the user's devices collection and the global push_tokens collection.
+ *
+ * IMPORTANT: listeners are registered BEFORE calling PushNotifications.register()
+ * to avoid missing the registration event on Android.
  */
 export async function registerPushNotifications(userId: string): Promise<void> {
   if (!isNative()) return;
 
   try {
-    await PushNotifications.requestPermissions();
-    await PushNotifications.register();
-
+    // 1. Register listeners first to avoid race conditions on Android.
     PushNotifications.addListener('registration', async (token: Token) => {
+      console.log('[PushNotifications] FCM token received:', token.value);
       try {
+        const { db } = await import('@/lib/firebase');
+        const platform = Capacitor.getPlatform();
+        const now = Date.now();
+
+        // Remember the token locally so we can unregister on logout
+        try { localStorage.setItem('prosper_push_token', token.value); } catch {}
+
+        // Per-user reference
         await setDoc(
-          doc((await import('@/lib/firebase')).db, 'users', userId, 'devices', token.value),
+          doc(db, 'users', userId, 'devices', token.value),
           {
             token: token.value,
-            platform: Capacitor.getPlatform(),
-            updatedAt: Date.now(),
+            platform,
+            updatedAt: now,
+          },
+          { merge: true }
+        );
+
+        // Global token index for mass delivery
+        await setDoc(
+          doc(db, 'push_tokens', token.value),
+          {
+            ownerId: userId,
+            token: token.value,
+            platform,
+            updatedAt: now,
           },
           { merge: true }
         );
@@ -144,6 +193,19 @@ export async function registerPushNotifications(userId: string): Promise<void> {
 
     PushNotifications.addListener('registrationError', (err) => {
       console.error('[PushNotifications] Registration error:', err);
+    });
+
+    PushNotifications.addListener('pushNotificationReceived', async (notification: PushNotificationSchema) => {
+      console.log('[PushNotifications] Received in foreground:', notification);
+      try {
+        await showLocalNotification({
+          title: notification.title || 'Prosper Pro',
+          body: notification.body || '',
+          channelId: 'prosper_general_v2',
+        });
+      } catch (e) {
+        console.error('[PushNotifications] Failed to show foreground notification:', e);
+      }
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', async (action: ActionPerformed) => {
@@ -157,8 +219,33 @@ export async function registerPushNotifications(userId: string): Promise<void> {
         }
       }
     });
+
+    // 2. Now request permissions and register with FCM.
+    await PushNotifications.requestPermissions();
+    await PushNotifications.register();
   } catch (e) {
     console.error('[PushNotifications] Init error:', e);
+  }
+}
+
+/**
+ * Remove the current push token from the global index on logout.
+ * The per-user device sub-document is left as-is for audit; only the
+ * deliverable token is deleted.
+ */
+export async function unregisterPushToken(token?: string): Promise<void> {
+  if (!isNative()) return;
+  let target = token;
+  if (!target) {
+    try { target = localStorage.getItem('prosper_push_token') || undefined; } catch {}
+  }
+  if (!target) return;
+  try {
+    const { db } = await import('@/lib/firebase');
+    await deleteDoc(doc(db, 'push_tokens', target));
+    try { localStorage.removeItem('prosper_push_token'); } catch {}
+  } catch (e) {
+    console.error('[PushNotifications] Failed to unregister token:', e);
   }
 }
 

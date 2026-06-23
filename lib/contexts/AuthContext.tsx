@@ -140,13 +140,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (coreRef.current) {
       try { await coreRef.current.logoutImpl(); } catch {}
     }
-    // 2. Remove device from Firestore
+    // 2. Remove device and push token from Firestore
     if (user?.uid) {
       try {
         const { deviceId } = await getDeviceInfoForHeartbeat(user.uid);
         await removeDevice(user.uid, deviceId);
       } catch {
         // If removal fails, device becomes a ghost — but user is already signed out
+      }
+      try {
+        const { unregisterPushToken } = await import('@/lib/notifications');
+        await unregisterPushToken();
+      } catch {
+        // Push token cleanup is best-effort
       }
     }
     // 3. Clear local state and storage

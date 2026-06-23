@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/contexts/AuthContext';
 import { useSearch } from '@/lib/contexts/SearchContext';
 import { useGoals } from '@/lib/contexts/GoalsContext';
 import { subscribeToNotifications, markNotificationRead, deleteNotification, deleteAllNotifications } from '@/lib/firestore/notifications';
+import { showLocalNotification } from '@/lib/notifications';
 import { useTranslation } from 'react-i18next';
 import { useClickOutside } from '@/lib/hooks/useClickOutside';
 import { useEscape } from '@/lib/hooks/useKeyPress';
@@ -75,6 +76,7 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
   const searchRef = useRef<HTMLDivElement>(null);
 
   const userInitial = user?.displayName ? user.displayName.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : isGuest ? t('topbar.guest').charAt(0) : t('topbar.user').charAt(0));
+  const seenNotificationIds = useRef<Set<string>>(new Set());
 
   const closeUserMenu = () => setShowUserMenu(false);
   const closeUserMenuDelayed = () => setTimeout(() => setShowUserMenu(false), 50);
@@ -129,6 +131,18 @@ export const Topbar = memo(function Topbar({ onToggleSidebar, isCollapsed, onTog
     const unsub = subscribeToNotifications(user.uid, (n) => {
       setNotifications(n);
       setUnreadCount(n.filter((notif) => !notif.read).length);
+
+      // Show native local notification for new unread in-app notifications
+      n.forEach((notif) => {
+        if (!notif.read && !seenNotificationIds.current.has(notif.id)) {
+          seenNotificationIds.current.add(notif.id);
+          showLocalNotification({
+            title: notif.title,
+            body: notif.message,
+            channelId: 'prosper_general_v2',
+          }).catch(() => {});
+        }
+      });
     });
     return () => unsub();
   }, [user?.uid]);

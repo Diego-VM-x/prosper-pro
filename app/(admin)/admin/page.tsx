@@ -98,6 +98,7 @@ export default function AdminPage() {
   const [searchResults, setSearchResults] = useState<AdminUser[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<AdminUser[]>([]);
   const [searching, setSearching] = useState(false);
+  const [sendGlobalPush, setSendGlobalPush] = useState(false);
 
   // Task form
   const [newTaskText, setNewTaskText] = useState('');
@@ -116,6 +117,7 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [directNotifTitle, setDirectNotifTitle] = useState('');
   const [directNotifMessage, setDirectNotifMessage] = useState('');
+  const [sendDirectPush, setSendDirectPush] = useState(false);
 
   // Rates
   const [currentRate, setCurrentRate] = useState<number | null>(null);
@@ -234,19 +236,26 @@ export default function AdminPage() {
     try {
       const target: 'all' | string[] =
         notifTargetMode === 'specific' ? selectedUsers.map((u) => u.uid) : 'all';
-      const result = await dispatchGlobalNotification({
-        title: notifTitle.trim(),
-        message: notifMessage.trim(),
-        target,
-        sentBy: SUPER_ADMIN_UID,
-      });
+      const result = await dispatchGlobalNotification(
+        {
+          title: notifTitle.trim(),
+          message: notifMessage.trim(),
+          target,
+          sentBy: SUPER_ADMIN_UID,
+        },
+        sendGlobalPush
+      );
       setNotifTitle('');
       setNotifMessage('');
       setSelectedUsers([]);
       setSearchQuery('');
       setSearchResults([]);
       setNotifTargetMode('all');
-      showToast(`Notificación enviada a ${result.recipients} usuario${result.recipients === 1 ? '' : 's'}`);
+      setSendGlobalPush(false);
+      const pushMsg = result.pushResult
+        ? ` (${result.pushResult.sent} push, ${result.pushResult.failed} fallos)`
+        : '';
+      showToast(`Notificación enviada a ${result.recipients} usuario${result.recipients === 1 ? '' : 's'}${pushMsg}`);
     } catch (err: any) {
       showToast(err?.message || 'Error al enviar notificación', 'error');
     }
@@ -396,10 +405,17 @@ export default function AdminPage() {
     e.preventDefault();
     if (!selectedUser || !directNotifTitle.trim() || !directNotifMessage.trim()) return;
     try {
-      await sendDirectNotification(selectedUser.uid, directNotifTitle.trim(), directNotifMessage.trim(), SUPER_ADMIN_UID);
+      await sendDirectNotification(
+        selectedUser.uid,
+        directNotifTitle.trim(),
+        directNotifMessage.trim(),
+        SUPER_ADMIN_UID,
+        sendDirectPush
+      );
       setDirectNotifTitle('');
       setDirectNotifMessage('');
-      showToast('Notificación directa enviada');
+      setSendDirectPush(false);
+      showToast(`Notificación directa enviada${sendDirectPush ? ' (push nativo)' : ''}`);
     } catch (err: any) {
       showToast(err?.message || 'Error al enviar notificación', 'error');
     }
@@ -580,6 +596,15 @@ export default function AdminPage() {
               )}
             </div>
           )}
+
+          <label className={styles.toggleRow}>
+            <input
+              type="checkbox"
+              checked={sendGlobalPush}
+              onChange={(e) => setSendGlobalPush(e.target.checked)}
+            />
+            <span>Enviar también como notificación push nativa</span>
+          </label>
 
           <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
             Enviar notificación global
@@ -911,6 +936,14 @@ export default function AdminPage() {
                 className={styles.textarea}
                 rows={3}
               />
+              <label className={styles.toggleRow}>
+                <input
+                  type="checkbox"
+                  checked={sendDirectPush}
+                  onChange={(e) => setSendDirectPush(e.target.checked)}
+                />
+                <span>Enviar también como push nativo</span>
+              </label>
               <div className={styles.userDetailActions}>
                 <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
                   <IconMail />
