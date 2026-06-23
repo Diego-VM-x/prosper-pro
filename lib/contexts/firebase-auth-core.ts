@@ -5,6 +5,7 @@ import { enableOfflinePersistence } from '@/lib/firebase';
 import { createUserProfile, getUserProfile } from '@/lib/firestore/users';
 import { registerDevice } from '@/lib/firestore/devices';
 import { getDeviceInfo, storeSessionToken } from '@/lib/utils/deviceInfo';
+import { setAdminSessionCookie, clearAdminSessionCookie } from '@/lib/utils/adminCookieClient';
 
 import type { CurrencyCode } from '@/types';
 
@@ -24,11 +25,13 @@ export function storeTokens(tokens: StoredTokens) {
     localStorage.setItem('prosper_auth', json);
     sessionStorage.setItem('prosper_auth', json);
   } catch {}
+  setAdminSessionCookie(tokens.idToken);
 }
 
 export function clearStoredTokens() {
   try { localStorage.removeItem('prosper_auth'); } catch {}
   try { sessionStorage.removeItem('prosper_auth'); } catch {}
+  clearAdminSessionCookie();
 }
 
 export function getStoredTokens(): StoredTokens | null {

@@ -19,8 +19,10 @@ export {
   orderBy,
   limit,
   arrayUnion,
+  serverTimestamp,
   type QuerySnapshot,
   type DocumentData,
+  type Timestamp,
 } from 'firebase/firestore';
 
 export {

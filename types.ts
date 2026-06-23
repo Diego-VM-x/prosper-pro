@@ -496,3 +496,42 @@ export interface DashboardLayouts {
   desktop: DashboardLayout;
   mobile: DashboardLayout;
 }
+
+// ─── Admin Panel ───
+export type FeedbackType = 'bug' | 'suggestion';
+
+export interface FeedbackReport {
+  id: string;
+  ownerId: string;
+  type: FeedbackType;
+  message: string;
+  page?: string;
+  createdAt: number;
+}
+
+export interface AdminTask {
+  id: string;
+  task: string;
+  deadline: string; // YYYY-MM-DD
+  completed: boolean;
+  createdAt: number;
+  completedAt?: number;
+}
+
+export interface GlobalNotification {
+  id: string;
+  title: string;
+  message: string;
+  target: 'all' | string[];
+  createdAt: number;
+  sentBy: string;
+}
+
+export interface AdminStats {
+  totalUsers?: number;
+  totalTransactions?: number;
+  totalPlans?: number;
+  totalFeedback?: number;
+  openTasks?: number;
+  updatedAt?: number;
+}
