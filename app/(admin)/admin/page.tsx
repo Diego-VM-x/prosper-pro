@@ -9,12 +9,20 @@ import {
   subscribeToFeedback,
   subscribeToAdminStats,
   subscribeToActiveUsers,
+  subscribeToGlobalConfig,
   addAdminTask,
   toggleAdminTask,
   deleteAdminTask,
   archiveFeedback,
+  respondToFeedback,
+  updateFeedbackStatus,
   dispatchGlobalNotification,
+  sendDirectNotification,
   searchUsersByNameOrEmail,
+  getAllUsers,
+  wipeUserData,
+  getCurrentBCVRate,
+  setGlobalConfig as saveGlobalConfig,
   recalculateAdminStats,
   getDeadlinePlusDays,
   type AdminUser,
@@ -28,8 +36,14 @@ import {
   IconBell,
   IconSearch,
   IconX,
+  IconEdit,
+  IconMail,
+  IconTrash,
+  IconCheck,
+  IconWallet,
+  IconSettings,
 } from '@/app/components/icons';
-import type { AdminTask, AdminStats, FeedbackReport } from '@/types';
+import type { AdminTask, AdminStats, FeedbackReport, GlobalConfig } from '@/types';
 import styles from './admin.module.css';
 
 const SUPER_ADMIN_UID = 'qpjtErB8lxWmxNdbOmoCdqZBeAl1';
@@ -90,6 +104,25 @@ export default function AdminPage() {
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskDeadline, setNewTaskDeadline] = useState('');
 
+  // Global config / feature flags
+  const [globalConfig, setGlobalConfig] = useState<GlobalConfig>({});
+
+  // Feedback response
+  const [respondingTo, setRespondingTo] = useState<FeedbackReport | null>(null);
+  const [responseText, setResponseText] = useState('');
+
+  // Users audit
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [directNotifTitle, setDirectNotifTitle] = useState('');
+  const [directNotifMessage, setDirectNotifMessage] = useState('');
+
+  // Rates
+  const [currentRate, setCurrentRate] = useState<number | null>(null);
+  const [rateOverride, setRateOverride] = useState<string>('');
+  const [rateEnabled, setRateEnabled] = useState(false);
+
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -134,13 +167,26 @@ export default function AdminPage() {
     const unsubFeedback = subscribeToFeedback(setFeedback);
     const unsubStats = subscribeToAdminStats(setStats);
     const unsubActive = subscribeToActiveUsers(setActiveUsers);
+    const unsubConfig = subscribeToGlobalConfig((cfg) => {
+      setGlobalConfig(cfg);
+      setRateEnabled(cfg.rates?.enabled ?? false);
+      setRateOverride(cfg.rates?.USD ? String(cfg.rates.USD) : '');
+    });
 
     return () => {
       unsubTasks();
       unsubFeedback();
       unsubStats();
       unsubActive();
+      unsubConfig();
     };
+  }, [user]);
+
+  // Load users and current BCV rate once
+  useEffect(() => {
+    if (!user || user.uid !== SUPER_ADMIN_UID) return;
+    getAllUsers().then(setUsers).catch(() => {});
+    getCurrentBCVRate().then(setCurrentRate).catch(() => {});
   }, [user]);
 
   // Recalculate derived stats once on load
@@ -283,6 +329,93 @@ export default function AdminPage() {
       showToast(err?.message || 'Error al crear tarea', 'error');
     }
   }
+
+  async function handleStatusChange(item: FeedbackReport, status: FeedbackReport['status']) {
+    try {
+      await updateFeedbackStatus(item.id, status);
+      showToast('Estado actualizado');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al actualizar estado', 'error');
+    }
+  }
+
+  async function handleSubmitResponse(e: React.FormEvent) {
+    e.preventDefault();
+    if (!respondingTo || !responseText.trim()) return;
+    try {
+      await respondToFeedback(respondingTo.id, respondingTo.ownerId, responseText.trim(), SUPER_ADMIN_UID);
+      setRespondingTo(null);
+      setResponseText('');
+      showToast('Respuesta enviada al usuario');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al responder', 'error');
+    }
+  }
+
+  async function handleSaveRateOverride(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const rateValue = rateEnabled ? parseFloat(rateOverride) : undefined;
+      await saveGlobalConfig(
+        {
+          rates: {
+            enabled: rateEnabled,
+            USD: rateValue,
+            source: rateEnabled ? 'manual' : 'api',
+          },
+        },
+        SUPER_ADMIN_UID
+      );
+      showToast(rateEnabled ? 'Override de tasa guardado' : 'Override desactivado');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al guardar tasa', 'error');
+    }
+  }
+
+  async function handleToggleFeature(key: keyof GlobalConfig, value: boolean) {
+    try {
+      await saveGlobalConfig({ [key]: value }, SUPER_ADMIN_UID);
+      showToast('Configuración actualizada');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al actualizar configuración', 'error');
+    }
+  }
+
+  async function handleDeleteUser(uid: string) {
+    if (!confirm('¿Eliminar TODOS los datos de este usuario? La cuenta de autenticación seguirá existiendo.')) return;
+    try {
+      await wipeUserData(uid);
+      setUsers((prev) => prev.filter((u) => u.uid !== uid));
+      if (selectedUser?.uid === uid) setSelectedUser(null);
+      showToast('Datos del usuario eliminados');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al eliminar usuario', 'error');
+    }
+  }
+
+  async function handleSendDirectNotification(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedUser || !directNotifTitle.trim() || !directNotifMessage.trim()) return;
+    try {
+      await sendDirectNotification(selectedUser.uid, directNotifTitle.trim(), directNotifMessage.trim(), SUPER_ADMIN_UID);
+      setDirectNotifTitle('');
+      setDirectNotifMessage('');
+      showToast('Notificación directa enviada');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al enviar notificación', 'error');
+    }
+  }
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        (u.displayName || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        u.uid.toLowerCase().includes(q)
+    );
+  }, [users, userSearch]);
 
   if (!mounted || loading) {
     return (
@@ -478,18 +611,39 @@ export default function AdminPage() {
                     >
                       {item.type === 'bug' ? 'BUG' : 'SUGERENCIA'}
                     </span>
-                    <span className={styles.feedbackMeta}>{formatDate(item.createdAt)}</span>
+                    <select
+                      value={item.status}
+                      onChange={(e) => handleStatusChange(item, e.target.value as FeedbackReport['status'])}
+                      className={styles.statusSelect}
+                    >
+                      <option value="pending">Pendiente</option>
+                      <option value="in_progress">En progreso</option>
+                      <option value="resolved">Resuelto</option>
+                    </select>
                   </div>
                   <p className={styles.feedbackMessage}>{item.message}</p>
                   {item.page && <p className={styles.feedbackPage}>Página: {item.page}</p>}
                   <p className={styles.feedbackOwner}>UID: {item.ownerId}</p>
+                  {item.adminResponse && (
+                    <div className={styles.adminResponse}>
+                      <strong>Respuesta:</strong> {item.adminResponse}
+                    </div>
+                  )}
                   <div className={styles.feedbackActions}>
                     <button
                       onClick={() => handleCreateTaskFromFeedback(item)}
                       className={`${styles.btn} ${styles.btnSecondary}`}
                       title="Crear tarea automática con deadline +7 días"
                     >
-                      🛠️ Crear Tarea
+                      <IconTasks />
+                      Crear Tarea
+                    </button>
+                    <button
+                      onClick={() => setRespondingTo(item)}
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                    >
+                      <IconEdit />
+                      Responder
                     </button>
                     <button
                       onClick={() => handleArchiveFeedback(item.id)}
@@ -590,6 +744,192 @@ export default function AdminPage() {
           </div>
         </section>
       </div>
+
+      {/* Response Modal */}
+      {respondingTo && (
+        <div className={styles.modalOverlay} onClick={() => setRespondingTo(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Responder feedback</h3>
+              <button onClick={() => setRespondingTo(null)} className={styles.modalClose}>
+                <IconX />
+              </button>
+            </div>
+            <p className={styles.modalHint}>Usuario: {respondingTo.ownerId}</p>
+            <form onSubmit={handleSubmitResponse} className={styles.notificationForm}>
+              <textarea
+                placeholder="Escribe la respuesta para el usuario..."
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                className={styles.textarea}
+                rows={4}
+              />
+              <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
+                Enviar respuesta
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Rates & Feature Flags */}
+      <div className={styles.twoColumn}>
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>
+            <IconWallet className={styles.cardIcon} />
+            Control de Tasas
+          </h2>
+          <div className={styles.rateInfo}>
+            <span className={styles.rateLabel}>Tasa BCV actual:</span>
+            <span className={styles.rateValue}>
+              {currentRate ? `${currentRate} Bs/USD` : 'No disponible'}
+            </span>
+          </div>
+          <form onSubmit={handleSaveRateOverride} className={styles.notificationForm}>
+            <label className={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={rateEnabled}
+                onChange={(e) => setRateEnabled(e.target.checked)}
+              />
+              <span>Activar override manual</span>
+            </label>
+            {rateEnabled && (
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Tasa manual (Bs/USD)"
+                value={rateOverride}
+                onChange={(e) => setRateOverride(e.target.value)}
+                className={styles.input}
+              />
+            )}
+            <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
+              Guardar configuración de tasas
+            </button>
+          </form>
+        </section>
+
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>
+            <IconSettings className={styles.cardIcon} />
+            Feature Flags
+          </h2>
+          <div className={styles.flagsList}>
+            <label className={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={globalConfig.maintenanceMode ?? false}
+                onChange={(e) => handleToggleFeature('maintenanceMode', e.target.checked)}
+              />
+              <span>Modo mantenimiento</span>
+            </label>
+            <label className={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={globalConfig.hideAndroidDownload ?? false}
+                onChange={(e) => handleToggleFeature('hideAndroidDownload', e.target.checked)}
+              />
+              <span>Ocultar descarga Android</span>
+            </label>
+            <label className={styles.toggleRow}>
+              <input
+                type="checkbox"
+                checked={globalConfig.disableRegister ?? false}
+                onChange={(e) => handleToggleFeature('disableRegister', e.target.checked)}
+              />
+              <span>Deshabilitar registro</span>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      {/* Users Audit */}
+      <section className={styles.card}>
+        <h2 className={styles.cardTitle}>
+          <IconTeam className={styles.cardIcon} />
+          Auditoría de Usuarios
+        </h2>
+        <div className={styles.searchInputWrapper}>
+          <IconSearch className={styles.searchIcon} />
+          <input
+            type="text"
+            placeholder="Buscar usuarios por nombre, email o UID..."
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            className={styles.input}
+          />
+        </div>
+
+        <div className={styles.usersGrid}>
+          {filteredUsers.length === 0 ? (
+            <p className={styles.empty}>No se encontraron usuarios.</p>
+          ) : (
+            filteredUsers.map((u) => {
+              const lastActive = u.devices?.reduce((max, d) => Math.max(max, d.lastActive || 0), 0);
+              return (
+                <button
+                  key={u.uid}
+                  type="button"
+                  onClick={() => setSelectedUser(u)}
+                  className={`${styles.userCard} ${selectedUser?.uid === u.uid ? styles.userCardActive : ''}`}
+                >
+                  <div className={styles.userAvatarLarge}>
+                    {u.photoURL ? (
+                      <img src={u.photoURL} alt="" />
+                    ) : (
+                      <span>{(u.displayName || u.email || u.uid).charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className={styles.userInfo}>
+                    <span className={styles.userName}>{u.displayName || 'Sin nombre'}</span>
+                    <span className={styles.userEmail}>{u.email || u.uid}</span>
+                    <span className={styles.userMeta}>
+                      Última actividad: {lastActive ? formatDate(lastActive) : 'Nunca'}
+                    </span>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+
+        {selectedUser && (
+          <div className={styles.userDetail}>
+            <h3 className={styles.userDetailTitle}>Acciones para {selectedUser.displayName || selectedUser.email}</h3>
+            <form onSubmit={handleSendDirectNotification} className={styles.notificationForm}>
+              <input
+                type="text"
+                placeholder="Título de la notificación"
+                value={directNotifTitle}
+                onChange={(e) => setDirectNotifTitle(e.target.value)}
+                className={styles.input}
+              />
+              <textarea
+                placeholder="Mensaje directo al usuario"
+                value={directNotifMessage}
+                onChange={(e) => setDirectNotifMessage(e.target.value)}
+                className={styles.textarea}
+                rows={3}
+              />
+              <div className={styles.userDetailActions}>
+                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
+                  <IconMail />
+                  Enviar notificación
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteUser(selectedUser.uid)}
+                  className={`${styles.btn} ${styles.btnDanger}`}
+                >
+                  <IconTrash />
+                  Borrar datos
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -499,6 +499,7 @@ export interface DashboardLayouts {
 
 // ─── Admin Panel ───
 export type FeedbackType = 'bug' | 'suggestion';
+export type FeedbackStatus = 'pending' | 'in_progress' | 'resolved';
 
 export interface FeedbackReport {
   id: string;
@@ -506,6 +507,9 @@ export interface FeedbackReport {
   type: FeedbackType;
   message: string;
   page?: string;
+  status: FeedbackStatus;
+  adminResponse?: string;
+  respondedAt?: number;
   createdAt: number;
 }
 
@@ -534,4 +538,27 @@ export interface AdminStats {
   totalFeedback?: number;
   openTasks?: number;
   updatedAt?: number;
+}
+
+
+export interface GlobalConfig {
+  maintenanceMode?: boolean;
+  hideAndroidDownload?: boolean;
+  disableRegister?: boolean;
+  rates?: RateOverride;
+  updatedAt?: number;
+  updatedBy?: string;
+}
+
+export interface RateOverride {
+  enabled: boolean;
+  USD?: number;
+  EUR?: number;
+  USDT?: number;
+  SOL?: number;
+  BTC?: number;
+  ETH?: number;
+  USDC?: number;
+  COP?: number;
+  source?: string;
 }

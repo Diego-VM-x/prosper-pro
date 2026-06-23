@@ -11,6 +11,7 @@ import {
   orderBy,
   onSnapshot,
   getDocs,
+  getDoc,
   increment,
   serverTimestamp,
   writeBatch,
@@ -18,7 +19,15 @@ import {
   type QuerySnapshot,
   type DocumentData,
 } from '@/lib/firebase';
-import type { AdminTask, GlobalNotification, AdminStats, FeedbackReport, Notification } from '@/types';
+import type {
+  AdminTask,
+  GlobalNotification,
+  AdminStats,
+  FeedbackReport,
+  Notification,
+  GlobalConfig,
+  RateOverride,
+} from '@/types';
 import { addNotification } from './notifications';
 
 const TASKS_COLLECTION = 'admin_tasks';
@@ -27,6 +36,8 @@ const FEEDBACK_COLLECTION = 'feedback';
 const STATS_COLLECTION = 'stats';
 const STATS_DOC = 'global';
 const USERS_COLLECTION = 'users';
+const CONFIG_COLLECTION = 'config';
+const CONFIG_DOC = 'global';
 
 export interface AdminUser {
   uid: string;
@@ -96,6 +107,9 @@ export function subscribeToFeedback(callback: (items: FeedbackReport[]) => void)
         type: data.type === 'suggestion' ? 'suggestion' : 'bug',
         message: String(data.message || ''),
         page: data.page ? String(data.page) : undefined,
+        status: (data.status as FeedbackReport['status']) || 'pending',
+        adminResponse: data.adminResponse ? String(data.adminResponse) : undefined,
+        respondedAt: data.respondedAt ? toMillis(data.respondedAt) : undefined,
         createdAt: toMillis(data.createdAt),
       } as FeedbackReport;
     });
@@ -159,6 +173,46 @@ export function subscribeToActiveUsers(callback: (stats: ActiveUsersStats) => vo
   );
 }
 
+export function subscribeToGlobalConfig(callback: (config: GlobalConfig) => void) {
+  return onSnapshot(doc(db, CONFIG_COLLECTION, CONFIG_DOC), (snap) => {
+    const data = snap.data() || {};
+    callback({
+      maintenanceMode: data.maintenanceMode === true,
+      hideAndroidDownload: data.hideAndroidDownload === true,
+      disableRegister: data.disableRegister === true,
+      rates: data.rates as RateOverride | undefined,
+      updatedAt: data.updatedAt ? toMillis(data.updatedAt) : undefined,
+      updatedBy: data.updatedBy ? String(data.updatedBy) : undefined,
+    });
+  });
+}
+
+export async function getGlobalConfig(): Promise<GlobalConfig> {
+  const snap = await getDoc(doc(db, CONFIG_COLLECTION, CONFIG_DOC));
+  if (!snap.exists()) return {};
+  const data = snap.data();
+  return {
+    maintenanceMode: data.maintenanceMode === true,
+    hideAndroidDownload: data.hideAndroidDownload === true,
+    disableRegister: data.disableRegister === true,
+    rates: data.rates as RateOverride | undefined,
+    updatedAt: data.updatedAt ? toMillis(data.updatedAt) : undefined,
+    updatedBy: data.updatedBy ? String(data.updatedBy) : undefined,
+  };
+}
+
+export async function setGlobalConfig(config: Partial<GlobalConfig>, updatedBy: string) {
+  await setDoc(
+    doc(db, CONFIG_COLLECTION, CONFIG_DOC),
+    {
+      ...config,
+      updatedAt: serverTimestamp(),
+      updatedBy,
+    },
+    { merge: true }
+  );
+}
+
 export async function searchUsersByNameOrEmail(queryText: string): Promise<AdminUser[]> {
   const normalized = queryText.trim().toLowerCase();
   if (!normalized) return [];
@@ -186,6 +240,55 @@ export async function searchUsersByNameOrEmail(queryText: string): Promise<Admin
   });
 
   return results.slice(0, 20);
+}
+
+export async function getAllUsers(): Promise<AdminUser[]> {
+  const snapshot = await getDocs(collection(db, USERS_COLLECTION));
+  const results: AdminUser[] = [];
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    results.push({
+      uid: docSnap.id,
+      displayName: data.displayName || null,
+      email: data.email || null,
+      photoURL: data.photoURL || null,
+      devices: Array.isArray(data.devices) ? data.devices : [],
+    });
+  });
+  return results;
+}
+
+export async function updateFeedbackStatus(
+  feedbackId: string,
+  status: FeedbackReport['status']
+) {
+  await updateDoc(doc(db, FEEDBACK_COLLECTION, feedbackId), { status });
+}
+
+export async function respondToFeedback(
+  feedbackId: string,
+  ownerId: string,
+  response: string,
+  sentBy: string
+) {
+  await updateDoc(doc(db, FEEDBACK_COLLECTION, feedbackId), {
+    status: 'resolved',
+    adminResponse: response,
+    respondedAt: Date.now(),
+  });
+
+  await addNotification({
+    ownerId,
+    title: 'Tu feedback ha sido respondido',
+    message: response,
+    type: 'info',
+    read: false,
+    meta: {
+      feedbackId,
+      respondedBy: sentBy,
+      isFeedbackResponse: true,
+    },
+  });
 }
 
 export async function addAdminTask(task: Omit<AdminTask, 'id'>) {
@@ -226,13 +329,11 @@ export async function addGlobalNotification(
 export async function dispatchGlobalNotification(
   notification: Omit<GlobalNotification, 'id' | 'createdAt'>
 ): Promise<{ recipients: number; globalId: string }> {
-  // 1. Guardar registro global
   const globalRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
     ...notification,
     createdAt: Date.now(),
   });
 
-  // 2. Resolver lista de destinatarios
   let targetUids: string[] = [];
   if (notification.target === 'all') {
     const usersSnap = await getDocs(collection(db, USERS_COLLECTION));
@@ -241,7 +342,6 @@ export async function dispatchGlobalNotification(
     targetUids = notification.target.filter((uid) => typeof uid === 'string' && uid.trim() !== '');
   }
 
-  // 3. Distribuir a /notifications en batches de 500
   const BATCH_LIMIT = 500;
   const baseNotification: Omit<Notification, 'id' | 'createdAt' | 'ownerId'> = {
     title: notification.title,
@@ -274,6 +374,31 @@ export async function dispatchGlobalNotification(
   return { recipients: targetUids.length, globalId: globalRef.id };
 }
 
+export async function sendDirectNotification(
+  ownerId: string,
+  title: string,
+  message: string,
+  sentBy: string
+) {
+  await addNotification({
+    ownerId,
+    title,
+    message,
+    type: 'info',
+    read: false,
+    meta: {
+      sentBy,
+      isDirect: true,
+    },
+  });
+}
+
+export async function wipeUserData(ownerId: string): Promise<void> {
+  const { wipeAllUserData } = await import('./accounts');
+  await wipeAllUserData(ownerId);
+  await deleteDoc(doc(db, USERS_COLLECTION, ownerId));
+}
+
 export async function incrementAdminStats(field: keyof AdminStats) {
   await setDoc(
     doc(db, STATS_COLLECTION, STATS_DOC),
@@ -304,6 +429,18 @@ export async function recalculateAdminStats() {
     },
     { merge: true }
   );
+}
+
+export async function getCurrentBCVRate(): Promise<number | null> {
+  try {
+    const res = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const rate = typeof data.venta === 'number' ? data.venta : typeof data.promedio === 'number' ? data.promedio : null;
+    return rate ? Number(rate.toFixed(2)) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function getDeadlinePlusDays(days: number): string {

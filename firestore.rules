@@ -167,11 +167,16 @@ service cloud.firestore {
       allow create, update: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Feedback (bugs & suggestions): crear autenticado, leer propio o admin, delete solo admin
+    // Feedback (bugs & suggestions): crear autenticado, leer propio o admin, update/delete solo admin
     match /feedback/{feedbackId} {
       allow read: if request.auth != null && (resource.data.ownerId == request.auth.uid || request.auth.uid == 'qpjtErB8lxWmxNdbOmoCdqZBeAl1');
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null && request.auth.uid == 'qpjtErB8lxWmxNdbOmoCdqZBeAl1';
+    }
+
+    // Global config: solo super admin
+    match /config/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == 'qpjtErB8lxWmxNdbOmoCdqZBeAl1';
     }
 
     // Admin tasks: solo super admin
