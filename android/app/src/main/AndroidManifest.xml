@@ -61,7 +61,8 @@
             android:name=".ProsperForegroundService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="dataSync"
+            android:stopWithTask="false" />
 
         <!-- Receiver to refresh the FCM token after reboot or app update -->
         <receiver
