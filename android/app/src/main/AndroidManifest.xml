@@ -56,6 +56,13 @@
             </intent-filter>
         </service>
 
+        <!-- Foreground service that keeps the app alive so FCM can deliver pushes -->
+        <service
+            android:name=".ProsperForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
         <!-- Receiver to refresh the FCM token after reboot or app update -->
         <receiver
             android:name=".PushBootReceiver"
@@ -81,4 +88,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 </manifest>

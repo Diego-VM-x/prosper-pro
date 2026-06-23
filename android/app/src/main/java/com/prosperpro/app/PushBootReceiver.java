@@ -10,6 +10,7 @@ public class PushBootReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d("PushBootReceiver", "Boot or package replaced, requesting FCM token refresh");
+        ProsperForegroundService.start(context);
         FirebaseMessaging.getInstance().getToken()
             .addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
