@@ -602,7 +602,7 @@ export default function AdminPage() {
               <p className={styles.empty}>No hay feedback recibido.</p>
             ) : (
               feedback.map((item) => (
-                <div key={item.id} className={styles.feedbackItem}>
+                <div key={item.id} className={`${styles.feedbackItem} ${styles[`feedback${item.status}`]}`}>
                   <div className={styles.feedbackTop}>
                     <span
                       className={`${styles.feedbackBadge} ${

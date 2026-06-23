@@ -1014,3 +1014,33 @@
     align-items: flex-start;
   }
 }
+
+
+/* Feedback status colors */
+.feedbackpending {
+  border-left: 4px solid var(--color-gold-500);
+}
+
+.feedbackin_progress {
+  border-left: 4px solid var(--color-blue-500);
+}
+
+.feedbackresolved {
+  border-left: 4px solid var(--color-prosper-green);
+  opacity: 0.85;
+}
+
+.statusSelect option[value="pending"] {
+  background: var(--color-gold-500);
+  color: #000;
+}
+
+.statusSelect option[value="in_progress"] {
+  background: var(--color-blue-500);
+  color: #fff;
+}
+
+.statusSelect option[value="resolved"] {
+  background: var(--color-prosper-green);
+  color: #052e1b;
+}

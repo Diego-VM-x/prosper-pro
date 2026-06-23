@@ -1,10 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users: lectura publica para busqueda, escritura solo propio
+    // Users: lectura publica para busqueda, escritura solo propio, delete tambien por admin
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write, delete: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && (request.auth.uid == userId || request.auth.uid == 'qpjtErB8lxWmxNdbOmoCdqZBeAl1');
     }
     
     // Goals: solo el propietario (ownerId)
