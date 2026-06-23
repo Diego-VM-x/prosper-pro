@@ -223,6 +223,21 @@ export async function registerPushNotifications(userId: string): Promise<void> {
     // 2. Now request permissions and register with FCM.
     await PushNotifications.requestPermissions();
     await PushNotifications.register();
+
+    // 3. On Android, ask the user to disable battery optimization so push
+    //    can be delivered even when the app is closed by the system.
+    if (Capacitor.getPlatform() === 'android') {
+      try {
+        const { BatteryOptimization } = await import('@capawesome-team/capacitor-android-battery-optimization');
+        const { enabled } = await BatteryOptimization.isBatteryOptimizationEnabled();
+        if (enabled) {
+          console.log('[PushNotifications] Requesting ignore battery optimization');
+          await BatteryOptimization.requestIgnoreBatteryOptimization();
+        }
+      } catch (e) {
+        console.warn('[PushNotifications] Battery optimization request failed:', e);
+      }
+    }
   } catch (e) {
     console.error('[PushNotifications] Init error:', e);
   }

@@ -58,8 +58,8 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
-    // Explicit FCM dependency so push notifications work reliably on Android 13+
-    implementation 'com.google.firebase:firebase-messaging:24.0.0'
+    // FCM version is controlled by firebaseMessagingVersion in variables.gradle
+    implementation "com.google.firebase:firebase-messaging:$firebaseMessagingVersion"
 }
 
 apply from: 'capacitor.build.gradle'

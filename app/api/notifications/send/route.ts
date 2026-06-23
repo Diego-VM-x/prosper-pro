@@ -102,6 +102,8 @@ export async function POST(request: NextRequest) {
           notification: {
             channelId: 'prosper_general_v2',
             sound: 'default',
+            icon: 'ic_stat_notification',
+            color: '#24D398',
           },
         },
       });
