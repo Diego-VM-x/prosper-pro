@@ -13,7 +13,7 @@ import {
   toggleAdminTask,
   deleteAdminTask,
   archiveFeedback,
-  addGlobalNotification,
+  dispatchGlobalNotification,
   searchUsersByNameOrEmail,
   recalculateAdminStats,
   getDeadlinePlusDays,
@@ -189,7 +189,7 @@ export default function AdminPage() {
     try {
       const target: 'all' | string[] =
         notifTargetMode === 'specific' ? selectedUsers.map((u) => u.uid) : 'all';
-      await addGlobalNotification({
+      const result = await dispatchGlobalNotification({
         title: notifTitle.trim(),
         message: notifMessage.trim(),
         target,
@@ -201,7 +201,7 @@ export default function AdminPage() {
       setSearchQuery('');
       setSearchResults([]);
       setNotifTargetMode('all');
-      showToast('Notificación global enviada');
+      showToast(`Notificación enviada a ${result.recipients} usuario${result.recipients === 1 ? '' : 's'}`);
     } catch (err: any) {
       showToast(err?.message || 'Error al enviar notificación', 'error');
     }

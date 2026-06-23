@@ -20,6 +20,7 @@ export {
   limit,
   arrayUnion,
   serverTimestamp,
+  writeBatch,
   type QuerySnapshot,
   type DocumentData,
   type Timestamp,

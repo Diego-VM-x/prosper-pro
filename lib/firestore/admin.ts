@@ -13,11 +13,13 @@ import {
   getDocs,
   increment,
   serverTimestamp,
+  writeBatch,
   type Timestamp,
   type QuerySnapshot,
   type DocumentData,
 } from '@/lib/firebase';
-import type { AdminTask, GlobalNotification, AdminStats, FeedbackReport } from '@/types';
+import type { AdminTask, GlobalNotification, AdminStats, FeedbackReport, Notification } from '@/types';
+import { addNotification } from './notifications';
 
 const TASKS_COLLECTION = 'admin_tasks';
 const NOTIFICATIONS_COLLECTION = 'global_notifications';
@@ -219,6 +221,57 @@ export async function addGlobalNotification(
     ...notification,
     createdAt: Date.now(),
   });
+}
+
+export async function dispatchGlobalNotification(
+  notification: Omit<GlobalNotification, 'id' | 'createdAt'>
+): Promise<{ recipients: number; globalId: string }> {
+  // 1. Guardar registro global
+  const globalRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
+    ...notification,
+    createdAt: Date.now(),
+  });
+
+  // 2. Resolver lista de destinatarios
+  let targetUids: string[] = [];
+  if (notification.target === 'all') {
+    const usersSnap = await getDocs(collection(db, USERS_COLLECTION));
+    usersSnap.forEach((d) => targetUids.push(d.id));
+  } else if (Array.isArray(notification.target)) {
+    targetUids = notification.target.filter((uid) => typeof uid === 'string' && uid.trim() !== '');
+  }
+
+  // 3. Distribuir a /notifications en batches de 500
+  const BATCH_LIMIT = 500;
+  const baseNotification: Omit<Notification, 'id' | 'createdAt' | 'ownerId'> = {
+    title: notification.title,
+    message: notification.message,
+    type: 'info',
+    read: false,
+    meta: {
+      globalNotificationId: globalRef.id,
+      sentBy: notification.sentBy,
+      isGlobal: true,
+    },
+  };
+
+  for (let i = 0; i < targetUids.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    const chunk = targetUids.slice(i, i + BATCH_LIMIT);
+
+    for (const uid of chunk) {
+      const notifRef = doc(collection(db, 'notifications'));
+      batch.set(notifRef, {
+        ...baseNotification,
+        ownerId: uid,
+        createdAt: Date.now(),
+      });
+    }
+
+    await batch.commit();
+  }
+
+  return { recipients: targetUids.length, globalId: globalRef.id };
 }
 
 export async function incrementAdminStats(field: keyof AdminStats) {
