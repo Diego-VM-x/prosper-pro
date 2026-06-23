@@ -7,11 +7,15 @@ import {
   updateDoc,
   deleteDoc,
   query,
+  where,
   orderBy,
   onSnapshot,
+  getDocs,
   increment,
   serverTimestamp,
   type Timestamp,
+  type QuerySnapshot,
+  type DocumentData,
 } from '@/lib/firebase';
 import type { AdminTask, GlobalNotification, AdminStats, FeedbackReport } from '@/types';
 
@@ -20,6 +24,25 @@ const NOTIFICATIONS_COLLECTION = 'global_notifications';
 const FEEDBACK_COLLECTION = 'feedback';
 const STATS_COLLECTION = 'stats';
 const STATS_DOC = 'global';
+const USERS_COLLECTION = 'users';
+
+export interface AdminUser {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  devices?: Array<{
+    isOnline?: boolean;
+    lastActive?: number;
+    deviceName?: string;
+  }>;
+}
+
+export interface ActiveUsersStats {
+  activeNow: number;
+  activeToday: number;
+  totalUsers: number;
+}
 
 function toMillis(value: unknown): number {
   if (typeof value === 'number') return value;
@@ -27,6 +50,19 @@ function toMillis(value: unknown): number {
     return (value as Timestamp).toMillis();
   }
   return Date.now();
+}
+
+function deviceLastActive(device: unknown): number {
+  if (!device || typeof device !== 'object') return 0;
+  const d = device as Record<string, unknown>;
+  if (typeof d.lastActive === 'number') return d.lastActive;
+  return 0;
+}
+
+function deviceIsOnline(device: unknown): boolean {
+  if (!device || typeof device !== 'object') return false;
+  const d = device as Record<string, unknown>;
+  return d.isOnline === true;
 }
 
 export function subscribeToAdminTasks(callback: (tasks: AdminTask[]) => void) {
@@ -79,6 +115,77 @@ export function subscribeToAdminStats(callback: (stats: AdminStats) => void) {
   });
 }
 
+export function subscribeToActiveUsers(callback: (stats: ActiveUsersStats) => void) {
+  return onSnapshot(
+    collection(db, USERS_COLLECTION),
+    (snapshot) => {
+      const now = Date.now();
+      const fiveMinutesAgo = now - 5 * 60 * 1000;
+      const oneDayAgo = now - 24 * 60 * 60 * 1000;
+
+      let activeNow = 0;
+      let activeToday = 0;
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const devices = Array.isArray(data.devices) ? data.devices : [];
+        let userActiveNow = false;
+        let userActiveToday = false;
+
+        for (const device of devices) {
+          const lastActive = deviceLastActive(device);
+          const isOnline = deviceIsOnline(device);
+          if (isOnline && lastActive > fiveMinutesAgo) {
+            userActiveNow = true;
+          }
+          if (lastActive > oneDayAgo) {
+            userActiveToday = true;
+          }
+        }
+
+        if (userActiveNow) activeNow++;
+        if (userActiveToday) activeToday++;
+      });
+
+      callback({
+        activeNow,
+        activeToday,
+        totalUsers: snapshot.size,
+      });
+    },
+    () => callback({ activeNow: 0, activeToday: 0, totalUsers: 0 })
+  );
+}
+
+export async function searchUsersByNameOrEmail(queryText: string): Promise<AdminUser[]> {
+  const normalized = queryText.trim().toLowerCase();
+  if (!normalized) return [];
+
+  const snapshot = await getDocs(collection(db, USERS_COLLECTION));
+  const results: AdminUser[] = [];
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const displayName = String(data.displayName || '');
+    const email = String(data.email || '');
+
+    if (
+      displayName.toLowerCase().includes(normalized) ||
+      email.toLowerCase().includes(normalized)
+    ) {
+      results.push({
+        uid: docSnap.id,
+        displayName: data.displayName || null,
+        email: data.email || null,
+        photoURL: data.photoURL || null,
+        devices: Array.isArray(data.devices) ? data.devices : [],
+      });
+    }
+  });
+
+  return results.slice(0, 20);
+}
+
 export async function addAdminTask(task: Omit<AdminTask, 'id'>) {
   await addDoc(collection(db, TASKS_COLLECTION), {
     ...task,
@@ -110,7 +217,7 @@ export async function addGlobalNotification(
 ) {
   await addDoc(collection(db, NOTIFICATIONS_COLLECTION), {
     ...notification,
-    createdAt: serverTimestamp(),
+    createdAt: Date.now(),
   });
 }
 
@@ -119,6 +226,27 @@ export async function incrementAdminStats(field: keyof AdminStats) {
     doc(db, STATS_COLLECTION, STATS_DOC),
     {
       [field]: increment(1),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+export async function recalculateAdminStats() {
+  const [usersSnap, feedbackSnap, tasksSnap] = await Promise.all([
+    getDocs(collection(db, USERS_COLLECTION)),
+    getDocs(collection(db, FEEDBACK_COLLECTION)),
+    getDocs(collection(db, TASKS_COLLECTION)),
+  ]);
+
+  const openTasks = tasksSnap.docs.filter((d) => !d.data().completed).length;
+
+  await setDoc(
+    doc(db, STATS_COLLECTION, STATS_DOC),
+    {
+      totalUsers: usersSnap.size,
+      totalFeedback: feedbackSnap.size,
+      openTasks,
       updatedAt: serverTimestamp(),
     },
     { merge: true }

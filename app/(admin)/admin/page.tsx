@@ -8,18 +8,32 @@ import {
   subscribeToAdminTasks,
   subscribeToFeedback,
   subscribeToAdminStats,
+  subscribeToActiveUsers,
   addAdminTask,
   toggleAdminTask,
   deleteAdminTask,
   archiveFeedback,
   addGlobalNotification,
+  searchUsersByNameOrEmail,
+  recalculateAdminStats,
   getDeadlinePlusDays,
+  type AdminUser,
+  type ActiveUsersStats,
 } from '@/lib/firestore/admin';
-import type { AdminTask, GlobalNotification, AdminStats, FeedbackReport } from '@/types';
+import {
+  IconDashboard,
+  IconTeam,
+  IconTasks,
+  IconAnalytics,
+  IconBell,
+  IconSearch,
+  IconX,
+} from '@/app/components/icons';
+import type { AdminTask, AdminStats, FeedbackReport } from '@/types';
 import styles from './admin.module.css';
 
 const SUPER_ADMIN_UID = 'qpjtErB8lxWmxNdbOmoCdqZBeAl1';
-const TOKEN_REFRESH_MS = 10 * 60 * 1000; // 10 minutos
+const TOKEN_REFRESH_MS = 10 * 60 * 1000;
 
 function formatDate(ts: number): string {
   if (!ts) return '-';
@@ -44,6 +58,10 @@ function daysUntil(deadline: string): number {
   return Math.ceil((dl.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function userDisplayName(user: AdminUser): string {
+  return user.displayName || user.email || user.uid;
+}
+
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -52,24 +70,36 @@ export default function AdminPage() {
   const [tasks, setTasks] = useState<AdminTask[]>([]);
   const [feedback, setFeedback] = useState<FeedbackReport[]>([]);
   const [stats, setStats] = useState<AdminStats>({});
+  const [activeUsers, setActiveUsers] = useState<ActiveUsersStats>({
+    activeNow: 0,
+    activeToday: 0,
+    totalUsers: 0,
+  });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Forms
+  // Notification form
   const [notifTitle, setNotifTitle] = useState('');
   const [notifMessage, setNotifMessage] = useState('');
-  const [notifTarget, setNotifTarget] = useState<'all' | 'specific'>('all');
-  const [notifTargets, setNotifTargets] = useState('');
+  const [notifTargetMode, setNotifTargetMode] = useState<'all' | 'specific'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<AdminUser[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<AdminUser[]>([]);
+  const [searching, setSearching] = useState(false);
 
+  // Task form
   const [newTaskText, setNewTaskText] = useState('');
   const [newTaskDeadline, setNewTaskDeadline] = useState('');
 
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function showToast(message: string, type: 'success' | 'error' = 'success') {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ message, type });
     toastTimer.current = setTimeout(() => setToast(null), 3500);
   }
+
+  const defaultDeadline = useMemo(() => getDeadlinePlusDays(7), []);
 
   // Client-side guard + token refresh
   useEffect(() => {
@@ -83,13 +113,12 @@ export default function AdminPage() {
       return;
     }
 
-    // Keep server cookie fresh while the admin panel is open
     const refreshCookie = async () => {
       try {
         const token = await user.getIdToken(true);
         setAdminSessionCookie(token);
       } catch {
-        // Token refresh failed silently
+        // ignore
       }
     };
     refreshCookie();
@@ -104,21 +133,48 @@ export default function AdminPage() {
     const unsubTasks = subscribeToAdminTasks(setTasks);
     const unsubFeedback = subscribeToFeedback(setFeedback);
     const unsubStats = subscribeToAdminStats(setStats);
+    const unsubActive = subscribeToActiveUsers(setActiveUsers);
 
     return () => {
       unsubTasks();
       unsubFeedback();
       unsubStats();
+      unsubActive();
     };
   }, [user]);
+
+  // Recalculate derived stats once on load
+  useEffect(() => {
+    if (!user || user.uid !== SUPER_ADMIN_UID) return;
+    recalculateAdminStats().catch(() => {});
+  }, [user]);
+
+  // Search users for notifications
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!searchQuery.trim() || notifTargetMode !== 'specific') {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    searchTimer.current = setTimeout(async () => {
+      try {
+        const results = await searchUsersByNameOrEmail(searchQuery);
+        const filtered = results.filter((u) => !selectedUsers.some((s) => s.uid === u.uid));
+        setSearchResults(filtered);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 350);
+  }, [searchQuery, notifTargetMode, selectedUsers]);
 
   const overdueCount = useMemo(
     () => tasks.filter((t) => isOverdue(t.deadline, t.completed)).length,
     [tasks]
   );
   const openCount = useMemo(() => tasks.filter((t) => !t.completed).length, [tasks]);
-  const bugCount = useMemo(() => feedback.filter((f) => f.type === 'bug').length, [feedback]);
-  const suggestionCount = useMemo(() => feedback.filter((f) => f.type === 'suggestion').length, [feedback]);
 
   async function handleSendNotification(e: React.FormEvent) {
     e.preventDefault();
@@ -126,14 +182,13 @@ export default function AdminPage() {
       showToast('Completa título y mensaje', 'error');
       return;
     }
+    if (notifTargetMode === 'specific' && selectedUsers.length === 0) {
+      showToast('Selecciona al menos un usuario', 'error');
+      return;
+    }
     try {
-      const target: GlobalNotification['target'] =
-        notifTarget === 'specific'
-          ? notifTargets
-              .split(',')
-              .map((s) => s.trim())
-              .filter(Boolean)
-          : 'all';
+      const target: 'all' | string[] =
+        notifTargetMode === 'specific' ? selectedUsers.map((u) => u.uid) : 'all';
       await addGlobalNotification({
         title: notifTitle.trim(),
         message: notifMessage.trim(),
@@ -142,12 +197,24 @@ export default function AdminPage() {
       });
       setNotifTitle('');
       setNotifMessage('');
-      setNotifTargets('');
-      setNotifTarget('all');
+      setSelectedUsers([]);
+      setSearchQuery('');
+      setSearchResults([]);
+      setNotifTargetMode('all');
       showToast('Notificación global enviada');
-    } catch {
-      showToast('Error al enviar notificación', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al enviar notificación', 'error');
     }
+  }
+
+  function selectUser(user: AdminUser) {
+    setSelectedUsers((prev) => [...prev, user]);
+    setSearchQuery('');
+    setSearchResults([]);
+  }
+
+  function removeSelectedUser(uid: string) {
+    setSelectedUsers((prev) => prev.filter((u) => u.uid !== uid));
   }
 
   async function handleAddTask(e: React.FormEvent) {
@@ -166,8 +233,8 @@ export default function AdminPage() {
       setNewTaskText('');
       setNewTaskDeadline('');
       showToast('Tarea añadida al roadmap');
-    } catch {
-      showToast('Error al crear tarea', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al crear tarea', 'error');
     }
   }
 
@@ -175,8 +242,8 @@ export default function AdminPage() {
     try {
       await toggleAdminTask(task.id, task.completed);
       showToast(task.completed ? 'Tarea reabierta' : 'Tarea completada');
-    } catch {
-      showToast('Error al actualizar tarea', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al actualizar tarea', 'error');
     }
   }
 
@@ -185,8 +252,8 @@ export default function AdminPage() {
     try {
       await deleteAdminTask(taskId);
       showToast('Tarea eliminada');
-    } catch {
-      showToast('Error al eliminar tarea', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al eliminar tarea', 'error');
     }
   }
 
@@ -195,8 +262,8 @@ export default function AdminPage() {
     try {
       await archiveFeedback(id);
       showToast('Feedback archivado');
-    } catch {
-      showToast('Error al archivar feedback', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al archivar feedback', 'error');
     }
   }
 
@@ -212,12 +279,10 @@ export default function AdminPage() {
         createdAt: Date.now(),
       });
       showToast('Tarea creada desde feedback');
-    } catch {
-      showToast('Error al crear tarea', 'error');
+    } catch (err: any) {
+      showToast(err?.message || 'Error al crear tarea', 'error');
     }
   }
-
-  const defaultDeadline = useMemo(() => getDeadlinePlusDays(7), []);
 
   if (!mounted || loading) {
     return (
@@ -229,7 +294,7 @@ export default function AdminPage() {
   }
 
   if (!user || user.uid !== SUPER_ADMIN_UID) {
-    return null; // router.replace already in progress
+    return null;
   }
 
   return (
@@ -241,19 +306,53 @@ export default function AdminPage() {
       )}
 
       <header className={styles.header}>
-        <h1 className={styles.title}>🛡️ Panel de Administración</h1>
+        <h1 className={styles.title}>
+          <IconShield className={styles.headerIcon} />
+          Panel de Administración
+        </h1>
         <p className={styles.subtitle}>Acceso exclusivo · Super Administrador</p>
       </header>
 
       <section className={styles.kpiGrid}>
-        <KpiCard label="Usuarios registrados" value={stats.totalUsers ?? 0} color="navy" />
-        <KpiCard label="Transacciones totales" value={stats.totalTransactions ?? 0} color="emerald" />
-        <KpiCard label="Feedback recibido" value={feedback.length} color="amber" />
-        <KpiCard label="Tareas abiertas" value={openCount} alert={overdueCount > 0} alertValue={overdueCount} color="rose" />
+        <KpiCard
+          label="Usuarios registrados"
+          value={activeUsers.totalUsers}
+          icon={<IconTeam />}
+          color="navy"
+        />
+        <KpiCard
+          label="Activos ahora"
+          value={activeUsers.activeNow}
+          icon={<IconDashboard />}
+          color="emerald"
+        />
+        <KpiCard
+          label="Activos hoy"
+          value={activeUsers.activeToday}
+          icon={<IconAnalytics />}
+          color="amber"
+        />
+        <KpiCard
+          label="Feedback recibido"
+          value={feedback.length}
+          icon={<IconBell />}
+          color="rose"
+        />
+        <KpiCard
+          label="Tareas abiertas"
+          value={openCount}
+          icon={<IconTasks />}
+          color="blue"
+          alert={overdueCount > 0}
+          alertValue={overdueCount}
+        />
       </section>
 
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>📢 Crear Notificación Global</h2>
+        <h2 className={styles.cardTitle}>
+          <IconBell className={styles.cardIcon} />
+          Crear Notificación Global
+        </h2>
         <form onSubmit={handleSendNotification} className={styles.notificationForm}>
           <input
             type="text"
@@ -274,8 +373,8 @@ export default function AdminPage() {
               <input
                 type="radio"
                 value="all"
-                checked={notifTarget === 'all'}
-                onChange={() => setNotifTarget('all')}
+                checked={notifTargetMode === 'all'}
+                onChange={() => setNotifTargetMode('all')}
               />
               Todos los usuarios
             </label>
@@ -283,21 +382,73 @@ export default function AdminPage() {
               <input
                 type="radio"
                 value="specific"
-                checked={notifTarget === 'specific'}
-                onChange={() => setNotifTarget('specific')}
+                checked={notifTargetMode === 'specific'}
+                onChange={() => setNotifTargetMode('specific')}
               />
               Usuarios específicos
             </label>
           </div>
-          {notifTarget === 'specific' && (
-            <input
-              type="text"
-              placeholder="UIDs separados por comas"
-              value={notifTargets}
-              onChange={(e) => setNotifTargets(e.target.value)}
-              className={styles.input}
-            />
+
+          {notifTargetMode === 'specific' && (
+            <div className={styles.userSearch}>
+              <div className={styles.searchInputWrapper}>
+                <IconSearch className={styles.searchIcon} />
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre o email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.input}
+                />
+              </div>
+
+              {searching && <p className={styles.hint}>Buscando...</p>}
+
+              {searchResults.length > 0 && (
+                <div className={styles.searchResults}>
+                  {searchResults.map((u) => (
+                    <button
+                      key={u.uid}
+                      type="button"
+                      onClick={() => selectUser(u)}
+                      className={styles.searchResultItem}
+                    >
+                      <div className={styles.userAvatar}>
+                        {u.photoURL ? (
+                          <img src={u.photoURL} alt="" />
+                        ) : (
+                          <span>{userDisplayName(u).charAt(0).toUpperCase()}</span>
+                        )}
+                      </div>
+                      <div className={styles.userInfo}>
+                        <span className={styles.userName}>{userDisplayName(u)}</span>
+                        <span className={styles.userEmail}>{u.email || u.uid}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {selectedUsers.length > 0 && (
+                <div className={styles.selectedUsers}>
+                  {selectedUsers.map((u) => (
+                    <span key={u.uid} className={styles.selectedChip}>
+                      {userDisplayName(u)}
+                      <button
+                        type="button"
+                        onClick={() => removeSelectedUser(u.uid)}
+                        className={styles.chipRemove}
+                        aria-label="Quitar usuario"
+                      >
+                        <IconX />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
+
           <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
             Enviar notificación global
           </button>
@@ -307,7 +458,10 @@ export default function AdminPage() {
       <div className={styles.twoColumn}>
         <section className={`${styles.card} ${styles.scrollCard}`}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>💬 Feedback de la Comunidad</h2>
+            <h2 className={styles.cardTitle}>
+              <IconBell className={styles.cardIcon} />
+              Feedback de la Comunidad
+            </h2>
             <span className={styles.badge}>{feedback.length}</span>
           </div>
           <div className={styles.list}>
@@ -352,7 +506,10 @@ export default function AdminPage() {
 
         <section className={`${styles.card} ${styles.scrollCard}`}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.cardTitle}>🛠️ Roadmap Técnico</h2>
+            <h2 className={styles.cardTitle}>
+              <IconTasks className={styles.cardIcon} />
+              Roadmap Técnico
+            </h2>
             <span className={`${styles.badge} ${overdueCount > 0 ? styles.badgeOverdue : ''}`}>
               {openCount} abiertas
             </span>
@@ -440,13 +597,15 @@ export default function AdminPage() {
 function KpiCard({
   label,
   value,
+  icon,
   color,
   alert,
   alertValue,
 }: {
   label: string;
   value: number;
-  color: 'navy' | 'emerald' | 'amber' | 'rose';
+  icon: React.ReactNode;
+  color: 'navy' | 'emerald' | 'amber' | 'rose' | 'blue';
   alert?: boolean;
   alertValue?: number;
 }) {
@@ -455,15 +614,34 @@ function KpiCard({
     emerald: styles.kpiEmerald,
     amber: styles.kpiAmber,
     rose: styles.kpiRose,
+    blue: styles.kpiBlue,
   }[color];
 
   return (
     <div className={`${styles.kpiCard} ${colorClass}`}>
+      <div className={styles.kpiIcon}>{icon}</div>
       <span className={styles.kpiValue}>{value.toLocaleString('es-ES')}</span>
       <span className={styles.kpiLabel}>{label}</span>
       {alert && alertValue ? (
         <span className={styles.kpiAlert}>{alertValue} vencidas</span>
       ) : null}
     </div>
+  );
+}
+
+// Shield icon local to avoid adding to shared icons
+function IconShield({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
   );
 }
